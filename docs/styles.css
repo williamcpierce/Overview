@@ -1,0 +1,55 @@
+/* General Reset */
+body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    transition: background-color 0.5s ease;
+}
+
+/* Style for UL and center alignment */
+ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+ul li {
+    list-style: none;
+}
+
+/* Link and image styles */
+ul li a {
+    display: block;
+    text-decoration: none;
+    transition: box-shadow 0.5s ease;
+    box-shadow: 0 0px 10px rgba(0, 0, 0, 0.4);
+    border-radius: 44px;
+}
+ul li a:hover {
+    box-shadow: 0 0px 50px rgba(0, 0, 0, 0.4);
+}
+ul li a .app-icon {
+    width: 200px;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+ul li a:hover .app-icon {
+    transform: scale(1.05);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #121212;
+    }
+    ul li a {
+        box-shadow: 0 0px 10px rgba(255, 255, 255, 0.4);
+    }
+    ul li a:hover {
+        box-shadow: 0 0px 50px rgba(255, 255, 255, 0.4);
+    }
+}
