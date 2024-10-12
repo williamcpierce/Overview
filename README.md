@@ -1,8 +1,8 @@
 # Overview: Window Previews
 
-## Pre-Alpha Release
+## Alpha Release
 
-**Note: Overview is currently in a pre-alpha state. It is not yet feature-complete and may contain bugs or unexpected behavior. Use at your own risk.**
+**Note: Overview is currently in an alpha state. It is not yet feature-complete and may contain bugs or unexpected behavior. Use at your own risk.**
 
 ## Overview
 
@@ -55,7 +55,7 @@ This project is MIT licensed, see the LICENSE file for full details.
 
 ## Disclaimer
 
-Overview is a pre-alpha software and is not intended for production use. Use of this software is at your own risk. The developers are not responsible for any data loss or system instability that may occur as a result of using Overview.
+Overview is alpha software and is not intended for production use. Use of this software is at your own risk. The developers are not responsible for any data loss or system instability that may occur as a result of using Overview.
 
 ## Contact
 
