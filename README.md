@@ -1,4 +1,4 @@
-# Overview: Window Previews
+# Overview: Window Previews on macOS
 
 ## Alpha Release
 
@@ -13,6 +13,7 @@ Overview is an macOS application designed to provide visibility of multiple wind
 - Capture and display live previews of any application in resizable floating windows
 - Overview windows are clickable to quickly switch to the corresponding application
 - Edit Mode for repositioning and resizing of Overview windows
+- Overview window edges snap together
 
 ## System Requirements
 
@@ -21,9 +22,9 @@ Overview is an macOS application designed to provide visibility of multiple wind
 
 ## Installation
 
-You can download the latest dmg from the GitHub Releases page. 
+You can download the latest dmg from the GitHub [Releases](https://github.com/williamcpierce/Overview/releases) page. 
 
-Note the app package is unsigned at this stage of development. Follow instructions at https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac to run the application.  
+Note the app package is unsigned at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.  
 
 On first launch, there will be an error and a notification to allow screen recording. This is necessary to show the preview windows. Allow screen recording permission in settings and then re-launch Overview. 
 
@@ -33,21 +34,28 @@ On first launch, there will be an error and a notification to allow screen recor
 2. Select a window to capture from the available windows list
 3. Toggle Edit Mode (via the window context menu) to reposition or resize Overview windows
 4. Click on an Overview window (with Edit Mode disabled) to switch to the previewed application
-5. Create new Overview windows with ⌘+N while in Edit Mode, or via the File menu
+5. Create new Overview windows with ⌘N while in Edit Mode, or via the File menu
+
+## Acknowledgements
+
+The design, features, and general purpose of Overview is heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview). 
+Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen. 
 
 ## Known Issues
 
+- Unexpected behavior while Stage Manager is enabled
 - Only windows in the current space appear in the the selection menu
 - Resizing a window will not change the aspect ratio of the Overview window
 - Multiple windows from an application can be previewed, but clicking brings the application into focus, not a specific window
 - Overview window sizes are not restored when relaunching the application
+- Overview window positions are reset to the center of the screen when relaunching the application
 - Closing an Overview window does not stop the capture of the previewed window
 - Closing a previewed application will not close the corresponding Overview window, which will freeze on the last frame
 - Performance is suboptimal
 
 ## Contributing
 
-Contributions to Overview are welcome! As the project is in its early stages, please contact me before starting any work.
+Contributions to Overview are welcome, but as the project is in its early stages, please contact me to coordinate before starting any work.
 
 ## License
 
