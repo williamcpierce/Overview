@@ -22,14 +22,16 @@ ul li {
 
 /* Link and image styles */
 ul li a {
+    height: 200px;
     display: block;
     text-decoration: none;
-    transition: box-shadow 0.5s ease;
+    transition: 0.5s ease;
     box-shadow: 0 0px 10px rgba(0, 0, 0, 0.4);
-    border-radius: 44px;
+    border-radius: 45px;
 }
 ul li a:hover {
     box-shadow: 0 0px 50px rgba(0, 0, 0, 0.4);
+    transform: scale(1.04);
 }
 ul li a .app-icon {
     width: 200px;
@@ -38,18 +40,12 @@ ul li a .app-icon {
     transition: transform 0.5s ease;
 }
 ul li a:hover .app-icon {
-    transform: scale(1.05);
+    transform: scale(1.04);
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     body {
         background: #121212;
-    }
-    ul li a {
-        box-shadow: 0 0px 10px rgba(255, 255, 255, 0.4);
-    }
-    ul li a:hover {
-        box-shadow: 0 0px 50px rgba(255, 255, 255, 0.4);
     }
 }
