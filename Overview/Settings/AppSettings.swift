@@ -15,16 +15,31 @@ import Foundation
 import Combine
 
 class AppSettings: ObservableObject {
-    @Published var opacity: Double {
-        didSet {
-            UserDefaults.standard.set(opacity, forKey: "windowOpacity")
-        }
-    }
+    @Published var opacity: Double
+    @Published var frameRate: Double
     
     init() {
-        self.opacity = UserDefaults.standard.double(forKey: "windowOpacity")
-        if self.opacity == 0 {
-            self.opacity = 0.95 // Default value
-        }
+        let storedOpacity = UserDefaults.standard.double(forKey: "windowOpacity")
+        self.opacity = storedOpacity != 0 ? storedOpacity : 0.95 // Default value
+        
+        let storedFrameRate = UserDefaults.standard.double(forKey: "frameRate")
+        self.frameRate = storedFrameRate != 0 ? storedFrameRate : 30 // Default value (30 fps)
+        
+        // Set up observers for changes
+        setupObservers()
     }
+    
+    private func setupObservers() {
+        $opacity
+            .dropFirst() // Ignore the initial value
+            .sink { UserDefaults.standard.set($0, forKey: "windowOpacity") }
+            .store(in: &cancellables)
+        
+        $frameRate
+            .dropFirst() // Ignore the initial value
+            .sink { UserDefaults.standard.set($0, forKey: "frameRate") }
+            .store(in: &cancellables)
+    }
+    
+    private var cancellables = Set<AnyCancellable>()
 }

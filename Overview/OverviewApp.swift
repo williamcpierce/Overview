@@ -17,8 +17,14 @@ import ScreenCaptureKit
 
 @main
 struct OverviewApp: App {
-    @StateObject private var windowManager = WindowManager()
+    @StateObject private var windowManager: WindowManager
     @StateObject private var appSettings = AppSettings()
+
+    init() {
+        let settings = AppSettings()
+        self._appSettings = StateObject(wrappedValue: settings)
+        self._windowManager = StateObject(wrappedValue: WindowManager(appSettings: settings))
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -46,10 +52,15 @@ struct OverviewApp: App {
 class WindowManager: ObservableObject {
     @Published private(set) var captureManagers: [UUID: ScreenCaptureManager] = [:]
     @Published var isEditModeEnabled = false
+    private let appSettings: AppSettings
+    
+    init(appSettings: AppSettings) {
+        self.appSettings = appSettings
+    }
     
     func createNewCaptureManager() -> UUID {
         let id = UUID()
-        let captureManager = ScreenCaptureManager()
+        let captureManager = ScreenCaptureManager(appSettings: appSettings)
         captureManagers[id] = captureManager
         return id
     }

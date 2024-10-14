@@ -16,16 +16,43 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     
+    init(appSettings: AppSettings) {
+        self.appSettings = appSettings
+    }
+    
     var body: some View {
         Form {
-            Section(header: Text("Window Settings")) {
-                Slider(value: $appSettings.opacity, in: 0.1...1.0, step: 0.05) {
-                    Text("Window Opacity")
-                }
-                Text("Opacity: \(appSettings.opacity, specifier: "%.2f")")
-            }
+            settingsSection
         }
-        .padding()
+        .padding(20)
         .frame(width: 300, height: 150)
+    }
+    
+    private var settingsSection: some View {
+        Section() {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Window Opacity")
+                        Spacer()
+                        Text("\(Int(appSettings.opacity * 100))%")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $appSettings.opacity, in: 0.1...1.0, step: 0.05)
+                    Spacer()
+                    HStack {
+                        Text("Preview Framerate")
+                        Spacer()
+                        Text("\(Int(appSettings.frameRate)) fps")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $appSettings.frameRate, in: 5...120, step: 5)
+                }
+        }
+    }
+}
+
+struct SettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        SettingsView(appSettings: AppSettings())
     }
 }
