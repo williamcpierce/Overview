@@ -11,8 +11,8 @@
  file at the root of this project.
 */
 
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat
@@ -27,9 +27,11 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let window = nsView.window else { return }
-        updateWindowSize(window)
-        updateWindowEditMode(window)
+        DispatchQueue.main.async {
+            guard let window = nsView.window else { return }
+            self.updateWindowSize(window)
+            self.updateWindowEditMode(window)
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -38,26 +40,23 @@ struct WindowAccessor: NSViewRepresentable {
 
     // MARK: - Window Creation and Configuration
 
-    static func createNewWindow(with content: () -> ContentView) -> NSWindow {
-        guard let screen = NSScreen.main else { return NSWindow() }
-        let screenSize = screen.frame.size
-        let windowSize = CGSize(width: 288, height: 162)
-        let origin = CGPoint(
-            x: (screenSize.width - windowSize.width) / 2,
-            y: (screenSize.height - windowSize.height) / 2
-        )
-
-        let newWindow = NSWindow(
-            contentRect: NSRect(origin: origin, size: windowSize),
-            styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+    static func createNewWindow(with content: @escaping () -> ContentView) -> NSWindow {
+        let window = NSWindow(
+            contentRect: NSRect(x: 100, y: 100, width: 288, height: 162),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
 
-        newWindow.contentView = NSHostingView(rootView: content())
-        configureWindowStyle(newWindow)
+        window.center()
+        window.setFrameAutosaveName("Main Window")
+        window.contentView = NSHostingView(rootView: content())
 
-        return newWindow
+        DispatchQueue.main.async {
+            configureWindowStyle(window)
+        }
+
+        return window
     }
 
     private static func configureWindowStyle(_ window: NSWindow) {
@@ -65,9 +64,10 @@ struct WindowAccessor: NSViewRepresentable {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.level = .floating
-        window.isOpaque = true
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.isOpaque = false
+        window.backgroundColor = .clear
         window.hasShadow = false
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     }
 
     // MARK: - Window Configuration Methods
@@ -75,7 +75,7 @@ struct WindowAccessor: NSViewRepresentable {
     private func configureWindow(for view: NSView, with context: Context) {
         guard let window = view.window else { return }
         window.delegate = context.coordinator
-        configureWindowStyle(window)
+        Self.configureWindowStyle(window)
         configureWindowSize(window)
         configureWindowAppearance(window)
     }
@@ -95,12 +95,11 @@ struct WindowAccessor: NSViewRepresentable {
         let initialSize = NSSize(width: 288, height: 162)
         window.setContentSize(initialSize)
         window.contentAspectRatio = initialSize
+        window.minSize = initialSize
     }
 
     private func configureWindowAppearance(_ window: NSWindow) {
         window.backgroundColor = .clear
-        window.styleMask.insert(.fullSizeContentView)
-
         if let contentView = window.contentView {
             contentView.wantsLayer = true
             contentView.layer?.backgroundColor = NSColor.clear.cgColor

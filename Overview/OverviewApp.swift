@@ -22,9 +22,8 @@ struct OverviewApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled)
+                .frame(minWidth: 288, minHeight: 162)
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(width: 288, height: 162)
         .commands {
             editCommands
         }

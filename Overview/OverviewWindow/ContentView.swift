@@ -19,8 +19,14 @@ struct ContentView: View {
     @Binding var isEditModeEnabled: Bool
     @State private var captureManagerId: UUID?
     @State private var showingSelection = true
-    @State private var selectedWindowSize: CGSize?
     @State private var aspectRatio: CGFloat = 1.5  // Default aspect ratio
+    @State private var selectedWindowSize: CGSize? {
+        didSet {
+            if let size = selectedWindowSize {
+                aspectRatio = size.width / size.height
+            }
+        }
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -38,11 +44,6 @@ struct ContentView: View {
             )
             .onAppear(perform: createCaptureManager)
             .onDisappear(perform: removeCaptureManager)
-            .onChange(of: selectedWindowSize) {
-                if let size = selectedWindowSize {
-                    aspectRatio = size.width / size.height
-                }
-            }
         }
     }
 
