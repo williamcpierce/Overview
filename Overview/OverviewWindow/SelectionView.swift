@@ -11,8 +11,8 @@
  file at the root of this project.
 */
 
-import SwiftUI
 import ScreenCaptureKit
+import SwiftUI
 
 struct SelectionView: View {
     // MARK: - Properties
@@ -20,7 +20,8 @@ struct SelectionView: View {
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
-    
+    @ObservedObject var appSettings: AppSettings  // Add this line
+
     @State private var selectedWindow: SCWindow?
     @State private var isLoading = true
     @State private var showError = false
@@ -41,7 +42,9 @@ struct SelectionView: View {
             Task { await setupCaptureManager() }
         }
         .alert(isPresented: $showError) {
-            Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+            Alert(
+                title: Text("Error"), message: Text(errorMessage),
+                dismissButton: .default(Text("OK")))
         }
     }
 
@@ -69,7 +72,7 @@ struct SelectionView: View {
                 }
             }
             .padding()
-            
+
             Button("Confirm") {
                 confirmSelection(for: captureManager)
             }

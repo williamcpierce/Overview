@@ -31,7 +31,7 @@ struct OverviewApp: App {
             ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled, appSettings: appSettings)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(width: 288, height: 162)
+        .defaultSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
         .commands {
             editCommands
         }

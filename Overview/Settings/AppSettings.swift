@@ -17,6 +17,8 @@ import Combine
 class AppSettings: ObservableObject {
     @Published var opacity: Double
     @Published var frameRate: Double
+    @Published var defaultWindowWidth: Double
+    @Published var defaultWindowHeight: Double
     
     init() {
         let storedOpacity = UserDefaults.standard.double(forKey: "windowOpacity")
@@ -24,6 +26,12 @@ class AppSettings: ObservableObject {
         
         let storedFrameRate = UserDefaults.standard.double(forKey: "frameRate")
         self.frameRate = storedFrameRate != 0 ? storedFrameRate : 30 // Default value (30 fps)
+        
+        let storedWidth = UserDefaults.standard.double(forKey: "defaultWindowWidth")
+        self.defaultWindowWidth = storedWidth != 0 ? storedWidth : 288 // Default value
+        
+        let storedHeight = UserDefaults.standard.double(forKey: "defaultWindowHeight")
+        self.defaultWindowHeight = storedHeight != 0 ? storedHeight : 162 // Default value
         
         // Set up observers for changes
         setupObservers()
@@ -39,6 +47,20 @@ class AppSettings: ObservableObject {
             .dropFirst() // Ignore the initial value
             .sink { UserDefaults.standard.set($0, forKey: "frameRate") }
             .store(in: &cancellables)
+        
+        $defaultWindowWidth
+            .dropFirst() // Ignore the initial value
+            .sink { UserDefaults.standard.set($0, forKey: "defaultWindowWidth") }
+            .store(in: &cancellables)
+        
+        $defaultWindowHeight
+            .dropFirst() // Ignore the initial value
+            .sink { UserDefaults.standard.set($0, forKey: "defaultWindowHeight") }
+            .store(in: &cancellables)
+    }
+    
+    var defaultWindowSize: CGSize {
+        CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }
     
     private var cancellables = Set<AnyCancellable>()
