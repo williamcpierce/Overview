@@ -12,8 +12,6 @@
 */
 
 import SwiftUI
-import AppKit
-import ScreenCaptureKit
 
 @main
 struct OverviewApp: App {
@@ -45,35 +43,5 @@ struct OverviewApp: App {
         CommandMenu("Edit") {
             Toggle("Edit Mode", isOn: $windowManager.isEditModeEnabled)
         }
-    }
-}
-
-@MainActor
-class WindowManager: ObservableObject {
-    @Published private(set) var captureManagers: [UUID: ScreenCaptureManager] = [:]
-    @Published var isEditModeEnabled = false
-    private let appSettings: AppSettings
-    
-    init(appSettings: AppSettings) {
-        self.appSettings = appSettings
-    }
-    
-    func createNewCaptureManager() -> UUID {
-        let id = UUID()
-        let captureManager = ScreenCaptureManager(appSettings: appSettings)
-        captureManagers[id] = captureManager
-        return id
-    }
-
-    func removeCaptureManager(id: UUID) {
-        guard captureManagers[id] != nil else {
-            print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
-            return
-        }
-        captureManagers.removeValue(forKey: id)
-    }
-
-    func toggleEditMode() {
-        isEditModeEnabled.toggle()
     }
 }

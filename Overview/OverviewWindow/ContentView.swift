@@ -29,7 +29,7 @@ struct ContentView: View {
                 if showingSelection {
                     selectionView
                 } else {
-                    CapturePreviewContent()
+                    CaptureContent()
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -56,7 +56,7 @@ struct ContentView: View {
             appSettings: appSettings
         )
         .padding(.vertical, 20)
-        .background(Color.black.opacity(0.9))
+        .background(Color.black.opacity(appSettings.opacity))
         .transition(.opacity)
         .overlay(
             InteractionOverlay(
@@ -70,9 +70,9 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func CapturePreviewContent() -> some View {
+    private func CaptureContent() -> some View {
         if let id = captureManagerId, let captureManager = windowManager.captureManagers[id] {
-            CapturePreviewView(
+            CaptureView(
                 captureManager: captureManager,
                 isEditModeEnabled: $isEditModeEnabled,
                 opacity: appSettings.opacity
@@ -105,147 +105,6 @@ struct ContentView: View {
     private func updateAspectRatio(_ size: CGSize?) {
         if let size = size {
             aspectRatio = size.width / size.height
-        }
-    }
-}
-
-struct CapturePreviewView: View {
-    @ObservedObject var captureManager: ScreenCaptureManager
-    @Binding var isEditModeEnabled: Bool
-    let opacity: Double
-
-    var body: some View {
-        Group {
-            if let frame = captureManager.capturedFrame {
-                CapturePreview(frame: frame)
-                    .opacity(opacity)
-                    .overlay(
-                        InteractionOverlay(
-                            isEditModeEnabled: $isEditModeEnabled,
-                            isBringToFrontEnabled: true,
-                            bringToFrontAction: {
-                                captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
-                            },
-                            toggleEditModeAction: { isEditModeEnabled.toggle() }
-                        )
-                    )
-            } else {
-                Text("No capture available")
-                    .opacity(opacity)
-            }
-        }
-        .onAppear(perform: startCapture)
-        .onDisappear(perform: stopCapture)
-    }
-
-    private func startCapture() {
-        Task {
-            await captureManager.startCapture()
-        }
-    }
-
-    private func stopCapture() {
-        Task {
-            await captureManager.stopCapture()
-        }
-    }
-}
-
-struct CapturePreview: NSViewRepresentable {
-    let frame: CapturedFrame
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.wantsLayer = true
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        guard let surface = frame.surface else { return }
-
-        let layer = CALayer()
-        layer.contents = surface
-        layer.contentsScale = frame.contentScale
-        layer.bounds = frame.contentRect
-
-        nsView.layer = layer
-    }
-}
-
-struct InteractionOverlay: NSViewRepresentable {
-    @Binding var isEditModeEnabled: Bool
-    var isBringToFrontEnabled: Bool
-    var bringToFrontAction: () -> Void
-    var toggleEditModeAction: () -> Void
-
-    func makeNSView(context: Context) -> NSView {
-        let view = InteractionView()
-        view.isEditModeEnabled = isEditModeEnabled
-        view.isBringToFrontEnabled = isBringToFrontEnabled
-        view.bringToFrontAction = bringToFrontAction
-        view.toggleEditModeAction = toggleEditModeAction
-
-        let menu = createContextMenu(for: view)
-        view.menu = menu
-
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        if let view = nsView as? InteractionView {
-            view.isEditModeEnabled = isEditModeEnabled
-            view.updateEditModeMenuItem()
-        }
-    }
-
-    private func createContextMenu(for view: InteractionView) -> NSMenu {
-        let menu = NSMenu()
-
-        let editModeItem = NSMenuItem(
-            title: "Edit Mode", action: #selector(InteractionView.toggleEditMode(_:)),
-            keyEquivalent: "")
-        editModeItem.target = view
-        menu.addItem(editModeItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        let closeItem = NSMenuItem(
-            title: "Close Window", action: #selector(NSWindow.close), keyEquivalent: "")
-        closeItem.target = nil
-        menu.addItem(closeItem)
-
-        view.editModeMenuItem = editModeItem
-
-        return menu
-    }
-
-    class InteractionView: NSView {
-        var isEditModeEnabled = false {
-            didSet { updateEditModeMenuItem() }
-        }
-        var isBringToFrontEnabled: Bool = false
-        var bringToFrontAction: (() -> Void)?
-        var toggleEditModeAction: (() -> Void)?
-        weak var editModeMenuItem: NSMenuItem?
-
-        override func mouseDown(with event: NSEvent) {
-            if !isEditModeEnabled && isBringToFrontEnabled {
-                bringToFrontAction?()
-            } else {
-                super.mouseDown(with: event)
-            }
-        }
-
-        override func rightMouseDown(with event: NSEvent) {
-            super.rightMouseDown(with: event)
-        }
-
-        @objc func toggleEditMode(_ sender: Any?) {
-            toggleEditModeAction?()
-        }
-
-        func updateEditModeMenuItem() {
-            editModeMenuItem?.state = isEditModeEnabled ? .on : .off
         }
     }
 }
