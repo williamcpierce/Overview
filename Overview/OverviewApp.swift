@@ -18,15 +18,20 @@ import ScreenCaptureKit
 @main
 struct OverviewApp: App {
     @StateObject private var windowManager = WindowManager()
+    @StateObject private var appSettings = AppSettings()
 
     var body: some Scene {
         WindowGroup {
-            ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled)
+            ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled, appSettings: appSettings)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(width: 288, height: 162)
         .commands {
             editCommands
+        }
+        
+        Settings {
+            SettingsView(appSettings: appSettings)
         }
     }
     

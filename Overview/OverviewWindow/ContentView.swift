@@ -17,6 +17,7 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var windowManager: WindowManager
     @Binding var isEditModeEnabled: Bool
+    @ObservedObject var appSettings: AppSettings
     @State private var captureManagerId: UUID?
     @State private var showingSelection = true
     @State private var selectedWindowSize: CGSize?
@@ -55,7 +56,7 @@ struct ContentView: View {
         )
         .padding(.vertical, 20)
         .frame(minHeight: 200)
-        .background(Color.black.opacity(0.7))
+        .background(Color.black.opacity(0.9))
         .transition(.opacity)
         .overlay(
             InteractionOverlay(
@@ -70,7 +71,9 @@ struct ContentView: View {
     private func CapturePreviewContent() -> some View {
         if let id = captureManagerId, let captureManager = windowManager.captureManagers[id] {
             CapturePreviewView(
-                captureManager: captureManager, isEditModeEnabled: $isEditModeEnabled
+                captureManager: captureManager,
+                isEditModeEnabled: $isEditModeEnabled,
+                opacity: appSettings.opacity
             )
             .background(Color.clear)
         } else {
@@ -107,12 +110,13 @@ struct ContentView: View {
 struct CapturePreviewView: View {
     @ObservedObject var captureManager: ScreenCaptureManager
     @Binding var isEditModeEnabled: Bool
+    let opacity: Double
 
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
                 CapturePreview(frame: frame)
-                    .opacity(0.95)
+                    .opacity(opacity)
                     .overlay(
                         InteractionOverlay(
                             isEditModeEnabled: $isEditModeEnabled,
@@ -124,7 +128,7 @@ struct CapturePreviewView: View {
                         ))
             } else {
                 Text("No capture available")
-                    .opacity(0.95)
+                    .opacity(opacity)
             }
         }
         .onAppear(perform: startCapture)
