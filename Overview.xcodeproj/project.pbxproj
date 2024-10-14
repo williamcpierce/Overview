@@ -36,9 +36,12 @@
 		C87695A32CBA16C500FBCA6C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				CaptureView.swift,
 				ContentView.swift,
+				InteractionView.swift,
 				SelectionView.swift,
 				WindowAccessor.swift,
+				WindowManager.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
