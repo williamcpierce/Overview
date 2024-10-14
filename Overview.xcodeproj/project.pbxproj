@@ -42,11 +42,20 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
+		C8CA3B652CBC9EE100B8526E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppSettings.swift,
+				SettingsView.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C87695A02CBA161200FBCA6C /* ScreenCapture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C87695A12CBA161800FBCA6C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ScreenCapture; sourceTree = "<group>"; };
 		C87695A22CBA16B900FBCA6C /* OverviewWindow */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C87695A32CBA16C500FBCA6C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = OverviewWindow; sourceTree = "<group>"; };
+		C8CA3B642CBC9EE100B8526E /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CA3B652CBC9EE100B8526E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				C87695852CBA082D00FBCA6C /* OverviewApp.swift */,
+				C8CA3B642CBC9EE100B8526E /* Settings */,
 				C87695A22CBA16B900FBCA6C /* OverviewWindow */,
 				C87695A02CBA161200FBCA6C /* ScreenCapture */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,

@@ -17,6 +17,7 @@ import AppKit
 struct WindowAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
+    @ObservedObject var appSettings: AppSettings
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
@@ -41,7 +42,7 @@ struct WindowAccessor: NSViewRepresentable {
     static func createNewWindow(with content: () -> ContentView) -> NSWindow {
         guard let screen = NSScreen.main else { return NSWindow() }
         let screenSize = screen.frame.size
-        let windowSize = CGSize(width: 288, height: 162)
+        let windowSize = AppSettings().defaultWindowSize
         let origin = CGPoint(
             x: (screenSize.width - windowSize.width) / 2,
             y: (screenSize.height - windowSize.height) / 2
@@ -92,9 +93,10 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func configureWindowSize(_ window: NSWindow) {
-        let initialSize = NSSize(width: 288, height: 162)
-        window.setContentSize(initialSize)
-        window.contentAspectRatio = initialSize
+        let size = NSSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
+        window.setContentSize(size)
+        window.contentMinSize = size
+        window.contentAspectRatio = size
     }
 
     private func configureWindowAppearance(_ window: NSWindow) {
