@@ -31,7 +31,13 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     private let captureEngine = CaptureEngine()
     private var captureTask: Task<Void, Never>?
     private let logger = Logger(subsystem: "com.Overview.ScreenCaptureManager", category: "ScreenCapture")
+    private var appSettings: AppSettings
 
+    init(appSettings: AppSettings) {
+        self.appSettings = appSettings
+        super.init()
+    }
+    
     // MARK: - Public Methods
     /// Requests permission to capture the screen.
     func requestPermission() async -> Bool {
@@ -135,8 +141,8 @@ class ScreenCaptureManager: NSObject, ObservableObject {
         let config = SCStreamConfiguration()
         config.width = Int(window.frame.width)
         config.height = Int(window.frame.height)
-        config.minimumFrameInterval = CMTime(value: 1, timescale: 10)
-        config.queueDepth = 5
+        config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(appSettings.frameRate))
+        config.queueDepth = 8
         return config
     }
 }

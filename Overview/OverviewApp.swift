@@ -12,21 +12,30 @@
 */
 
 import SwiftUI
-import AppKit
-import ScreenCaptureKit
 
 @main
 struct OverviewApp: App {
-    @StateObject private var windowManager = WindowManager()
+    @StateObject private var windowManager: WindowManager
+    @StateObject private var appSettings = AppSettings()
+
+    init() {
+        let settings = AppSettings()
+        self._appSettings = StateObject(wrappedValue: settings)
+        self._windowManager = StateObject(wrappedValue: WindowManager(appSettings: settings))
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled)
+            ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled, appSettings: appSettings)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(width: 288, height: 162)
+        .defaultSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
         .commands {
             editCommands
+        }
+        
+        Settings {
+            SettingsView(appSettings: appSettings)
         }
     }
     
@@ -34,30 +43,5 @@ struct OverviewApp: App {
         CommandMenu("Edit") {
             Toggle("Edit Mode", isOn: $windowManager.isEditModeEnabled)
         }
-    }
-}
-
-@MainActor
-class WindowManager: ObservableObject {
-    @Published private(set) var captureManagers: [UUID: ScreenCaptureManager] = [:]
-    @Published var isEditModeEnabled = false
-    
-    func createNewCaptureManager() -> UUID {
-        let id = UUID()
-        let captureManager = ScreenCaptureManager()
-        captureManagers[id] = captureManager
-        return id
-    }
-
-    func removeCaptureManager(id: UUID) {
-        guard captureManagers[id] != nil else {
-            print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
-            return
-        }
-        captureManagers.removeValue(forKey: id)
-    }
-
-    func toggleEditMode() {
-        isEditModeEnabled.toggle()
     }
 }
