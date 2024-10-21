@@ -3,6 +3,7 @@
 ## Alpha Release
 
 **Note: Overview is alpha software. It is not yet feature-complete and may contain bugs or unexpected behavior. Use at your own risk.**
+For development updates, join our [Discord](https://discord.gg/ZFXK5txaVh).
 
 ## Overview
 
