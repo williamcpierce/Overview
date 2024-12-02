@@ -70,10 +70,14 @@ struct SettingsView: View {
                         set: { appSettings.defaultWindowHeight = Double($0) }
                     ), in: 100...2160)
                 }
+
                 Toggle(isOn: $appSettings.showFocusedBorder) {
                     Text("Show border around focused window")
                 }
                 .padding(.top, 5)
+                Toggle(isOn: $appSettings.showWindowTitle) {
+                    Text("Show window title overlay")
+                }
             }
         }
     }
