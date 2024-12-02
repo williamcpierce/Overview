@@ -29,7 +29,7 @@ struct SettingsView: View {
             settingsSection
         }
         .padding(20)
-        .frame(width: 300, height: 200)  // Adjusted height
+        .frame(width: 300, height: 250)
     }
     
     private var settingsSection: some View {
@@ -69,6 +69,14 @@ struct SettingsView: View {
                         get: { Int(appSettings.defaultWindowHeight) },
                         set: { appSettings.defaultWindowHeight = Double($0) }
                     ), in: 100...2160)
+                }
+
+                Toggle(isOn: $appSettings.showFocusedBorder) {
+                    Text("Show border around focused window")
+                }
+                .padding(.top, 5)
+                Toggle(isOn: $appSettings.showWindowTitle) {
+                    Text("Show window title overlay")
                 }
             }
         }

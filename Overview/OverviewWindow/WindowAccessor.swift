@@ -47,9 +47,9 @@ struct WindowAccessor: NSViewRepresentable {
         window.isMovableByWindowBackground = isEditModeEnabled
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.level = .floating
+        window.level = .statusBar + 1
         window.isOpaque = true
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.collectionBehavior = [.fullScreenAuxiliary]
         window.hasShadow = false
     }
 
