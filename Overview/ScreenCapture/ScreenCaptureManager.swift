@@ -34,11 +34,12 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     private let logger = Logger(subsystem: "com.Overview.ScreenCaptureManager", category: "ScreenCapture")
     private var appSettings: AppSettings
     private var workspaceObserver: NSObjectProtocol?
+    private var windowObserver: NSObjectProtocol?
 
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
         super.init()
-        setupWorkspaceObserver()
+        setupObservers()
     }
     
     // MARK: - Public Methods
@@ -139,34 +140,81 @@ class ScreenCaptureManager: NSObject, ObservableObject {
         }
     }
     
-    private func setupWorkspaceObserver() {
-            workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-                forName: NSWorkspace.didActivateApplicationNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] notification in
-                // Extract the activated app from the notification before the Task
-                guard let self = self,
-                      let activatedApp = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-                      let activatedBundleId = activatedApp.bundleIdentifier else {
-                    return
-                }
-                
-                Task { @MainActor in
-                    guard let selectedWindow = self.selectedWindow,
-                          let bundleId = selectedWindow.owningApplication?.bundleIdentifier
-                    else { return }
-                    
-                    self.isSourceWindowFocused = activatedBundleId == bundleId
-                }
-            }
+    private func setupObservers() {
+           // Workspace observer for application-level changes
+           workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+               forName: NSWorkspace.didActivateApplicationNotification,
+               object: nil,
+               queue: .main
+           ) { [weak self] notification in
+               Task { @MainActor [weak self] in
+                   guard let self = self else { return }
+                   await self.updateFocusState()
+               }
+           }
+           
+           // Window observer for window-level changes
+           windowObserver = NotificationCenter.default.addObserver(
+               forName: NSWindow.didBecomeKeyNotification,
+               object: nil,
+               queue: .main
+           ) { [weak self] notification in
+               Task { @MainActor [weak self] in
+                   guard let self = self else { return }
+                   await self.updateFocusState()
+               }
+           }
+       }
+       
+    private func updateFocusState() async {
+        guard let selectedWindow = self.selectedWindow else {
+            isSourceWindowFocused = false
+            return
         }
         
-        deinit {
-            if let observer = workspaceObserver {
-                NSWorkspace.shared.notificationCenter.removeObserver(observer)
-            }
+        // Get the current active window information
+        guard let activeApp = NSWorkspace.shared.frontmostApplication,
+              let selectedApp = selectedWindow.owningApplication else {
+            isSourceWindowFocused = false
+            return
         }
+        
+        // First check if we're even in the right application
+        guard activeApp.processIdentifier == selectedApp.processID else {
+            isSourceWindowFocused = false
+            return
+        }
+            
+        // Get updated window list to check current window state
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            let currentWindows = content.windows
+            
+            // Find our selected window in the current window list
+            if let updatedWindow = currentWindows.first(where: { window in
+                // Match by process ID and title, as these are the most reliable identifiers
+                return window.owningApplication?.processID == selectedWindow.owningApplication?.processID &&
+                       window.title == selectedWindow.title
+            }) {
+                // Simply check if the window's application is active and the window exists
+                isSourceWindowFocused = updatedWindow.isOnScreen
+            } else {
+                isSourceWindowFocused = false
+            }
+        } catch {
+            logger.error("Failed to update focus state: \(error.localizedDescription)")
+            isSourceWindowFocused = false
+        }
+    }
+    
+    deinit {
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        if let observer = windowObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
 
     /// Creates a stream configuration for the given window.
     private func createStreamConfiguration(for window: SCWindow) -> SCStreamConfiguration {
