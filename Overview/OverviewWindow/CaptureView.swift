@@ -33,6 +33,12 @@ struct CaptureView: View {
                             toggleEditModeAction: { isEditModeEnabled.toggle() }
                         )
                     )
+                    .overlay(
+                        // Add border overlay when source window is focused
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Color.gray, lineWidth: 5)
+                            .opacity(captureManager.isSourceWindowFocused ? 1 : 0)
+                    )
             } else {
                 Text("No capture available")
                     .opacity(opacity)
