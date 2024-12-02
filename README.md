@@ -42,6 +42,7 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 4. Click on an Overview window (with Edit Mode disabled) to switch to the previewed application
 5. Create new Overview windows with ⌘N while in Edit Mode, or via the File menu
 6. Adjust settings for opacity, frame rate, and default window size in the Settings menu
+7. If you want Overview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
 
 ### Settings
 
