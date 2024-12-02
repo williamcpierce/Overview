@@ -15,6 +15,7 @@ import SwiftUI
 
 struct CaptureView: View {
     @ObservedObject var captureManager: ScreenCaptureManager
+    @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
     let opacity: Double
 
@@ -37,7 +38,7 @@ struct CaptureView: View {
                         // Add border overlay when source window is focused
                         RoundedRectangle(cornerRadius: 0)
                             .stroke(Color.gray, lineWidth: 5)
-                            .opacity(captureManager.isSourceWindowFocused ? 1 : 0)
+                            .opacity(appSettings.showFocusedBorder && captureManager.isSourceWindowFocused ? 1 : 0)
                     )
             } else {
                 Text("No capture available")

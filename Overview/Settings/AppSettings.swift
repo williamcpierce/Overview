@@ -19,7 +19,8 @@ class AppSettings: ObservableObject {
     @Published var frameRate: Double
     @Published var defaultWindowWidth: Double
     @Published var defaultWindowHeight: Double
-    
+    @Published var showFocusedBorder: Bool
+
     init() {
         let storedOpacity = UserDefaults.standard.double(forKey: "windowOpacity")
         self.opacity = storedOpacity != 0 ? storedOpacity : 0.95 // Default value
@@ -33,6 +34,8 @@ class AppSettings: ObservableObject {
         let storedHeight = UserDefaults.standard.double(forKey: "defaultWindowHeight")
         self.defaultWindowHeight = storedHeight != 0 ? storedHeight : 162 // Default value
         
+        self.showFocusedBorder = UserDefaults.standard.bool(forKey: "showFocusedBorder") // Defaults to false
+
         // Set up observers for changes
         setupObservers()
     }
@@ -56,6 +59,11 @@ class AppSettings: ObservableObject {
         $defaultWindowHeight
             .dropFirst() // Ignore the initial value
             .sink { UserDefaults.standard.set($0, forKey: "defaultWindowHeight") }
+            .store(in: &cancellables)
+    
+        $showFocusedBorder
+            .dropFirst() // Ignore the initial value
+            .sink { UserDefaults.standard.set($0, forKey: "showFocusedBorder") }
             .store(in: &cancellables)
     }
     

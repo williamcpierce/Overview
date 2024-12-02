@@ -74,6 +74,7 @@ struct ContentView: View {
         if let id = captureManagerId, let captureManager = windowManager.captureManagers[id] {
             CaptureView(
                 captureManager: captureManager,
+                appSettings: appSettings,
                 isEditModeEnabled: $isEditModeEnabled,
                 opacity: appSettings.opacity
             )
