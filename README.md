@@ -16,9 +16,9 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 - **Multi-Window Support:** Create multiple Overview windows to monitor several applications simultaneously.
 - **Bring to Front:** Quickly switch to the source window with a single click.
 - **Floating Windows:** Overview windows stay on top of other applications for constant visibility.
-- **Context Menu:** Right-click on Overview windows to access additional options.
 - **Customizable Opacity:** Adjust the transparency of Overview windows to suit your workflow.
 - **Adjustable Frame Rate:** Set the refresh rate of previews to balance performance and system resources.
+- **Informational Overlays:** Optional preview overlays for focused window and window title
 
 ## System Requirements
 
@@ -41,7 +41,7 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 3. Toggle Edit Mode (via the window context menu) to reposition or resize Overview windows
 4. Click on an Overview window (with Edit Mode disabled) to switch to the previewed application
 5. Create new Overview windows with ⌘N while in Edit Mode, or via the File menu
-6. Adjust settings for opacity, frame rate, and default window size in the Settings menu
+6. Adjust Overview window frame rate and style in the Settings menu
 7. If you want Overview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
 
 ### Settings
@@ -49,6 +49,8 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 - Window opacity
 - Preview frame rate
 - Default window size for new Overview windows
+- Border for focused window
+- Window title overlay
 
 ## Acknowledgements
 
