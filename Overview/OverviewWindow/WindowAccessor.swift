@@ -49,7 +49,7 @@ struct WindowAccessor: NSViewRepresentable {
         window.titleVisibility = .hidden
         window.level = .floating
         window.isOpaque = true
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.collectionBehavior = [.fullScreenAuxiliary]
         window.hasShadow = false
     }
 
