@@ -15,6 +15,7 @@ import SwiftUI
 
 struct CaptureView: View {
     @ObservedObject var captureManager: ScreenCaptureManager
+    @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
     let opacity: Double
 
@@ -32,6 +33,30 @@ struct CaptureView: View {
                             },
                             toggleEditModeAction: { isEditModeEnabled.toggle() }
                         )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Color.gray, lineWidth: 5)
+                            .opacity(appSettings.showFocusedBorder && captureManager.isSourceWindowFocused ? 1 : 0)
+                    )
+                    .overlay(
+                        Group {
+                            if appSettings.showWindowTitle,
+                               let title = captureManager.selectedWindow?.title {
+                                VStack {
+                                    HStack {
+                                        Text(title)
+                                            .font(.system(size: 12))
+                                            .foregroundColor(.white)
+                                            .padding(4)
+                                            .background(Color.black.opacity(0.4))
+                                        Spacer()
+                                    }
+                                    .padding(6)
+                                    Spacer()
+                                }
+                            }
+                        }
                     )
             } else {
                 Text("No capture available")

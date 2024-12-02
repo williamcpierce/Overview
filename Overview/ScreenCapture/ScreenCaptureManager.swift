@@ -25,6 +25,7 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     @Published var availableWindows: [SCWindow] = []
     @Published var selectedWindow: SCWindow?
     @Published var isCapturing = false
+    @Published var isSourceWindowFocused = false
 
     // MARK: - Private Properties
     private var stream: SCStream?
@@ -32,10 +33,12 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     private var captureTask: Task<Void, Never>?
     private let logger = Logger(subsystem: "com.Overview.ScreenCaptureManager", category: "ScreenCapture")
     private var appSettings: AppSettings
+    private var workspaceObserver: NSObjectProtocol?
 
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
         super.init()
+        setupWorkspaceObserver()
     }
     
     // MARK: - Public Methods
@@ -135,6 +138,35 @@ class ScreenCaptureManager: NSObject, ObservableObject {
             return isValidWindow && isNotMenuBarOrDock && hasValidTitle && isNotDesktop && isNotSystemUIServer && isNotSystemApp
         }
     }
+    
+    private func setupWorkspaceObserver() {
+            workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didActivateApplicationNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                // Extract the activated app from the notification before the Task
+                guard let self = self,
+                      let activatedApp = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                      let activatedBundleId = activatedApp.bundleIdentifier else {
+                    return
+                }
+                
+                Task { @MainActor in
+                    guard let selectedWindow = self.selectedWindow,
+                          let bundleId = selectedWindow.owningApplication?.bundleIdentifier
+                    else { return }
+                    
+                    self.isSourceWindowFocused = activatedBundleId == bundleId
+                }
+            }
+        }
+        
+        deinit {
+            if let observer = workspaceObserver {
+                NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            }
+        }
 
     /// Creates a stream configuration for the given window.
     private func createStreamConfiguration(for window: SCWindow) -> SCStreamConfiguration {
