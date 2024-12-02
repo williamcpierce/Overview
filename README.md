@@ -1,10 +1,14 @@
 # Overview: Window Previews on macOS
 
+![Example Screenshot](https://github.com/user-attachments/assets/625fa194-d4dd-42cc-8570-33984070c1c5)
+
 ## Alpha Release
 
 **Note: Overview is alpha software. It is not yet feature-complete and may contain bugs or unexpected behavior. Use at your own risk.**
 
-For development updates, join our [Discord](https://discord.gg/ZFXK5txaVh).
+For development updates, please join our Discord:
+
+[![Discord Banner](https://discord.com/api/guilds/1295309622445473865/widget.png?style=banner2)](https://discord.gg/ZFXK5txaVh)
 
 ## Overview
 
