@@ -193,8 +193,7 @@ class ScreenCaptureManager: NSObject, ObservableObject {
             // Find our selected window in the current window list
             if let updatedWindow = currentWindows.first(where: { window in
                 // Match by process ID and title, as these are the most reliable identifiers
-                return window.owningApplication?.processID == selectedWindow.owningApplication?.processID &&
-                       window.title == selectedWindow.title
+                return window.owningApplication?.processID == selectedWindow.owningApplication?.processID
             }) {
                 // Simply check if the window's application is active and the window exists
                 isSourceWindowFocused = updatedWindow.isOnScreen
