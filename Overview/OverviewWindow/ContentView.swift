@@ -34,6 +34,15 @@ struct ContentView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .aspectRatio(aspectRatio, contentMode: .fit)
+            .background(Color.black.opacity(appSettings.opacity))
+            .overlay(
+                InteractionOverlay(
+                    isEditModeEnabled: $isEditModeEnabled,
+                    isBringToFrontEnabled: false,
+                    bringToFrontAction: {},
+                    toggleEditModeAction: { isEditModeEnabled.toggle() }
+                )
+            )
         }
         .background(
             WindowAccessor(aspectRatio: $aspectRatio, isEditModeEnabled: $isEditModeEnabled, appSettings: appSettings)
@@ -55,17 +64,8 @@ struct ContentView: View {
             selectedWindowSize: $selectedWindowSize,
             appSettings: appSettings
         )
-        .padding(.vertical, 20)
-        .background(Color.black.opacity(appSettings.opacity))
+        .frame(height: appSettings.defaultWindowHeight)
         .transition(.opacity)
-        .overlay(
-            InteractionOverlay(
-                isEditModeEnabled: $isEditModeEnabled,
-                isBringToFrontEnabled: false,
-                bringToFrontAction: {},
-                toggleEditModeAction: { isEditModeEnabled.toggle() }
-            )
-        )
         .frame(minWidth: appSettings.defaultWindowWidth, minHeight: appSettings.defaultWindowHeight)
     }
 
