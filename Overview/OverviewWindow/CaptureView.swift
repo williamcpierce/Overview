@@ -18,6 +18,9 @@ struct CaptureView: View {
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
     let opacity: Double
+    
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var body: some View {
         Group {
@@ -65,11 +68,25 @@ struct CaptureView: View {
         }
         .onAppear(perform: startCapture)
         .onDisappear(perform: stopCapture)
+        .alert(isPresented: $showError) {
+            Alert(
+                title: Text("Error"),
+                message: Text(errorMessage),
+                dismissButton: .default(Text("OK"))
+            )
+        }
     }
 
     private func startCapture() {
         Task {
-            await captureManager.startCapture()
+            do {
+                try await captureManager.startCapture()
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    showError = true
+                }
+            }
         }
     }
 

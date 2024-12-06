@@ -20,7 +20,7 @@ struct SelectionView: View {
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
-    @ObservedObject var appSettings: AppSettings  // Add this line
+    @ObservedObject var appSettings: AppSettings
 
     @State private var selectedWindow: SCWindow?
     @State private var isLoading = true
@@ -43,7 +43,8 @@ struct SelectionView: View {
         }
         .alert(isPresented: $showError) {
             Alert(
-                title: Text("Error"), message: Text(errorMessage),
+                title: Text("Error"),
+                message: Text(errorMessage),
                 dismissButton: .default(Text("OK")))
         }
     }
@@ -98,7 +99,16 @@ struct SelectionView: View {
             selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
         }
         showingSelection = false
-        Task { await captureManager.startCapture() }
+        
+        Task {
+            do {
+                try await captureManager.startCapture()
+            } catch {
+                await MainActor.run {
+                    showError(message: error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func setupCaptureManager() async {
@@ -107,14 +117,16 @@ struct SelectionView: View {
             return
         }
 
-        let authorized = await captureManager.requestPermission()
-        if authorized {
+        do {
+            try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()
-        } else {
-            showError(message: "Screen capture permission denied")
+            await MainActor.run { isLoading = false }
+        } catch {
+            await MainActor.run {
+                showError(message: "Screen capture permission denied")
+                isLoading = false
+            }
         }
-
-        await MainActor.run { isLoading = false }
     }
 
     private func showError(message: String) {
