@@ -13,64 +13,85 @@
 
 import SwiftUI
 
+// MARK: - ContentView
 struct ContentView: View {
-    @ObservedObject var windowManager: WindowManager
-    @Binding var isEditModeEnabled: Bool
-    @ObservedObject var appSettings: AppSettings
-    @State private var captureManagerId: UUID?
-    @State private var showingSelection = true
-    @State private var selectedWindowSize: CGSize?
-    @State private var aspectRatio: CGFloat = 1.5  // Default aspect ratio
-
-    var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                if showingSelection {
-                    selectionView
-                } else {
-                    CaptureContent()
-                }
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height)
-            .aspectRatio(aspectRatio, contentMode: .fit)
-        }
-        .background(
-            WindowAccessor(aspectRatio: $aspectRatio, isEditModeEnabled: $isEditModeEnabled, appSettings: appSettings)
-        )
-        .onAppear(perform: createCaptureManager)
-        .onDisappear(perform: removeCaptureManager)
-        .onChange(of: selectedWindowSize) {
-            if let size = selectedWindowSize {
-                aspectRatio = size.width / size.height
-            }
+    // MARK: - Properties
+    private struct ViewState {
+        var captureManagerId: UUID?
+        var showingSelection = true
+        var selectedWindowSize: CGSize?
+        var aspectRatio: CGFloat
+        
+        init(defaultWidth: Double, defaultHeight: Double) {
+            self.aspectRatio = defaultWidth / defaultHeight
         }
     }
-
+    
+    // MARK: - Observed Properties
+    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var appSettings: AppSettings
+    @Binding private var isEditModeEnabled: Bool
+    
+    // MARK: - State
+    @State private var viewState: ViewState
+    
+    // MARK: - Initialization
+    init(windowManager: WindowManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings) {
+        self.windowManager = windowManager
+        self._isEditModeEnabled = isEditModeEnabled
+        self.appSettings = appSettings
+        self._viewState = State(initialValue: ViewState(
+            defaultWidth: appSettings.defaultWindowWidth,
+            defaultHeight: appSettings.defaultWindowHeight
+        ))
+    }
+    
+    // MARK: - Body
+    var body: some View {
+        GeometryReader { geometry in
+            mainContent(in: geometry)
+                .background(windowAccessor)
+                .onAppear(perform: createCaptureManager)
+                .onDisappear(perform: removeCaptureManager)
+                .onChange(of: viewState.selectedWindowSize, updateAspectRatioForSelectedWindow)
+                .onChange(of: appSettings.defaultWindowWidth, updateAspectRatioFromSettings)
+                .onChange(of: appSettings.defaultWindowHeight, updateAspectRatioFromSettings)
+        }
+    }
+    
+    // MARK: - Content Builders
+    @ViewBuilder
+    private func mainContent(in geometry: GeometryProxy) -> some View {
+        VStack(spacing: 0) {
+            if viewState.showingSelection {
+                selectionView
+            } else {
+                captureContent
+            }
+        }
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        .aspectRatio(viewState.aspectRatio, contentMode: .fit)
+        .background(Color.black.opacity(appSettings.opacity))
+        .overlay(interactionOverlay)
+    }
+    
     private var selectionView: some View {
         SelectionView(
             windowManager: windowManager,
-            captureManagerId: $captureManagerId,
-            showingSelection: $showingSelection,
-            selectedWindowSize: $selectedWindowSize,
+            captureManagerId: bindingForCaptureManagerId,
+            showingSelection: bindingForShowingSelection,
+            selectedWindowSize: bindingForSelectedWindowSize,
             appSettings: appSettings
         )
-        .padding(.vertical, 20)
-        .background(Color.black.opacity(appSettings.opacity))
+        .frame(height: appSettings.defaultWindowHeight)
         .transition(.opacity)
-        .overlay(
-            InteractionOverlay(
-                isEditModeEnabled: $isEditModeEnabled,
-                isBringToFrontEnabled: false,
-                bringToFrontAction: {},
-                toggleEditModeAction: { isEditModeEnabled.toggle() }
-            )
-        )
         .frame(minWidth: appSettings.defaultWindowWidth, minHeight: appSettings.defaultWindowHeight)
     }
-
+    
     @ViewBuilder
-    private func CaptureContent() -> some View {
-        if let id = captureManagerId, let captureManager = windowManager.captureManagers[id] {
+    private var captureContent: some View {
+        if let id = viewState.captureManagerId,
+           let captureManager = windowManager.captureManagers[id] {
             CaptureView(
                 captureManager: captureManager,
                 appSettings: appSettings,
@@ -82,7 +103,7 @@ struct ContentView: View {
             noCaptureManagerView
         }
     }
-
+    
     private var noCaptureManagerView: some View {
         VStack {
             Text("No capture manager found")
@@ -91,20 +112,74 @@ struct ContentView: View {
                 .padding()
         }
     }
-
-    private func createCaptureManager() {
-        captureManagerId = windowManager.createNewCaptureManager()
+    
+    private var interactionOverlay: some View {
+        InteractionOverlay(
+            isEditModeEnabled: $isEditModeEnabled,
+            isBringToFrontEnabled: false,
+            bringToFrontAction: {},
+            toggleEditModeAction: { isEditModeEnabled.toggle() }
+        )
     }
-
+    
+    private var windowAccessor: some View {
+        WindowAccessor(
+            aspectRatio: bindingForAspectRatio,
+            isEditModeEnabled: $isEditModeEnabled,
+            appSettings: appSettings
+        )
+    }
+    
+    // MARK: - State Bindings
+    private var bindingForCaptureManagerId: Binding<UUID?> {
+        Binding(
+            get: { viewState.captureManagerId },
+            set: { viewState.captureManagerId = $0 }
+        )
+    }
+    
+    private var bindingForShowingSelection: Binding<Bool> {
+        Binding(
+            get: { viewState.showingSelection },
+            set: { viewState.showingSelection = $0 }
+        )
+    }
+    
+    private var bindingForSelectedWindowSize: Binding<CGSize?> {
+        Binding(
+            get: { viewState.selectedWindowSize },
+            set: { viewState.selectedWindowSize = $0 }
+        )
+    }
+    
+    private var bindingForAspectRatio: Binding<CGFloat> {
+        Binding(
+            get: { viewState.aspectRatio },
+            set: { viewState.aspectRatio = $0 }
+        )
+    }
+    
+    // MARK: - Actions
+    private func createCaptureManager() {
+        viewState.captureManagerId = windowManager.createNewCaptureManager()
+    }
+    
     private func removeCaptureManager() {
-        if let id = captureManagerId {
+        if let id = viewState.captureManagerId {
             windowManager.removeCaptureManager(id: id)
         }
     }
-
-    private func updateAspectRatio(_ size: CGSize?) {
-        if let size = size {
-            aspectRatio = size.width / size.height
+    
+    // MARK: - Update Handlers
+    private func updateAspectRatioForSelectedWindow() {
+        if let size = viewState.selectedWindowSize {
+            viewState.aspectRatio = size.width / size.height
+        }
+    }
+    
+    private func updateAspectRatioFromSettings() {
+        if viewState.selectedWindowSize == nil {
+            viewState.aspectRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         }
     }
 }
