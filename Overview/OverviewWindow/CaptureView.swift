@@ -42,7 +42,7 @@ struct CaptureView: View {
                     .overlay(
                         Group {
                             if appSettings.showWindowTitle,
-                               let title = captureManager.selectedWindow?.title {
+                               let title = captureManager.windowTitle {
                                 VStack {
                                     HStack {
                                         Text(title)
