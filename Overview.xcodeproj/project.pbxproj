@@ -29,6 +29,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				CaptureEngine.swift,
+				CaptureTaskManager.swift,
 				ScreenCaptureManager.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
@@ -45,6 +46,18 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
+		C88A9D7D2D02A2A400B22C51 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ShareableContentService.swift,
+				StreamConfigurationService.swift,
+				WindowFilterService.swift,
+				WindowFocusService.swift,
+				WindowObserverService.swift,
+				WindowTitleService.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
 		C8CA3B652CBC9EE100B8526E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -58,6 +71,7 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C87695A02CBA161200FBCA6C /* ScreenCapture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C87695A12CBA161800FBCA6C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ScreenCapture; sourceTree = "<group>"; };
 		C87695A22CBA16B900FBCA6C /* OverviewWindow */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C87695A32CBA16C500FBCA6C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = OverviewWindow; sourceTree = "<group>"; };
+		C88A9D7A2D02A27300B22C51 /* Services */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C88A9D7D2D02A2A400B22C51 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Services; sourceTree = "<group>"; };
 		C8CA3B642CBC9EE100B8526E /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CA3B652CBC9EE100B8526E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -94,9 +108,10 @@
 			isa = PBXGroup;
 			children = (
 				C87695852CBA082D00FBCA6C /* OverviewApp.swift */,
-				C8CA3B642CBC9EE100B8526E /* Settings */,
 				C87695A22CBA16B900FBCA6C /* OverviewWindow */,
 				C87695A02CBA161200FBCA6C /* ScreenCapture */,
+				C8CA3B642CBC9EE100B8526E /* Settings */,
+				C88A9D7A2D02A27300B22C51 /* Services */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
 				C876958B2CBA082F00FBCA6C /* Preview Content */,
