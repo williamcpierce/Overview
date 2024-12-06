@@ -12,7 +12,6 @@
 */
 
 import ScreenCaptureKit
-import Foundation
 
 protocol WindowFilterService {
     func filterWindows(_ windows: [SCWindow]) -> [SCWindow]

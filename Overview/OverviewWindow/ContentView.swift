@@ -11,7 +11,6 @@
  file at the root of this project.
 */
 
-import ScreenCaptureKit
 import SwiftUI
 
 struct ContentView: View {

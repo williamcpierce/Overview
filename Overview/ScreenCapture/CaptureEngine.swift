@@ -14,10 +14,8 @@
  file in the root of this project.
 */
 
-import Foundation
 import ScreenCaptureKit
 import OSLog
-import Combine
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {

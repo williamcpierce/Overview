@@ -12,7 +12,6 @@
 */
 
 import SwiftUI
-import AppKit
 
 struct WindowAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat

@@ -11,7 +11,6 @@
  file at the root of this project.
 */
 
-import AppKit
 import ScreenCaptureKit
 
 protocol WindowFocusService {

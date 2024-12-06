@@ -12,7 +12,6 @@
 */
 
 import ScreenCaptureKit
-import CoreMedia
 import OSLog
 
 protocol StreamConfigurationService {

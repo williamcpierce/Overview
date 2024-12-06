@@ -11,10 +11,7 @@
  file at the root of this project.
 */
 
-import Foundation
 import ScreenCaptureKit
-import CoreImage
-import AppKit
 import Combine
 import OSLog
 
