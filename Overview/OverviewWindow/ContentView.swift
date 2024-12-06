@@ -21,6 +21,7 @@ struct ContentView: View {
         var showingSelection = true
         var selectedWindowSize: CGSize?
         var aspectRatio: CGFloat
+        var hasSetInitialSize = false
         
         init(defaultWidth: Double, defaultHeight: Double) {
             self.aspectRatio = defaultWidth / defaultHeight
@@ -54,8 +55,6 @@ struct ContentView: View {
                 .onAppear(perform: createCaptureManager)
                 .onDisappear(perform: removeCaptureManager)
                 .onChange(of: viewState.selectedWindowSize, updateAspectRatioForSelectedWindow)
-                .onChange(of: appSettings.defaultWindowWidth, updateAspectRatioFromSettings)
-                .onChange(of: appSettings.defaultWindowHeight, updateAspectRatioFromSettings)
         }
     }
     
@@ -83,9 +82,18 @@ struct ContentView: View {
             selectedWindowSize: bindingForSelectedWindowSize,
             appSettings: appSettings
         )
-        .frame(height: appSettings.defaultWindowHeight)
+        .frame(height: viewState.hasSetInitialSize ? nil : appSettings.defaultWindowHeight)
         .transition(.opacity)
-        .frame(minWidth: appSettings.defaultWindowWidth, minHeight: appSettings.defaultWindowHeight)
+        .frame(
+            minWidth: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowWidth,
+            minHeight: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowHeight
+        )
+        .onAppear {
+            // Mark that we've set the initial size
+            if !viewState.hasSetInitialSize {
+                viewState.hasSetInitialSize = true
+            }
+        }
     }
     
     @ViewBuilder
@@ -174,12 +182,6 @@ struct ContentView: View {
     private func updateAspectRatioForSelectedWindow() {
         if let size = viewState.selectedWindowSize {
             viewState.aspectRatio = size.width / size.height
-        }
-    }
-    
-    private func updateAspectRatioFromSettings() {
-        if viewState.selectedWindowSize == nil {
-            viewState.aspectRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         }
     }
 }
