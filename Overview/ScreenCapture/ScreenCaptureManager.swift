@@ -42,6 +42,8 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     private var workspaceObserver: NSObjectProtocol?
     private var windowObserver: NSObjectProtocol?
     private var titleCheckTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
+
 
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
@@ -182,6 +184,16 @@ class ScreenCaptureManager: NSObject, ObservableObject {
             }
         }
         
+        // Add FPS observer
+        appSettings.$frameRate
+            .dropFirst() // Ignore initial value
+            .sink { [weak self] _ in
+                Task {
+                    await self?.updateStreamConfiguration()
+                }
+            }
+            .store(in: &cancellables)
+        
         // Start timer for title checks only
         startTitleChecks()
     }
@@ -237,8 +249,23 @@ class ScreenCaptureManager: NSObject, ObservableObject {
         let config = SCStreamConfiguration()
         config.width = Int(window.frame.width)
         config.height = Int(window.frame.height)
-        config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(appSettings.frameRate))
-        config.queueDepth = 8
+        config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(self.appSettings.frameRate))
+        config.queueDepth = 3
+        config.showsCursor = false
         return config
+    }
+    
+    private func updateStreamConfiguration() async {
+        guard isCapturing, let window = selectedWindow else { return }
+        
+        let config = createStreamConfiguration(for: window)
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        
+        do {
+            try await captureEngine.stream?.updateConfiguration(config)
+            logger.info("Successfully updated stream configuration with new FPS: \(self.appSettings.frameRate)")
+        } catch {
+            logger.error("Failed to update stream configuration: \(error.localizedDescription)")
+        }
     }
 }
