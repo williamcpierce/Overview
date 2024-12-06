@@ -23,9 +23,15 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     // MARK: - Published Properties
     @Published var capturedFrame: CapturedFrame?
     @Published var availableWindows: [SCWindow] = []
-    @Published var selectedWindow: SCWindow?
     @Published var isCapturing = false
     @Published var isSourceWindowFocused = false
+    @Published var windowTitle: String?
+    @Published var selectedWindow: SCWindow? {
+        didSet {
+            windowTitle = selectedWindow?.title
+            Task { await updateFocusState() }
+        }
+    }
 
     // MARK: - Private Properties
     private var stream: SCStream?
@@ -35,11 +41,22 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     private var appSettings: AppSettings
     private var workspaceObserver: NSObjectProtocol?
     private var windowObserver: NSObjectProtocol?
+    private var titleCheckTimer: Timer?
 
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
         super.init()
         setupObservers()
+    }
+    
+    deinit {
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        if let observer = windowObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        titleCheckTimer?.invalidate()
     }
     
     // MARK: - Public Methods
@@ -141,77 +158,77 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     }
     
     private func setupObservers() {
-           // Workspace observer for application-level changes
-           workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-               forName: NSWorkspace.didActivateApplicationNotification,
-               object: nil,
-               queue: .main
-           ) { [weak self] notification in
-               Task { @MainActor [weak self] in
-                   guard let self = self else { return }
-                   await self.updateFocusState()
-               }
-           }
-           
-           // Window observer for window-level changes
-           windowObserver = NotificationCenter.default.addObserver(
-               forName: NSWindow.didBecomeKeyNotification,
-               object: nil,
-               queue: .main
-           ) { [weak self] notification in
-               Task { @MainActor [weak self] in
-                   guard let self = self else { return }
-                   await self.updateFocusState()
-               }
-           }
-       }
-       
+        // Workspace observer for application-level changes
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                await self.updateFocusState()
+            }
+        }
+        
+        // Window observer for window-level changes
+        windowObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                await self.updateFocusState()
+            }
+        }
+        
+        // Start timer for title checks only
+        startTitleChecks()
+    }
+    
+    private func startTitleChecks() {
+        titleCheckTimer?.invalidate()
+        titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                await self.updateWindowTitle()
+            }
+        }
+    }
+    
     private func updateFocusState() async {
         guard let selectedWindow = self.selectedWindow else {
             isSourceWindowFocused = false
             return
         }
-        
-        // Get the current active window information
-        guard let activeApp = NSWorkspace.shared.frontmostApplication,
-              let selectedApp = selectedWindow.owningApplication else {
-            isSourceWindowFocused = false
-            return
-        }
-        
-        // First check if we're even in the right application
-        guard activeApp.processIdentifier == selectedApp.processID else {
-            isSourceWindowFocused = false
-            return
-        }
-            
-        // Get updated window list to check current window state
-        do {
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            let currentWindows = content.windows
-            
-            // Find our selected window in the current window list
-            if let updatedWindow = currentWindows.first(where: { window in
-                // Match by process ID and title, as these are the most reliable identifiers
-                return window.owningApplication?.processID == selectedWindow.owningApplication?.processID
-            }) {
-                // Simply check if the window's application is active and the window exists
-                isSourceWindowFocused = updatedWindow.isOnScreen
-            } else {
-                isSourceWindowFocused = false
-            }
-        } catch {
-            logger.error("Failed to update focus state: \(error.localizedDescription)")
+
+        // Check focus state only
+        if let activeApp = NSWorkspace.shared.frontmostApplication,
+           let selectedApp = selectedWindow.owningApplication {
+            isSourceWindowFocused = activeApp.processIdentifier == selectedApp.processID
+        } else {
             isSourceWindowFocused = false
         }
     }
     
-    deinit {
-        if let observer = workspaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+    private func updateWindowTitle() async {
+        guard let selectedWindow = self.selectedWindow else {
+            windowTitle = nil
+            return
         }
-        if let observer = windowObserver {
-            NotificationCenter.default.removeObserver(observer)
+            
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            
+            // Find our selected window and update its title
+            if let updatedWindow = content.windows.first(where: { window in
+                window.owningApplication?.processID == selectedWindow.owningApplication?.processID &&
+                window.frame == selectedWindow.frame
+            }) {
+                windowTitle = updatedWindow.title
+            }
+        } catch {
+            logger.error("Failed to update window title: \(error.localizedDescription)")
         }
     }
 
