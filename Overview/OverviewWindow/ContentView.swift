@@ -70,7 +70,9 @@ struct ContentView: View {
         }
         .frame(width: geometry.size.width, height: geometry.size.height)
         .aspectRatio(viewState.aspectRatio, contentMode: .fit)
-        .background(Color.black.opacity(appSettings.opacity))
+        .background(Color.black.opacity(
+            viewState.showingSelection ? appSettings.opacity : 0
+        ))
         .overlay(interactionOverlay)
     }
     
