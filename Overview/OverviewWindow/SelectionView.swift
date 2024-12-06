@@ -26,6 +26,7 @@ struct SelectionView: View {
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var refreshID = UUID()
 
     // MARK: - Body
     var body: some View {
@@ -66,10 +67,24 @@ struct SelectionView: View {
 
     private func windowPicker(for captureManager: ScreenCaptureManager) -> some View {
         VStack {
-            Picker("Select Window", selection: $selectedWindow) {
-                Text("None").tag(nil as SCWindow?)
-                ForEach(captureManager.availableWindows, id: \.self) { window in
-                    Text(window.title ?? "Untitled Window").tag(window as SCWindow?)
+            HStack {
+                Picker("Select Window", selection: $selectedWindow) {
+                    Text("None").tag(nil as SCWindow?)
+                    ForEach(captureManager.availableWindows, id: \.windowID) { window in
+                        Text(window.title ?? "Untitled Window").tag(window as SCWindow?)
+                    }
+                }
+                .id(refreshID)
+                
+                Button(action: {
+                    Task {
+                        await captureManager.updateAvailableWindows()
+                        await MainActor.run {
+                            refreshID = UUID()
+                        }
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
                 }
             }
             .padding()

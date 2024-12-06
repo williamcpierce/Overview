@@ -94,10 +94,14 @@ class ScreenCaptureManager: NSObject, ObservableObject {
         try await shareableContentService.requestPermission()
     }
     
+    @MainActor
     func updateAvailableWindows() async {
         do {
             let windows = try await shareableContentService.getAvailableWindows()
-            self.availableWindows = windowFilterService.filterWindows(windows)
+            let filteredWindows = windowFilterService.filterWindows(windows)
+            await MainActor.run {
+                self.availableWindows = filteredWindows
+            }
         } catch {
             logger.error("Failed to get available windows: \(error.localizedDescription)")
         }
