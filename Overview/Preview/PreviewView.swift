@@ -14,12 +14,27 @@
 import SwiftUI
 
 struct PreviewView: View {
-    @ObservedObject var captureManager: CaptureManager
-    @ObservedObject var appSettings: AppSettings
-    @Binding var isEditModeEnabled: Bool
+    // MARK: - Properties
+    @ObservedObject private var captureManager: CaptureManager
+    @ObservedObject private var appSettings: AppSettings
+    @Binding private var isEditModeEnabled: Bool
     @StateObject private var viewModel = PreviewViewModel()
-    let opacity: Double
+    private let opacity: Double
     
+    // MARK: - Initialization
+    init(
+        captureManager: CaptureManager,
+        appSettings: AppSettings,
+        isEditModeEnabled: Binding<Bool>,
+        opacity: Double
+    ) {
+        self.captureManager = captureManager
+        self.appSettings = appSettings
+        self._isEditModeEnabled = isEditModeEnabled
+        self.opacity = opacity
+    }
+    
+    // MARK: - View Body
     var body: some View {
         mainContent
             .onAppear(perform: startCapture)
@@ -30,6 +45,7 @@ struct PreviewView: View {
             )
     }
     
+    // MARK: - Private Views
     private var mainContent: some View {
         Group {
             if let frame = captureManager.capturedFrame {
@@ -56,6 +72,7 @@ struct PreviewView: View {
             )
     }
     
+    // MARK: - Private Methods
     private func startCapture() {
         Task {
             await viewModel.startCapture(using: captureManager)
@@ -69,7 +86,7 @@ struct PreviewView: View {
     }
 }
 
-// View modifiers to clean up the overlay code
+// MARK: - View Modifiers
 private extension View {
     func withInteractionOverlay(
         isEditModeEnabled: Binding<Bool>,
@@ -96,7 +113,8 @@ private extension View {
     }
 }
 
-class PreviewViewModel: ObservableObject {
+// MARK: - Supporting Types
+final class PreviewViewModel: ObservableObject {
     @Published var showError = false
     @Published var errorMessage = ""
     
@@ -116,7 +134,7 @@ class PreviewViewModel: ObservableObject {
     }
 }
 
-
+// MARK: - Supporting Views
 struct PreviewAlertConfiguration {
     static func errorAlert(message: String) -> Alert {
         Alert(

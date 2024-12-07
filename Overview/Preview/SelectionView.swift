@@ -21,14 +21,14 @@ struct SelectionView: View {
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
     @ObservedObject var appSettings: AppSettings
-
+    
     @State private var selectedWindow: SCWindow?
     @State private var isLoading = true
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var refreshID = UUID()
-
-    // MARK: - Body
+    
+    // MARK: - View Body
     var body: some View {
         VStack {
             if isLoading {
@@ -49,12 +49,12 @@ struct SelectionView: View {
                 dismissButton: .default(Text("OK")))
         }
     }
-
-    // MARK: - Subviews
+    
+    // MARK: - Private Views
     private var loadingView: some View {
         ProgressView("Loading available windows...")
     }
-
+    
     private func contentView(for captureManager: CaptureManager) -> some View {
         Group {
             if captureManager.availableWindows.isEmpty {
@@ -64,7 +64,7 @@ struct SelectionView: View {
             }
         }
     }
-
+    
     private func windowPicker(for captureManager: CaptureManager) -> some View {
         VStack {
             HStack {
@@ -78,40 +78,47 @@ struct SelectionView: View {
                 
                 Button(action: {
                     Task {
-                        await captureManager.updateAvailableWindows()
-                        await MainActor.run {
-                            refreshID = UUID()
-                        }
+                        await refreshWindowList(captureManager)
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
                 }
             }
             .padding()
-
+            
             Button("Confirm") {
                 confirmSelection(for: captureManager)
             }
             .disabled(selectedWindow == nil)
         }
     }
-
+    
     private func errorView(message: String) -> some View {
         Text(message)
             .foregroundColor(.red)
             .padding()
     }
-
+    
     // MARK: - Helper Methods
     private func getCaptureManager() -> CaptureManager? {
         guard let id = captureManagerId else { return nil }
         return previewManager.captureManagers[id]
     }
-
+    
+    private func refreshWindowList(_ captureManager: CaptureManager) async {
+        await captureManager.updateAvailableWindows()
+        await MainActor.run {
+            refreshID = UUID()
+        }
+    }
+    
     private func confirmSelection(for captureManager: CaptureManager) {
         captureManager.selectedWindow = selectedWindow
         if let window = selectedWindow {
-            selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
+            selectedWindowSize = CGSize(
+                width: window.frame.width,
+                height: window.frame.height
+            )
         }
         showingSelection = false
         
@@ -125,13 +132,22 @@ struct SelectionView: View {
             }
         }
     }
-
+    
+    private func updateWindowSize() {
+        if let window = selectedWindow {
+            selectedWindowSize = CGSize(
+                width: window.frame.width,
+                height: window.frame.height
+            )
+        }
+    }
+    
     private func setupCaptureManager() async {
         guard let captureManager = getCaptureManager() else {
             showError(message: "Error: No capture manager found")
             return
         }
-
+        
         do {
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()
@@ -143,7 +159,7 @@ struct SelectionView: View {
             }
         }
     }
-
+    
     private func showError(message: String) {
         errorMessage = message
         showError = true
