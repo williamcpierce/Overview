@@ -14,171 +14,57 @@
 import SwiftUI
 
 struct PreviewView: View {
-    // MARK: - Properties
-    @ObservedObject private var captureManager: CaptureManager
-    @ObservedObject private var appSettings: AppSettings
-    @Binding private var isEditModeEnabled: Bool
-    @StateObject private var viewModel = PreviewViewModel()
-    private let opacity: Double
+    @ObservedObject var captureManager: CaptureManager
+    @ObservedObject var appSettings: AppSettings
+    @Binding var isEditModeEnabled: Bool
     
-    // MARK: - Initialization
-    init(
-        captureManager: CaptureManager,
-        appSettings: AppSettings,
-        isEditModeEnabled: Binding<Bool>,
-        opacity: Double
-    ) {
-        self.captureManager = captureManager
-        self.appSettings = appSettings
-        self._isEditModeEnabled = isEditModeEnabled
-        self.opacity = opacity
-    }
-    
-    // MARK: - View Body
     var body: some View {
-        mainContent
-            .onAppear(perform: startCapture)
-            .onDisappear(perform: stopCapture)
-            .alert(
-                isPresented: $viewModel.showError,
-                content: { PreviewAlertConfiguration.errorAlert(message: viewModel.errorMessage) }
-            )
-    }
-    
-    // MARK: - Private Views
-    private var mainContent: some View {
         Group {
             if let frame = captureManager.capturedFrame {
-                captureContent(frame)
+                Capture(frame: frame)
+                    .opacity(appSettings.opacity)
+                    .overlay(
+                        InteractionOverlay(
+                            isEditModeEnabled: $isEditModeEnabled,
+                            isBringToFrontEnabled: true,
+                            bringToFrontAction: { captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled) },
+                            toggleEditModeAction: { isEditModeEnabled.toggle() }
+                        )
+                    )
+                    .overlay(
+                        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused ?
+                            RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5) : nil
+                    )
+                    .overlay(
+                        appSettings.showWindowTitle ?
+                            TitleView(title: captureManager.windowTitle) : nil
+                    )
             } else {
-                NoPreviewView(opacity: opacity)
+                Text("No capture available").opacity(appSettings.opacity)
             }
         }
-    }
-    
-    private func captureContent(_ frame: CapturedFrame) -> some View {
-        Capture(frame: frame)
-            .opacity(opacity)
-            .withInteractionOverlay(
-                isEditModeEnabled: $isEditModeEnabled,
-                focusAction: { captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled) }
-            )
-            .withFocusedBorder(
-                isVisible: appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-            )
-            .withTitleOverlay(
-                title: captureManager.windowTitle,
-                isVisible: appSettings.showWindowTitle
-            )
-    }
-    
-    // MARK: - Private Methods
-    private func startCapture() {
-        Task {
-            await viewModel.startCapture(using: captureManager)
-        }
-    }
-    
-    private func stopCapture() {
-        Task {
-            await captureManager.stopCapture()
-        }
+        .onAppear { Task { try? await captureManager.startCapture() } }
+        .onDisappear { Task { await captureManager.stopCapture() } }
     }
 }
 
-// MARK: - View Modifiers
-private extension View {
-    func withInteractionOverlay(
-        isEditModeEnabled: Binding<Bool>,
-        focusAction: @escaping () -> Void
-    ) -> some View {
-        overlay(InteractionOverlay(
-            isEditModeEnabled: isEditModeEnabled,
-            isBringToFrontEnabled: true,
-            bringToFrontAction: focusAction,
-            toggleEditModeAction: { isEditModeEnabled.wrappedValue.toggle() }
-        ))
-    }
-    
-    func withFocusedBorder(isVisible: Bool) -> some View {
-        overlay(FocusedBorderOverlay(isVisible: isVisible))
-    }
-    
-    func withTitleOverlay(title: String?, isVisible: Bool) -> some View {
-        overlay(Group {
-            if isVisible, let title = title {
-                WindowTitleOverlay(title: title)
-            }
-        })
-    }
-}
-
-// MARK: - Supporting Types
-final class PreviewViewModel: ObservableObject {
-    @Published var showError = false
-    @Published var errorMessage = ""
-    
-    func handleError(_ error: Error) {
-        errorMessage = error.localizedDescription
-        showError = true
-    }
-    
-    func startCapture(using manager: CaptureManager) async {
-        do {
-            try await manager.startCapture()
-        } catch {
-            await MainActor.run {
-                handleError(error)
-            }
-        }
-    }
-}
-
-// MARK: - Supporting Views
-struct PreviewAlertConfiguration {
-    static func errorAlert(message: String) -> Alert {
-        Alert(
-            title: Text("Error"),
-            message: Text(message),
-            dismissButton: .default(Text("OK"))
-        )
-    }
-}
-
-struct FocusedBorderOverlay: View {
-    let isVisible: Bool
+struct TitleView: View {
+    let title: String?
     
     var body: some View {
-        RoundedRectangle(cornerRadius: 0)
-            .stroke(Color.gray, lineWidth: 5)
-            .opacity(isVisible ? 1 : 0)
-    }
-}
-
-struct WindowTitleOverlay: View {
-    let title: String
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Text(title)
-                    .font(.system(size: 12))
-                    .foregroundColor(.white)
-                    .padding(4)
-                    .background(Color.black.opacity(0.4))
+        if let title = title {
+            VStack {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(Color.black.opacity(0.4))
+                    Spacer()
+                }
+                .padding(6)
                 Spacer()
             }
-            .padding(6)
-            Spacer()
         }
-    }
-}
-
-struct NoPreviewView: View {
-    let opacity: Double
-    
-    var body: some View {
-        Text("No capture available")
-            .opacity(opacity)
     }
 }

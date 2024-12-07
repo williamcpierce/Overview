@@ -13,7 +13,6 @@
 
 import SwiftUI
 
-// MARK: - ContentView
 struct ContentView: View {
     // MARK: - Properties
     private struct ViewState {
@@ -105,8 +104,7 @@ struct ContentView: View {
             PreviewView(
                 captureManager: captureManager,
                 appSettings: appSettings,
-                isEditModeEnabled: $isEditModeEnabled,
-                opacity: appSettings.opacity
+                isEditModeEnabled: $isEditModeEnabled
             )
             .background(Color.clear)
         } else {
