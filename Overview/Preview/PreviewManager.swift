@@ -1,5 +1,5 @@
 /*
- WindowManager.swift
+ PreviewManager.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -14,22 +14,25 @@
 import SwiftUI
 
 @MainActor
-class WindowManager: ObservableObject {
-    @Published private(set) var captureManagers: [UUID: ScreenCaptureManager] = [:]
+final class PreviewManager: ObservableObject {
+    // MARK: - Properties
+    @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
     @Published var isEditModeEnabled = false
     private let appSettings: AppSettings
     
+    // MARK: - Initialization
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
     }
     
+    // MARK: - Public Methods
     func createNewCaptureManager() -> UUID {
         let id = UUID()
-        let captureManager = ScreenCaptureManager(appSettings: appSettings)
+        let captureManager = CaptureManager(appSettings: appSettings)
         captureManagers[id] = captureManager
         return id
     }
-
+    
     func removeCaptureManager(id: UUID) {
         guard captureManagers[id] != nil else {
             print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
@@ -37,7 +40,7 @@ class WindowManager: ObservableObject {
         }
         captureManagers.removeValue(forKey: id)
     }
-
+    
     func toggleEditMode() {
         isEditModeEnabled.toggle()
     }

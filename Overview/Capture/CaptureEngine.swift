@@ -1,5 +1,5 @@
 /*
- ScreenCaptureManager.swift
+ CaptureEngine.swift
  Overview
 
  Created by William Pierce on 9/15/24.

@@ -14,10 +14,12 @@
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
+    // MARK: - Properties
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
     @ObservedObject var appSettings: AppSettings
-
+    
+    // MARK: - NSViewRepresentable Methods
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         DispatchQueue.main.async {
@@ -25,22 +27,21 @@ struct WindowAccessor: NSViewRepresentable {
         }
         return view
     }
-
+    
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else { return }
         updateWindowSize(window)
         updateWindowEditMode(window)
     }
-
-    // MARK: - Window Configuration Methods
-
+    
+    // MARK: - Window Configuration
     private func configureWindow(for view: NSView, with context: Context) {
         guard let window = view.window else { return }
         configureWindowStyle(window)
         configureWindowSize(window)
         configureWindowAppearance(window)
     }
-
+    
     private func configureWindowStyle(_ window: NSWindow) {
         window.styleMask = [.borderless, .resizable, .fullSizeContentView]
         window.isMovableByWindowBackground = isEditModeEnabled
@@ -51,33 +52,35 @@ struct WindowAccessor: NSViewRepresentable {
         window.collectionBehavior = [.fullScreenAuxiliary]
         window.hasShadow = false
     }
-
+    
     private func configureWindowSize(_ window: NSWindow) {
-        let size = NSSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
+        let size = NSSize(
+            width: appSettings.defaultWindowWidth,
+            height: appSettings.defaultWindowHeight
+        )
         window.setContentSize(size)
         window.contentMinSize = size
         window.contentAspectRatio = size
     }
-
+    
     private func configureWindowAppearance(_ window: NSWindow) {
         window.backgroundColor = .clear
         window.styleMask.insert(.fullSizeContentView)
-
+        
         if let contentView = window.contentView {
             contentView.wantsLayer = true
             contentView.layer?.backgroundColor = NSColor.clear.cgColor
         }
     }
-
-    // MARK: - Window Update Methods
-
+    
+    // MARK: - Window Updates
     private func updateWindowSize(_ window: NSWindow) {
         let currentSize = window.frame.size
         let newHeight = currentSize.width / CGFloat(aspectRatio)
         window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
     }
-
+    
     private func updateWindowEditMode(_ window: NSWindow) {
         window.isMovableByWindowBackground = isEditModeEnabled
         window.isMovable = isEditModeEnabled

@@ -15,18 +15,18 @@ import SwiftUI
 
 @main
 struct OverviewApp: App {
-    @StateObject private var windowManager: WindowManager
+    @StateObject private var previewManager: PreviewManager
     @StateObject private var appSettings = AppSettings()
 
     init() {
         let settings = AppSettings()
         self._appSettings = StateObject(wrappedValue: settings)
-        self._windowManager = StateObject(wrappedValue: WindowManager(appSettings: settings))
+        self._previewManager = StateObject(wrappedValue: PreviewManager(appSettings: settings))
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(windowManager: windowManager, isEditModeEnabled: $windowManager.isEditModeEnabled, appSettings: appSettings)
+            ContentView(previewManager: previewManager, isEditModeEnabled: $previewManager.isEditModeEnabled, appSettings: appSettings)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
@@ -41,7 +41,7 @@ struct OverviewApp: App {
     
     private var editCommands: some Commands {
         CommandMenu("Edit") {
-            Toggle("Edit Mode", isOn: $windowManager.isEditModeEnabled)
+            Toggle("Edit Mode", isOn: $previewManager.isEditModeEnabled)
         }
     }
 }
