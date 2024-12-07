@@ -53,12 +53,7 @@
 				SourceWindows/Core/CaptureEngine.swift,
 				SourceWindows/Managers/CaptureTaskManager.swift,
 				SourceWindows/Managers/ScreenCaptureManager.swift,
-				SourceWindows/Services/ShareableContentService.swift,
-				SourceWindows/Services/StreamConfigurationService.swift,
-				SourceWindows/Services/WindowFilterService.swift,
-				SourceWindows/Services/WindowFocusService.swift,
-				SourceWindows/Services/WindowObserverService.swift,
-				SourceWindows/Services/WindowTitleService.swift,
+				SourceWindows/Services/CaptureServices.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

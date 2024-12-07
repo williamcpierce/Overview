@@ -11,30 +11,17 @@
  file at the root of this project.
 */
 
-import Foundation
 import ScreenCaptureKit
-import OSLog
 
-protocol CaptureTaskManager: AnyObject {
-    var onFrame: (CapturedFrame) -> Void { get set }
-    var onError: (Error) -> Void { get set }
-    
-    func startCapture(using engine: CaptureEngine, config: SCStreamConfiguration, filter: SCContentFilter) async
-    func stopCapture() async
-}
-
-class DefaultCaptureTaskManager: CaptureTaskManager {
+class CaptureTaskManager {
     private var captureTask: Task<Void, Never>?
-    private let logger = Logger(subsystem: "com.Overview.CaptureTaskManager", category: "CaptureTask")
     
     var onFrame: (CapturedFrame) -> Void = { _ in }
     var onError: (Error) -> Void = { _ in }
     
     @MainActor
-    func startCapture(using engine: CaptureEngine, config: SCStreamConfiguration, filter: SCContentFilter) async {
+    func startCapture(frameStream: AsyncThrowingStream<CapturedFrame, Error>) async {
         captureTask?.cancel()
-        
-        let frameStream = engine.startCapture(configuration: config, filter: filter)
         
         captureTask = Task { @MainActor in
             do {
@@ -43,7 +30,6 @@ class DefaultCaptureTaskManager: CaptureTaskManager {
                 }
             } catch {
                 onError(error)
-                logger.error("Capture stream failed: \(error.localizedDescription)")
             }
         }
     }

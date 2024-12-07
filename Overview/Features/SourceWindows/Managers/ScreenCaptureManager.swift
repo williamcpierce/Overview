@@ -33,7 +33,7 @@ enum CaptureError: LocalizedError {
 }
 
 @MainActor
-class ScreenCaptureManager: NSObject, ObservableObject {
+class ScreenCaptureManager: ObservableObject {
     // MARK: - Published Properties
     @Published var capturedFrame: CapturedFrame?
     @Published var availableWindows: [SCWindow] = []
@@ -48,59 +48,56 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     }
     
     // MARK: - Private Properties
-    private let captureEngine: CaptureEngine
     private let logger = Logger(subsystem: "com.Overview.ScreenCaptureManager", category: "ScreenCapture")
-    private let appSettings: AppSettings
     private var cancellables = Set<AnyCancellable>()
     
-    // MARK: - Services
-    private let windowFilterService: WindowFilterService
-    private let windowObserverService: WindowObserverService
-    private let streamConfigService: StreamConfigurationService
-    private let windowFocusService: WindowFocusService
-    private let windowTitleService: WindowTitleService
-    private let shareableContentService: ShareableContentService
-    private let captureTaskManager: CaptureTaskManager
+    // MARK: - Dependencies
+    private let appSettings: AppSettings
+    private let captureEngine: CaptureEngine
+    private let captureTask: CaptureTaskManager
+    private let streamConfig: StreamConfigurationService
+    private let windowFilter: WindowFilterService
+    private let windowFocus: WindowFocusService
+    private let titleService: WindowTitleService
+    private let windowObserver: WindowObserverService
+    private let shareableContent: ShareableContentService
     
+    // MARK: - Initialization
     init(
         appSettings: AppSettings,
         captureEngine: CaptureEngine = CaptureEngine(),
-        windowFilterService: WindowFilterService = DefaultWindowFilterService(),
-        windowObserverService: WindowObserverService = DefaultWindowObserverService(),
-        streamConfigService: StreamConfigurationService = DefaultStreamConfigurationService(),
-        windowFocusService: WindowFocusService = DefaultWindowFocusService(),
-        windowTitleService: WindowTitleService = DefaultWindowTitleService(),
-        shareableContentService: ShareableContentService = DefaultShareableContentService(),
-        captureTaskManager: CaptureTaskManager = DefaultCaptureTaskManager()
+        captureTask: CaptureTaskManager = CaptureTaskManager(),
+        streamConfig: StreamConfigurationService = StreamConfigurationService(),
+        windowFilter: WindowFilterService = WindowFilterService(),
+        windowFocus: WindowFocusService = WindowFocusService(),
+        titleService: WindowTitleService = WindowTitleService(),
+        windowObserver: WindowObserverService = WindowObserverService(),
+        shareableContent: ShareableContentService = ShareableContentService()
     ) {
         self.appSettings = appSettings
         self.captureEngine = captureEngine
-        self.windowFilterService = windowFilterService
-        self.windowObserverService = windowObserverService
-        self.streamConfigService = streamConfigService
-        self.windowFocusService = windowFocusService
-        self.windowTitleService = windowTitleService
-        self.shareableContentService = shareableContentService
-        self.captureTaskManager = captureTaskManager
-        
-        super.init()
+        self.captureTask = captureTask
+        self.streamConfig = streamConfig
+        self.windowFilter = windowFilter
+        self.windowFocus = windowFocus
+        self.titleService = titleService
+        self.windowObserver = windowObserver
+        self.shareableContent = shareableContent
         
         setupCaptureHandlers()
         setupObservers()
     }
-
+    
     // MARK: - Public Methods
     func requestPermission() async throws {
-        try await shareableContentService.requestPermission()
+        try await shareableContent.requestPermission()
     }
     
-    @MainActor
     func updateAvailableWindows() async {
         do {
-            let windows = try await shareableContentService.getAvailableWindows()
-            let filteredWindows = windowFilterService.filterWindows(windows)
+            let windows = try await shareableContent.getAvailableWindows()
             await MainActor.run {
-                self.availableWindows = filteredWindows
+                self.availableWindows = windowFilter.filterWindows(windows)
             }
         } catch {
             logger.error("Failed to get available windows: \(error.localizedDescription)")
@@ -113,17 +110,16 @@ class ScreenCaptureManager: NSObject, ObservableObject {
             throw CaptureError.noWindowSelected
         }
 
-        let config = streamConfigService.createConfiguration(for: window, frameRate: appSettings.frameRate)
-        let filter = SCContentFilter(desktopIndependentWindow: window)
-        
-        await captureTaskManager.startCapture(using: captureEngine, config: config, filter: filter)
+        let (config, filter) = streamConfig.createConfiguration(window, frameRate: appSettings.frameRate)
+        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
+        await captureTask.startCapture(frameStream: frameStream)
         isCapturing = true
     }
     
     func stopCapture() async {
         guard isCapturing else { return }
         
-        await captureTaskManager.stopCapture()
+        await captureTask.stopCapture()
         await captureEngine.stopCapture()
         
         isCapturing = false
@@ -132,18 +128,18 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     
     func focusWindow(isEditModeEnabled: Bool) {
         guard let window = selectedWindow else { return }
-        windowFocusService.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
+        windowFocus.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
     }
     
     // MARK: - Private Methods
     private func setupCaptureHandlers() {
-        captureTaskManager.onFrame = { [weak self] frame in
+        captureTask.onFrame = { [weak self] frame in
             Task { @MainActor [weak self] in
                 self?.capturedFrame = frame
             }
         }
         
-        captureTaskManager.onError = { [weak self] _ in
+        captureTask.onError = { [weak self] _ in
             Task { [weak self] in
                 await self?.stopCapture()
             }
@@ -151,13 +147,15 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     }
     
     private func setupObservers() {
-        windowObserverService.onFocusStateChanged = { [weak self] in
+        windowObserver.onFocusStateChanged = { [weak self] in
             await self?.updateFocusState()
         }
-        windowObserverService.onWindowTitleChanged = { [weak self] in
+        
+        windowObserver.onWindowTitleChanged = { [weak self] in
             await self?.updateWindowTitle()
         }
-        windowObserverService.startObserving()
+        
+        windowObserver.startObserving()
         
         appSettings.$frameRate
             .dropFirst()
@@ -170,24 +168,15 @@ class ScreenCaptureManager: NSObject, ObservableObject {
     }
     
     private func updateFocusState() async {
-        isSourceWindowFocused = await windowFocusService.updateFocusState(for: selectedWindow)
+        isSourceWindowFocused = await windowFocus.updateFocusState(for: selectedWindow)
     }
     
     private func updateWindowTitle() async {
-        windowTitle = await windowTitleService.updateWindowTitle(for: selectedWindow)
+        windowTitle = await titleService.updateWindowTitle(for: selectedWindow)
     }
     
     private func updateStreamConfiguration() async {
         guard isCapturing, let window = selectedWindow else { return }
-        
-        do {
-            try await streamConfigService.updateConfiguration(
-                captureEngine.stream,
-                for: window,
-                frameRate: appSettings.frameRate
-            )
-        } catch {
-            logger.error("Failed to update stream configuration: \(error.localizedDescription)")
-        }
+        try? await streamConfig.updateConfiguration(captureEngine.stream, window, frameRate: appSettings.frameRate)
     }
 }
