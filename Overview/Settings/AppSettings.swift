@@ -12,71 +12,41 @@
 */
 
 import Foundation
-import Combine
 
 class AppSettings: ObservableObject {
-    @Published var opacity: Double
-    @Published var frameRate: Double
-    @Published var defaultWindowWidth: Double
-    @Published var defaultWindowHeight: Double
-    @Published var showFocusedBorder: Bool
-    @Published var showWindowTitle: Bool
-
-    init() {
-        let storedOpacity = UserDefaults.standard.double(forKey: "windowOpacity")
-        self.opacity = storedOpacity != 0 ? storedOpacity : 0.95 // Default value
-        
-        let storedFrameRate = UserDefaults.standard.double(forKey: "frameRate")
-        self.frameRate = storedFrameRate != 0 ? storedFrameRate : 30 // Default value (30 fps)
-        
-        let storedWidth = UserDefaults.standard.double(forKey: "defaultWindowWidth")
-        self.defaultWindowWidth = storedWidth != 0 ? storedWidth : 288 // Default value
-        
-        let storedHeight = UserDefaults.standard.double(forKey: "defaultWindowHeight")
-        self.defaultWindowHeight = storedHeight != 0 ? storedHeight : 162 // Default value
-        
-        self.showFocusedBorder = UserDefaults.standard.bool(forKey: "showFocusedBorder") // Defaults to false
-        self.showWindowTitle = UserDefaults.standard.bool(forKey: "showWindowTitle") // Defaults to false
-
-        // Set up observers for changes
-        setupObservers()
+    @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
+        didSet { UserDefaults.standard.set(opacity, forKey: "windowOpacity") }
     }
     
-    private func setupObservers() {
-        $opacity
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "windowOpacity") }
-            .store(in: &cancellables)
-        
-        $frameRate
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "frameRate") }
-            .store(in: &cancellables)
-        
-        $defaultWindowWidth
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "defaultWindowWidth") }
-            .store(in: &cancellables)
-        
-        $defaultWindowHeight
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "defaultWindowHeight") }
-            .store(in: &cancellables)
+    @Published var frameRate: Double = UserDefaults.standard.double(forKey: "frameRate") {
+        didSet { UserDefaults.standard.set(frameRate, forKey: "frameRate") }
+    }
     
-        $showFocusedBorder
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "showFocusedBorder") }
-            .store(in: &cancellables)
+    @Published var defaultWindowWidth: Double = UserDefaults.standard.double(forKey: "defaultWindowWidth") {
+        didSet { UserDefaults.standard.set(defaultWindowWidth, forKey: "defaultWindowWidth") }
+    }
     
-        $showWindowTitle
-            .dropFirst() // Ignore the initial value
-            .sink { UserDefaults.standard.set($0, forKey: "showWindowTitle") }
-            .store(in: &cancellables)
+    @Published var defaultWindowHeight: Double = UserDefaults.standard.double(forKey: "defaultWindowHeight") {
+        didSet { UserDefaults.standard.set(defaultWindowHeight, forKey: "defaultWindowHeight") }
+    }
+    
+    @Published var showFocusedBorder: Bool = UserDefaults.standard.bool(forKey: "showFocusedBorder") {
+        didSet { UserDefaults.standard.set(showFocusedBorder, forKey: "showFocusedBorder") }
+    }
+    
+    @Published var showWindowTitle: Bool = UserDefaults.standard.bool(forKey: "showWindowTitle") {
+        didSet { UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle") }
+    }
+    
+    init() {
+        // Set defaults if needed
+        if UserDefaults.standard.double(forKey: "windowOpacity") == 0 { opacity = 0.95 }
+        if UserDefaults.standard.double(forKey: "frameRate") == 0 { frameRate = 30 }
+        if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 { defaultWindowWidth = 288 }
+        if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 { defaultWindowHeight = 162 }
     }
     
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }
-    
-    private var cancellables = Set<AnyCancellable>()
 }
