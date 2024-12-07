@@ -29,6 +29,7 @@
 				AppSettings.swift,
 				ContentView.swift,
 				OverviewApp.swift,
+				SettingsView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -46,10 +47,6 @@
 				Capture/Views/CaptureView.swift,
 				Capture/Views/NoCaptureView.swift,
 				Capture/Views/SelectionView.swift,
-				Settings/Views/GeneralSettingsView.swift,
-				Settings/Views/PerformanceSettingsView.swift,
-				Settings/Views/SettingsView.swift,
-				Settings/Views/WindowSettingsView.swift,
 				SourceWindows/Core/CaptureEngine.swift,
 				SourceWindows/Managers/CaptureTaskManager.swift,
 				SourceWindows/Managers/ScreenCaptureManager.swift,
