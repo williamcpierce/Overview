@@ -1,5 +1,5 @@
 /*
- CaptureView.swift
+ PreviewView.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -13,11 +13,11 @@
 
 import SwiftUI
 
-struct CaptureView: View {
-    @ObservedObject var captureManager: ScreenCaptureManager
+struct PreviewView: View {
+    @ObservedObject var captureManager: CaptureManager
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
-    @StateObject private var viewModel = CaptureViewModel()
+    @StateObject private var viewModel = PreviewViewModel()
     let opacity: Double
     
     var body: some View {
@@ -26,7 +26,7 @@ struct CaptureView: View {
             .onDisappear(perform: stopCapture)
             .alert(
                 isPresented: $viewModel.showError,
-                content: { CaptureAlertConfiguration.errorAlert(message: viewModel.errorMessage) }
+                content: { PreviewAlertConfiguration.errorAlert(message: viewModel.errorMessage) }
             )
     }
     
@@ -35,7 +35,7 @@ struct CaptureView: View {
             if let frame = captureManager.capturedFrame {
                 captureContent(frame)
             } else {
-                NoCaptureView(opacity: opacity)
+                NoPreviewView(opacity: opacity)
             }
         }
     }
@@ -93,5 +93,74 @@ private extension View {
                 WindowTitleOverlay(title: title)
             }
         })
+    }
+}
+
+class PreviewViewModel: ObservableObject {
+    @Published var showError = false
+    @Published var errorMessage = ""
+    
+    func handleError(_ error: Error) {
+        errorMessage = error.localizedDescription
+        showError = true
+    }
+    
+    func startCapture(using manager: CaptureManager) async {
+        do {
+            try await manager.startCapture()
+        } catch {
+            await MainActor.run {
+                handleError(error)
+            }
+        }
+    }
+}
+
+
+struct PreviewAlertConfiguration {
+    static func errorAlert(message: String) -> Alert {
+        Alert(
+            title: Text("Error"),
+            message: Text(message),
+            dismissButton: .default(Text("OK"))
+        )
+    }
+}
+
+struct FocusedBorderOverlay: View {
+    let isVisible: Bool
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 0)
+            .stroke(Color.gray, lineWidth: 5)
+            .opacity(isVisible ? 1 : 0)
+    }
+}
+
+struct WindowTitleOverlay: View {
+    let title: String
+    
+    var body: some View {
+        VStack {
+            HStack {
+                Text(title)
+                    .font(.system(size: 12))
+                    .foregroundColor(.white)
+                    .padding(4)
+                    .background(Color.black.opacity(0.4))
+                Spacer()
+            }
+            .padding(6)
+            Spacer()
+        }
+    }
+}
+
+struct NoPreviewView: View {
+    let opacity: Double
+    
+    var body: some View {
+        Text("No capture available")
+            .opacity(opacity)
     }
 }

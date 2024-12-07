@@ -16,7 +16,7 @@ import SwiftUI
 
 struct SelectionView: View {
     // MARK: - Properties
-    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var previewManager: PreviewManager
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
@@ -55,7 +55,7 @@ struct SelectionView: View {
         ProgressView("Loading available windows...")
     }
 
-    private func contentView(for captureManager: ScreenCaptureManager) -> some View {
+    private func contentView(for captureManager: CaptureManager) -> some View {
         Group {
             if captureManager.availableWindows.isEmpty {
                 Text("No windows available for capture")
@@ -65,7 +65,7 @@ struct SelectionView: View {
         }
     }
 
-    private func windowPicker(for captureManager: ScreenCaptureManager) -> some View {
+    private func windowPicker(for captureManager: CaptureManager) -> some View {
         VStack {
             HStack {
                 Picker("Select Window", selection: $selectedWindow) {
@@ -103,12 +103,12 @@ struct SelectionView: View {
     }
 
     // MARK: - Helper Methods
-    private func getCaptureManager() -> ScreenCaptureManager? {
+    private func getCaptureManager() -> CaptureManager? {
         guard let id = captureManagerId else { return nil }
-        return windowManager.captureManagers[id]
+        return previewManager.captureManagers[id]
     }
 
-    private func confirmSelection(for captureManager: ScreenCaptureManager) {
+    private func confirmSelection(for captureManager: CaptureManager) {
         captureManager.selectedWindow = selectedWindow
         if let window = selectedWindow {
             selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)

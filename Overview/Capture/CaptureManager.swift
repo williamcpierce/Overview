@@ -1,5 +1,5 @@
 /*
- ScreenCaptureManager.swift
+ CaptureManager.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -33,7 +33,7 @@ enum CaptureError: LocalizedError {
 }
 
 @MainActor
-class ScreenCaptureManager: ObservableObject {
+class CaptureManager: ObservableObject {
     // MARK: - Published Properties
     @Published var capturedFrame: CapturedFrame?
     @Published var availableWindows: [SCWindow] = []
@@ -48,13 +48,13 @@ class ScreenCaptureManager: ObservableObject {
     }
     
     // MARK: - Private Properties
-    private let logger = Logger(subsystem: "com.Overview.ScreenCaptureManager", category: "ScreenCapture")
+    private let logger = Logger(subsystem: "com.Overview.CaptureManager", category: "ScreenCapture")
     private var cancellables = Set<AnyCancellable>()
+    private var captureTask: Task<Void, Never>?
     
     // MARK: - Dependencies
     private let appSettings: AppSettings
     private let captureEngine: CaptureEngine
-    private let captureTask: CaptureTaskManager
     private let streamConfig: StreamConfigurationService
     private let windowFilter: WindowFilterService
     private let windowFocus: WindowFocusService
@@ -66,7 +66,6 @@ class ScreenCaptureManager: ObservableObject {
     init(
         appSettings: AppSettings,
         captureEngine: CaptureEngine = CaptureEngine(),
-        captureTask: CaptureTaskManager = CaptureTaskManager(),
         streamConfig: StreamConfigurationService = StreamConfigurationService(),
         windowFilter: WindowFilterService = WindowFilterService(),
         windowFocus: WindowFocusService = WindowFocusService(),
@@ -76,7 +75,6 @@ class ScreenCaptureManager: ObservableObject {
     ) {
         self.appSettings = appSettings
         self.captureEngine = captureEngine
-        self.captureTask = captureTask
         self.streamConfig = streamConfig
         self.windowFilter = windowFilter
         self.windowFocus = windowFocus
@@ -84,7 +82,6 @@ class ScreenCaptureManager: ObservableObject {
         self.windowObserver = windowObserver
         self.shareableContent = shareableContent
         
-        setupCaptureHandlers()
         setupObservers()
     }
     
@@ -112,14 +109,16 @@ class ScreenCaptureManager: ObservableObject {
 
         let (config, filter) = streamConfig.createConfiguration(window, frameRate: appSettings.frameRate)
         let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
-        await captureTask.startCapture(frameStream: frameStream)
+        
+        await startCaptureTask(frameStream: frameStream)
         isCapturing = true
     }
     
     func stopCapture() async {
         guard isCapturing else { return }
         
-        await captureTask.stopCapture()
+        captureTask?.cancel()
+        captureTask = nil
         await captureEngine.stopCapture()
         
         isCapturing = false
@@ -132,18 +131,24 @@ class ScreenCaptureManager: ObservableObject {
     }
     
     // MARK: - Private Methods
-    private func setupCaptureHandlers() {
-        captureTask.onFrame = { [weak self] frame in
-            Task { @MainActor [weak self] in
-                self?.capturedFrame = frame
-            }
-        }
+    @MainActor
+    private func startCaptureTask(frameStream: AsyncThrowingStream<CapturedFrame, Error>) async {
+        captureTask?.cancel()
         
-        captureTask.onError = { [weak self] _ in
-            Task { [weak self] in
-                await self?.stopCapture()
+        captureTask = Task { @MainActor in
+            do {
+                for try await frame in frameStream {
+                    self.capturedFrame = frame
+                }
+            } catch {
+                await self.handleCaptureError(error)
             }
         }
+    }
+    
+    private func handleCaptureError(_ error: Error) async {
+        logger.error("Capture error: \(error.localizedDescription)")
+        await stopCapture()
     }
     
     private func setupObservers() {

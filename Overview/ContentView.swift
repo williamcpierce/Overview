@@ -29,7 +29,7 @@ struct ContentView: View {
     }
     
     // MARK: - Observed Properties
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var appSettings: AppSettings
     @Binding private var isEditModeEnabled: Bool
     
@@ -37,8 +37,8 @@ struct ContentView: View {
     @State private var viewState: ViewState
     
     // MARK: - Initialization
-    init(windowManager: WindowManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings) {
-        self.windowManager = windowManager
+    init(previewManager: PreviewManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings) {
+        self.previewManager = previewManager
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
         self._viewState = State(initialValue: ViewState(
@@ -78,7 +78,7 @@ struct ContentView: View {
     
     private var selectionView: some View {
         SelectionView(
-            windowManager: windowManager,
+            previewManager: previewManager,
             captureManagerId: bindingForCaptureManagerId,
             showingSelection: bindingForShowingSelection,
             selectedWindowSize: bindingForSelectedWindowSize,
@@ -101,8 +101,8 @@ struct ContentView: View {
     @ViewBuilder
     private var captureContent: some View {
         if let id = viewState.captureManagerId,
-           let captureManager = windowManager.captureManagers[id] {
-            CaptureView(
+           let captureManager = previewManager.captureManagers[id] {
+            PreviewView(
                 captureManager: captureManager,
                 appSettings: appSettings,
                 isEditModeEnabled: $isEditModeEnabled,
@@ -171,12 +171,12 @@ struct ContentView: View {
     
     // MARK: - Actions
     private func createCaptureManager() {
-        viewState.captureManagerId = windowManager.createNewCaptureManager()
+        viewState.captureManagerId = previewManager.createNewCaptureManager()
     }
     
     private func removeCaptureManager() {
         if let id = viewState.captureManagerId {
-            windowManager.removeCaptureManager(id: id)
+            previewManager.removeCaptureManager(id: id)
         }
     }
     

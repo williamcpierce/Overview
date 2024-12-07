@@ -11,6 +11,8 @@
 		C876958D2CBA082F00FBCA6C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */; };
 		C876959F2CBA087400FBCA6C /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = C87695982CBA087400FBCA6C /* LICENSE */; };
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
+		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
+		C8A838372D0410CF002EC00B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838332D0410CF002EC00B /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +22,8 @@
 		C876958E2CBA082F00FBCA6C /* Overview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Overview.entitlements; sourceTree = "<group>"; };
 		C87695982CBA087400FBCA6C /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		C87695A42CBA1B5800FBCA6C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		C8A838332D0410CF002EC00B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -27,38 +31,37 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppSettings.swift,
-				ContentView.swift,
-				OverviewApp.swift,
 				SettingsView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
-		C8A837F32D0405D1002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppWindows/Core/WindowAccessor.swift,
-				AppWindows/Managers/WindowManager.swift,
-				Capture/Configuration/AlertConfiguration.swift,
-				Capture/Overlays/FocusedBorderOverlay.swift,
-				Capture/Overlays/InteractionOverlay.swift,
-				Capture/Overlays/WindowTitleOverlay.swift,
-				Capture/ViewModels/CaptureViewModel.swift,
-				Capture/Views/Capture.swift,
-				Capture/Views/CaptureView.swift,
-				Capture/Views/NoCaptureView.swift,
-				Capture/Views/SelectionView.swift,
-				SourceWindows/Core/CaptureEngine.swift,
-				SourceWindows/Managers/CaptureTaskManager.swift,
-				SourceWindows/Managers/ScreenCaptureManager.swift,
-				SourceWindows/Services/CaptureServices.swift,
+				InteractionView.swift,
+				PreviewManager.swift,
+				PreviewView.swift,
+				SelectionView.swift,
+				WindowAccessor.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
+		C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Capture.swift,
+				CaptureEngine.swift,
+				CaptureManager.swift,
+				CaptureServices.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C8A837D72D0405B7002EC00B /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = App; sourceTree = "<group>"; };
-		C8A837D92D0405C7002EC00B /* Features */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837F32D0405D1002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Features; sourceTree = "<group>"; };
+		C8A837D72D0405B7002EC00B /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
+		C8A8387E2D0421ED002EC00B /* Preview */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Preview; sourceTree = "<group>"; };
+		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,8 +96,11 @@
 		C87695842CBA082D00FBCA6C /* Overview */ = {
 			isa = PBXGroup;
 			children = (
-				C8A837D72D0405B7002EC00B /* App */,
-				C8A837D92D0405C7002EC00B /* Features */,
+				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
+				C8A838332D0410CF002EC00B /* ContentView.swift */,
+				C8A8387E2D0421ED002EC00B /* Preview */,
+				C8A838892D0421EF002EC00B /* Capture */,
+				C8A837D72D0405B7002EC00B /* Settings */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
 				C876958B2CBA082F00FBCA6C /* Preview Content */,
@@ -182,6 +188,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */,
+				C8A838372D0410CF002EC00B /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
