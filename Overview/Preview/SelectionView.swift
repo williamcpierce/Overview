@@ -4,6 +4,9 @@
 
  Created by William Pierce on 9/15/24.
 
+ Manages window selection and capture initialization, providing the initial setup
+ interface for Overview preview windows and handling permission flows.
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -14,37 +17,56 @@
 import ScreenCaptureKit
 import SwiftUI
 
-/// Handles window selection and capture initialization for Overview previews
+/// Manages window selection and capture session initialization
 ///
 /// Key responsibilities:
-/// - Displays available windows for capture selection
-/// - Manages capture permission requests
-/// - Initiates window capture sessions
+/// - Presents window selection interface with filtering and refresh
+/// - Handles screen recording permission workflow
+/// - Coordinates capture initialization with size constraints
+/// - Manages transition between selection and preview modes
 ///
 /// Coordinates with:
-/// - PreviewManager: For capture manager lifecycle and edit mode state
-/// - CaptureManager: For window listing and capture initialization
-/// - ContentView: For window size and preview state management
+/// - PreviewManager: Manages capture lifecycle and window creation
+/// - CaptureManager: Provides window listing and capture initialization
+/// - ContentView: Coordinates window dimensions and preview state
+/// - AppSettings: Applies user preferences to capture configuration
 struct SelectionView: View {
     // MARK: - Properties
 
-    /// Manager for coordinating multiple capture preview instances
+    /// Controls multiple window previews and edit mode state
     @ObservedObject var previewManager: PreviewManager
 
-    /// Application-wide settings and preferences
+    /// Global application settings and preferences
     @ObservedObject var appSettings: AppSettings
 
-    /// Context: These bindings coordinate window lifecycle with ContentView
+    /// Active capture manager identifier
+    /// - Note: Created by parent view during initialization
     @Binding var captureManagerId: UUID?
+
+    /// Controls selection interface visibility
+    /// - Note: False transitions to preview display
     @Binding var showingSelection: Bool
+
+    /// Source window dimensions for scaling
+    /// - Note: Used to maintain correct preview aspect ratio
     @Binding var selectedWindowSize: CGSize?
 
-    /// State for window selection UI
+    // MARK: - Selection State
+
+    /// Currently selected capture target
+    /// - Note: nil indicates no window selected
     @State private var selectedWindow: SCWindow?
+
+    /// Window list loading indicator
+    /// - Note: True during permission and refresh operations
     @State private var isLoading = true
+
+    /// Current error state message
+    /// - Note: Empty string indicates no error
     @State private var errorMessage = ""
 
-    /// Triggers picker refresh when window list updates
+    /// Forces picker refresh on window list updates
+    /// - Note: New UUID triggers picker reconstruction
     @State private var refreshID = UUID()
 
     // MARK: - View Layout
@@ -66,9 +88,16 @@ struct SelectionView: View {
         }
     }
 
-    // MARK: - Private Methods
+    // MARK: - Private Views
 
-    /// Renders the window selection picker and capture controls
+    /// Creates window selection interface with picker and controls
+    ///
+    /// Flow:
+    /// 1. Displays window picker with filtered list
+    /// 2. Provides refresh button for window updates
+    /// 3. Shows start button for capture initiation
+    ///
+    /// - Parameter captureManager: Active capture manager instance
     private func windowSelectionContent(_ captureManager: CaptureManager) -> some View {
         VStack {
             HStack {
@@ -93,18 +122,26 @@ struct SelectionView: View {
         }
     }
 
-    /// Retrieves the active CaptureManager instance
+    // MARK: - Private Methods
+
+    /// Retrieves active capture manager instance
+    ///
+    /// - Returns: Current CaptureManager if available
+    /// - Note: Used throughout view for safe manager access
     private func getCaptureManager() -> CaptureManager? {
         guard let id = captureManagerId else { return nil }
         return previewManager.captureManagers[id]
     }
 
-    /// Initializes capture permissions and available window list
+    /// Initializes capture system and permissions
     ///
     /// Flow:
-    /// 1. Requests screen recording permission if needed
-    /// 2. Updates available window list
-    /// 3. Updates loading state
+    /// 1. Validates capture manager reference
+    /// 2. Requests screen recording permission
+    /// 3. Updates available window list
+    /// 4. Updates loading and error states
+    ///
+    /// - Important: Must complete before window selection
     private func setupCapture() async {
         guard let captureManager = getCaptureManager() else {
             errorMessage = "Setup failed"
@@ -117,12 +154,19 @@ struct SelectionView: View {
             await captureManager.updateAvailableWindows()
             isLoading = false
         } catch {
+            // Context: Permission denied triggers settings access flow
             errorMessage = "Permission denied"
             isLoading = false
         }
     }
 
-    /// Updates the list of available windows and triggers picker refresh
+    /// Updates available window list
+    ///
+    /// Flow:
+    /// 1. Requests window list refresh
+    /// 2. Forces picker update with new ID
+    ///
+    /// - Parameter captureManager: Active manager instance
     private func refreshWindows(_ captureManager: CaptureManager) async {
         await captureManager.updateAvailableWindows()
         await MainActor.run {
@@ -130,13 +174,16 @@ struct SelectionView: View {
         }
     }
 
-    /// Initiates window capture and transitions to preview mode
+    /// Starts window capture and preview display
     ///
     /// Flow:
-    /// 1. Updates CaptureManager with selected window
-    /// 2. Updates parent view with window dimensions
-    /// 3. Transitions to preview display
-    /// 4. Starts capture stream
+    /// 1. Updates manager with selected window
+    /// 2. Sets parent view window dimensions
+    /// 3. Transitions to preview mode
+    /// 4. Initiates capture stream
+    ///
+    /// - Parameter captureManager: Active manager instance
+    /// - Warning: Must be called from main actor context
     private func startPreview(_ captureManager: CaptureManager) {
         guard let window = selectedWindow else { return }
 

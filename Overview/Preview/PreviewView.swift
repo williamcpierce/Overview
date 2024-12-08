@@ -4,6 +4,10 @@
 
  Created by William Pierce on 10/13/24.
 
+ Implements the core preview window rendering system, managing the visual presentation
+ of captured window content and coordinating real-time updates between the capture
+ system and user interface layers.
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -13,74 +17,142 @@
 
 import SwiftUI
 
-/// Renders the live window preview with configurable overlays and interaction handlers
+/// Core view component responsible for rendering live window previews and managing preview state
 ///
 /// Key responsibilities:
-/// - Displays the captured window content with configurable opacity
-/// - Manages window focus and edit mode interactions
-/// - Shows optional window title and focus border overlays
+/// - Coordinates display of captured window content via Capture component
+/// - Manages preview lifecycle and capture state transitions
+/// - Coordinates visual overlays and interaction handlers
+/// - Maintains synchronization between capture and display states
 ///
 /// Coordinates with:
-/// - CaptureManager: For frame capture and window focus state
-/// - AppSettings: For visual configuration and behavior settings
+/// - CaptureManager: Provides frame data and manages capture lifecycle
+/// - AppSettings: Controls visual appearance and overlay behavior
+/// - InteractionOverlay: Manages mouse events and window interactions
+/// - WindowAccessor: Handles window property updates and scaling
 struct PreviewView: View {
+    // MARK: - Properties
+
+    /// Controls capture stream and window state
+    /// - Note: Updates trigger immediate preview refresh
     @ObservedObject var captureManager: CaptureManager
+
+    /// User-configurable preview settings
+    /// - Note: Changes affect all preview instances
     @ObservedObject var appSettings: AppSettings
+
+    /// Controls window interaction mode
+    /// - Note: Shared state affecting all preview windows
+    /// - Warning: Must be coordinated through PreviewManager
     @Binding var isEditModeEnabled: Bool
+
+    /// Controls view mode transitions
+    /// - Note: True shows selection, false shows preview
     @Binding var showingSelection: Bool
+
+    // MARK: - View Body
 
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
-                Capture(frame: frame)
-                    .opacity(appSettings.opacity)
-                    .overlay(
-                        InteractionOverlay(
-                            isEditModeEnabled: $isEditModeEnabled,
-                            isBringToFrontEnabled: true,
-                            bringToFrontAction: {
-                                captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
-                            },
-                            toggleEditModeAction: { isEditModeEnabled.toggle() }
-                        )
-                    )
-                    .overlay(
-                        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-                            ? RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5)
-                            : nil
-                    )
-                    .overlay(
-                        appSettings.showWindowTitle
-                            ? TitleView(title: captureManager.windowTitle) : nil
-                    )
+                previewContent(frame: frame)
             } else {
-                /// Show placeholder when no frame is available
+                // Use black placeholder to maintain visual consistency
+                // during capture initialization and transitions
                 Color.black
                     .opacity(appSettings.opacity)
             }
         }
         .onAppear {
+            // Initialize capture when view enters window hierarchy
             Task { try? await captureManager.startCapture() }
         }
         .onDisappear {
+            // Ensure proper resource cleanup when view is removed
             Task { await captureManager.stopCapture() }
         }
         .onChange(of: captureManager.isCapturing) { oldValue, newValue in
-            /// Return to selection view if capture stops
-            if !newValue {
-                showingSelection = true
-            }
+            handleCaptureStateChange(from: oldValue, to: newValue)
+        }
+    }
+
+    // MARK: - Private Methods
+
+    /// Constructs the main preview content hierarchy with overlays
+    ///
+    /// Flow:
+    /// 1. Creates base Capture view for frame rendering
+    /// 2. Applies global opacity settings
+    /// 3. Adds interaction handling layer
+    /// 4. Applies conditional visual overlays based on settings
+    ///
+    /// - Parameter frame: Current frame data for display
+    /// - Important: InteractionOverlay must be above Capture to receive mouse events but below
+    ///             visual overlays (focus border, title) to maintain proper visual hierarchy.
+    ///             This ensures both proper event handling and correct visual presentation.
+    private func previewContent(frame: CapturedFrame) -> some View {
+        Capture(frame: frame)
+            .opacity(appSettings.opacity)
+            .overlay(
+                InteractionOverlay(
+                    isEditModeEnabled: $isEditModeEnabled,
+                    isBringToFrontEnabled: true,
+                    bringToFrontAction: {
+                        captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
+                    },
+                    toggleEditModeAction: { isEditModeEnabled.toggle() }
+                )
+            )
+            .overlay(
+                // Focus border aids in visual tracking of active window
+                // Only shown when source window has system focus
+                appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
+                    ? RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5)
+                    : nil
+            )
+            .overlay(
+                appSettings.showWindowTitle
+                    ? TitleView(title: captureManager.windowTitle)
+                    : nil
+            )
+    }
+
+    /// Manages view state transitions when capture state changes
+    ///
+    /// Flow:
+    /// 1. Detects capture state changes
+    /// 2. Returns to selection view if capture stops
+    /// 3. Ensures user can restart capture if needed
+    ///
+    /// - Parameters:
+    ///   - oldValue: Previous capture state
+    ///   - newValue: Updated capture state
+    /// - Important: Prevents users from being stuck in non-functional preview
+    private func handleCaptureStateChange(from oldValue: Bool, to newValue: Bool) {
+        if !newValue {
+            showingSelection = true
         }
     }
 }
 
-/// Displays the window title in a semi-transparent overlay at the top of the preview
+/// Displays window title with consistent styling in preview overlay
 ///
 /// Key responsibilities:
-/// - Renders the window title with consistent styling
-/// - Maintains proper layout and spacing
+/// - Renders window title with optimized visibility
+/// - Maintains proper positioning and layout
+/// - Handles null title states gracefully
+///
+/// Coordinates with:
+/// - PreviewView: Receives title content and visibility state
+/// - AppSettings: Controls overlay visibility
 struct TitleView: View {
+    // MARK: - Properties
+
+    /// Text to display in overlay
+    /// - Note: nil handled gracefully with no display
     let title: String?
+
+    // MARK: - View Body
 
     var body: some View {
         if let title = title {
@@ -90,6 +162,8 @@ struct TitleView: View {
                         .font(.system(size: 12))
                         .foregroundColor(.white)
                         .padding(4)
+                        // Semi-transparent background ensures readability
+                        // while preserving content visibility
                         .background(Color.black.opacity(0.4))
                     Spacer()
                 }
