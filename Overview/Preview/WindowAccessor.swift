@@ -23,7 +23,7 @@ struct WindowAccessor: NSViewRepresentable {
         DispatchQueue.main.async {
             if let window = view.window {
                 // Set basic window properties
-                window.styleMask = [.hudWindow]
+                window.styleMask = [.fullSizeContentView]
                 window.hasShadow = false
                 window.backgroundColor = .clear
                 window.isMovableByWindowBackground = true
@@ -41,23 +41,28 @@ struct WindowAccessor: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else { return }
-        
-        // Update edit mode settings
-        window.styleMask = isEditModeEnabled ? [.hudWindow, .resizable] : [.hudWindow]
-        window.isMovable = isEditModeEnabled
-        window.level = isEditModeEnabled && appSettings.enableEditModeAlignment ? .floating : .statusBar + 1
-        
-        // Update window management
-        if appSettings.managedByMissionControl {
-            window.collectionBehavior.insert(.managed)
-        } else {
-            window.collectionBehavior.remove(.managed)
+
+        // Debounce window updates using async dispatch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Update edit mode settings
+            window.styleMask = isEditModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
+            window.isMovable = isEditModeEnabled
+            window.level = isEditModeEnabled && appSettings.enableEditModeAlignment ? .floating : .statusBar + 1
+            
+            // Update window management
+            if appSettings.managedByMissionControl {
+                window.collectionBehavior.insert(.managed)
+            } else {
+                window.collectionBehavior.remove(.managed)
+            }
+            
+            // Update window size to maintain aspect ratio
+            let currentSize = window.frame.size
+            let newHeight = currentSize.width / aspectRatio
+            if abs(currentSize.height - newHeight) > 1.0 {
+                window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
+                window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
+            }
         }
-        
-        // Update window size
-        let width = window.frame.size.width
-        let height = width / aspectRatio
-        window.setContentSize(NSSize(width: width, height: height))
-        window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
     }
 }
