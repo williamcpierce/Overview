@@ -18,7 +18,7 @@ struct PreviewView: View {
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
     @Binding var showingSelection: Bool
-    
+
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
@@ -28,17 +28,20 @@ struct PreviewView: View {
                         InteractionOverlay(
                             isEditModeEnabled: $isEditModeEnabled,
                             isBringToFrontEnabled: true,
-                            bringToFrontAction: { captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled) },
+                            bringToFrontAction: {
+                                captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
+                            },
                             toggleEditModeAction: { isEditModeEnabled.toggle() }
                         )
                     )
                     .overlay(
-                        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused ?
-                            RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5) : nil
+                        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
+                            ? RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5)
+                            : nil
                     )
                     .overlay(
-                        appSettings.showWindowTitle ?
-                            TitleView(title: captureManager.windowTitle) : nil
+                        appSettings.showWindowTitle
+                            ? TitleView(title: captureManager.windowTitle) : nil
                     )
             } else {
                 Color.black
@@ -61,7 +64,7 @@ struct PreviewView: View {
 
 struct TitleView: View {
     let title: String?
-    
+
     var body: some View {
         if let title = title {
             VStack {

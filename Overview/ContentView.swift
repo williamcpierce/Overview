@@ -17,19 +17,21 @@ struct ContentView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
-    
+
     @State private var captureManagerId: UUID?
     @State private var showingSelection = true
     @State private var aspectRatio: CGFloat
     @State private var selectedWindowSize: CGSize?
-    
-    init(previewManager: PreviewManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings) {
+
+    init(previewManager: PreviewManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings)
+    {
         self.previewManager = previewManager
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
-        self._aspectRatio = State(initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)
+        self._aspectRatio = State(
+            initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
@@ -46,7 +48,8 @@ struct ContentView: View {
                         height: appSettings.defaultWindowHeight
                     )
                 } else if let id = captureManagerId,
-                          let captureManager = previewManager.captureManagers[id] {
+                    let captureManager = previewManager.captureManagers[id]
+                {
                     PreviewView(
                         captureManager: captureManager,
                         appSettings: appSettings,
@@ -88,7 +91,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private var retryView: some View {
         VStack {
             Text("No capture manager found")

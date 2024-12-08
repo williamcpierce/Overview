@@ -14,18 +14,19 @@
  file in the root of this project.
 */
 
-import ScreenCaptureKit
 import OSLog
+import ScreenCaptureKit
 
 /// A structure that contains the video data to render.
 struct CapturedFrame {
-    static let invalid = CapturedFrame(surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
-    
+    static let invalid = CapturedFrame(
+        surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
+
     let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
-    
+
     var size: CGSize { contentRect.size }
 }
 
@@ -34,19 +35,24 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     private let logger = Logger()
     private(set) var stream: SCStream?
     private var streamOutput: CaptureEngineStreamOutput?
-    private let videoSampleBufferQueue = DispatchQueue(label: "com.example.apple-samplecode.VideoSampleBufferQueue")
+    private let videoSampleBufferQueue = DispatchQueue(
+        label: "com.example.apple-samplecode.VideoSampleBufferQueue")
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 
     /// Starts capturing the screen content.
-    func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter) -> AsyncThrowingStream<CapturedFrame, Error> {
+    func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
+        -> AsyncThrowingStream<CapturedFrame, Error>
+    {
         AsyncThrowingStream<CapturedFrame, Error> { continuation in
             let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
             self.streamOutput = streamOutput
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
 
             do {
-                self.stream = SCStream(filter: filter, configuration: configuration, delegate: streamOutput)
-                try self.stream?.addStreamOutput(streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
+                self.stream = SCStream(
+                    filter: filter, configuration: configuration, delegate: streamOutput)
+                try self.stream?.addStreamOutput(
+                    streamOutput, type: .screen, sampleHandlerQueue: self.videoSampleBufferQueue)
                 self.stream?.startCapture()
             } catch {
                 logger.error("Failed to start capture: \(error.localizedDescription)")
@@ -79,8 +85,9 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
 /// A class that handles output from an SCStream, and handles stream errors.
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
-    private let logger = Logger(subsystem: "com.example.Overview", category: "CaptureEngineStreamOutput")
-    
+    private let logger = Logger(
+        subsystem: "com.example.Overview", category: "CaptureEngineStreamOutput")
+
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 
@@ -89,7 +96,10 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     }
 
     /// Handles the output of a sample buffer from the stream.
-    func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of outputType: SCStreamOutputType) {
+    func stream(
+        _ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+        of outputType: SCStreamOutputType
+    ) {
         guard sampleBuffer.isValid else {
             logger.error("Invalid sample buffer received.")
             return
@@ -105,39 +115,44 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             logger.info("Audio stream received but not processed.")
         default:
             // Convert outputType to a string for logging
-            logger.error("Encountered unknown stream output type: \(String(describing: outputType))")
+            logger.error(
+                "Encountered unknown stream output type: \(String(describing: outputType))")
             fatalError("Encountered unknown stream output type: \(outputType)")
         }
     }
 
     /// Creates a `CapturedFrame` for the video sample buffer.
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
-        guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]] else {
+        guard
+            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
+                sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]]
+        else {
             logger.error("Failed to get sample attachments array.")
             return nil
         }
-        
+
         guard let attachments = attachmentsArray.first else {
             logger.error("Attachments array is empty.")
             return nil
         }
-        
+
         guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
-            let status = SCFrameStatus(rawValue: statusRawValue), status == .complete else {
+            let status = SCFrameStatus(rawValue: statusRawValue), status == .complete
+        else {
             // Silently ignore incomplete frames to avoid log clutter
             return nil
         }
-        
+
         guard let status = SCFrameStatus(rawValue: statusRawValue), status == .complete else {
             logger.error("Frame status is not complete. Status: \(statusRawValue)")
             return nil
         }
-        
+
         guard let pixelBuffer = sampleBuffer.imageBuffer else {
             logger.error("Sample buffer does not contain an image buffer.")
             return nil
         }
-        
+
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
             logger.error("Failed to get IOSurface from pixel buffer.")
             return nil
@@ -166,9 +181,10 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         }
 
         // Successfully created a CapturedFrame
-        return CapturedFrame(surface: surface, contentRect: contentRect, contentScale: contentScale, scaleFactor: scaleFactor)
+        return CapturedFrame(
+            surface: surface, contentRect: contentRect, contentScale: contentScale,
+            scaleFactor: scaleFactor)
     }
-
 
     /// Handles stream stop with an error.
     func stream(_ stream: SCStream, didStopWithError error: Error) {

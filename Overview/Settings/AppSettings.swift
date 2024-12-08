@@ -17,43 +17,60 @@ class AppSettings: ObservableObject {
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
         didSet { UserDefaults.standard.set(opacity, forKey: "windowOpacity") }
     }
-    
+
     @Published var frameRate: Double = UserDefaults.standard.double(forKey: "frameRate") {
         didSet { UserDefaults.standard.set(frameRate, forKey: "frameRate") }
     }
-    
-    @Published var defaultWindowWidth: Double = UserDefaults.standard.double(forKey: "defaultWindowWidth") {
+
+    @Published var defaultWindowWidth: Double = UserDefaults.standard.double(
+        forKey: "defaultWindowWidth")
+    {
         didSet { UserDefaults.standard.set(defaultWindowWidth, forKey: "defaultWindowWidth") }
     }
-    
-    @Published var defaultWindowHeight: Double = UserDefaults.standard.double(forKey: "defaultWindowHeight") {
+
+    @Published var defaultWindowHeight: Double = UserDefaults.standard.double(
+        forKey: "defaultWindowHeight")
+    {
         didSet { UserDefaults.standard.set(defaultWindowHeight, forKey: "defaultWindowHeight") }
     }
-    
-    @Published var showFocusedBorder: Bool = UserDefaults.standard.bool(forKey: "showFocusedBorder") {
+
+    @Published var showFocusedBorder: Bool = UserDefaults.standard.bool(forKey: "showFocusedBorder")
+    {
         didSet { UserDefaults.standard.set(showFocusedBorder, forKey: "showFocusedBorder") }
     }
-    
+
     @Published var showWindowTitle: Bool = UserDefaults.standard.bool(forKey: "showWindowTitle") {
         didSet { UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle") }
     }
-    
-    @Published var managedByMissionControl: Bool = UserDefaults.standard.bool(forKey: "managedByMissionControl") {
-        didSet { UserDefaults.standard.set(managedByMissionControl, forKey: "managedByMissionControl") }
+
+    @Published var managedByMissionControl: Bool = UserDefaults.standard.bool(
+        forKey: "managedByMissionControl")
+    {
+        didSet {
+            UserDefaults.standard.set(managedByMissionControl, forKey: "managedByMissionControl")
+        }
     }
 
-    @Published var enableEditModeAlignment: Bool = UserDefaults.standard.bool(forKey: "enableEditModeAlignment") {
-        didSet { UserDefaults.standard.set(enableEditModeAlignment, forKey: "enableEditModeAlignment") }
+    @Published var enableEditModeAlignment: Bool = UserDefaults.standard.bool(
+        forKey: "enableEditModeAlignment")
+    {
+        didSet {
+            UserDefaults.standard.set(enableEditModeAlignment, forKey: "enableEditModeAlignment")
+        }
     }
-    
+
     init() {
         // Set defaults if needed
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 { opacity = 0.95 }
         if UserDefaults.standard.double(forKey: "frameRate") == 0 { frameRate = 30 }
-        if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 { defaultWindowWidth = 288 }
-        if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 { defaultWindowHeight = 162 }
+        if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 {
+            defaultWindowWidth = 288
+        }
+        if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
+            defaultWindowHeight = 162
+        }
     }
-    
+
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }

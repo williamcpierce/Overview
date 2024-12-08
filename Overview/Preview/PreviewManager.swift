@@ -19,12 +19,12 @@ final class PreviewManager: ObservableObject {
     @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
     @Published var isEditModeEnabled = false
     private let appSettings: AppSettings
-    
+
     // MARK: - Initialization
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
     }
-    
+
     // MARK: - Public Methods
     func createNewCaptureManager() -> UUID {
         let id = UUID()
@@ -32,7 +32,7 @@ final class PreviewManager: ObservableObject {
         captureManagers[id] = captureManager
         return id
     }
-    
+
     func removeCaptureManager(id: UUID) {
         guard captureManagers[id] != nil else {
             print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
@@ -40,7 +40,7 @@ final class PreviewManager: ObservableObject {
         }
         captureManagers.removeValue(forKey: id)
     }
-    
+
     func toggleEditMode() {
         isEditModeEnabled.toggle()
     }
