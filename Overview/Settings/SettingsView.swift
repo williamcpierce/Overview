@@ -13,13 +13,24 @@
 
 import SwiftUI
 
+/// Main settings view that provides user configuration options through a tabbed interface
+///
+/// Key responsibilities:
+/// - Displays and manages all user-configurable app settings
+/// - Organizes settings into logical groupings via tabs
+/// - Provides real-time preview of setting changes
+///
+/// Coordinates with:
+/// - AppSettings: Stores and persists all user preferences
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
+
+    /// Available frame rate options for performance configuration
     private let frameRateOptions = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
-    
+
     var body: some View {
         TabView {
-            // General Tab
+            // MARK: - General Tab
             Form {
                 Section {
                     Text("Overlays")
@@ -31,14 +42,15 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gear") }
-            
-            // Window Tab
+
+            // MARK: - Window Tab
             Form {
+                /// Opacity configuration section
                 Section {
                     Text("Opacity")
                         .font(.headline)
                         .padding(.bottom, 4)
-                    
+
                     HStack(spacing: 8) {
                         SliderRepresentable(
                             value: $appSettings.opacity,
@@ -50,16 +62,19 @@ struct SettingsView: View {
                             .frame(width: 40)
                     }
                 }
-                
+
+                /// Default window size configuration
                 Section {
                     Text("Default Size")
                         .font(.headline)
                         .padding(.bottom, 4)
-                    
-                    ForEach([
-                        ("Width", $appSettings.defaultWindowWidth),
-                        ("Height", $appSettings.defaultWindowHeight)
-                    ], id: \.0) { label, binding in
+
+                    ForEach(
+                        [
+                            ("Width", $appSettings.defaultWindowWidth),
+                            ("Height", $appSettings.defaultWindowHeight),
+                        ], id: \.0
+                    ) { label, binding in
                         HStack {
                             Text("\(label):")
                             Spacer()
@@ -71,28 +86,33 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
+                /// Window behavior settings
                 Section {
                     Text("Behavior")
                         .font(.headline)
                         .padding(.bottom, 4)
                     Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
-                    Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
-                    Text("Alignment help will cause preview windows to show behind some other windows until edit mode is turned off.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Toggle(
+                        "Enable alignment help in edit mode",
+                        isOn: $appSettings.enableEditModeAlignment)
+                    Text(
+                        "Alignment help will cause preview windows to show behind some other windows until edit mode is turned off."
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 }
             }
             .formStyle(.grouped)
             .tabItem { Label("Windows", systemImage: "macwindow") }
-            
-            // Performance Tab
+
+            // MARK: - Performance Tab
             Form {
                 Section {
                     Text("Frame Rate")
                         .font(.headline)
                         .padding(.bottom, 4)
-                    
+
                     Picker("FPS:", selection: $appSettings.frameRate) {
                         ForEach(frameRateOptions, id: \.self) { rate in
                             Text("\(Int(rate))")
@@ -100,10 +120,12 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    
-                    Text("Higher frame rates provide smoother previews but use more system resources.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+
+                    Text(
+                        "Higher frame rates provide smoother previews but use more system resources."
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 }
             }
             .formStyle(.grouped)
@@ -114,32 +136,45 @@ struct SettingsView: View {
 }
 
 // MARK: - Slider Component
+
+/// Custom NSSlider wrapper that provides precise opacity control
+///
+/// Key responsibilities:
+/// - Provides continuous value updates while dragging
+/// - Rounds values to 2 decimal places for stability
+/// - Maintains binding with parent view's state
 struct SliderRepresentable: NSViewRepresentable {
     @Binding var value: Double
     let minValue: Double
     let maxValue: Double
-    
+
     func makeNSView(context: Context) -> NSSlider {
-        let slider = NSSlider(value: value, minValue: minValue, maxValue: maxValue, target: context.coordinator, action: #selector(Coordinator.valueChanged(_:)))
+        let slider = NSSlider(
+            value: value, minValue: minValue, maxValue: maxValue, target: context.coordinator,
+            action: #selector(Coordinator.valueChanged(_:)))
         slider.isContinuous = true
         return slider
     }
-    
+
     func updateNSView(_ nsView: NSSlider, context: Context) {
         nsView.doubleValue = value
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(value: $value)
     }
-    
+
+    /// Coordinates between NSSlider events and SwiftUI state
     class Coordinator: NSObject {
         var value: Binding<Double>
-        
+
         init(value: Binding<Double>) {
             self.value = value
         }
-        
+
+        /// Handles slider value changes and updates the binding
+        ///
+        /// Rounds the value to 2 decimal places for stability
         @objc func valueChanged(_ sender: NSSlider) {
             let rounded = round(sender.doubleValue * 100) / 100
             value.wrappedValue = rounded

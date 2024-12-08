@@ -13,15 +13,31 @@
 
 import SwiftUI
 
+/// Displays captured window content using a Core Animation layer
+///
+/// Key responsibilities:
+/// - Converts CapturedFrame data into a renderable CALayer
+/// - Maintains proper content scaling across display densities
+///
+/// Coordinates with:
+/// - CaptureEngine: Receives frame data including IOSurface and scaling information
+/// - PreviewView: Parent view that manages capture lifecycle and window interactions
 struct Capture: NSViewRepresentable {
     let frame: CapturedFrame
 
+    /// Creates the underlying NSView with layer support enabled
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
         return view
     }
 
+    /// Updates the view's layer with new frame content
+    ///
+    /// Flow:
+    /// 1. Extracts IOSurface from the captured frame
+    /// 2. Configures layer properties for proper scaling
+    /// 3. Updates the view's backing layer
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let surface = frame.surface else { return }
 
