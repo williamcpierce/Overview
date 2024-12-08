@@ -71,6 +71,17 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                Section {
+                    Text("Behavior")
+                        .font(.headline)
+                        .padding(.bottom, 4)
+                    Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
+                    Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
+                    Text("Alignment help will cause preview windows to show behind some other windows until edit mode is turned off.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Windows", systemImage: "macwindow") }
@@ -98,7 +109,7 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("Performance", systemImage: "gauge.medium") }
         }
-        .frame(width: 340, height: 260)
+        .frame(width: 360, height: 420)
     }
 }
 

@@ -30,27 +30,28 @@ struct WindowAccessor: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else { return }
+        updateWindowBehavior(window)
         updateWindowSize(window)
-        updateWindowEditMode(window)
     }
     
     // MARK: - Window Configuration
     private func configureWindow(for view: NSView, with context: Context) {
         guard let window = view.window else { return }
-        configureWindowStyle(window)
-        configureWindowSize(window)
         configureWindowAppearance(window)
+        configureWindowBehavior(window)
+        configureWindowSize(window)
     }
     
-    private func configureWindowStyle(_ window: NSWindow) {
-        window.styleMask = [.borderless, .resizable, .fullSizeContentView]
-        window.isMovableByWindowBackground = isEditModeEnabled
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.level = .statusBar + 1
-        window.isOpaque = true
-        window.collectionBehavior = [.fullScreenAuxiliary]
+    private func configureWindowAppearance(_ window: NSWindow) {
+        window.styleMask = [.hudWindow]
         window.hasShadow = false
+        window.backgroundColor = .clear
+    }
+
+    private func configureWindowBehavior(_ window: NSWindow) {
+        window.isMovableByWindowBackground = true
+        window.collectionBehavior.insert(.fullScreenAuxiliary)
+        updateWindowBehavior(window)
     }
     
     private func configureWindowSize(_ window: NSWindow) {
@@ -63,26 +64,33 @@ struct WindowAccessor: NSViewRepresentable {
         window.contentAspectRatio = size
     }
     
-    private func configureWindowAppearance(_ window: NSWindow) {
-        window.backgroundColor = .clear
-        window.styleMask.insert(.fullSizeContentView)
+    // MARK: - Window Updates
+    private func updateWindowBehavior(_ window: NSWindow) {
+        if isEditModeEnabled {
+            window.styleMask.insert(.resizable)
+            window.isMovable = true
+        } else {
+            window.styleMask.remove(.resizable)
+            window.isMovable = false
+        }
         
-        if let contentView = window.contentView {
-            contentView.wantsLayer = true
-            contentView.layer?.backgroundColor = NSColor.clear.cgColor
+        if isEditModeEnabled && appSettings.enableEditModeAlignment {
+            window.level = .floating
+        } else {
+            window.level = .statusBar + 1
+        }
+        
+        if appSettings.managedByMissionControl {
+            window.collectionBehavior.insert(.managed)
+        } else {
+            window.collectionBehavior.remove(.managed)
         }
     }
     
-    // MARK: - Window Updates
     private func updateWindowSize(_ window: NSWindow) {
         let currentSize = window.frame.size
         let newHeight = currentSize.width / CGFloat(aspectRatio)
         window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
-    }
-    
-    private func updateWindowEditMode(_ window: NSWindow) {
-        window.isMovableByWindowBackground = isEditModeEnabled
-        window.isMovable = isEditModeEnabled
     }
 }
