@@ -14,83 +14,50 @@
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // MARK: - Properties
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
     @ObservedObject var appSettings: AppSettings
     
-    // MARK: - NSViewRepresentable Methods
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         DispatchQueue.main.async {
-            self.configureWindow(for: view, with: context)
+            if let window = view.window {
+                // Set basic window properties
+                window.styleMask = [.hudWindow]
+                window.hasShadow = false
+                window.backgroundColor = .clear
+                window.isMovableByWindowBackground = true
+                window.collectionBehavior.insert(.fullScreenAuxiliary)
+                
+                // Set initial size
+                let size = NSSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
+                window.setContentSize(size)
+                window.contentMinSize = size
+                window.contentAspectRatio = size
+            }
         }
         return view
     }
     
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else { return }
-        updateWindowBehavior(window)
-        updateWindowSize(window)
-    }
-    
-    // MARK: - Window Configuration
-    private func configureWindow(for view: NSView, with context: Context) {
-        guard let window = view.window else { return }
-        configureWindowAppearance(window)
-        configureWindowBehavior(window)
-        configureWindowSize(window)
-    }
-    
-    private func configureWindowAppearance(_ window: NSWindow) {
-        window.styleMask = [.hudWindow]
-        window.hasShadow = false
-        window.backgroundColor = .clear
-    }
-
-    private func configureWindowBehavior(_ window: NSWindow) {
-        window.isMovableByWindowBackground = true
-        window.collectionBehavior.insert(.fullScreenAuxiliary)
-        updateWindowBehavior(window)
-    }
-    
-    private func configureWindowSize(_ window: NSWindow) {
-        let size = NSSize(
-            width: appSettings.defaultWindowWidth,
-            height: appSettings.defaultWindowHeight
-        )
-        window.setContentSize(size)
-        window.contentMinSize = size
-        window.contentAspectRatio = size
-    }
-    
-    // MARK: - Window Updates
-    private func updateWindowBehavior(_ window: NSWindow) {
-        if isEditModeEnabled {
-            window.styleMask.insert(.resizable)
-            window.isMovable = true
-        } else {
-            window.styleMask.remove(.resizable)
-            window.isMovable = false
-        }
         
-        if isEditModeEnabled && appSettings.enableEditModeAlignment {
-            window.level = .floating
-        } else {
-            window.level = .statusBar + 1
-        }
+        // Update edit mode settings
+        window.styleMask = isEditModeEnabled ? [.hudWindow, .resizable] : [.hudWindow]
+        window.isMovable = isEditModeEnabled
+        window.level = isEditModeEnabled && appSettings.enableEditModeAlignment ? .floating : .statusBar + 1
         
+        // Update window management
         if appSettings.managedByMissionControl {
             window.collectionBehavior.insert(.managed)
         } else {
             window.collectionBehavior.remove(.managed)
         }
-    }
-    
-    private func updateWindowSize(_ window: NSWindow) {
-        let currentSize = window.frame.size
-        let newHeight = currentSize.width / CGFloat(aspectRatio)
-        window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
+        
+        // Update window size
+        let width = window.frame.size.width
+        let height = width / aspectRatio
+        window.setContentSize(NSSize(width: width, height: height))
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
     }
 }
