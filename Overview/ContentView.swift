@@ -14,174 +14,89 @@
 import SwiftUI
 
 struct ContentView: View {
-    // MARK: - Properties
-    private struct ViewState {
-        var captureManagerId: UUID?
-        var showingSelection = true
-        var selectedWindowSize: CGSize?
-        var aspectRatio: CGFloat
-        var hasSetInitialSize = false
-        
-        init(defaultWidth: Double, defaultHeight: Double) {
-            self.aspectRatio = defaultWidth / defaultHeight
-        }
-    }
+    @ObservedObject var previewManager: PreviewManager
+    @ObservedObject var appSettings: AppSettings
+    @Binding var isEditModeEnabled: Bool
     
-    // MARK: - Observed Properties
-    @ObservedObject private var previewManager: PreviewManager
-    @ObservedObject private var appSettings: AppSettings
-    @Binding private var isEditModeEnabled: Bool
+    @State private var captureManagerId: UUID?
+    @State private var showingSelection = true
+    @State private var aspectRatio: CGFloat
+    @State private var selectedWindowSize: CGSize?
     
-    // MARK: - State
-    @State private var viewState: ViewState
-    
-    // MARK: - Initialization
     init(previewManager: PreviewManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings) {
         self.previewManager = previewManager
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
-        self._viewState = State(initialValue: ViewState(
-            defaultWidth: appSettings.defaultWindowWidth,
-            defaultHeight: appSettings.defaultWindowHeight
-        ))
+        self._aspectRatio = State(initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)
     }
     
-    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
-            mainContent(in: geometry)
-                .background(windowAccessor)
-                .onAppear(perform: createCaptureManager)
-                .onDisappear(perform: removeCaptureManager)
-                .onChange(of: viewState.selectedWindowSize, updateAspectRatioForSelectedWindow)
-        }.ignoresSafeArea()
-    }
-    
-    // MARK: - Content Builders
-    @ViewBuilder
-        private func mainContent(in geometry: GeometryProxy) -> some View {
             VStack(spacing: 0) {
-                if viewState.showingSelection {
-                    selectionView
+                if showingSelection {
+                    SelectionView(
+                        previewManager: previewManager,
+                        appSettings: appSettings,
+                        captureManagerId: $captureManagerId,
+                        showingSelection: $showingSelection,
+                        selectedWindowSize: $selectedWindowSize
+                    )
+                    .frame(
+                        width: appSettings.defaultWindowWidth,
+                        height: appSettings.defaultWindowHeight
+                    )
+                } else if let id = captureManagerId,
+                          let captureManager = previewManager.captureManagers[id] {
+                    PreviewView(
+                        captureManager: captureManager,
+                        appSettings: appSettings,
+                        isEditModeEnabled: $isEditModeEnabled,
+                        showingSelection: $showingSelection
+                    )
                 } else {
-                    captureContent
+                    retryView
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-            .aspectRatio(viewState.aspectRatio, contentMode: .fit)
-            .background(Color.black.opacity(
-                viewState.showingSelection ? appSettings.opacity : 0
-            ))
-            .overlay(interactionOverlay)
-        }
-        
-        @ViewBuilder
-        private var captureContent: some View {
-            if let id = viewState.captureManagerId,
-               let captureManager = previewManager.captureManagers[id] {
-                PreviewView(
-                    captureManager: captureManager,
-                    appSettings: appSettings,
+            .aspectRatio(aspectRatio, contentMode: .fit)
+            .background(Color.black.opacity(showingSelection ? appSettings.opacity : 0))
+            .overlay(
+                InteractionOverlay(
                     isEditModeEnabled: $isEditModeEnabled,
-                    showingSelection: bindingForShowingSelection
+                    isBringToFrontEnabled: false,
+                    bringToFrontAction: {},
+                    toggleEditModeAction: { isEditModeEnabled.toggle() }
                 )
-                .background(Color.clear)
-            } else {
-                noCaptureManagerView
+            )
+            .background(
+                WindowAccessor(
+                    aspectRatio: $aspectRatio,
+                    isEditModeEnabled: $isEditModeEnabled,
+                    appSettings: appSettings
+                )
+            )
+        }
+        .onAppear { captureManagerId = previewManager.createNewCaptureManager() }
+        .onDisappear {
+            if let id = captureManagerId {
+                previewManager.removeCaptureManager(id: id)
             }
         }
-    
-    private var selectionView: some View {
-        SelectionView(
-            previewManager: previewManager,
-            appSettings: appSettings,
-            captureManagerId: bindingForCaptureManagerId,
-            showingSelection: bindingForShowingSelection,
-            selectedWindowSize: bindingForSelectedWindowSize
-        )
-        .frame(height: viewState.hasSetInitialSize ? nil : appSettings.defaultWindowHeight)
-        .frame(
-            minWidth: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowWidth,
-            minHeight: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowHeight
-        )
-        .onAppear {
-            // Mark that we've set the initial size
-            if !viewState.hasSetInitialSize {
-                viewState.hasSetInitialSize = true
+        .onChange(of: selectedWindowSize) { oldSize, newSize in
+            if let size = newSize {
+                aspectRatio = size.width / size.height
             }
         }
     }
     
-    private var noCaptureManagerView: some View {
+    private var retryView: some View {
         VStack {
             Text("No capture manager found")
                 .foregroundColor(.red)
-            Button("Retry", action: createCaptureManager)
-                .padding()
-        }
-    }
-    
-    private var interactionOverlay: some View {
-        InteractionOverlay(
-            isEditModeEnabled: $isEditModeEnabled,
-            isBringToFrontEnabled: false,
-            bringToFrontAction: {},
-            toggleEditModeAction: { isEditModeEnabled.toggle() }
-        )
-    }
-    
-    private var windowAccessor: some View {
-        WindowAccessor(
-            aspectRatio: bindingForAspectRatio,
-            isEditModeEnabled: $isEditModeEnabled,
-            appSettings: appSettings
-        )
-    }
-    
-    // MARK: - State Bindings
-    private var bindingForCaptureManagerId: Binding<UUID?> {
-        Binding(
-            get: { viewState.captureManagerId },
-            set: { viewState.captureManagerId = $0 }
-        )
-    }
-    
-    private var bindingForShowingSelection: Binding<Bool> {
-        Binding(
-            get: { viewState.showingSelection },
-            set: { viewState.showingSelection = $0 }
-        )
-    }
-    
-    private var bindingForSelectedWindowSize: Binding<CGSize?> {
-        Binding(
-            get: { viewState.selectedWindowSize },
-            set: { viewState.selectedWindowSize = $0 }
-        )
-    }
-    
-    private var bindingForAspectRatio: Binding<CGFloat> {
-        Binding(
-            get: { viewState.aspectRatio },
-            set: { viewState.aspectRatio = $0 }
-        )
-    }
-    
-    // MARK: - Actions
-    private func createCaptureManager() {
-        viewState.captureManagerId = previewManager.createNewCaptureManager()
-    }
-    
-    private func removeCaptureManager() {
-        if let id = viewState.captureManagerId {
-            previewManager.removeCaptureManager(id: id)
-        }
-    }
-    
-    // MARK: - Update Handlers
-    private func updateAspectRatioForSelectedWindow() {
-        if let size = viewState.selectedWindowSize {
-            viewState.aspectRatio = size.width / size.height
+            Button("Retry") {
+                captureManagerId = previewManager.createNewCaptureManager()
+            }
+            .padding()
         }
     }
 }
