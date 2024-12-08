@@ -59,21 +59,37 @@ struct ContentView: View {
     
     // MARK: - Content Builders
     @ViewBuilder
-    private func mainContent(in geometry: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            if viewState.showingSelection {
-                selectionView
+        private func mainContent(in geometry: GeometryProxy) -> some View {
+            VStack(spacing: 0) {
+                if viewState.showingSelection {
+                    selectionView
+                } else {
+                    captureContent
+                }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .aspectRatio(viewState.aspectRatio, contentMode: .fit)
+            .background(Color.black.opacity(
+                viewState.showingSelection ? appSettings.opacity : 0
+            ))
+            .overlay(interactionOverlay)
+        }
+        
+        @ViewBuilder
+        private var captureContent: some View {
+            if let id = viewState.captureManagerId,
+               let captureManager = previewManager.captureManagers[id] {
+                PreviewView(
+                    captureManager: captureManager,
+                    appSettings: appSettings,
+                    isEditModeEnabled: $isEditModeEnabled,
+                    showingSelection: bindingForShowingSelection
+                )
+                .background(Color.clear)
             } else {
-                captureContent
+                noCaptureManagerView
             }
         }
-        .frame(width: geometry.size.width, height: geometry.size.height)
-        .aspectRatio(viewState.aspectRatio, contentMode: .fit)
-        .background(Color.black.opacity(
-            viewState.showingSelection ? appSettings.opacity : 0
-        ))
-        .overlay(interactionOverlay)
-    }
     
     private var selectionView: some View {
         SelectionView(
@@ -84,7 +100,6 @@ struct ContentView: View {
             selectedWindowSize: bindingForSelectedWindowSize
         )
         .frame(height: viewState.hasSetInitialSize ? nil : appSettings.defaultWindowHeight)
-        .transition(.opacity)
         .frame(
             minWidth: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowWidth,
             minHeight: viewState.hasSetInitialSize ? 0 : appSettings.defaultWindowHeight
@@ -94,21 +109,6 @@ struct ContentView: View {
             if !viewState.hasSetInitialSize {
                 viewState.hasSetInitialSize = true
             }
-        }
-    }
-    
-    @ViewBuilder
-    private var captureContent: some View {
-        if let id = viewState.captureManagerId,
-           let captureManager = previewManager.captureManagers[id] {
-            PreviewView(
-                captureManager: captureManager,
-                appSettings: appSettings,
-                isEditModeEnabled: $isEditModeEnabled
-            )
-            .background(Color.clear)
-        } else {
-            noCaptureManagerView
         }
     }
     

@@ -17,6 +17,7 @@ struct PreviewView: View {
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
+    @Binding var showingSelection: Bool
     
     var body: some View {
         Group {
@@ -40,11 +41,21 @@ struct PreviewView: View {
                             TitleView(title: captureManager.windowTitle) : nil
                     )
             } else {
-                Text("No capture available").opacity(appSettings.opacity)
+                Color.black
+                    .opacity(appSettings.opacity)
             }
         }
-        .onAppear { Task { try? await captureManager.startCapture() } }
-        .onDisappear { Task { await captureManager.stopCapture() } }
+        .onAppear {
+            Task { try? await captureManager.startCapture() }
+        }
+        .onDisappear {
+            Task { await captureManager.stopCapture() }
+        }
+        .onChange(of: captureManager.isCapturing) { oldValue, newValue in
+            if !newValue {
+                showingSelection = true
+            }
+        }
     }
 }
 
