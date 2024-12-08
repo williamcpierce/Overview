@@ -4,6 +4,9 @@
 
  Created by William Pierce on 9/15/24.
 
+ Manages window capture lifecycle and state synchronization between the capture
+ stream and UI components, providing a high-level interface for window previews.
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -15,22 +18,15 @@ import Combine
 import OSLog
 import ScreenCaptureKit
 
-/// Manages window capture state and coordinates capture operations with UI components
-///
-/// Key responsibilities:
-/// - Manages capture session lifecycle and configuration
-/// - Coordinates window selection and focus state
-/// - Handles capture permissions and errors
-/// - Maintains captured frame state for preview rendering
-///
-/// Coordinates with:
-/// - PreviewView: Provides captured frames and window state for display
-/// - SelectionView: Handles window selection and capture initialization
-/// - AppSettings: Applies user configuration to capture sessions
-/// - CaptureEngine: Manages low-level capture stream operations
+/// Error cases that can occur during window capture operations
 enum CaptureError: LocalizedError {
+    /// Screen recording permission was denied by the user or system
     case permissionDenied
+
+    /// Attempted to start capture without selecting a window
     case noWindowSelected
+
+    /// Capture stream failed to initialize or encountered an error
     case captureStreamFailed(Error)
 
     var errorDescription: String? {
@@ -45,24 +41,37 @@ enum CaptureError: LocalizedError {
     }
 }
 
+/// Manages window capture state and coordinates preview operations
+///
+/// Key responsibilities:
+/// - Coordinates window selection and focus state tracking
+/// - Maintains captured frame state for preview rendering
+/// - Manages capture session lifecycle and permissions
+/// - Synchronizes capture configuration with user settings
+///
+/// Coordinates with:
+/// - PreviewView: Provides frame data and window state
+/// - SelectionView: Handles window setup and initialization
+/// - AppSettings: Applies user configuration to capture
+/// - CaptureEngine: Manages low-level stream operations
 @MainActor
 class CaptureManager: ObservableObject {
-    // MARK: - Published Properties
+    // MARK: - Properties
 
-    /// The most recent frame captured from the source window
-    @Published var capturedFrame: CapturedFrame?
+    /// Most recent frame from the source window
+    @Published private(set) var capturedFrame: CapturedFrame?
 
-    /// List of windows available for capture, filtered by WindowFilterService
-    @Published var availableWindows: [SCWindow] = []
+    /// Available windows for capture, filtered to remove system windows
+    @Published private(set) var availableWindows: [SCWindow] = []
 
-    /// Whether capture is currently active
-    @Published var isCapturing = false
+    /// Whether capture is active and delivering frames
+    @Published private(set) var isCapturing = false
 
-    /// Whether the source window currently has focus
-    @Published var isSourceWindowFocused = false
+    /// Whether the source window has system focus
+    @Published private(set) var isSourceWindowFocused = false
 
     /// Title of the currently selected window
-    @Published var windowTitle: String?
+    @Published private(set) var windowTitle: String?
 
     /// Currently selected window for capture
     @Published var selectedWindow: SCWindow? {
@@ -74,31 +83,54 @@ class CaptureManager: ObservableObject {
 
     // MARK: - Private Properties
 
-    /// Context: Logger is used across services for consistent error tracking
+    /// System logger for capture operations
     private let logger = Logger(subsystem: "com.Overview.CaptureManager", category: "ScreenCapture")
+
+    /// Active Combine subscriptions for cleanup
     private var cancellables = Set<AnyCancellable>()
+
+    /// Current capture operation
+    /// - Warning: Must be cancelled before starting new capture
     private var captureTask: Task<Void, Never>?
 
-    // MARK: - Dependencies
+    // MARK: - Service Dependencies
 
-    /// Context: These services handle specific aspects of window capture and management
+    /// User-configured settings for capture behavior
     private let appSettings: AppSettings
+
+    /// Low-level screen capture operations
     private let captureEngine: CaptureEngine
+
+    /// Capture stream parameters
     private let streamConfig: StreamConfigurationService
+
+    /// Window filtering for capture targets
     private let windowFilter: WindowFilterService
+
+    /// Window focus state tracking
     private let windowFocus: WindowFocusService
+
+    /// Window title updates
     private let titleService: WindowTitleService
+
+    /// Window state change monitoring
     private let windowObserver: WindowObserverService
+
+    /// Screen recording permissions
     private let shareableContent: ShareableContentService
 
     // MARK: - Initialization
 
-    /// Initializes the capture manager with required services
+    /// Creates capture manager with required services
     ///
     /// Flow:
     /// 1. Stores service dependencies
     /// 2. Sets up window state observers
     /// 3. Configures frame rate monitoring
+    ///
+    /// - Parameters:
+    ///   - appSettings: User preferences
+    ///   - services: Optional service overrides for testing
     init(
         appSettings: AppSettings,
         captureEngine: CaptureEngine = CaptureEngine(),
@@ -124,11 +156,17 @@ class CaptureManager: ObservableObject {
     // MARK: - Public Methods
 
     /// Requests screen capture permission from the system
+    /// - Throws: CaptureError.permissionDenied if access is not granted
     func requestPermission() async throws {
         try await shareableContent.requestPermission()
     }
 
     /// Updates the list of available windows for capture
+    ///
+    /// Flow:
+    /// 1. Retrieves current window list
+    /// 2. Filters out invalid capture targets
+    /// 3. Updates available windows property
     func updateAvailableWindows() async {
         do {
             let windows = try await shareableContent.getAvailableWindows()
@@ -143,12 +181,13 @@ class CaptureManager: ObservableObject {
     /// Initiates window capture with current configuration
     ///
     /// Flow:
-    /// 1. Validates window selection
-    /// 2. Configures capture stream
-    /// 3. Begins frame processing
+    /// 1. Validates window selection and state
+    /// 2. Creates stream configuration
+    /// 3. Starts capture engine
     ///
-    /// - Throws: CaptureError.noWindowSelected if no window is selected
-    ///          CaptureError.captureStreamFailed for stream initialization failures
+    /// - Throws:
+    ///   - CaptureError.noWindowSelected if no window selected
+    ///   - CaptureError.captureStreamFailed for initialization failures
     func startCapture() async throws {
         guard !isCapturing else { return }
         guard let window = selectedWindow else {
@@ -164,6 +203,11 @@ class CaptureManager: ObservableObject {
     }
 
     /// Stops the current capture session
+    ///
+    /// Flow:
+    /// 1. Cancels active capture task
+    /// 2. Stops capture engine
+    /// 3. Resets capture state
     func stopCapture() async {
         guard isCapturing else { return }
 
@@ -175,8 +219,7 @@ class CaptureManager: ObservableObject {
         capturedFrame = nil
     }
 
-    /// Brings the source window to front when preview is clicked
-    ///
+    /// Brings source window to front when preview is clicked
     /// - Parameter isEditModeEnabled: Whether edit mode is active
     func focusWindow(isEditModeEnabled: Bool) {
         guard let window = selectedWindow else { return }
@@ -185,7 +228,8 @@ class CaptureManager: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// Starts a new capture task for processing frames
+    /// Starts new capture task for processing frames
+    /// - Parameter frameStream: Stream of captured frames from engine
     @MainActor
     private func startCaptureTask(frameStream: AsyncThrowingStream<CapturedFrame, Error>) async {
         captureTask?.cancel()
@@ -202,12 +246,23 @@ class CaptureManager: ObservableObject {
     }
 
     /// Handles errors during capture
+    ///
+    /// Flow:
+    /// 1. Logs error details
+    /// 2. Stops capture session
+    /// 3. Updates UI state
     private func handleCaptureError(_ error: Error) async {
         logger.error("Capture error: \(error.localizedDescription)")
         await stopCapture()
     }
 
     /// Sets up observers for window state changes
+    ///
+    /// Flow:
+    /// 1. Configures focus monitoring
+    /// 2. Sets up title tracking
+    /// 3. Starts observation
+    /// 4. Configures frame rate handling
     private func setupObservers() {
         windowObserver.onFocusStateChanged = { [weak self] in
             await self?.updateFocusState()
@@ -219,7 +274,7 @@ class CaptureManager: ObservableObject {
 
         windowObserver.startObserving()
 
-        /// WARNING: Frame rate changes require stream reconfiguration
+        // WARNING: Frame rate changes require stream reconfiguration
         appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in
@@ -230,17 +285,18 @@ class CaptureManager: ObservableObject {
             .store(in: &cancellables)
     }
 
-    /// Updates the focus state of the source window
+    /// Updates focus state of the source window
     private func updateFocusState() async {
         isSourceWindowFocused = await windowFocus.updateFocusState(for: selectedWindow)
     }
 
-    /// Updates the title of the source window
+    /// Updates title of the source window
     private func updateWindowTitle() async {
         windowTitle = await titleService.updateWindowTitle(for: selectedWindow)
     }
 
     /// Updates capture configuration when settings change
+    /// - Warning: Frame rate changes require stream reconfiguration
     private func updateStreamConfiguration() async {
         guard isCapturing, let window = selectedWindow else { return }
         try? await streamConfig.updateConfiguration(

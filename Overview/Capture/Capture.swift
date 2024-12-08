@@ -4,6 +4,9 @@
 
  Created by William Pierce on 12/6/24.
 
+ Provides efficient rendering of captured window content using Core Animation layers,
+ handling display scaling and frame updates with minimal overhead.
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -13,20 +16,38 @@
 
 import SwiftUI
 
-/// Displays captured window content using a Core Animation layer
+/// Renders captured window content using a high-performance Core Animation layer
 ///
 /// Key responsibilities:
-/// - Converts CapturedFrame data into a renderable CALayer
-/// - Maintains proper content scaling across display densities
+/// - Converts CapturedFrame data into a renderable CALayer representation
+/// - Maintains proper content scaling across varying display densities
+/// - Handles dynamic frame updates with minimal performance impact
+/// - Ensures proper memory management of IOSurface resources
 ///
 /// Coordinates with:
-/// - CaptureEngine: Receives frame data including IOSurface and scaling information
-/// - PreviewView: Parent view that manages capture lifecycle and window interactions
+/// - CaptureEngine: Receives frame data and scaling information
+/// - PreviewView: Integrates into the SwiftUI view hierarchy
+/// - WindowAccessor: Coordinates window dimensions and scaling
 struct Capture: NSViewRepresentable {
+    // MARK: - Properties
+
+    /// Current frame data containing surface and layout information
+    /// - Note: Updates frequently (up to screen refresh rate)
     let frame: CapturedFrame
 
+    // MARK: - NSViewRepresentable Implementation
+
     /// Creates the underlying NSView with layer support enabled
+    ///
+    /// Flow:
+    /// 1. Creates base NSView instance
+    /// 2. Enables layer backing for Core Animation
+    /// 3. Returns configured view for layer updates
+    ///
+    /// - Important: View must be layer-backed for proper rendering
     func makeNSView(context: Context) -> NSView {
+        // Context: Using NSView for direct layer access provides
+        // better performance with frequent frame updates
         let view = NSView()
         view.wantsLayer = true
         return view
@@ -35,17 +56,25 @@ struct Capture: NSViewRepresentable {
     /// Updates the view's layer with new frame content
     ///
     /// Flow:
-    /// 1. Extracts IOSurface from the captured frame
-    /// 2. Configures layer properties for proper scaling
-    /// 3. Updates the view's backing layer
+    /// 1. Validates IOSurface availability
+    /// 2. Creates CALayer with proper scaling
+    /// 3. Updates view's backing layer
+    ///
+    /// - Important: Layer updates must occur on main thread
+    /// - Warning: Must ensure proper IOSurface lifecycle
     func updateNSView(_ nsView: NSView, context: Context) {
+        // Context: Direct layer replacement provides better performance
+        // than updating existing layer properties
         guard let surface = frame.surface else { return }
 
         let layer = CALayer()
+
+        // Configure layer for optimal rendering
         layer.contents = surface
         layer.contentsScale = frame.contentScale
         layer.bounds = frame.contentRect
 
+        // WARNING: Layer replacement must be atomic to prevent tearing
         nsView.layer = layer
     }
 }

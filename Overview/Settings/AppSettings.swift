@@ -4,6 +4,9 @@
 
  Created by William Pierce on 10/13/24.
 
+ Manages persistent application settings and preferences using UserDefaults,
+ providing real-time updates across the application through Combine.
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -13,62 +16,84 @@
 
 import Foundation
 
-/// Manages persistent application settings and broadcasts changes to observers
+/// Manages persistent application settings and real-time preference updates
 ///
 /// Key responsibilities:
-/// - Persists user preferences using UserDefaults
-/// - Provides default values for first-time app launch
-/// - Broadcasts setting changes via @Published properties
+/// - Maintains core application preferences in UserDefaults
+/// - Broadcasts setting changes via Combine publishers
+/// - Validates setting values for consistency
+/// - Provides default configurations for new installations
 ///
 /// Coordinates with:
-/// - CaptureManager: Provides frame rate and window settings
-/// - WindowAccessor: Controls window appearance and behavior settings
-/// - PreviewView: Configures preview window visual properties
+/// - CaptureManager: Provides capture configuration settings
+/// - WindowAccessor: Controls window appearance and behavior
+/// - PreviewView: Configures preview window properties
+/// - SettingsView: Enables preference modification
 class AppSettings: ObservableObject {
-    // MARK: - Visual Properties
+    // MARK: - Visual Settings
 
-    /// Window transparency level (0.05-1.0)
+    /// Preview window transparency level (0.05-1.0)
+    /// - Note: Values outside range are clamped during validation
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
-        didSet { UserDefaults.standard.set(opacity, forKey: "windowOpacity") }
+        didSet {
+            let clampedValue = max(0.05, min(1.0, opacity))
+            UserDefaults.standard.set(clampedValue, forKey: "windowOpacity")
+        }
     }
 
-    /// Capture refresh rate in frames per second
+    /// Window capture refresh rate in frames per second
+    /// - Note: Valid values are 1, 5, 10, 30, 60, 120
+    /// - Warning: Changes require CaptureEngine stream reconfiguration
     @Published var frameRate: Double = UserDefaults.standard.double(forKey: "frameRate") {
-        didSet { UserDefaults.standard.set(frameRate, forKey: "frameRate") }
+        didSet {
+            UserDefaults.standard.set(frameRate, forKey: "frameRate")
+        }
     }
 
     // MARK: - Window Dimensions
 
-    /// Initial window width in pixels for new preview windows
+    /// Default width for new preview windows
+    /// - Note: Maintains aspect ratio with height
     @Published var defaultWindowWidth: Double = UserDefaults.standard.double(
         forKey: "defaultWindowWidth")
     {
-        didSet { UserDefaults.standard.set(defaultWindowWidth, forKey: "defaultWindowWidth") }
+        didSet {
+            UserDefaults.standard.set(defaultWindowWidth, forKey: "defaultWindowWidth")
+        }
     }
 
-    /// Initial window height in pixels for new preview windows
+    /// Default height for new preview windows
+    /// - Note: Maintains aspect ratio with width
     @Published var defaultWindowHeight: Double = UserDefaults.standard.double(
         forKey: "defaultWindowHeight")
     {
-        didSet { UserDefaults.standard.set(defaultWindowHeight, forKey: "defaultWindowHeight") }
+        didSet {
+            UserDefaults.standard.set(defaultWindowHeight, forKey: "defaultWindowHeight")
+        }
     }
 
     // MARK: - UI Options
 
-    /// Whether to display a border around the active source window
+    /// Indicates whether to highlight the currently focused window
+    /// - Note: Border only appears when source window has focus
     @Published var showFocusedBorder: Bool = UserDefaults.standard.bool(forKey: "showFocusedBorder")
     {
-        didSet { UserDefaults.standard.set(showFocusedBorder, forKey: "showFocusedBorder") }
+        didSet {
+            UserDefaults.standard.set(showFocusedBorder, forKey: "showFocusedBorder")
+        }
     }
 
-    /// Whether to display the source window's title in the preview
+    /// Indicates whether to show source window title in preview
     @Published var showWindowTitle: Bool = UserDefaults.standard.bool(forKey: "showWindowTitle") {
-        didSet { UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle") }
+        didSet {
+            UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle")
+        }
     }
 
     // MARK: - Window Management
 
-    /// Whether preview windows appear in Mission Control
+    /// Controls preview window visibility in Mission Control
+    /// - Warning: Requires window recreation to take effect
     @Published var managedByMissionControl: Bool = UserDefaults.standard.bool(
         forKey: "managedByMissionControl")
     {
@@ -77,7 +102,8 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// Whether to adjust window level during edit mode to assist with positioning
+    /// Controls window level adjustment during edit mode
+    /// - Note: Lower window level helps with alignment to other windows
     @Published var enableEditModeAlignment: Bool = UserDefaults.standard.bool(
         forKey: "enableEditModeAlignment")
     {
@@ -88,22 +114,57 @@ class AppSettings: ObservableObject {
 
     // MARK: - Initialization
 
-    /// Creates settings manager and establishes default values if not previously set
+    /// Initializes settings with defaults and validates stored values
+    ///
+    /// Flow:
+    /// 1. Checks for existing preferences in UserDefaults
+    /// 2. Applies defaults for missing settings
+    /// 3. Validates all values meet requirements
     init() {
-        /// Set initial values for first launch
-        if UserDefaults.standard.double(forKey: "windowOpacity") == 0 { opacity = 0.95 }
-        if UserDefaults.standard.double(forKey: "frameRate") == 0 { frameRate = 30 }
+        // Apply defaults for first launch
+        if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
+            opacity = 0.95  // High visibility default
+        }
+        if UserDefaults.standard.double(forKey: "frameRate") == 0 {
+            frameRate = 30  // Balance performance/smoothness
+        }
         if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 {
-            defaultWindowWidth = 288
+            defaultWindowWidth = 288  // 16:9 aspect ratio
         }
         if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
+            defaultWindowHeight = 162  // 16:9 aspect ratio
+        }
+
+        validateSettings()
+    }
+
+    // MARK: - Private Methods
+
+    /// Validates and corrects settings values
+    private func validateSettings() {
+        // Clamp opacity to valid range
+        if opacity < 0.05 || opacity > 1.0 {
+            opacity = max(0.05, min(1.0, opacity))
+        }
+
+        // Ensure frame rate is supported
+        let validRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
+        if !validRates.contains(frameRate) {
+            frameRate = 30.0
+        }
+
+        // Enforce minimum window dimensions
+        if defaultWindowWidth < 100 {
+            defaultWindowWidth = 288
+        }
+        if defaultWindowHeight < 100 {
             defaultWindowHeight = 162
         }
     }
 
     // MARK: - Computed Properties
 
-    /// Convenience accessor for default window dimensions
+    /// Provides default window size as CGSize
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }
