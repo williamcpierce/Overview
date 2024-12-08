@@ -13,16 +13,50 @@
 
 import SwiftUI
 
+/// Primary view container that manages window preview and selection states
+///
+/// Key responsibilities:
+/// - Coordinates between selection and preview modes
+/// - Manages window aspect ratio and sizing
+/// - Handles edit mode interactions
+///
+/// Coordinates with:
+/// - PreviewManager: Window management and capture state
+/// - AppSettings: User preferences and window configuration
+/// - SelectionView: Window selection interface
+/// - PreviewView: Live window preview display
 struct ContentView: View {
+    // MARK: - Properties
+
+    /// Manages capture windows and edit mode state
     @ObservedObject var previewManager: PreviewManager
+
+    /// Stores user preferences and window settings
     @ObservedObject var appSettings: AppSettings
+
+    /// Controls whether the window can be moved and resized
     @Binding var isEditModeEnabled: Bool
 
+    /// State for managing the active capture session
     @State private var captureManagerId: UUID?
+
+    /// Controls visibility of window selection interface
     @State private var showingSelection = true
+
+    /// Current width/height ratio of the preview window
     @State private var aspectRatio: CGFloat
+
+    /// Dimensions of the currently selected window
     @State private var selectedWindowSize: CGSize?
 
+    // MARK: - Initialization
+
+    /// Creates a new content view with the specified managers and edit mode state
+    ///
+    /// - Parameters:
+    ///   - previewManager: Controls window previews and capture state
+    ///   - isEditModeEnabled: Binding to edit mode toggle
+    ///   - appSettings: User preferences and window configuration
     init(previewManager: PreviewManager, isEditModeEnabled: Binding<Bool>, appSettings: AppSettings)
     {
         self.previewManager = previewManager
@@ -31,6 +65,8 @@ struct ContentView: View {
         self._aspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)
     }
+
+    // MARK: - View Body
 
     var body: some View {
         GeometryReader { geometry in
@@ -62,6 +98,7 @@ struct ContentView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .aspectRatio(aspectRatio, contentMode: .fit)
+            /// Context: Background opacity only applies during window selection
             .background(Color.black.opacity(showingSelection ? appSettings.opacity : 0))
             .overlay(
                 InteractionOverlay(
@@ -92,6 +129,9 @@ struct ContentView: View {
         }
     }
 
+    // MARK: - Private Views
+
+    /// Fallback view shown when capture manager initialization fails
     private var retryView: some View {
         VStack {
             Text("No capture manager found")

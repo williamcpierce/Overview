@@ -13,6 +13,16 @@
 
 import SwiftUI
 
+/// Renders the live window preview with configurable overlays and interaction handlers
+///
+/// Key responsibilities:
+/// - Displays the captured window content with configurable opacity
+/// - Manages window focus and edit mode interactions
+/// - Shows optional window title and focus border overlays
+///
+/// Coordinates with:
+/// - CaptureManager: For frame capture and window focus state
+/// - AppSettings: For visual configuration and behavior settings
 struct PreviewView: View {
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var appSettings: AppSettings
@@ -44,6 +54,7 @@ struct PreviewView: View {
                             ? TitleView(title: captureManager.windowTitle) : nil
                     )
             } else {
+                /// Show placeholder when no frame is available
                 Color.black
                     .opacity(appSettings.opacity)
             }
@@ -55,6 +66,7 @@ struct PreviewView: View {
             Task { await captureManager.stopCapture() }
         }
         .onChange(of: captureManager.isCapturing) { oldValue, newValue in
+            /// Return to selection view if capture stops
             if !newValue {
                 showingSelection = true
             }
@@ -62,6 +74,11 @@ struct PreviewView: View {
     }
 }
 
+/// Displays the window title in a semi-transparent overlay at the top of the preview
+///
+/// Key responsibilities:
+/// - Renders the window title with consistent styling
+/// - Maintains proper layout and spacing
 struct TitleView: View {
     let title: String?
 

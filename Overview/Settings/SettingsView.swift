@@ -13,13 +13,24 @@
 
 import SwiftUI
 
+/// Main settings view that provides user configuration options through a tabbed interface
+///
+/// Key responsibilities:
+/// - Displays and manages all user-configurable app settings
+/// - Organizes settings into logical groupings via tabs
+/// - Provides real-time preview of setting changes
+///
+/// Coordinates with:
+/// - AppSettings: Stores and persists all user preferences
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
+
+    /// Available frame rate options for performance configuration
     private let frameRateOptions = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
         TabView {
-            // General Tab
+            // MARK: - General Tab
             Form {
                 Section {
                     Text("Overlays")
@@ -32,8 +43,9 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gear") }
 
-            // Window Tab
+            // MARK: - Window Tab
             Form {
+                /// Opacity configuration section
                 Section {
                     Text("Opacity")
                         .font(.headline)
@@ -51,6 +63,7 @@ struct SettingsView: View {
                     }
                 }
 
+                /// Default window size configuration
                 Section {
                     Text("Default Size")
                         .font(.headline)
@@ -74,6 +87,7 @@ struct SettingsView: View {
                     }
                 }
 
+                /// Window behavior settings
                 Section {
                     Text("Behavior")
                         .font(.headline)
@@ -92,7 +106,7 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("Windows", systemImage: "macwindow") }
 
-            // Performance Tab
+            // MARK: - Performance Tab
             Form {
                 Section {
                     Text("Frame Rate")
@@ -122,6 +136,13 @@ struct SettingsView: View {
 }
 
 // MARK: - Slider Component
+
+/// Custom NSSlider wrapper that provides precise opacity control
+///
+/// Key responsibilities:
+/// - Provides continuous value updates while dragging
+/// - Rounds values to 2 decimal places for stability
+/// - Maintains binding with parent view's state
 struct SliderRepresentable: NSViewRepresentable {
     @Binding var value: Double
     let minValue: Double
@@ -143,6 +164,7 @@ struct SliderRepresentable: NSViewRepresentable {
         Coordinator(value: $value)
     }
 
+    /// Coordinates between NSSlider events and SwiftUI state
     class Coordinator: NSObject {
         var value: Binding<Double>
 
@@ -150,6 +172,9 @@ struct SliderRepresentable: NSViewRepresentable {
             self.value = value
         }
 
+        /// Handles slider value changes and updates the binding
+        ///
+        /// Rounds the value to 2 decimal places for stability
         @objc func valueChanged(_ sender: NSSlider) {
             let rounded = round(sender.doubleValue * 100) / 100
             value.wrappedValue = rounded

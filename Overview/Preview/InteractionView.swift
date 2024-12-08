@@ -13,11 +13,23 @@
 
 import SwiftUI
 
+/// Provides user interaction controls for Overview preview windows
+///
+/// Key responsibilities:
+/// - Handles mouse events for window focus control
+/// - Manages context menu for edit mode and window controls
+/// - Coordinates window interaction state with SwiftUI environment
+///
+/// Coordinates with:
+/// - PreviewView: Parent view providing window state and actions
+/// - CaptureManager: Handles window focus changes triggered by interactions
 struct InteractionOverlay: NSViewRepresentable {
     @Binding var isEditModeEnabled: Bool
     let isBringToFrontEnabled: Bool
     let bringToFrontAction: () -> Void
     let toggleEditModeAction: () -> Void
+
+    // MARK: - NSViewRepresentable
 
     func makeNSView(context: Context) -> NSView {
         let view = InteractionView()
@@ -35,6 +47,7 @@ struct InteractionOverlay: NSViewRepresentable {
         view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
     }
 
+    /// Creates the context menu with edit mode toggle and window controls
     private func createContextMenu(for view: InteractionView) -> NSMenu {
         let menu = NSMenu()
 
@@ -55,6 +68,8 @@ struct InteractionOverlay: NSViewRepresentable {
     }
 }
 
+/// Context: Handles low-level mouse events and menu interactions, coordinating with
+/// InteractionOverlay for state management
 private final class InteractionView: NSView {
     var isEditModeEnabled = false
     var isBringToFrontEnabled = false
