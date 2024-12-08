@@ -52,7 +52,7 @@ struct SelectionView: View {
     
     // MARK: - Private Views
     private var loadingView: some View {
-        ProgressView("Loading available windows...")
+        Text("")
     }
     
     private func contentView(for captureManager: CaptureManager) -> some View {

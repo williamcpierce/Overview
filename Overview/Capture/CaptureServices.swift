@@ -70,7 +70,7 @@ class WindowFocusService {
               let processID = window.owningApplication?.processID else { return }
               
         NSRunningApplication(processIdentifier: pid_t(processID))?
-            .activate(options: [.activateAllWindows])
+            .activate()
     }
     
     func updateFocusState(for window: SCWindow?) async -> Bool {

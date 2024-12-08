@@ -54,7 +54,7 @@ struct ContentView: View {
                 .onAppear(perform: createCaptureManager)
                 .onDisappear(perform: removeCaptureManager)
                 .onChange(of: viewState.selectedWindowSize, updateAspectRatioForSelectedWindow)
-        }
+        }.ignoresSafeArea()
     }
     
     // MARK: - Content Builders
