@@ -14,75 +14,50 @@
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // MARK: - Properties
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
     @ObservedObject var appSettings: AppSettings
     
-    // MARK: - NSViewRepresentable Methods
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         DispatchQueue.main.async {
-            self.configureWindow(for: view, with: context)
+            if let window = view.window {
+                // Set basic window properties
+                window.styleMask = [.hudWindow]
+                window.hasShadow = false
+                window.backgroundColor = .clear
+                window.isMovableByWindowBackground = true
+                window.collectionBehavior.insert(.fullScreenAuxiliary)
+                
+                // Set initial size
+                let size = NSSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
+                window.setContentSize(size)
+                window.contentMinSize = size
+                window.contentAspectRatio = size
+            }
         }
         return view
     }
     
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else { return }
-        updateWindowSize(window)
-        updateWindowEditMode(window)
-    }
-    
-    // MARK: - Window Configuration
-    private func configureWindow(for view: NSView, with context: Context) {
-        guard let window = view.window else { return }
-        configureWindowStyle(window)
-        configureWindowSize(window)
-        configureWindowAppearance(window)
-    }
-    
-    private func configureWindowStyle(_ window: NSWindow) {
-        window.styleMask = [.borderless, .resizable, .fullSizeContentView]
-        window.isMovableByWindowBackground = isEditModeEnabled
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.level = .statusBar + 1
-        window.isOpaque = true
-        window.collectionBehavior = [.fullScreenAuxiliary]
-        window.hasShadow = false
-    }
-    
-    private func configureWindowSize(_ window: NSWindow) {
-        let size = NSSize(
-            width: appSettings.defaultWindowWidth,
-            height: appSettings.defaultWindowHeight
-        )
-        window.setContentSize(size)
-        window.contentMinSize = size
-        window.contentAspectRatio = size
-    }
-    
-    private func configureWindowAppearance(_ window: NSWindow) {
-        window.backgroundColor = .clear
-        window.styleMask.insert(.fullSizeContentView)
         
-        if let contentView = window.contentView {
-            contentView.wantsLayer = true
-            contentView.layer?.backgroundColor = NSColor.clear.cgColor
-        }
-    }
-    
-    // MARK: - Window Updates
-    private func updateWindowSize(_ window: NSWindow) {
-        let currentSize = window.frame.size
-        let newHeight = currentSize.width / CGFloat(aspectRatio)
-        window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
-        window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
-    }
-    
-    private func updateWindowEditMode(_ window: NSWindow) {
-        window.isMovableByWindowBackground = isEditModeEnabled
+        // Update edit mode settings
+        window.styleMask = isEditModeEnabled ? [.hudWindow, .resizable] : [.hudWindow]
         window.isMovable = isEditModeEnabled
+        window.level = isEditModeEnabled && appSettings.enableEditModeAlignment ? .floating : .statusBar + 1
+        
+        // Update window management
+        if appSettings.managedByMissionControl {
+            window.collectionBehavior.insert(.managed)
+        } else {
+            window.collectionBehavior.remove(.managed)
+        }
+        
+        // Update window size
+        let width = window.frame.size.width
+        let height = width / aspectRatio
+        window.setContentSize(NSSize(width: width, height: height))
+        window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
     }
 }

@@ -38,6 +38,14 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle") }
     }
     
+    @Published var managedByMissionControl: Bool = UserDefaults.standard.bool(forKey: "managedByMissionControl") {
+        didSet { UserDefaults.standard.set(managedByMissionControl, forKey: "managedByMissionControl") }
+    }
+
+    @Published var enableEditModeAlignment: Bool = UserDefaults.standard.bool(forKey: "enableEditModeAlignment") {
+        didSet { UserDefaults.standard.set(enableEditModeAlignment, forKey: "enableEditModeAlignment") }
+    }
+    
     init() {
         // Set defaults if needed
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 { opacity = 0.95 }
