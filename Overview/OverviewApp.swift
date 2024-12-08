@@ -26,22 +26,25 @@ struct OverviewApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(previewManager: previewManager, isEditModeEnabled: $previewManager.isEditModeEnabled, appSettings: appSettings)
+            ContentView(
+                previewManager: previewManager,
+                isEditModeEnabled: $previewManager.isEditModeEnabled,
+                appSettings: appSettings
+            )
         }
         .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(width: appSettings.defaultWindowWidth, height: appSettings.defaultWindowHeight)
+        .defaultSize(
+            width: appSettings.defaultWindowWidth,
+            height: appSettings.defaultWindowHeight
+        )
         .commands {
-            editCommands
+            CommandMenu("Edit") {
+                Toggle("Edit Mode", isOn: $previewManager.isEditModeEnabled)
+            }
         }
-        
+
         Settings {
             SettingsView(appSettings: appSettings)
-        }
-    }
-    
-    private var editCommands: some Commands {
-        CommandMenu("Edit") {
-            Toggle("Edit Mode", isOn: $previewManager.isEditModeEnabled)
         }
     }
 }
