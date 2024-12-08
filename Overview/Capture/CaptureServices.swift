@@ -207,7 +207,7 @@ class WindowFilterService {
 /// Coordinates with:
 /// - CaptureManager: Provides window focus state updates
 /// - NSWorkspace: Monitors active application changes
-/// - InteractionView: Triggers focus state transitions
+/// - InteractionOverlay: Triggers focus state transitions
 /// - PreviewView: Updates visual state based on focus
 /// - WindowAccessor: Coordinates window level changes during focus
 class WindowFocusService {
