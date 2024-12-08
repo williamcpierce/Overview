@@ -15,153 +15,97 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SelectionView: View {
-    // MARK: - Properties
     @ObservedObject var previewManager: PreviewManager
+    @ObservedObject var appSettings: AppSettings
+    
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
-    @ObservedObject var appSettings: AppSettings
     
     @State private var selectedWindow: SCWindow?
     @State private var isLoading = true
-    @State private var showError = false
     @State private var errorMessage = ""
     @State private var refreshID = UUID()
     
-    // MARK: - View Body
     var body: some View {
         VStack {
             if isLoading {
-                loadingView
+                ProgressView("Loading windows...")
+            } else if let error = errorMessage.isEmpty ? nil : errorMessage {
+                Text(error)
+                    .foregroundColor(.red)
+                    .padding()
             } else if let captureManager = getCaptureManager() {
-                contentView(for: captureManager)
-            } else {
-                errorView(message: "Error: No capture manager found")
+                windowSelectionContent(captureManager)
             }
         }
-        .onAppear {
-            Task { await setupCaptureManager() }
-        }
-        .alert(isPresented: $showError) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorMessage),
-                dismissButton: .default(Text("OK")))
+        .task {
+            await setupCapture()
         }
     }
     
-    // MARK: - Private Views
-    private var loadingView: some View {
-        Text("")
-    }
-    
-    private func contentView(for captureManager: CaptureManager) -> some View {
-        Group {
-            if captureManager.availableWindows.isEmpty {
-                Text("No windows available for capture")
-            } else {
-                windowPicker(for: captureManager)
-            }
-        }
-    }
-    
-    private func windowPicker(for captureManager: CaptureManager) -> some View {
+    private func windowSelectionContent(_ captureManager: CaptureManager) -> some View {
         VStack {
             HStack {
-                Picker("Select Window", selection: $selectedWindow) {
-                    Text("None").tag(nil as SCWindow?)
+                Picker("", selection: $selectedWindow) {
+                    Text("Select a window").tag(nil as SCWindow?)
                     ForEach(captureManager.availableWindows, id: \.windowID) { window in
-                        Text(window.title ?? "Untitled Window").tag(window as SCWindow?)
+                        Text(window.title ?? "Untitled").tag(window as SCWindow?)
                     }
                 }
                 .id(refreshID)
                 
-                Button(action: {
-                    Task {
-                        await refreshWindowList(captureManager)
-                    }
-                }) {
+                Button(action: { Task { await refreshWindows(captureManager) }}) {
                     Image(systemName: "arrow.clockwise")
                 }
             }
             .padding()
             
-            Button("Confirm") {
-                confirmSelection(for: captureManager)
+            Button("Start Preview") {
+                startPreview(captureManager)
             }
             .disabled(selectedWindow == nil)
         }
     }
     
-    private func errorView(message: String) -> some View {
-        Text(message)
-            .foregroundColor(.red)
-            .padding()
-    }
-    
-    // MARK: - Helper Methods
     private func getCaptureManager() -> CaptureManager? {
         guard let id = captureManagerId else { return nil }
         return previewManager.captureManagers[id]
     }
     
-    private func refreshWindowList(_ captureManager: CaptureManager) async {
-        await captureManager.updateAvailableWindows()
-        await MainActor.run {
-            refreshID = UUID()
-        }
-    }
-    
-    private func confirmSelection(for captureManager: CaptureManager) {
-        captureManager.selectedWindow = selectedWindow
-        if let window = selectedWindow {
-            selectedWindowSize = CGSize(
-                width: window.frame.width,
-                height: window.frame.height
-            )
-        }
-        showingSelection = false
-        
-        Task {
-            do {
-                try await captureManager.startCapture()
-            } catch {
-                await MainActor.run {
-                    showError(message: error.localizedDescription)
-                }
-            }
-        }
-    }
-    
-    private func updateWindowSize() {
-        if let window = selectedWindow {
-            selectedWindowSize = CGSize(
-                width: window.frame.width,
-                height: window.frame.height
-            )
-        }
-    }
-    
-    private func setupCaptureManager() async {
+    private func setupCapture() async {
         guard let captureManager = getCaptureManager() else {
-            showError(message: "Error: No capture manager found")
+            errorMessage = "Setup failed"
+            isLoading = false
             return
         }
         
         do {
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()
-            await MainActor.run { isLoading = false }
+            isLoading = false
         } catch {
-            await MainActor.run {
-                showError(message: "Screen capture permission denied")
-                isLoading = false
-            }
+            errorMessage = "Permission denied"
+            isLoading = false
         }
     }
     
-    private func showError(message: String) {
-        errorMessage = message
-        showError = true
+    private func refreshWindows(_ captureManager: CaptureManager) async {
+        await captureManager.updateAvailableWindows()
+        await MainActor.run {
+            refreshID = UUID()
+        }
+    }
+    
+    private func startPreview(_ captureManager: CaptureManager) {
+        guard let window = selectedWindow else { return }
+        
+        captureManager.selectedWindow = window
+        selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
+        showingSelection = false
+        
+        Task {
+            try? await captureManager.startCapture()
+        }
     }
 }

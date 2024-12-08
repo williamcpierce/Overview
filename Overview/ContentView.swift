@@ -78,10 +78,10 @@ struct ContentView: View {
     private var selectionView: some View {
         SelectionView(
             previewManager: previewManager,
+            appSettings: appSettings,
             captureManagerId: bindingForCaptureManagerId,
             showingSelection: bindingForShowingSelection,
-            selectedWindowSize: bindingForSelectedWindowSize,
-            appSettings: appSettings
+            selectedWindowSize: bindingForSelectedWindowSize
         )
         .frame(height: viewState.hasSetInitialSize ? nil : appSettings.defaultWindowHeight)
         .transition(.opacity)
