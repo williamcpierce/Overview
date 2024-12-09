@@ -40,6 +40,11 @@ struct SettingsView: View {
     /// - Note: Options balance preview smoothness with resource usage
     private let frameRateOptions = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
+    @State private var isAddingHotkey = false
+    @ObservedObject var previewManager: PreviewManager  // Change this
+    @State private var showingResetAlert = false
+
+
     // MARK: - View Layout
 
     var body: some View {
@@ -65,9 +70,62 @@ struct SettingsView: View {
                 Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
                 Toggle("Show window title", isOn: $appSettings.showWindowTitle)
             }
+            Section {
+                Text("Keyboard Shortcuts")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+                
+                if appSettings.hotkeyBindings.isEmpty {
+                    Text("No shortcuts configured")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
+                        HStack {
+                            Text(binding.windowTitle)
+                            Spacer()
+                            Text(formatHotkey(binding))
+                                .foregroundColor(.secondary)
+                            
+                            Button(action: {
+                                if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
+                                    appSettings.hotkeyBindings.remove(at: index)
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                
+                Button("Add Shortcut") {
+                    isAddingHotkey = true
+                }
+            }
+            .sheet(isPresented: $isAddingHotkey) {
+                HotkeyBindingSheet(
+                    appSettings: appSettings,
+                    previewManager: previewManager
+                )
+            }
         }
         .formStyle(.grouped)
         .tabItem { Label("General", systemImage: "gear") }
+        .safeAreaInset(edge: .bottom) {
+            Button("Reset All Settings") {
+                showingResetAlert = true
+            }
+            .padding(.bottom, 8)
+        }
+        .alert("Reset Settings", isPresented: $showingResetAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                appSettings.resetToDefaults()
+            }
+        } message: {
+            Text("This will reset all settings to their default values. This action cannot be undone.")
+        }
     }
 
     /// Window configuration for appearance and behavior settings
@@ -258,4 +316,8 @@ struct SliderRepresentable: NSViewRepresentable {
             value.wrappedValue = rounded
         }
     }
+}
+
+private func formatHotkey(_ binding: HotkeyBinding) -> String {
+    return binding.hotkeyDisplayString
 }

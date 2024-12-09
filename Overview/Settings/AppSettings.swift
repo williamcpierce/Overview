@@ -15,6 +15,7 @@
 */
 
 import Foundation
+import AppKit
 
 /// Manages persistent application settings and real-time preference updates
 ///
@@ -111,6 +112,14 @@ class AppSettings: ObservableObject {
             UserDefaults.standard.set(enableEditModeAlignment, forKey: "enableEditModeAlignment")
         }
     }
+    
+    @Published var hotkeyBindings: [HotkeyBinding] = [] {
+        didSet {
+            if let encoded = try? JSONEncoder().encode(hotkeyBindings) {
+                UserDefaults.standard.set(encoded, forKey: "hotkeyBindings")
+            }
+        }
+    }
 
     // MARK: - Initialization
 
@@ -133,6 +142,10 @@ class AppSettings: ObservableObject {
         }
         if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
             defaultWindowHeight = 162  // 16:9 aspect ratio
+        }
+        if let data = UserDefaults.standard.data(forKey: "hotkeyBindings"),
+           let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data) {
+            hotkeyBindings = decoded
         }
 
         validateSettings()
@@ -167,5 +180,66 @@ class AppSettings: ObservableObject {
     /// Provides default window size as CGSize
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
+    }
+    
+    func resetToDefaults() {
+        let domain = Bundle.main.bundleIdentifier ?? "Overview"
+        UserDefaults.standard.removePersistentDomain(forName: domain)
+        UserDefaults.standard.synchronize()
+        
+        // Reinitialize with defaults
+        opacity = 0.95
+        frameRate = 30.0
+        defaultWindowWidth = 288
+        defaultWindowHeight = 162
+        showFocusedBorder = false
+        showWindowTitle = false
+        managedByMissionControl = false
+        enableEditModeAlignment = false
+        hotkeyBindings = []
+    }
+}
+
+struct HotkeyBinding: Codable, Equatable, Hashable {
+    let windowTitle: String
+    let keyCode: Int
+    private let modifierFlags: UInt
+    
+    var modifiers: NSEvent.ModifierFlags {
+        NSEvent.ModifierFlags(rawValue: modifierFlags)
+    }
+    
+    init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
+        self.windowTitle = windowTitle
+        self.keyCode = keyCode
+        // Only store the relevant modifier flags
+        self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
+    }
+    
+    // Custom Codable implementation
+    enum CodingKeys: String, CodingKey {
+        case windowTitle, keyCode, modifierFlags
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        windowTitle = try container.decode(String.self, forKey: .windowTitle)
+        keyCode = try container.decode(Int.self, forKey: .keyCode)
+        modifierFlags = try container.decode(UInt.self, forKey: .modifierFlags)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(windowTitle, forKey: .windowTitle)
+        try container.encode(keyCode, forKey: .keyCode)
+        try container.encode(modifierFlags, forKey: .modifierFlags)
+    }
+    
+    // MARK: - Hashable Implementation
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(windowTitle)
+        hasher.combine(keyCode)
+        hasher.combine(modifierFlags)
     }
 }

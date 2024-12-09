@@ -118,6 +118,8 @@ class CaptureManager: ObservableObject {
 
     /// Screen recording permissions
     private let shareableContent: ShareableContentService
+    
+    private let hotkeyService = HotkeyService.shared
 
     // MARK: - Initialization
 
@@ -149,8 +151,15 @@ class CaptureManager: ObservableObject {
         self.titleService = titleService
         self.windowObserver = windowObserver
         self.shareableContent = shareableContent
-
+        HotkeyService.shared.registerFocusCallback(owner: self) { [weak self] windowTitle in
+                self?.focusWindowByTitle(windowTitle)
+            }
         setupObservers()
+    }
+    
+    deinit {
+        // Remove callback registration
+        HotkeyService.shared.removeFocusCallback(for: self)
     }
 
     // MARK: - Public Methods
@@ -283,6 +292,12 @@ class CaptureManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+        
+        appSettings.$hotkeyBindings
+            .sink { [weak self] bindings in
+                self?.hotkeyService.registerHotkeys(bindings)
+            }
+            .store(in: &cancellables)
     }
 
     /// Updates focus state of the source window
@@ -301,5 +316,26 @@ class CaptureManager: ObservableObject {
         guard isCapturing, let window = selectedWindow else { return }
         try? await streamConfig.updateConfiguration(
             captureEngine.stream, window, frameRate: appSettings.frameRate)
+    }
+    
+    private func focusWindowByTitle(_ title: String) {
+        let logger = Logger(subsystem: "com.Overview.CaptureManager", category: "WindowFocus")
+        
+        logger.info("Attempting to focus window with title: '\(title)'")
+        
+        guard let selectedWindow = selectedWindow else {
+            logger.error("No window selected")
+            return
+        }
+        
+        logger.info("Current window title: '\(selectedWindow.title ?? "nil")'")
+        
+        // Only focus if the titles match
+        if selectedWindow.title == title {
+            logger.info("Title match found, focusing window")
+            windowFocus.focusWindow(window: selectedWindow, isEditModeEnabled: false)
+        } else {
+            logger.info("Title mismatch - selected: '\(selectedWindow.title ?? "nil")', target: '\(title)'")
+        }
     }
 }

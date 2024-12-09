@@ -79,7 +79,10 @@ struct OverviewApp: App {
 
         // MARK: Settings Scene
         Settings {
-            SettingsView(appSettings: appSettings)
+            SettingsView(
+                appSettings: appSettings,
+                previewManager: previewManager  // Pass PreviewManager instead
+            )
         }
     }
 }

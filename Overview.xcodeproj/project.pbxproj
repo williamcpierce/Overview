@@ -31,6 +31,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppSettings.swift,
+				HotkeyBindingSheet.swift,
+				HotkeyRecorder.swift,
 				SettingsView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
@@ -38,6 +40,7 @@
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				HotkeyService.swift,
 				InteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
