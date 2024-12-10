@@ -41,7 +41,7 @@ struct SettingsView: View {
     private let frameRateOptions = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     @State private var isAddingHotkey = false
-    @ObservedObject var previewManager: PreviewManager  // Change this
+    @ObservedObject var previewManager: PreviewManager
     @State private var showingResetAlert = false
 
     // MARK: - View Layout

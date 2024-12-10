@@ -14,8 +14,6 @@
  file at the root of this project.
 */
 
-import AppKit
-import Carbon
 import Foundation
 
 /// Manages persistent application settings and real-time preference updates
@@ -116,6 +114,7 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// TODO: Comment
     @Published var hotkeyBindings: [HotkeyBinding] = [] {
         didSet {
             if let encoded = try? JSONEncoder().encode(hotkeyBindings) {

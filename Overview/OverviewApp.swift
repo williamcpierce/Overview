@@ -32,11 +32,28 @@ import SwiftUI
 /// - SettingsView: User preferences interface
 @main
 struct OverviewApp: App {
+    // MARK: - Properties
+
+    /// Controls preview window lifecycle and global edit mode
     @StateObject private var previewManager: PreviewManager
+    
+    /// Manages persistent user preferences and window configuration
     @StateObject private var appSettings: AppSettings
+
+    /// TODO: Comment
     @StateObject private var hotkeyManager: HotkeyManager
 
+    // MARK: - Initialization
+
+    /// Creates the app instance and initializes core services
+    ///
+    /// Flow:
+    /// 1. Creates AppSettings for user preferences
+    /// 2. Initializes PreviewManager with settings reference
+    /// 3. TODO: Comment
+    /// 4. Wraps managers in StateObjects for SwiftUI state management
     init() {
+        // Create settings first as PreviewManager depends on them
         let settings = AppSettings()
         let preview = PreviewManager(appSettings: settings)
 
@@ -45,7 +62,10 @@ struct OverviewApp: App {
         self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
     }
 
+    // MARK: - Scene Configuration
+
     var body: some Scene {
+        // MARK: Main Window Scene
         WindowGroup {
             ContentView(
                 previewManager: previewManager,
@@ -68,6 +88,7 @@ struct OverviewApp: App {
             }
         }
 
+        // MARK: Settings Scene
         Settings {
             SettingsView(
                 appSettings: appSettings,
