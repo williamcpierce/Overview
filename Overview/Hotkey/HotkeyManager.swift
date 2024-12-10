@@ -6,6 +6,7 @@
 
  Coordinates window focusing operations through keyboard shortcuts, serving as the bridge
  between the HotkeyService and WindowManager for hotkey-triggered window activation.
+ between the HotkeyService and WindowManager for hotkey-triggered window activation.
 
  This file is part of Overview.
 
@@ -14,8 +15,8 @@
  file at the root of this project.
 */
 
-import SwiftUI
 import OSLog
+import SwiftUI
 
 /// Manages hotkey-triggered window focus operations across preview windows
 ///
@@ -32,18 +33,18 @@ import OSLog
 @MainActor
 final class HotkeyManager: ObservableObject {
     // MARK: - Properties
-    
+
     /// Logger for tracking window focus operations
     private let logger = Logger(
         subsystem: "com.Overview.HotkeyManager",
         category: "WindowFocus"
     )
-    
+
     /// Window service for focus operations
     private let windowService = WindowService.shared
 
     // MARK: - Initialization
-    
+
     init() {
         // Register for hotkey events
         HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
@@ -57,7 +58,7 @@ final class HotkeyManager: ObservableObject {
 
     private func focusWindowByTitle(_ windowTitle: String) {
         logger.debug("Focusing window with title: '\(windowTitle)'")
-        
+
         if !windowService.focusWindow(withTitle: windowTitle) {
             logger.warning("Failed to focus window: '\(windowTitle)'")
         }
