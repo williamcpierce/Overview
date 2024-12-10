@@ -212,7 +212,8 @@ class WindowFilterService {
 /// - WindowAccessor: Coordinates window level changes during focus
 class WindowFocusService {
     // MARK: - Public Methods
-    private let logger = Logger(subsystem: "com.Overview.WindowFocusService", category: "WindowFocus")
+    private let logger = Logger(
+        subsystem: "com.Overview.WindowFocusService", category: "WindowFocus")
     /// Activates the captured window's application when appropriate
     ///
     /// Flow:
@@ -232,14 +233,16 @@ class WindowFocusService {
         guard !isEditModeEnabled,
             let processID = window.owningApplication?.processID
         else {
-            logger.error("Cannot focus window: isEditModeEnabled=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)")
+            logger.error(
+                "Cannot focus window: isEditModeEnabled=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)"
+            )
             return
         }
-        
+
         logger.info("Focusing application: processID=\(processID)")
-        
+
         NSRunningApplication(processIdentifier: pid_t(processID))?
-                    .activate()
+            .activate()
     }
 
     /// Determines if specified window's application currently has focus

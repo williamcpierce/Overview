@@ -118,7 +118,7 @@ class CaptureManager: ObservableObject {
 
     /// Screen recording permissions
     private let shareableContent: ShareableContentService
-    
+
     private let hotkeyService = HotkeyService.shared
 
     // MARK: - Initialization
@@ -151,7 +151,7 @@ class CaptureManager: ObservableObject {
         self.titleService = titleService
         self.windowObserver = windowObserver
         self.shareableContent = shareableContent
-        
+
         // Remove hotkey-related initialization
         setupObservers()
     }
@@ -304,25 +304,26 @@ class CaptureManager: ObservableObject {
         try? await streamConfig.updateConfiguration(
             captureEngine.stream, window, frameRate: appSettings.frameRate)
     }
-    
+
     private func focusWindowByTitle(_ title: String) {
         let logger = Logger(subsystem: "com.Overview.CaptureManager", category: "WindowFocus")
-        
+
         logger.info("Attempting to focus window with title: '\(title)'")
-        
+
         guard let selectedWindow = selectedWindow else {
             logger.error("No window selected")
             return
         }
-        
+
         logger.info("Current window title: '\(selectedWindow.title ?? "nil")'")
-        
+
         // Only focus if the titles match
         if selectedWindow.title == title {
             logger.info("Title match found, focusing window")
             windowFocus.focusWindow(window: selectedWindow, isEditModeEnabled: false)
         } else {
-            logger.info("Title mismatch - selected: '\(selectedWindow.title ?? "nil")', target: '\(title)'")
+            logger.info(
+                "Title mismatch - selected: '\(selectedWindow.title ?? "nil")', target: '\(title)'")
         }
     }
 }

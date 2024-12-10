@@ -35,11 +35,11 @@ struct OverviewApp: App {
     @StateObject private var previewManager: PreviewManager
     @StateObject private var appSettings: AppSettings
     @StateObject private var hotkeyManager: HotkeyManager
-    
+
     init() {
         let settings = AppSettings()
         let preview = PreviewManager(appSettings: settings)
-        
+
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
         self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())

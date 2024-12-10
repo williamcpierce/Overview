@@ -44,7 +44,6 @@ struct SettingsView: View {
     @ObservedObject var previewManager: PreviewManager  // Change this
     @State private var showingResetAlert = false
 
-
     // MARK: - View Layout
 
     var body: some View {
@@ -74,7 +73,7 @@ struct SettingsView: View {
                 Text("Keyboard Shortcuts")
                     .font(.headline)
                     .padding(.bottom, 4)
-                
+
                 if appSettings.hotkeyBindings.isEmpty {
                     Text("No shortcuts configured")
                         .foregroundColor(.secondary)
@@ -85,7 +84,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(formatHotkey(binding))
                                 .foregroundColor(.secondary)
-                            
+
                             Button(action: {
                                 if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
                                     appSettings.hotkeyBindings.remove(at: index)
@@ -98,7 +97,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
                 Button("Add Shortcut") {
                     isAddingHotkey = true
                 }
@@ -119,12 +118,14 @@ struct SettingsView: View {
             .padding(.bottom, 8)
         }
         .alert("Reset Settings", isPresented: $showingResetAlert) {
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
             Button("Reset", role: .destructive) {
                 appSettings.resetToDefaults()
             }
         } message: {
-            Text("This will reset all settings to their default values. This action cannot be undone.")
+            Text(
+                "This will reset all settings to their default values. This action cannot be undone."
+            )
         }
     }
 

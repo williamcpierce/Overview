@@ -14,9 +14,9 @@
  file at the root of this project.
 */
 
-import Foundation
 import AppKit
 import Carbon
+import Foundation
 
 /// Manages persistent application settings and real-time preference updates
 ///
@@ -35,7 +35,7 @@ class AppSettings: ObservableObject {
     // MARK: - Visual Settings
 
     private var isInitializing = true  // Flag to prevent initial registration
-    
+
     /// Preview window transparency level (0.05-1.0)
     /// - Note: Values outside range are clamped during validation
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
@@ -115,7 +115,7 @@ class AppSettings: ObservableObject {
             UserDefaults.standard.set(enableEditModeAlignment, forKey: "enableEditModeAlignment")
         }
     }
-    
+
     @Published var hotkeyBindings: [HotkeyBinding] = [] {
         didSet {
             if let encoded = try? JSONEncoder().encode(hotkeyBindings) {
@@ -139,7 +139,6 @@ class AppSettings: ObservableObject {
     init() {
         isInitializing = true
 
-        
         // Apply defaults for first launch
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
             opacity = 0.95  // High visibility default
@@ -153,10 +152,11 @@ class AppSettings: ObservableObject {
         if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
             defaultWindowHeight = 162  // 16:9 aspect ratio
         }
-        
+
         // Load hotkey bindings without registering them yet
         if let data = UserDefaults.standard.data(forKey: "hotkeyBindings"),
-           let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data) {
+            let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
+        {
             hotkeyBindings = decoded
         }
 
@@ -194,12 +194,12 @@ class AppSettings: ObservableObject {
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }
-    
+
     func resetToDefaults() {
         let domain = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
-        
+
         // Reinitialize with defaults
         opacity = 0.95
         frameRate = 30.0

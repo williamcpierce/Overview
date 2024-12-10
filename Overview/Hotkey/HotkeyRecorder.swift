@@ -6,7 +6,7 @@
 
  Provides user interface for recording global keyboard shortcuts, handling system
  keyboard events and coordinating with Overview's hotkey management system.
- 
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -22,10 +22,10 @@ import SwiftUI
 enum ShortcutRecordingError: LocalizedError {
     /// Event monitor creation or installation failed
     case monitoringFailed
-    
+
     /// Required modifier keys not present
     case invalidModifiers
-    
+
     var errorDescription: String? {
         switch self {
         case .monitoringFailed:
@@ -56,23 +56,23 @@ enum ShortcutRecordingError: LocalizedError {
 /// system-wide registration.
 struct HotkeyRecorder: NSViewRepresentable {
     // MARK: - Properties
-    
+
     /// System logger for recording operations
     let logger = Logger(
         subsystem: "com.Overview.HotkeyRecorder",
         category: "KeyboardEvents"
     )
-    
+
     /// Current keyboard shortcut configuration
     /// - Note: nil indicates no shortcut recorded
     @Binding var shortcut: HotkeyBinding?
-    
+
     /// Title of window being bound to shortcut
     /// - Note: Used to create HotkeyBinding when recording completes
     let windowTitle: String
-    
+
     // MARK: - NSViewRepresentable Implementation
-    
+
     /// Creates button for initiating shortcut recording
     ///
     /// Flow:
@@ -84,22 +84,22 @@ struct HotkeyRecorder: NSViewRepresentable {
     /// - Returns: Configured recording button
     func makeNSView(context: Context) -> NSButton {
         let button = NSButton(frame: .zero)
-        
+
         // Context: Using rounded style for visual consistency with system preferences
         button.bezelStyle = .rounded
         button.setButtonType(.momentaryPushIn)
-        
+
         // Initial state shows current binding or prompt
         button.title = shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
-        
+
         // Context: Using target-action for reliable event handling
         button.target = context.coordinator
         button.action = #selector(Coordinator.buttonClicked(_:))
-        
+
         logger.debug("Created recorder button for window: '\(windowTitle)'")
         return button
     }
-    
+
     /// Updates button title when shortcut changes
     ///
     /// Flow:
@@ -112,13 +112,13 @@ struct HotkeyRecorder: NSViewRepresentable {
     func updateNSView(_ button: NSButton, context: Context) {
         button.title = shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     // MARK: - Coordinator
-    
+
     /// Manages button state and keyboard event monitoring
     ///
     /// Key responsibilities:
@@ -132,38 +132,38 @@ struct HotkeyRecorder: NSViewRepresentable {
     /// resources when recording completes.
     class Coordinator: NSObject {
         // MARK: - Properties
-        
+
         /// Parent recorder providing configuration and state updates
         /// - Note: Strong reference maintained by SwiftUI
         var parent: HotkeyRecorder
-        
+
         /// Logger instance for recording operations
         /// - Note: Stored to avoid repeated parent access
         private let logger: Logger
-        
+
         /// Whether currently recording a shortcut
         /// - Note: Controls event monitoring state
         var isRecording = false
-        
+
         /// Current modifier key state
         /// - Note: Updated with each key event
         var currentModifiers: NSEvent.ModifierFlags = []
-        
+
         /// Active keyboard event monitor
         /// - Note: Stored to enable removal when recording stops
         /// - Warning: Must be removed before deallocation
         var monitor: Any?
-        
+
         // MARK: - Initialization
-        
+
         init(_ parent: HotkeyRecorder) {
             self.parent = parent
             self.logger = parent.logger
             super.init()
         }
-        
+
         // MARK: - Event Handling
-        
+
         /// Toggles recording state when button clicked
         ///
         /// Flow:
@@ -183,7 +183,7 @@ struct HotkeyRecorder: NSViewRepresentable {
                 logger.debug("Recording started for window: '\(self.parent.windowTitle)'")
             }
         }
-        
+
         /// Begins keyboard event monitoring session
         ///
         /// Flow:
@@ -197,17 +197,18 @@ struct HotkeyRecorder: NSViewRepresentable {
             guard monitor == nil else { return }
             isRecording = true
             currentModifiers = []
-            
-            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp, .flagsChanged]) { [weak self] event in
+
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp, .flagsChanged])
+            { [weak self] event in
                 self?.handleKeyEvent(event)
                 return nil
             }
-            
+
             if monitor == nil {
                 logger.error("Failed to create event monitor")
             }
         }
-        
+
         /// Stops keyboard monitoring and cleans up
         ///
         /// Flow:
@@ -223,7 +224,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             isRecording = false
             currentModifiers = []
         }
-        
+
         /// Processes keyboard events during recording
         ///
         /// Flow:
@@ -242,7 +243,7 @@ struct HotkeyRecorder: NSViewRepresentable {
                 break
             }
         }
-        
+
         /// Updates modifier key state
         ///
         /// Flow:
@@ -252,11 +253,13 @@ struct HotkeyRecorder: NSViewRepresentable {
         ///
         /// - Parameter event: Modifier key event
         private func handleModifierChange(_ event: NSEvent) {
-            currentModifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+            currentModifiers = event.modifierFlags.intersection([
+                .command, .control, .option, .shift,
+            ])
             let modifierString: String = currentModifiers.rawValue.description
             logger.debug("Modifier state updated: \(modifierString)")
         }
-        
+
         /// Processes key press events and creates bindings
         ///
         /// Flow:
@@ -271,11 +274,11 @@ struct HotkeyRecorder: NSViewRepresentable {
                 logger.warning("Key press ignored - no required modifiers")
                 return
             }
-            
+
             createBinding(for: event)
             stopRecording()
         }
-        
+
         /// Creates hotkey binding from current state
         ///
         /// Flow:
@@ -292,7 +295,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             )
             logger.info("Created binding for window '\(self.parent.windowTitle)'")
         }
-        
+
         /// Cleanup event monitor on deallocation
         /// - Warning: Required to prevent monitor leaks
         deinit {

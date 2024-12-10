@@ -5,8 +5,7 @@
  Created by William Pierce on 12/9/24.
 
  Coordinates window focusing operations through keyboard shortcuts, serving as the bridge
- between the HotkeyService and WindowManager for hotkey-triggered window activation.
- between the HotkeyService and WindowManager for hotkey-triggered window activation.
+ between the HotkeyService and WindowService for hotkey-triggered window activation.
 
  This file is part of Overview.
 
