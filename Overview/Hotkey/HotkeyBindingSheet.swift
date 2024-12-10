@@ -14,9 +14,8 @@
  file at the root of this project.
 */
 
-import AppKit
-import ScreenCaptureKit
 import SwiftUI
+import ScreenCaptureKit
 
 struct HotkeyBindingSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -54,10 +53,7 @@ struct HotkeyBindingSheet: View {
             }
             
             HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-                
+                Button("Cancel") { dismiss() }
                 Button("Add") {
                     if let shortcut = currentShortcut {
                         appSettings.hotkeyBindings.append(shortcut)
@@ -73,24 +69,36 @@ struct HotkeyBindingSheet: View {
     }
 }
 
-// Update HotkeyBinding to include a description
-extension HotkeyBinding {
-    var description: String {
+struct HotkeyBinding: Codable, Equatable, Hashable {
+    let windowTitle: String
+    let keyCode: Int
+    private let modifierFlags: UInt
+    
+    var modifiers: NSEvent.ModifierFlags {
+        NSEvent.ModifierFlags(rawValue: modifierFlags)
+    }
+    
+    init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
+        self.windowTitle = windowTitle
+        self.keyCode = keyCode
+        self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
+    }
+    
+    var hotkeyDisplayString: String {
         var parts: [String] = []
-        
         if modifiers.contains(.command) { parts.append("⌘") }
         if modifiers.contains(.option) { parts.append("⌥") }
         if modifiers.contains(.control) { parts.append("⌃") }
         if modifiers.contains(.shift) { parts.append("⇧") }
-        
-        if let keyChar = keyCodeToString(keyCode) {
+        if let keyChar = Self.keyCodeToString(keyCode) {
             parts.append(keyChar)
+        } else {
+            parts.append("Key\(keyCode)")
         }
-        
         return parts.joined(separator: "")
     }
     
-    private func keyCodeToString(_ keyCode: Int) -> String? {
+    private static func keyCodeToString(_ keyCode: Int) -> String? {
         let keyCodeMap: [Int: String] = [
             0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
             8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
@@ -100,7 +108,6 @@ extension HotkeyBinding {
             18: "1", 19: "2", 20: "3", 21: "4", 22: "5", 23: "6", 24: "7",
             25: "8", 26: "9", 27: "0"
         ]
-        
         return keyCodeMap[keyCode]
     }
 }

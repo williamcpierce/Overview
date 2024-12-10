@@ -32,39 +32,30 @@ import SwiftUI
 /// - SettingsView: User preferences interface
 @main
 struct OverviewApp: App {
-    // MARK: - Properties
-
-    /// Controls preview window lifecycle and global edit mode
     @StateObject private var previewManager: PreviewManager
-
-    /// Manages persistent user preferences and window configuration
-    @StateObject private var appSettings = AppSettings()
-
-    // MARK: - Initialization
-
-    /// Creates the app instance and initializes core services
-    ///
-    /// Flow:
-    /// 1. Creates AppSettings for user preferences
-    /// 2. Initializes PreviewManager with settings reference
-    /// 3. Wraps managers in StateObjects for SwiftUI state management
+    @StateObject private var appSettings: AppSettings
+    @StateObject private var hotkeyManager: HotkeyManager
+    
     init() {
-        // Create settings first as PreviewManager depends on them
         let settings = AppSettings()
+        let preview = PreviewManager(appSettings: settings)
+        
         self._appSettings = StateObject(wrappedValue: settings)
-        self._previewManager = StateObject(wrappedValue: PreviewManager(appSettings: settings))
+        self._previewManager = StateObject(wrappedValue: preview)
+        self._hotkeyManager = StateObject(wrappedValue: HotkeyManager(previewManager: preview))
     }
 
-    // MARK: - Scene Configuration
-
     var body: some Scene {
-        // MARK: Main Window Scene
         WindowGroup {
             ContentView(
                 previewManager: previewManager,
                 isEditModeEnabled: $previewManager.isEditModeEnabled,
                 appSettings: appSettings
             )
+            .onAppear {
+                // Initialize hotkey system
+                _ = HotkeyService.shared
+            }
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(
@@ -77,11 +68,10 @@ struct OverviewApp: App {
             }
         }
 
-        // MARK: Settings Scene
         Settings {
             SettingsView(
                 appSettings: appSettings,
-                previewManager: previewManager  // Pass PreviewManager instead
+                previewManager: previewManager
             )
         }
     }

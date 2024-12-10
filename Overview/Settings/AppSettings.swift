@@ -16,6 +16,7 @@
 
 import Foundation
 import AppKit
+import Carbon
 
 /// Manages persistent application settings and real-time preference updates
 ///
@@ -33,6 +34,8 @@ import AppKit
 class AppSettings: ObservableObject {
     // MARK: - Visual Settings
 
+    private var isInitializing = true  // Flag to prevent initial registration
+    
     /// Preview window transparency level (0.05-1.0)
     /// - Note: Values outside range are clamped during validation
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
@@ -117,6 +120,10 @@ class AppSettings: ObservableObject {
         didSet {
             if let encoded = try? JSONEncoder().encode(hotkeyBindings) {
                 UserDefaults.standard.set(encoded, forKey: "hotkeyBindings")
+                // Only register if not during initialization
+                if !isInitializing {
+                    HotkeyService.shared.registerHotkeys(hotkeyBindings)
+                }
             }
         }
     }
@@ -130,6 +137,9 @@ class AppSettings: ObservableObject {
     /// 2. Applies defaults for missing settings
     /// 3. Validates all values meet requirements
     init() {
+        isInitializing = true
+
+        
         // Apply defaults for first launch
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
             opacity = 0.95  // High visibility default
@@ -143,12 +153,15 @@ class AppSettings: ObservableObject {
         if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
             defaultWindowHeight = 162  // 16:9 aspect ratio
         }
+        
+        // Load hotkey bindings without registering them yet
         if let data = UserDefaults.standard.data(forKey: "hotkeyBindings"),
            let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data) {
             hotkeyBindings = decoded
         }
 
         validateSettings()
+        isInitializing = false
     }
 
     // MARK: - Private Methods
@@ -197,49 +210,6 @@ class AppSettings: ObservableObject {
         managedByMissionControl = false
         enableEditModeAlignment = false
         hotkeyBindings = []
-    }
-}
-
-struct HotkeyBinding: Codable, Equatable, Hashable {
-    let windowTitle: String
-    let keyCode: Int
-    private let modifierFlags: UInt
-    
-    var modifiers: NSEvent.ModifierFlags {
-        NSEvent.ModifierFlags(rawValue: modifierFlags)
-    }
-    
-    init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
-        self.windowTitle = windowTitle
-        self.keyCode = keyCode
-        // Only store the relevant modifier flags
-        self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
-    }
-    
-    // Custom Codable implementation
-    enum CodingKeys: String, CodingKey {
-        case windowTitle, keyCode, modifierFlags
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        windowTitle = try container.decode(String.self, forKey: .windowTitle)
-        keyCode = try container.decode(Int.self, forKey: .keyCode)
-        modifierFlags = try container.decode(UInt.self, forKey: .modifierFlags)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(windowTitle, forKey: .windowTitle)
-        try container.encode(keyCode, forKey: .keyCode)
-        try container.encode(modifierFlags, forKey: .modifierFlags)
-    }
-    
-    // MARK: - Hashable Implementation
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(windowTitle)
-        hasher.combine(keyCode)
-        hasher.combine(modifierFlags)
+        HotkeyService.shared.registerHotkeys([])
     }
 }

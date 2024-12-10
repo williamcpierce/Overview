@@ -151,15 +151,9 @@ class CaptureManager: ObservableObject {
         self.titleService = titleService
         self.windowObserver = windowObserver
         self.shareableContent = shareableContent
-        HotkeyService.shared.registerFocusCallback(owner: self) { [weak self] windowTitle in
-                self?.focusWindowByTitle(windowTitle)
-            }
+        
+        // Remove hotkey-related initialization
         setupObservers()
-    }
-    
-    deinit {
-        // Remove callback registration
-        HotkeyService.shared.removeFocusCallback(for: self)
     }
 
     // MARK: - Public Methods
@@ -283,19 +277,12 @@ class CaptureManager: ObservableObject {
 
         windowObserver.startObserving()
 
-        // WARNING: Frame rate changes require stream reconfiguration
         appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in
                 Task {
                     await self?.updateStreamConfiguration()
                 }
-            }
-            .store(in: &cancellables)
-        
-        appSettings.$hotkeyBindings
-            .sink { [weak self] bindings in
-                self?.hotkeyService.registerHotkeys(bindings)
             }
             .store(in: &cancellables)
     }
