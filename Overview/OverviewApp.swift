@@ -42,7 +42,7 @@ struct OverviewApp: App {
         
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
-        self._hotkeyManager = StateObject(wrappedValue: HotkeyManager(previewManager: preview))
+        self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
     }
 
     var body: some Scene {
