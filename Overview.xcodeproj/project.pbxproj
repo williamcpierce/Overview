@@ -37,6 +37,13 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
+		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WindowService.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -70,6 +77,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C8323A2B2D081388001B91A6 /* Hotkey */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Hotkey; sourceTree = "<group>"; };
+		C868D7E22D082CCB00EF1F4C /* Window */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Window; sourceTree = "<group>"; };
 		C8A837D72D0405B7002EC00B /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		C8A8387E2D0421ED002EC00B /* Preview */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Preview; sourceTree = "<group>"; };
 		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
@@ -112,6 +120,7 @@
 				C8A8387E2D0421ED002EC00B /* Preview */,
 				C8A838892D0421EF002EC00B /* Capture */,
 				C8323A2B2D081388001B91A6 /* Hotkey */,
+				C868D7E22D082CCB00EF1F4C /* Window */,
 				C8A837D72D0405B7002EC00B /* Settings */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
