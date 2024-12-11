@@ -19,13 +19,13 @@ final class HotkeyService {
     static let shared = HotkeyService()
 
     private var registeredHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
-    private var nextHotkeyID: UInt32 = 1
-    private var focusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
+    private var nextAvailableHotkeyID: UInt32 = 1
+    private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
     private let logger = Logger(subsystem: "com.Overview.HotkeyService", category: "Hotkeys")
     private let storage: UserDefaults
     private let storageKey = "hotkeyBindings"
 
-    var bindings: [HotkeyBinding] {
+    var hotkeyBindings: [HotkeyBinding] {
         get {
             guard let data = storage.data(forKey: storageKey),
                 let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
@@ -49,17 +49,17 @@ final class HotkeyService {
     }
 
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
-        focusCallbacks[ObjectIdentifier(owner)] = callback
+        windowFocusCallbacks[ObjectIdentifier(owner)] = callback
     }
 
     func removeCallback(for owner: AnyObject) {
-        focusCallbacks.removeValue(forKey: ObjectIdentifier(owner))
+        windowFocusCallbacks.removeValue(forKey: ObjectIdentifier(owner))
     }
 
-    func registerHotkeys(_ bindings: [HotkeyBinding]) {
+    func registerHotkeys(_ hotkeyBindings: [HotkeyBinding]) {
         unregisterAllHotkeys()
 
-        for binding in bindings {
+        for binding in hotkeyBindings {
             do {
                 try register(binding)
             } catch {
@@ -69,7 +69,7 @@ final class HotkeyService {
             }
         }
 
-        self.bindings = bindings
+        self.hotkeyBindings = hotkeyBindings
     }
 
     private func setupEventHandler() throws {
@@ -118,7 +118,7 @@ final class HotkeyService {
 
         if result == noErr, let (_, binding) = registeredHotkeys[hotkeyID.id] {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.focusCallbacks.values.forEach { $0(binding.windowTitle) }
+                self?.windowFocusCallbacks.values.forEach { $0(binding.windowTitle) }
             }
             return noErr
         }
@@ -132,7 +132,7 @@ final class HotkeyService {
             throw HotkeyError.invalidModifiers
         }
 
-        let hotkeyID = EventHotKeyID(signature: 0x4F56_5257, id: nextHotkeyID)
+        let hotkeyID = EventHotKeyID(signature: 0x4F56_5257, id: nextAvailableHotkeyID)
         let carbonModifiers = CarbonModifierTranslator.convert(modifiers)
 
         var hotkeyRef: EventHotKeyRef?
@@ -146,8 +146,8 @@ final class HotkeyService {
         )
 
         if status == noErr, let hotkeyRef = hotkeyRef {
-            registeredHotkeys[nextHotkeyID] = (hotkeyRef, binding)
-            nextHotkeyID += 1
+            registeredHotkeys[nextAvailableHotkeyID] = (hotkeyRef, binding)
+            nextAvailableHotkeyID += 1
         } else {
             throw HotkeyError.registrationFailed(status)
         }

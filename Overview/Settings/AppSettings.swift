@@ -14,7 +14,7 @@
 import Foundation
 
 class AppSettings: ObservableObject {
-    private var isInitializing = true
+    private var isLoadingDefaults = true
 
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
         didSet {
@@ -78,7 +78,7 @@ class AppSettings: ObservableObject {
         didSet {
             if let encoded = try? JSONEncoder().encode(hotkeyBindings) {
                 UserDefaults.standard.set(encoded, forKey: "hotkeyBindings")
-                if !isInitializing {
+                if !isLoadingDefaults {
                     HotkeyService.shared.registerHotkeys(hotkeyBindings)
                 }
             }
@@ -86,7 +86,7 @@ class AppSettings: ObservableObject {
     }
 
     init() {
-        isInitializing = true
+        isLoadingDefaults = true
 
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
             opacity = 0.95
@@ -107,11 +107,11 @@ class AppSettings: ObservableObject {
             hotkeyBindings = decoded
         }
 
-        validateSettings()
-        isInitializing = false
+        validateAndCorrectSettings()
+        isLoadingDefaults = false
     }
 
-    private func validateSettings() {
+    private func validateAndCorrectSettings() {
         if opacity < 0.05 || opacity > 1.0 {
             opacity = max(0.05, min(1.0, opacity))
         }

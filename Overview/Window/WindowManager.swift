@@ -38,8 +38,8 @@ final class WindowManager {
     private let logger = Logger(
         subsystem: "com.Overview.WindowManager", category: "WindowManagement")
     private let shareableContent = ShareableContentService()
-    private var windowCache: [String: WindowState] = [:]
-    private var updateTimer: Timer?
+    private var trackedWindows: [String: WindowState] = [:]
+    private var windowUpdateTimer: Timer?
 
     private let systemAppBundleIDs = [
         "com.apple.controlcenter",
@@ -52,16 +52,16 @@ final class WindowManager {
 
     func getAvailableWindows() async -> [SCWindow] {
         await updateWindowState()
-        return Array(windowCache.values.map { $0.window })
+        return Array(trackedWindows.values.map { $0.window })
     }
 
     func findWindow(withTitle title: String) -> SCWindow? {
-        windowCache[title]?.window
+        trackedWindows[title]?.window
     }
 
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
-        guard let windowState = windowCache[title],
+        guard let windowState = trackedWindows[title],
             let processID = windowState.window.owningApplication?.processID
         else {
             logger.error("No window found with title: \(title)")
@@ -74,32 +74,33 @@ final class WindowManager {
 
     func isWindowFocused(_ window: SCWindow) -> Bool {
         guard let title = window.title else { return false }
-        return windowCache[title]?.isFocused ?? false
+        return trackedWindows[title]?.isFocused ?? false
     }
 
     func updateWindowState() async {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true)
-            let filtered = filterWindows(content.windows)
+            let filteredWindows = filterWindows(content.windows)
             let activeApp = NSWorkspace.shared.frontmostApplication
             let activeProcessID = activeApp?.processIdentifier
 
             logger.debug("Active app processID: \(String(describing: activeProcessID))")
 
-            var newCache: [String: WindowState] = [:]
+            var newTrackedWindows: [String: WindowState] = [:]
 
-            for window in filtered {
+            for window in filteredWindows {
                 guard let processID = window.owningApplication?.processID,
                     let title = window.title
                 else { continue }
 
                 let isFocused = processID == activeProcessID
                 logger.debug("Window '\(title)' processID: \(processID), isFocused: \(isFocused)")
-                newCache[title] = WindowState(window: window, isFocused: isFocused, title: title)
+                newTrackedWindows[title] = WindowState(
+                    window: window, isFocused: isFocused, title: title)
             }
 
-            windowCache = newCache
+            trackedWindows = newTrackedWindows
 
         } catch {
             logger.error("Failed to update window state: \(error.localizedDescription)")
@@ -122,7 +123,7 @@ final class WindowManager {
                 let currentlyActive = NSWorkspace.shared.frontmostApplication?.processIdentifier
                 let isFocused = processID == currentlyActive
 
-                if let state = self.windowCache.values.first(where: { state in
+                if let state = self.trackedWindows.values.first(where: { state in
                     state.processID == processID && state.frame == frame
                 }) {
                     logger.debug(
@@ -135,7 +136,8 @@ final class WindowManager {
     }
 
     private func startWindowTracking() {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        windowUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {
+            [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.updateWindowState()
             }
@@ -166,6 +168,6 @@ final class WindowManager {
     }
 
     deinit {
-        updateTimer?.invalidate()
+        windowUpdateTimer?.invalidate()
     }
 }

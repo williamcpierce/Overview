@@ -22,7 +22,7 @@ struct PreviewView: View {
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
-                previewContent(frame: frame)
+                renderPreviewContent(frame: frame)
             } else {
                 Color.black
                     .opacity(appSettings.opacity)
@@ -39,7 +39,7 @@ struct PreviewView: View {
         }
     }
 
-    private func previewContent(frame: CapturedFrame) -> some View {
+    private func renderPreviewContent(frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .opacity(appSettings.opacity)
             .overlay(

@@ -22,16 +22,16 @@ struct SelectionView: View {
     @Binding var selectedWindowSize: CGSize?
 
     @State private var selectedWindow: SCWindow?
-    @State private var isLoading = true
+    @State private var isLoadingWindowList = true
     @State private var errorMessage = ""
-    @State private var refreshID = UUID()
+    @State private var windowListRefreshID = UUID()
     @State private var availableWindows: [SCWindow] = []
 
     private let windowManager = WindowManager.shared
 
     var body: some View {
         VStack {
-            if isLoading {
+            if isLoadingWindowList {
                 ProgressView("Loading windows...")
             } else if let error = errorMessage.isEmpty ? nil : errorMessage {
                 Text(error)
@@ -55,7 +55,7 @@ struct SelectionView: View {
                         Text(window.title ?? "Untitled").tag(window as SCWindow?)
                     }
                 }
-                .id(refreshID)
+                .id(windowListRefreshID)
 
                 Button(action: { Task { await refreshWindows() } }) {
                     Image(systemName: "arrow.clockwise")
@@ -78,24 +78,24 @@ struct SelectionView: View {
     private func setupCapture() async {
         guard let captureManager = getCaptureManager() else {
             errorMessage = "Setup failed"
-            isLoading = false
+            isLoadingWindowList = false
             return
         }
 
         do {
             try await captureManager.requestPermission()
             await refreshWindows()
-            isLoading = false
+            isLoadingWindowList = false
         } catch {
             errorMessage = "Permission denied"
-            isLoading = false
+            isLoadingWindowList = false
         }
     }
 
     private func refreshWindows() async {
         availableWindows = await windowManager.getAvailableWindows()
         await MainActor.run {
-            refreshID = UUID()
+            windowListRefreshID = UUID()
         }
     }
 
