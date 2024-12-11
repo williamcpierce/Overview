@@ -57,9 +57,15 @@ struct OverviewApp: App {
         let settings = AppSettings()
         let preview = PreviewManager(appSettings: settings)
 
+        // Initialize WindowManager before HotkeyManager
+        _ = WindowManager.shared
+        
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
         self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
+        
+        // Register any saved hotkeys
+        HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)
     }
 
     // MARK: - Scene Configuration

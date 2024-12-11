@@ -104,8 +104,7 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $isAddingHotkey) {
                 HotkeyBindingSheet(
-                    appSettings: appSettings,
-                    previewManager: previewManager
+                    appSettings: appSettings
                 )
             }
         }

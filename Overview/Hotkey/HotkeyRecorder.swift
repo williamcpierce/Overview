@@ -18,24 +18,6 @@ import AppKit
 import OSLog
 import SwiftUI
 
-/// Error types that can occur during shortcut recording
-enum ShortcutRecordingError: LocalizedError {
-    /// Event monitor creation or installation failed
-    case monitoringFailed
-
-    /// Required modifier keys not present
-    case invalidModifiers
-
-    var errorDescription: String? {
-        switch self {
-        case .monitoringFailed:
-            return "Failed to start keyboard monitoring"
-        case .invalidModifiers:
-            return "Invalid modifier key combination"
-        }
-    }
-}
-
 /// Records keyboard shortcuts for window focus operations in Overview
 ///
 /// Key responsibilities:
@@ -96,6 +78,9 @@ struct HotkeyRecorder: NSViewRepresentable {
         button.target = context.coordinator
         button.action = #selector(Coordinator.buttonClicked(_:))
 
+        // Prevent layout recursion
+        button.translatesAutoresizingMaskIntoConstraints = false
+            
         logger.debug("Created recorder button for window: '\(windowTitle)'")
         return button
     }
@@ -300,6 +285,24 @@ struct HotkeyRecorder: NSViewRepresentable {
         /// - Warning: Required to prevent monitor leaks
         deinit {
             stopRecording()
+        }
+    }
+}
+
+/// Error types that can occur during shortcut recording
+enum ShortcutRecordingError: LocalizedError {
+    /// Event monitor creation or installation failed
+    case monitoringFailed
+
+    /// Required modifier keys not present
+    case invalidModifiers
+
+    var errorDescription: String? {
+        switch self {
+        case .monitoringFailed:
+            return "Failed to start keyboard monitoring"
+        case .invalidModifiers:
+            return "Invalid modifier key combination"
         }
     }
 }

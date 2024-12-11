@@ -18,21 +18,7 @@
 import ScreenCaptureKit
 import SwiftUI
 
-/// Presents a sheet for creating new hotkey bindings with window selection and key capture
-///
-/// Key responsibilities:
-/// - Manages window selection from available capture targets
-/// - Records keyboard combinations for hotkey bindings
-/// - Validates hotkey requirements before saving
-/// - Prevents duplicate or conflicting bindings
-/// - Provides user feedback for invalid configurations
-///
-/// Coordinates with:
-/// - AppSettings: Stores persistent hotkey configurations
-/// - PreviewManager: Provides list of available windows
-/// - HotkeyService: Handles system-wide hotkey registration
-/// - HotkeyRecorder: Captures keyboard combinations
-/// - WindowFilterService: Validates window selection targets
+/// Presents a sheet for creating new hotkey bindings
 struct HotkeyBindingSheet: View {
     // MARK: - Properties
 
@@ -42,27 +28,17 @@ struct HotkeyBindingSheet: View {
     /// Global application settings for storing hotkey bindings
     @ObservedObject var appSettings: AppSettings
 
-    /// Access to available windows for hotkey targets
-    @ObservedObject var previewManager: PreviewManager
-
     /// Currently selected window for binding
-    /// - Note: nil indicates no selection or invalid window
     @State private var selectedWindow: SCWindow?
 
     /// Current keyboard shortcut configuration
-    /// - Note: nil when recording hasn't started or is invalid
     @State private var currentShortcut: HotkeyBinding?
 
     /// Error message for invalid configurations
-    /// - Note: Empty string indicates no error
     @State private var errorMessage = ""
 
-    /// Available windows filtered for valid hotkey targets
-    /// - Note: Uses first capture manager to ensure consistent window list
-    /// - Warning: May be empty if no windows are available
-    private var availableWindows: [SCWindow] {
-        previewManager.captureManagers.first?.value.availableWindows ?? []
-    }
+    /// List of available windows for binding
+    @State private var availableWindows: [SCWindow] = []
 
     // MARK: - View Layout
 
@@ -119,20 +95,24 @@ struct HotkeyBindingSheet: View {
         }
         .padding()
         .frame(width: 400)
+        .task {
+            updateAvailableWindows()
+        }
     }
 
     // MARK: - Private Methods
 
+    /// Updates the list of available windows
+    private func updateAvailableWindows() {
+        Task {
+            availableWindows = await WindowManager.shared.getAvailableWindows()
+        }
+    }
+
     /// Validates the current window selection
-    ///
-    /// Flow:
-    /// 1. Checks window title uniqueness
-    /// 2. Validates window is still available
-    /// 3. Updates error message if needed
     private func validateSelection() {
         guard let window = selectedWindow,
-            let title = window.title
-        else {
+              let title = window.title else {
             errorMessage = ""
             return
         }
@@ -147,11 +127,6 @@ struct HotkeyBindingSheet: View {
     }
 
     /// Validates the current shortcut configuration
-    ///
-    /// Flow:
-    /// 1. Checks for existing bindings
-    /// 2. Validates modifier requirements
-    /// 3. Updates error state
     private func validateShortcut() {
         guard let shortcut = currentShortcut else {
             errorMessage = ""
@@ -160,7 +135,8 @@ struct HotkeyBindingSheet: View {
 
         // Check for duplicate bindings
         if appSettings.hotkeyBindings.contains(where: { binding in
-            binding.keyCode == shortcut.keyCode && binding.modifiers == shortcut.modifiers
+            binding.keyCode == shortcut.keyCode &&
+            binding.modifiers == shortcut.modifiers
         }) {
             errorMessage = "This shortcut is already in use"
             return
@@ -176,30 +152,17 @@ struct HotkeyBindingSheet: View {
     }
 
     /// Checks if current configuration can be saved
-    ///
-    /// Flow:
-    /// 1. Validates window selection
-    /// 2. Checks shortcut configuration
-    /// 3. Ensures no validation errors
-    ///
-    /// - Returns: Whether binding can be added
     private func canAddBinding() -> Bool {
         guard let window = selectedWindow,
-            window.title != nil,
-            currentShortcut != nil,
-            errorMessage.isEmpty
-        else {
+              window.title != nil,
+              currentShortcut != nil,
+              errorMessage.isEmpty else {
             return false
         }
         return true
     }
 
     /// Adds current binding to settings and dismisses sheet
-    ///
-    /// Flow:
-    /// 1. Performs final validation
-    /// 2. Appends to settings
-    /// 3. Closes sheet
     private func addBinding() {
         if let shortcut = currentShortcut {
             appSettings.hotkeyBindings.append(shortcut)
