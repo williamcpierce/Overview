@@ -76,7 +76,6 @@ struct TitleOverlay: View {
 
     var body: some View {
         let title = captureManager.windowTitle
-//        print("TitleOverlay - Rendering with title: \(title ?? "none")")
 
         return VStack {
             if let title = title {
