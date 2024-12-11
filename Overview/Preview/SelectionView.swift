@@ -17,6 +17,9 @@
 import ScreenCaptureKit
 import SwiftUI
 
+import ScreenCaptureKit
+import SwiftUI
+
 struct SelectionView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
@@ -72,7 +75,7 @@ struct SelectionView: View {
             .disabled(selectedWindow == nil)
         }
     }
-    
+
     private func getCaptureManager() -> CaptureManager? {
         guard let id = captureManagerId else { return nil }
         return previewManager.captureManagers[id]
@@ -84,7 +87,7 @@ struct SelectionView: View {
             isLoading = false
             return
         }
-        
+
         do {
             try await captureManager.requestPermission()
             await refreshWindows()

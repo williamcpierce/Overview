@@ -50,10 +50,12 @@ class CaptureManager: ObservableObject {
     @Published var selectedWindow: SCWindow? {
         didSet {
             windowTitle = selectedWindow?.title
-            Task { await updateFocusState() }
+            if let window = selectedWindow {
+                subscribeToWindowUpdates(window)
+            }
         }
     }
-    
+
     private let logger = Logger()
     private var cancellables = Set<AnyCancellable>()
     private var captureTask: Task<Void, Never>?
@@ -61,7 +63,7 @@ class CaptureManager: ObservableObject {
     private let appSettings: AppSettings
     private let captureEngine: CaptureEngine
     private let streamConfig: StreamConfigurationService
-    
+
     init(
         appSettings: AppSettings,
         captureEngine: CaptureEngine = CaptureEngine(),
@@ -72,13 +74,20 @@ class CaptureManager: ObservableObject {
         self.streamConfig = streamConfig
         setupObservers()
     }
-    
+
     func requestPermission() async throws {
         try await ShareableContentService().requestPermission()
     }
-    
+
     func updateAvailableWindows() async {
         await windowManager.updateWindowState()
+    }
+
+    func getAvailableWindows() -> [SCWindow] {
+        Task {
+            await windowManager.getAvailableWindows()
+        }
+        return []  // Return empty array while async task completes
     }
     
     func startCapture() async throws {
@@ -127,16 +136,34 @@ class CaptureManager: ObservableObject {
         }
     }
     
+    private func subscribeToWindowUpdates(_ window: SCWindow) {
+        print("CaptureManager - Setting up subscription for: \(window.title ?? "unknown")")
+        windowManager.subscribeToWindowState(window) { [weak self] isFocused, title in
+            guard let self = self else { return }
+            
+            if self.windowTitle != title {
+                print("CaptureManager - Received title update: \(self.windowTitle ?? "none") -> \(title ?? "none")")
+                self.windowTitle = title
+            }
+            
+            if self.isSourceWindowFocused != isFocused {
+                print("CaptureManager - Received focus update: \(self.isSourceWindowFocused) -> \(isFocused)")
+                self.isSourceWindowFocused = isFocused
+            }
+        }
+    }
+    
     private func handleCaptureError(_ error: Error) async {
         logger.error("Capture error: \(error.localizedDescription)")
         await stopCapture()
     }
     
     private func setupObservers() {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                await self?.updateFocusState()
-                await self?.updateWindowTitle()
+        // Subscribe to window state updates from WindowManager
+        if let window = selectedWindow {
+            windowManager.subscribeToWindowState(window) { [weak self] isFocused, title in
+                self?.isSourceWindowFocused = isFocused
+                self?.windowTitle = title
             }
         }
         

@@ -26,6 +26,16 @@ final class WindowManager {
         let window: SCWindow
         var isFocused: Bool
         var title: String
+        let processID: pid_t
+        let frame: CGRect
+        
+        init(window: SCWindow, isFocused: Bool, title: String) {
+            self.window = window
+            self.isFocused = isFocused
+            self.title = title
+            self.processID = window.owningApplication?.processID ?? 0
+            self.frame = window.frame
+        }
     }
     
     private let logger = Logger(subsystem: "com.Overview.WindowManager", category: "WindowManagement")
@@ -67,27 +77,61 @@ final class WindowManager {
     }
     
     func updateWindowState() async {
-        do {
-            let windows = try await shareableContent.getAvailableWindows()
-            let filtered = filterWindows(windows)
-            let activeApp = NSWorkspace.shared.frontmostApplication
-            
-            windowCache.removeAll()
-            
-            for window in filtered {
-                guard let title = window.title else { continue }
-                let isFocused = window.owningApplication?.processID == activeApp?.processIdentifier
-                windowCache[title] = WindowState(window: window, isFocused: isFocused, title: title)
+            do {
+                let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+                let filtered = filterWindows(content.windows)
+                let activeApp = NSWorkspace.shared.frontmostApplication
+                
+                var newCache: [String: WindowState] = [:]
+                
+                for window in filtered {
+                    guard let processID = window.owningApplication?.processID,
+                          let title = window.title else { continue }
+                    
+                    let existingState = windowCache.values.first { state in
+                        state.processID == processID && state.frame == window.frame
+                    }
+                    
+                    let isFocused = existingState?.isFocused ?? (processID == activeApp?.processIdentifier)
+                    newCache[title] = WindowState(window: window, isFocused: isFocused, title: title)
+                }
+                
+                if let activeProcessID = activeApp?.processIdentifier {
+                    for (title, state) in newCache where state.processID == activeProcessID {
+                        newCache[title] = WindowState(window: state.window, isFocused: true, title: title)
+                    }
+                }
+                
+                windowCache = newCache
+                
+            } catch {
+                logger.error("Failed to update window state: \(error.localizedDescription)")
             }
-        } catch {
-            logger.error("Failed to update window state: \(error.localizedDescription)")
+        }
+    
+    private func startWindowTracking() {
+        // More frequent updates for responsive UI
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.updateWindowState()
+            }
         }
     }
     
-    private func startWindowTracking() {
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+    func subscribeToWindowState(_ window: SCWindow, onUpdate: @escaping (Bool, String?) -> Void) {
+        guard let processID = window.owningApplication?.processID else { return }
+        let frame = window.frame
+        
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.updateWindowState()
+                guard let self = self else { return }
+                
+                // Find window by processID and frame
+                if let state = self.windowCache.values.first(where: { state in
+                    state.processID == processID && state.frame == frame
+                }) {
+                    onUpdate(state.isFocused, state.title)
+                }
             }
         }
     }
