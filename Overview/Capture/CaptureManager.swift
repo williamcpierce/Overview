@@ -139,16 +139,18 @@ class CaptureManager: ObservableObject {
     private func subscribeToWindowUpdates(_ window: SCWindow) {
         print("CaptureManager - Setting up subscription for: \(window.title ?? "unknown")")
         windowManager.subscribeToWindowState(window) { [weak self] isFocused, title in
-            guard let self = self else { return }
-            
-            if self.windowTitle != title {
-                print("CaptureManager - Received title update: \(self.windowTitle ?? "none") -> \(title ?? "none")")
-                self.windowTitle = title
-            }
-            
-            if self.isSourceWindowFocused != isFocused {
-                print("CaptureManager - Received focus update: \(self.isSourceWindowFocused) -> \(isFocused)")
-                self.isSourceWindowFocused = isFocused
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                if self.windowTitle != title {
+                    print("CaptureManager - Received title update: \(self.windowTitle ?? "none") -> \(title ?? "none")")
+                    self.windowTitle = title
+                }
+                
+                if self.isSourceWindowFocused != isFocused {
+                    print("CaptureManager - Received focus update: \(self.isSourceWindowFocused) -> \(isFocused)")
+                    self.isSourceWindowFocused = isFocused
+                }
             }
         }
     }
