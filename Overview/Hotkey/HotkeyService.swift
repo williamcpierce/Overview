@@ -21,7 +21,6 @@ final class HotkeyService {
     private var registeredHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
     private var nextAvailableHotkeyID: UInt32 = 1
     private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
-    private let logger = Logger(subsystem: "com.Overview.HotkeyService", category: "Hotkeys")
     private let storage: UserDefaults
     private let storageKey = "hotkeyBindings"
 
@@ -44,7 +43,6 @@ final class HotkeyService {
         do {
             try setupEventHandler()
         } catch {
-            logger.error("Failed to initialize hotkey service: \(error.localizedDescription)")
         }
     }
 
@@ -63,9 +61,7 @@ final class HotkeyService {
             do {
                 try register(binding)
             } catch {
-                logger.error(
-                    "Failed to register hotkey for '\(binding.windowTitle)': \(error.localizedDescription)"
-                )
+
             }
         }
 

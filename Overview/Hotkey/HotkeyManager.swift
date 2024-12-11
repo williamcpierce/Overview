@@ -16,10 +16,6 @@ import SwiftUI
 
 @MainActor
 final class HotkeyManager: ObservableObject {
-    private let logger = Logger(
-        subsystem: "com.Overview.HotkeyManager",
-        category: "WindowFocus"
-    )
 
     init() {
         HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
@@ -30,12 +26,9 @@ final class HotkeyManager: ObservableObject {
     }
 
     private func focusWindowByTitle(_ windowTitle: String) {
-        logger.debug("Focusing window with title: '\(windowTitle)'")
 
         if WindowManager.shared.focusWindow(withTitle: windowTitle) {
-            logger.info("Successfully focused window: '\(windowTitle)'")
         } else {
-            logger.warning("Failed to focus window: '\(windowTitle)'")
         }
     }
 

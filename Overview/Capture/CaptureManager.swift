@@ -30,7 +30,6 @@ class CaptureManager: ObservableObject {
         }
     }
 
-    private let logger = Logger()
     private var cancellables = Set<AnyCancellable>()
     private var captureTask: Task<Void, Never>?
     private let windowManager = WindowManager.shared
@@ -113,22 +112,15 @@ class CaptureManager: ObservableObject {
     }
 
     private func subscribeToWindowUpdates(_ window: SCWindow) {
-        print("CaptureManager - Setting up subscription for: \(window.title ?? "unknown")")
         windowManager.subscribeToWindowState(window) { [weak self] isFocused, title in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
 
                 if self.windowTitle != title {
-                    print(
-                        "CaptureManager - Received title update: \(self.windowTitle ?? "none") -> \(title ?? "none")"
-                    )
                     self.windowTitle = title
                 }
 
                 if self.isSourceWindowFocused != isFocused {
-                    print(
-                        "CaptureManager - Received focus update: \(self.isSourceWindowFocused) -> \(isFocused)"
-                    )
                     self.isSourceWindowFocused = isFocused
                 }
             }
@@ -136,7 +128,6 @@ class CaptureManager: ObservableObject {
     }
 
     private func handleCaptureError(_ error: Error) async {
-        logger.error("Capture error: \(error.localizedDescription)")
         await stopCapture()
     }
 

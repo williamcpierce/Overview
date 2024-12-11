@@ -35,8 +35,6 @@ final class WindowManager {
         }
     }
 
-    private let logger = Logger(
-        subsystem: "com.Overview.WindowManager", category: "WindowManagement")
     private let shareableContent = ShareableContentService()
     private var trackedWindows: [String: WindowState] = [:]
     private var windowUpdateTimer: Timer?
@@ -64,11 +62,9 @@ final class WindowManager {
         guard let windowState = trackedWindows[title],
             let processID = windowState.window.owningApplication?.processID
         else {
-            logger.error("No window found with title: \(title)")
             return false
         }
 
-        logger.info("Focusing window: \(title) with processID: \(processID)")
         return NSRunningApplication(processIdentifier: pid_t(processID))?.activate() ?? false
     }
 
@@ -85,7 +81,6 @@ final class WindowManager {
             let activeApp = NSWorkspace.shared.frontmostApplication
             let activeProcessID = activeApp?.processIdentifier
 
-            logger.debug("Active app processID: \(String(describing: activeProcessID))")
 
             var newTrackedWindows: [String: WindowState] = [:]
 
@@ -95,7 +90,6 @@ final class WindowManager {
                 else { continue }
 
                 let isFocused = processID == activeProcessID
-                logger.debug("Window '\(title)' processID: \(processID), isFocused: \(isFocused)")
                 newTrackedWindows[title] = WindowState(
                     window: window, isFocused: isFocused, title: title)
             }
@@ -103,18 +97,13 @@ final class WindowManager {
             trackedWindows = newTrackedWindows
 
         } catch {
-            logger.error("Failed to update window state: \(error.localizedDescription)")
+            
         }
     }
 
     func subscribeToWindowState(_ window: SCWindow, onUpdate: @escaping (Bool, String?) -> Void) {
         guard let processID = window.owningApplication?.processID else { return }
         let frame = window.frame
-        let windowTitle = window.title
-
-        logger.debug(
-            "Setting up subscription for window: \(windowTitle ?? "unknown"), processID: \(processID)"
-        )
 
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -126,9 +115,6 @@ final class WindowManager {
                 if let state = self.trackedWindows.values.first(where: { state in
                     state.processID == processID && state.frame == frame
                 }) {
-                    logger.debug(
-                        "Window '\(state.title)' status - focused: \(isFocused), active app: \(String(describing: currentlyActive))"
-                    )
                     onUpdate(isFocused, state.title)
                 }
             }

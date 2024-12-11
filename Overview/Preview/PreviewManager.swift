@@ -33,7 +33,7 @@ final class PreviewManager: ObservableObject {
 
     func removeCaptureManager(id: UUID) {
         guard captureManagers[id] != nil else {
-            print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
+//            print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
             return
         }
         captureManagers.removeValue(forKey: id)
