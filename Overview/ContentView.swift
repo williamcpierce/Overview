@@ -16,65 +16,16 @@
 
 import SwiftUI
 
-/// Primary view container managing window preview lifecycle and state transitions
-///
-/// Key responsibilities:
-/// - Coordinates window selection and preview mode transitions
-/// - Maintains window aspect ratio and size constraints
-/// - Manages capture manager instance lifecycle
-/// - Handles window interaction state (edit mode, focus)
-///
-/// Coordinates with:
-/// - PreviewManager: Global preview state and edit mode coordination
-/// - CaptureManager: Window capture and preview state management
-/// - SelectionView: Window selection and setup flow
-/// - PreviewView: Live window preview display
-/// - WindowAccessor: Window property management
 struct ContentView: View {
-    // MARK: - Properties
-
-    /// Global preview manager coordinating window capture instances
-    /// - Note: Shared across all Overview windows
     @ObservedObject var previewManager: PreviewManager
-
-    /// Application settings for window configuration and behavior
     @ObservedObject var appSettings: AppSettings
-
-    /// Controls window editing capabilities (move/resize)
-    /// - Note: Bound to global edit mode state in PreviewManager
     @Binding var isEditModeEnabled: Bool
-
-    // MARK: - Window State
-
-    /// Unique identifier for this window's capture manager
-    /// - Note: Created during view lifecycle, removed on disappear
+    
     @State private var captureManagerId: UUID?
-
-    /// Controls visibility of window selection interface
-    /// - Note: True during initial setup and when capture stops
     @State private var showingSelection = true
-
-    /// Current width/height ratio for window scaling
-    /// - Note: Updated when window selection changes
     @State private var aspectRatio: CGFloat
-
-    /// Dimensions of the currently selected source window
-    /// - Note: Used to calculate correct preview scaling
     @State private var selectedWindowSize: CGSize?
-
-    // MARK: - Initialization
-
-    /// Creates a content view with required managers and edit mode state
-    ///
-    /// Flow:
-    /// 1. Stores manager references for preview and settings
-    /// 2. Configures initial aspect ratio from settings
-    /// 3. Binds to global edit mode state
-    ///
-    /// - Parameters:
-    ///   - previewManager: Controls window previews and capture state
-    ///   - isEditModeEnabled: Binding to global edit mode toggle
-    ///   - appSettings: User preferences and window configuration
+    
     init(
         previewManager: PreviewManager,
         isEditModeEnabled: Binding<Bool>,
@@ -83,15 +34,11 @@ struct ContentView: View {
         self.previewManager = previewManager
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
-
-        // Use settings-defined aspect ratio until window selection
         self._aspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
     }
-
-    // MARK: - View Layout
-
+    
     var body: some View {
         GeometryReader { geometry in
             mainContent(geometry)
@@ -107,11 +54,7 @@ struct ContentView: View {
             handleWindowSizeChange(oldValue, newValue)
         }
     }
-
-    // MARK: - Private Views
-
-    /// Main content container switching between selection and preview
-    /// - Parameter geometry: Current geometry proxy from parent
+    
     private func mainContent(_ geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             if showingSelection {
@@ -127,8 +70,7 @@ struct ContentView: View {
                     height: appSettings.defaultWindowHeight
                 )
             } else if let id = captureManagerId,
-                let captureManager = previewManager.captureManagers[id]
-            {
+                      let captureManager = previewManager.captureManagers[id] {
                 PreviewView(
                     captureManager: captureManager,
                     appSettings: appSettings,

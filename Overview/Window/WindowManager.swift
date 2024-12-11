@@ -20,90 +20,99 @@ import ScreenCaptureKit
 
 @MainActor
 final class WindowManager {
-    // MARK: - Properties
-    
-    /// Shared instance for app-wide window management
     static let shared = WindowManager()
     
-    /// System logger for window operations
-    private let logger = Logger(
-        subsystem: "com.Overview.WindowManager",
-        category: "WindowManagement"
-    )
+    struct WindowState: Equatable {
+        let window: SCWindow
+        var isFocused: Bool
+        var title: String
+    }
     
-    /// Services for window operations
-    private let windowFilter = WindowFilterService()
+    private let logger = Logger(subsystem: "com.Overview.WindowManager", category: "WindowManagement")
     private let shareableContent = ShareableContentService()
-    
-    /// Map of window titles to windows for quick lookup
-    private var windowCache: [String: SCWindow] = [:]
-    
-    /// Timer for periodic window cache updates
+    private var windowCache: [String: WindowState] = [:]
     private var updateTimer: Timer?
     
-    // MARK: - Initialization
+    private let systemAppBundleIDs = [
+        "com.apple.controlcenter",
+        "com.apple.notificationcenterui",
+    ]
     
     private init() {
-        setupWindowTracking()
+        startWindowTracking()
     }
     
-    // MARK: - Public Methods
-    
-    /// Gets all available windows for capture
-    /// - Returns: Array of available windows
     func getAvailableWindows() async -> [SCWindow] {
-        do {
-            let windows = try await shareableContent.getAvailableWindows()
-            let filtered = windowFilter.filterWindows(windows)
-            
-            // Update cache while we have fresh data
-            updateWindowCache(filtered)
-            
-            return filtered
-        } catch {
-            logger.error("Failed to get windows: \(error.localizedDescription)")
-            return []
-        }
+        await updateWindowState()
+        return Array(windowCache.values.map { $0.window })
     }
     
-    /// Focuses a window by its title
-    /// - Parameter title: Title of the window to focus
-    /// - Returns: Whether the focus operation succeeded
+    func findWindow(withTitle title: String) -> SCWindow? {
+        windowCache[title]?.window
+    }
+    
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
-        guard let window = windowCache[title],
-              let processID = window.owningApplication?.processID else {
-            logger.warning("No window found with title: '\(title)'")
+        guard let windowState = windowCache[title],
+              let processID = windowState.window.owningApplication?.processID else {
             return false
         }
         
-        logger.info("Focusing window: '\(title)'")
-        return NSRunningApplication(processIdentifier: pid_t(processID))?
-            .activate() ?? false
+        return NSRunningApplication(processIdentifier: pid_t(processID))?.activate() ?? false
     }
     
-    // MARK: - Private Methods
+    func isWindowFocused(_ window: SCWindow) -> Bool {
+        guard let title = window.title else { return false }
+        return windowCache[title]?.isFocused ?? false
+    }
     
-    /// Sets up periodic window cache updates
-    private func setupWindowTracking() {
-        // Update every 2 seconds to balance freshness and performance
+    func updateWindowState() async {
+        do {
+            let windows = try await shareableContent.getAvailableWindows()
+            let filtered = filterWindows(windows)
+            let activeApp = NSWorkspace.shared.frontmostApplication
+            
+            windowCache.removeAll()
+            
+            for window in filtered {
+                guard let title = window.title else { continue }
+                let isFocused = window.owningApplication?.processID == activeApp?.processIdentifier
+                windowCache[title] = WindowState(window: window, isFocused: isFocused, title: title)
+            }
+        } catch {
+            logger.error("Failed to update window state: \(error.localizedDescription)")
+        }
+    }
+    
+    private func startWindowTracking() {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                _ = await self?.getAvailableWindows()
+                await self?.updateWindowState()
             }
         }
     }
     
-    /// Updates the window title cache
-    /// - Parameter windows: Current list of valid windows
-    private func updateWindowCache(_ windows: [SCWindow]) {
-        windowCache.removeAll()
-        for window in windows {
-            if let title = window.title {
-                windowCache[title] = window
-            }
+    private func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
+        windows.filter { window in
+            isValidWindow(window) && !isSystemWindow(window)
         }
-        logger.debug("Window cache updated, count: \(self.windowCache.count)")
+    }
+    
+    private func isValidWindow(_ window: SCWindow) -> Bool {
+        window.isOnScreen &&
+        window.frame.height > 100 &&
+        window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier &&
+        window.windowLayer == 0 &&
+        window.title != nil &&
+        !window.title!.isEmpty
+    }
+    
+    private func isSystemWindow(_ window: SCWindow) -> Bool {
+        let isDesktop = window.owningApplication?.bundleIdentifier == "com.apple.finder" && window.title == "Desktop"
+        let isSystemUI = window.owningApplication?.bundleIdentifier == "com.apple.systemuiserver"
+        let isSystemApp = systemAppBundleIDs.contains(window.owningApplication?.bundleIdentifier ?? "")
+        
+        return isDesktop || isSystemUI || isSystemApp
     }
     
     deinit {
