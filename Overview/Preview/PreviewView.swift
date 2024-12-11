@@ -4,10 +4,6 @@
 
  Created by William Pierce on 10/13/24.
 
- Implements the core preview window rendering system, managing the visual presentation
- of captured window content and coordinating real-time updates between the capture
- system and user interface layers.
-
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -22,7 +18,7 @@ struct PreviewView: View {
     @ObservedObject var appSettings: AppSettings
     @Binding var isEditModeEnabled: Bool
     @Binding var showingSelection: Bool
-    
+
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
@@ -42,7 +38,7 @@ struct PreviewView: View {
             handleCaptureStateChange(from: oldValue, to: newValue)
         }
     }
-    
+
     private func previewContent(frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .opacity(appSettings.opacity)
@@ -67,7 +63,7 @@ struct PreviewView: View {
                 }
             }
     }
-    
+
     private func handleCaptureStateChange(from oldValue: Bool, to newValue: Bool) {
         if !newValue {
             showingSelection = true
@@ -77,11 +73,11 @@ struct PreviewView: View {
 
 struct TitleOverlay: View {
     @ObservedObject var captureManager: CaptureManager
-    
+
     var body: some View {
         let title = captureManager.windowTitle
         print("TitleOverlay - Rendering with title: \(title ?? "none")")
-        
+
         return VStack {
             if let title = title {
                 HStack {

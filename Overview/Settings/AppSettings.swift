@@ -4,9 +4,6 @@
 
  Created by William Pierce on 10/13/24.
 
- Manages persistent application settings and preferences using UserDefaults,
- providing real-time updates across the application through Combine.
-
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -16,26 +13,9 @@
 
 import Foundation
 
-/// Manages persistent application settings and real-time preference updates
-///
-/// Key responsibilities:
-/// - Maintains core application preferences in UserDefaults
-/// - Broadcasts setting changes via Combine publishers
-/// - Validates setting values for consistency
-/// - Provides default configurations for new installations
-///
-/// Coordinates with:
-/// - CaptureManager: Provides capture configuration settings
-/// - WindowAccessor: Controls window appearance and behavior
-/// - PreviewView: Configures preview window properties
-/// - SettingsView: Enables preference modification
 class AppSettings: ObservableObject {
-    // MARK: - Visual Settings
+    private var isInitializing = true
 
-    private var isInitializing = true  // Flag to prevent initial registration
-
-    /// Preview window transparency level (0.05-1.0)
-    /// - Note: Values outside range are clamped during validation
     @Published var opacity: Double = UserDefaults.standard.double(forKey: "windowOpacity") {
         didSet {
             let clampedValue = max(0.05, min(1.0, opacity))
@@ -43,19 +23,12 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// Window capture refresh rate in frames per second
-    /// - Note: Valid values are 1, 5, 10, 30, 60, 120
-    /// - Warning: Changes require CaptureEngine stream reconfiguration
     @Published var frameRate: Double = UserDefaults.standard.double(forKey: "frameRate") {
         didSet {
             UserDefaults.standard.set(frameRate, forKey: "frameRate")
         }
     }
 
-    // MARK: - Window Dimensions
-
-    /// Default width for new preview windows
-    /// - Note: Maintains aspect ratio with height
     @Published var defaultWindowWidth: Double = UserDefaults.standard.double(
         forKey: "defaultWindowWidth")
     {
@@ -64,8 +37,6 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// Default height for new preview windows
-    /// - Note: Maintains aspect ratio with width
     @Published var defaultWindowHeight: Double = UserDefaults.standard.double(
         forKey: "defaultWindowHeight")
     {
@@ -74,10 +45,6 @@ class AppSettings: ObservableObject {
         }
     }
 
-    // MARK: - UI Options
-
-    /// Indicates whether to highlight the currently focused window
-    /// - Note: Border only appears when source window has focus
     @Published var showFocusedBorder: Bool = UserDefaults.standard.bool(forKey: "showFocusedBorder")
     {
         didSet {
@@ -85,17 +52,12 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// Indicates whether to show source window title in preview
     @Published var showWindowTitle: Bool = UserDefaults.standard.bool(forKey: "showWindowTitle") {
         didSet {
             UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle")
         }
     }
 
-    // MARK: - Window Management
-
-    /// Controls preview window visibility in Mission Control
-    /// - Warning: Requires window recreation to take effect
     @Published var managedByMissionControl: Bool = UserDefaults.standard.bool(
         forKey: "managedByMissionControl")
     {
@@ -104,8 +66,6 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// Controls window level adjustment during edit mode
-    /// - Note: Lower window level helps with alignment to other windows
     @Published var enableEditModeAlignment: Bool = UserDefaults.standard.bool(
         forKey: "enableEditModeAlignment")
     {
@@ -114,12 +74,10 @@ class AppSettings: ObservableObject {
         }
     }
 
-    /// TODO: Comment
     @Published var hotkeyBindings: [HotkeyBinding] = [] {
         didSet {
             if let encoded = try? JSONEncoder().encode(hotkeyBindings) {
                 UserDefaults.standard.set(encoded, forKey: "hotkeyBindings")
-                // Only register if not during initialization
                 if !isInitializing {
                     HotkeyService.shared.registerHotkeys(hotkeyBindings)
                 }
@@ -127,32 +85,22 @@ class AppSettings: ObservableObject {
         }
     }
 
-    // MARK: - Initialization
-
-    /// Initializes settings with defaults and validates stored values
-    ///
-    /// Flow:
-    /// 1. Checks for existing preferences in UserDefaults
-    /// 2. Applies defaults for missing settings
-    /// 3. Validates all values meet requirements
     init() {
         isInitializing = true
 
-        // Apply defaults for first launch
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
-            opacity = 0.95  // High visibility default
+            opacity = 0.95
         }
         if UserDefaults.standard.double(forKey: "frameRate") == 0 {
-            frameRate = 30  // Balance performance/smoothness
+            frameRate = 30
         }
         if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 {
-            defaultWindowWidth = 288  // 16:9 aspect ratio
+            defaultWindowWidth = 288
         }
         if UserDefaults.standard.double(forKey: "defaultWindowHeight") == 0 {
-            defaultWindowHeight = 162  // 16:9 aspect ratio
+            defaultWindowHeight = 162
         }
 
-        // Load hotkey bindings without registering them yet
         if let data = UserDefaults.standard.data(forKey: "hotkeyBindings"),
             let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
         {
@@ -163,22 +111,16 @@ class AppSettings: ObservableObject {
         isInitializing = false
     }
 
-    // MARK: - Private Methods
-
-    /// Validates and corrects settings values
     private func validateSettings() {
-        // Clamp opacity to valid range
         if opacity < 0.05 || opacity > 1.0 {
             opacity = max(0.05, min(1.0, opacity))
         }
 
-        // Ensure frame rate is supported
         let validRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
         if !validRates.contains(frameRate) {
             frameRate = 30.0
         }
 
-        // Enforce minimum window dimensions
         if defaultWindowWidth < 100 {
             defaultWindowWidth = 288
         }
@@ -187,9 +129,6 @@ class AppSettings: ObservableObject {
         }
     }
 
-    // MARK: - Computed Properties
-
-    /// Provides default window size as CGSize
     var defaultWindowSize: CGSize {
         CGSize(width: defaultWindowWidth, height: defaultWindowHeight)
     }
@@ -199,7 +138,6 @@ class AppSettings: ObservableObject {
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
 
-        // Reinitialize with defaults
         opacity = 0.95
         frameRate = 30.0
         defaultWindowWidth = 288

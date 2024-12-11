@@ -4,9 +4,6 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages window selection and capture initialization, providing the initial setup
- interface for Overview preview windows and handling permission flows.
-
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -17,24 +14,21 @@
 import ScreenCaptureKit
 import SwiftUI
 
-import ScreenCaptureKit
-import SwiftUI
-
 struct SelectionView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
-    
+
     @State private var selectedWindow: SCWindow?
     @State private var isLoading = true
     @State private var errorMessage = ""
     @State private var refreshID = UUID()
     @State private var availableWindows: [SCWindow] = []
-    
+
     private let windowManager = WindowManager.shared
-    
+
     var body: some View {
         VStack {
             if isLoading {
@@ -51,7 +45,7 @@ struct SelectionView: View {
             await setupCapture()
         }
     }
-    
+
     private func windowSelectionContent(_ captureManager: CaptureManager) -> some View {
         VStack {
             HStack {
@@ -62,13 +56,13 @@ struct SelectionView: View {
                     }
                 }
                 .id(refreshID)
-                
+
                 Button(action: { Task { await refreshWindows() } }) {
                     Image(systemName: "arrow.clockwise")
                 }
             }
             .padding()
-            
+
             Button("Start Preview") {
                 startPreview(captureManager)
             }
@@ -80,7 +74,7 @@ struct SelectionView: View {
         guard let id = captureManagerId else { return nil }
         return previewManager.captureManagers[id]
     }
-    
+
     private func setupCapture() async {
         guard let captureManager = getCaptureManager() else {
             errorMessage = "Setup failed"
@@ -97,21 +91,21 @@ struct SelectionView: View {
             isLoading = false
         }
     }
-    
+
     private func refreshWindows() async {
         availableWindows = await windowManager.getAvailableWindows()
         await MainActor.run {
             refreshID = UUID()
         }
     }
-    
+
     private func startPreview(_ captureManager: CaptureManager) {
         guard let window = selectedWindow else { return }
-        
+
         captureManager.selectedWindow = window
         selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
         showingSelection = false
-        
+
         Task {
             try? await captureManager.startCapture()
         }
