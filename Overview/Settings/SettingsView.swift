@@ -59,6 +59,7 @@ struct SettingsView: View {
             generalTab
             windowTab
             performanceTab
+            experimentTab
         }
         .frame(width: 360, height: 420)
     }
@@ -84,43 +85,6 @@ struct SettingsView: View {
                     .onChange(of: appSettings.showWindowTitle) { oldValue, newValue in
                         AppLogger.settings.info("Window title visibility changed: \(newValue)")
                     }
-            }
-
-            // Keyboard shortcuts section
-            Section {
-                Text("Keyboard Shortcuts")
-                    .font(.headline)
-                    .padding(.bottom, 4)
-
-                if appSettings.hotkeyBindings.isEmpty {
-                    Text("No shortcuts configured")
-                        .foregroundColor(.secondary)
-                } else {
-                    ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
-                        HStack {
-                            Text(binding.windowTitle)
-                            Spacer()
-                            Text(formatHotkey(binding))
-                                .foregroundColor(.secondary)
-
-                            Button(action: {
-                                removeHotkeyBinding(binding)
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                Button("Add Shortcut") {
-                    AppLogger.settings.debug("Opening hotkey binding sheet")
-                    isAddingHotkey = true
-                }
-            }
-            .sheet(isPresented: $isAddingHotkey) {
-                HotkeyBindingSheet(appSettings: appSettings)
             }
         }
         .formStyle(.grouped)
@@ -221,7 +185,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .tabItem { Label("Windows", systemImage: "macwindow") }
+        .tabItem { Label("Previews", systemImage: "macwindow") }
     }
 
     /// Performance settings for frame rate configuration
@@ -253,6 +217,56 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Performance", systemImage: "gauge.medium") }
+    }
+    
+    /// Experimental features still under development
+    private var experimentTab: some View {
+        Form {
+            // Keyboard shortcuts section
+            Section {
+                Text("Hotkeys")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+
+                if appSettings.hotkeyBindings.isEmpty {
+                    Text("No hotkeys configured")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
+                        HStack {
+                            Text(binding.windowTitle)
+                            Spacer()
+                            Text(formatHotkey(binding))
+                                .foregroundColor(.secondary)
+
+                            Button(action: {
+                                removeHotkeyBinding(binding)
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                Button("Add Hotkey") {
+                    AppLogger.settings.debug("Opening hotkey binding sheet")
+                    isAddingHotkey = true
+                }
+                
+                Text(
+                    "Hotkeys currently only work while Overview is in focus - this will be improved."
+                )
+                .font(.caption)
+                .foregroundColor(.red)
+            }
+            .sheet(isPresented: $isAddingHotkey) {
+                HotkeyBindingSheet(appSettings: appSettings)
+            }
+        }
+        .formStyle(.grouped)
+        .tabItem { Label("Experimental", systemImage: "flask") }
     }
 
     // MARK: - Private Methods

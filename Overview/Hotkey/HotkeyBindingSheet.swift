@@ -56,7 +56,7 @@ struct HotkeyBindingSheet: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text("Add Keyboard Shortcut")
+            Text("Add Hotkey")
                 .font(.headline)
 
             VStack(alignment: .leading) {
@@ -75,13 +75,18 @@ struct HotkeyBindingSheet: View {
 
             if let window = selectedWindow, let title = window.title {
                 VStack(alignment: .leading) {
-                    Text("Shortcut:")
+                    Text("Hotkey:")
                     HotkeyRecorder(shortcut: $currentShortcut, windowTitle: title)
                         .frame(height: 24)
                         .accessibilityLabel("Hotkey Recorder")
                         .onChange(of: currentShortcut) { _, _ in
                             validateShortcut()
                         }
+                    Text(
+                        "Hotkeys must consist of ⌘/⌥/⌃/⇧ plus another standard character."
+                    )
+                    .font(.caption)
+                    .foregroundColor(.primary)
                 }
             }
 
