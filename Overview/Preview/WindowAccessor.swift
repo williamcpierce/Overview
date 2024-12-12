@@ -4,8 +4,8 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages low-level window configuration through NSWindow APIs, providing
- essential window management capabilities for Overview's preview windows.
+ Manages low-level window configuration through NSWindow APIs, providing a bridge
+ between SwiftUI window state and AppKit window behavior for Overview's previews.
 
  This file is part of Overview.
 
@@ -14,6 +14,7 @@
  file at the root of this project.
 */
 
+import OSLog
 import SwiftUI
 
 /// Bridges SwiftUI window state with AppKit window properties for preview windows
@@ -62,11 +63,15 @@ struct WindowAccessor: NSViewRepresentable {
     ///
     /// - Important: Window setup must occur after view creation
     func makeNSView(context: Context) -> NSView {
+        AppLogger.windows.debug("Creating window container view")
         let view = NSView()
 
         // Context: Window configuration requires valid window reference
         DispatchQueue.main.async {
-            guard let window = view.window else { return }
+            guard let window = view.window else {
+                AppLogger.windows.warning("No window reference available during setup")
+                return
+            }
 
             // Core window configuration
             window.styleMask = [.fullSizeContentView]
@@ -85,6 +90,8 @@ struct WindowAccessor: NSViewRepresentable {
             window.setContentSize(size)
             window.contentMinSize = size
             window.contentAspectRatio = size
+
+            AppLogger.windows.info("Window initialized with size: \(size.width)x\(size.height)")
         }
         return view
     }
@@ -99,7 +106,10 @@ struct WindowAccessor: NSViewRepresentable {
     ///
     /// - Important: Updates are debounced for performance
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let window = nsView.window else { return }
+        guard let window = nsView.window else {
+            AppLogger.windows.warning("No window reference available during update")
+            return
+        }
 
         // Context: Debouncing prevents rapid consecutive updates
         DispatchQueue.main.asyncAfter(deadline: .now() + updateDebounceInterval) {
@@ -118,23 +128,32 @@ struct WindowAccessor: NSViewRepresentable {
     /// 2. Updates movement restrictions
     /// 3. Adjusts window level for positioning
     private func updateEditModeProperties(for window: NSWindow) {
+        AppLogger.windows.debug("Updating edit mode properties: isEnabled=\(isEditModeEnabled)")
+        
         // Window chrome and interaction state
         window.styleMask =
             isEditModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
         window.isMovable = isEditModeEnabled
 
         // Context: Window level changes help with positioning in edit mode
-        window.level =
-            isEditModeEnabled && appSettings.enableEditModeAlignment
-            ? .floating  // Behind normal windows for alignment
-            : .statusBar + 1  // Above most content
+        let newLevel = isEditModeEnabled && appSettings.enableEditModeAlignment
+            ? NSWindow.Level.floating  // Behind normal windows for alignment
+            : NSWindow.Level.statusBar + 1  // Above most content
+
+        window.level = newLevel
+        AppLogger.windows.info("Window level updated: \(newLevel.rawValue)")
     }
 
     /// Sets window collection behavior based on settings
     ///
-    /// - Important: Affects Mission Control integration
+    /// Flow:
+    /// 1. Updates Mission Control integration state
+    /// 2. Logs behavior changes for debugging
     private func updateWindowManagement(for window: NSWindow) {
-        if appSettings.managedByMissionControl {
+        let shouldManage = appSettings.managedByMissionControl
+        AppLogger.windows.debug("Updating window management: managedByMissionControl=\(shouldManage)")
+
+        if shouldManage {
             window.collectionBehavior.insert(.managed)
         } else {
             window.collectionBehavior.remove(.managed)
@@ -155,8 +174,15 @@ struct WindowAccessor: NSViewRepresentable {
 
         // Context: Only update for visible changes (>1px)
         if abs(currentSize.height - newHeight) > 1.0 {
-            window.setContentSize(NSSize(width: currentSize.width, height: newHeight))
+            let newSize = NSSize(width: currentSize.width, height: newHeight)
+            window.setContentSize(newSize)
             window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
+            
+            AppLogger.windows.debug("""
+                Window size updated: \(String(format: "%.1f", currentSize.width))x\
+                \(String(format: "%.1f", newHeight)) (ratio: \
+                \(String(format: "%.2f", aspectRatio)))
+                """)
         }
     }
 }

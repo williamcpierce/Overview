@@ -4,8 +4,9 @@
 
  Created by William Pierce on 12/9/24
 
- Provides centralized window management capabilities, handling window discovery,
- focus operations, and state tracking independently of capture functionality.
+ Provides centralized window management capabilities independently of capture
+ functionality, managing window discovery, focus operations, and state tracking
+ across the application.
 
  This file is part of Overview.
 
@@ -18,99 +19,113 @@ import AppKit
 import OSLog
 import ScreenCaptureKit
 
-/// Manages window operations independently of capture functionality
+/// Manages window operations and state tracking across the application
 ///
 /// Key responsibilities:
-/// - Maintains current window state across the system
-/// - Handles window focus operations
-/// - Provides window discovery and filtering
-/// - Coordinates with system window management
+/// - Provides real-time window state tracking and caching
+/// - Handles window focus operations and validation
+/// - Coordinates window discovery and filtering
+/// - Maintains periodic window state updates
 ///
 /// Coordinates with:
-/// - ShareableContentService: Window discovery
-/// - WindowFilterService: Window validation
-/// - HotkeyManager: Window focus operations
-/// - CaptureManager: Window state updates
+/// - ShareableContentService: Retrieves available windows
+/// - WindowFilterService: Validates capture compatibility
+/// - HotkeyManager: Processes focus requests
+/// - CaptureManager: Provides window state updates
 @MainActor
 class WindowService {
     // MARK: - Properties
 
     /// Shared instance for app-wide window management
+    /// - Note: Enforces singleton pattern for consistent state
     static let shared = WindowService()
 
-    /// System logger for window operations
-    private let logger = Logger(
-        subsystem: "com.Overview.WindowService",
-        category: "WindowManagement"
-    )
-
-    /// Current system window state
+    /// Maps window titles to window references for quick lookup
     /// - Note: Updated periodically to maintain accuracy
     private var windowCache: [String: SCWindow] = [:]
 
-    /// Service dependencies
+    /// Service dependencies for window operations
     private let shareableContent = ShareableContentService()
     private let windowFilter = WindowFilterService()
 
-    /// Update timer for window state
+    /// Timer for periodic window cache updates
+    /// - Note: Maintains cache freshness without blocking
     private var updateTimer: Timer?
 
     // MARK: - Initialization
 
+    /// Creates window service and initializes tracking
+    /// - Important: Private to enforce singleton pattern
     private init() {
         setupWindowTracking()
     }
 
     // MARK: - Public Methods
 
-    /// Focuses window with specified title
+    /// Activates window with specified title
     ///
     /// Flow:
-    /// 1. Validates window exists in current state
-    /// 2. Retrieves window information
-    /// 3. Activates window's application
+    /// 1. Validates window exists in current cache
+    /// 2. Retrieves application process identifier
+    /// 3. Activates window's parent application
+    /// 4. Reports success or failure
     ///
     /// - Parameter title: Title of window to focus
     /// - Returns: Whether focus operation succeeded
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
+        AppLogger.windows.debug("Attempting to focus window: '\(title)'")
+        
         guard let window = windowCache[title],
             let processID = window.owningApplication?.processID
         else {
-            logger.warning("No window found with title: '\(title)'")
+            AppLogger.windows.warning("No window found with title: '\(title)'")
             return false
         }
 
-        logger.info("Focusing window: '\(title)'")
-        return NSRunningApplication(processIdentifier: pid_t(processID))?
+        AppLogger.windows.info("Focusing window: '\(title)' (PID: \(processID))")
+        let success = NSRunningApplication(processIdentifier: pid_t(processID))?
             .activate() ?? false
+            
+        if !success {
+            AppLogger.windows.error("Failed to activate window: '\(title)'")
+        }
+        return success
     }
 
-    /// Returns filtered list of available windows
+    /// Retrieves filtered list of available windows
     ///
     /// Flow:
-    /// 1. Updates current window state
-    /// 2. Applies window filters
-    /// 3. Returns valid windows
+    /// 1. Updates window cache state
+    /// 2. Returns current window collection
+    /// 3. Maintains consistent window order
     ///
-    /// - Returns: Array of available windows
+    /// - Returns: Array of available windows for capture
+    /// - Note: Windows are filtered based on capture compatibility
     func getAvailableWindows() async -> [SCWindow] {
+        AppLogger.windows.debug("Retrieving available windows")
         await updateWindowState()
         return Array(windowCache.values)
     }
+
+    // MARK: - Private Methods
 
     /// Updates window cache with current system state
     ///
     /// Flow:
     /// 1. Retrieves current shareable content
-    /// 2. Filters valid windows
-    /// 3. Updates cache state
+    /// 2. Applies window filtering rules
+    /// 3. Updates cache with valid windows
+    /// 4. Logs cache update metrics
+    ///
+    /// - Warning: Must be called from MainActor context
     private func updateWindowState() async {
+        AppLogger.windows.debug("Updating window cache state")
+        
         do {
             let windows = try await shareableContent.getAvailableWindows()
             let filtered = windowFilter.filterWindows(windows)
 
-            // Update cache with valid windows
             windowCache.removeAll()
             for window in filtered {
                 if let title = window.title {
@@ -118,22 +133,26 @@ class WindowService {
                 }
             }
 
-            logger.debug("Window cache updated, count: \(self.windowCache.count)")
+            AppLogger.windows.info("Window cache updated: \(windowCache.count) windows")
         } catch {
-            logger.error("Failed to update window state: \(error.localizedDescription)")
+            AppLogger.logError(error,
+                             context: "Failed to update window state",
+                             logger: AppLogger.windows)
         }
     }
 
-    // MARK: - Private Methods
-
-    /// Sets up periodic window state updates
+    /// Configures periodic window state updates
     ///
     /// Flow:
-    /// 1. Creates update timer
-    /// 2. Configures update interval
-    /// 3. Starts tracking
+    /// 1. Creates update timer with 2-second interval
+    /// 2. Configures update callback
+    /// 3. Begins tracking cycle
+    ///
+    /// - Important: Balance update frequency with performance
+    /// - Note: Updates run on main actor to maintain consistency
     private func setupWindowTracking() {
-        // Update every 2 seconds to balance freshness and performance
+        AppLogger.windows.debug("Initializing window tracking")
+        
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.updateWindowState()
@@ -141,7 +160,10 @@ class WindowService {
         }
     }
 
+    /// Cleanup timer on deallocation
+    /// - Warning: Required to prevent timer retention
     deinit {
+        AppLogger.windows.debug("Cleaning up window service")
         updateTimer?.invalidate()
     }
 }

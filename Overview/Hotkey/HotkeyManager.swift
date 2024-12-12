@@ -5,7 +5,8 @@
  Created by William Pierce on 12/9/24.
 
  Coordinates window focusing operations through keyboard shortcuts, serving as the bridge
- between the HotkeyService and WindowService for hotkey-triggered window activation.
+ between the HotkeyService and WindowManager for hotkey-triggered window activation.
+ Provides reliable window focus operations in response to global keyboard events.
 
  This file is part of Overview.
 
@@ -20,48 +21,71 @@ import SwiftUI
 /// Manages hotkey-triggered window focus operations across preview windows
 ///
 /// Key responsibilities:
-/// - Handles hotkey event registration with HotkeyService
-/// - Executes window focus operations with WindowService
-/// - Manages callback lifecycle for hotkey events
-/// - Provides logging for debugging focus operations
+/// - Coordinates hotkey event handling with HotkeyService
+/// - Executes window focus operations through WindowManager
+/// - Manages callback registration lifecycle
+/// - Provides reliable logging for focus operations
 ///
 /// Coordinates with:
 /// - HotkeyService: Provides hotkey event notifications
-/// - WindowService: Executes window focus operations
+/// - WindowManager: Executes window focus operations
+/// - OverviewApp: Initializes hotkey management system
 @MainActor
 final class HotkeyManager: ObservableObject {
-    // MARK: - Properties
-    
-    /// Logger for tracking window focus operations
-    private let logger = Logger(
-        subsystem: "com.Overview.HotkeyManager",
-        category: "WindowFocus"
-    )
-    
     // MARK: - Initialization
     
+    /// Creates hotkey manager and registers for hotkey events
+    ///
+    /// Flow:
+    /// 1. Initializes logging system
+    /// 2. Registers callback with HotkeyService
+    /// 3. Configures window focus handling
     init() {
-        // Register for hotkey events
+        AppLogger.hotkeys.debug("Initializing HotkeyManager")
+        
+        // Register for hotkey events with weak self reference
+        // to prevent retain cycles during callback handling
         HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
             Task { @MainActor in
                 self?.focusWindowByTitle(windowTitle)
             }
         }
+        
+        AppLogger.hotkeys.info("HotkeyManager successfully initialized")
     }
     
     // MARK: - Private Methods
     
+    /// Attempts to focus window with specified title
+    ///
+    /// Flow:
+    /// 1. Logs focus attempt details
+    /// 2. Requests focus through WindowManager
+    /// 3. Logs operation outcome
+    ///
+    /// - Parameter windowTitle: Title of window to focus
+    /// - Note: Operation logged as warning if focus fails
     private func focusWindowByTitle(_ windowTitle: String) {
-        logger.debug("Focusing window with title: '\(windowTitle)'")
+        AppLogger.hotkeys.debug("Focusing window: '\(windowTitle)'")
         
-        if WindowManager.shared.focusWindow(withTitle: windowTitle) {
-            logger.info("Successfully focused window: '\(windowTitle)'")
+        let success = WindowManager.shared.focusWindow(withTitle: windowTitle)
+        
+        if success {
+            AppLogger.hotkeys.info("Successfully focused window: '\(windowTitle)'")
         } else {
-            logger.warning("Failed to focus window: '\(windowTitle)'")
+            AppLogger.hotkeys.warning("Failed to focus window: '\(windowTitle)'")
         }
     }
     
+    /// Removes hotkey callback registration on deallocation
+    ///
+    /// Flow:
+    /// 1. Logs cleanup initiation
+    /// 2. Removes callback from HotkeyService
+    /// 3. Confirms cleanup completion
     deinit {
+        AppLogger.hotkeys.debug("Cleaning up HotkeyManager")
         HotkeyService.shared.removeCallback(for: self)
+        AppLogger.hotkeys.info("HotkeyManager cleanup completed")
     }
 }

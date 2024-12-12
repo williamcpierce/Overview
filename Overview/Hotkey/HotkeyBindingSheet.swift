@@ -18,26 +18,38 @@
 import ScreenCaptureKit
 import SwiftUI
 
-/// Presents a sheet for creating new hotkey bindings
+/// Presents interface for creating and configuring window-specific keyboard shortcuts
+///
+/// Key responsibilities:
+/// - Manages window selection and shortcut recording workflow
+/// - Validates shortcut combinations for duplicates and requirements
+/// - Coordinates with hotkey system for binding storage
+/// - Provides immediate feedback on configuration issues
+///
+/// Coordinates with:
+/// - AppSettings: Persists hotkey configurations
+/// - WindowManager: Retrieves available window targets
+/// - HotkeyBinding: Creates validated shortcut configurations
+/// - HotkeyRecorder: Handles keyboard input capture
 struct HotkeyBindingSheet: View {
     // MARK: - Properties
-
-    /// Environment-provided dismiss action for closing sheet
+    
+    /// Provides sheet dismissal capability
     @Environment(\.dismiss) private var dismiss
 
-    /// Global application settings for storing hotkey bindings
+    /// Stores and manages hotkey configurations
     @ObservedObject var appSettings: AppSettings
 
-    /// Currently selected window for binding
+    /// Currently targeted window for shortcut binding
     @State private var selectedWindow: SCWindow?
 
-    /// Current keyboard shortcut configuration
+    /// Active keyboard shortcut configuration
     @State private var currentShortcut: HotkeyBinding?
 
-    /// Error message for invalid configurations
+    /// Current validation failure message
     @State private var errorMessage = ""
 
-    /// List of available windows for binding
+    /// Windows available for shortcut binding
     @State private var availableWindows: [SCWindow] = []
 
     // MARK: - View Layout
@@ -102,14 +114,26 @@ struct HotkeyBindingSheet: View {
 
     // MARK: - Private Methods
 
-    /// Updates the list of available windows
+    /// Retrieves current list of available windows for binding
+    ///
+    /// Flow:
+    /// 1. Requests filtered window list from manager
+    /// 2. Updates view state with results
+    /// 3. Handles any window loading failures
     private func updateAvailableWindows() {
         Task {
+            AppLogger.windows.debug("Fetching available windows for hotkey binding")
             availableWindows = await WindowManager.shared.getAvailableWindows()
+            AppLogger.windows.info("Retrieved \(availableWindows.count) windows for binding")
         }
     }
 
-    /// Validates the current window selection
+    /// Validates current window selection for binding conflicts
+    ///
+    /// Flow:
+    /// 1. Checks for valid window selection
+    /// 2. Detects duplicate window titles
+    /// 3. Updates error state for user feedback
     private func validateSelection() {
         guard let window = selectedWindow,
               let title = window.title else {
@@ -117,16 +141,23 @@ struct HotkeyBindingSheet: View {
             return
         }
 
-        // Check for duplicate window titles
+        // Context: Multiple windows with same title could cause focus issues
         let duplicateTitles = availableWindows.filter { $0.title == title }.count > 1
         if duplicateTitles {
+            AppLogger.hotkeys.warning("Duplicate window titles detected for '\(title)'")
             errorMessage = "Warning: Multiple windows have this title"
         } else {
             errorMessage = ""
+            AppLogger.hotkeys.debug("Window '\(title)' validated for binding")
         }
     }
 
-    /// Validates the current shortcut configuration
+    /// Validates shortcut configuration for conflicts and requirements
+    ///
+    /// Flow:
+    /// 1. Checks for existing binding conflicts
+    /// 2. Validates modifier key requirements
+    /// 3. Updates error state with validation results
     private func validateShortcut() {
         guard let shortcut = currentShortcut else {
             errorMessage = ""
@@ -138,20 +169,28 @@ struct HotkeyBindingSheet: View {
             binding.keyCode == shortcut.keyCode &&
             binding.modifiers == shortcut.modifiers
         }) {
+            AppLogger.hotkeys.warning("Duplicate shortcut detected: \(shortcut.hotkeyDisplayString)")
             errorMessage = "This shortcut is already in use"
             return
         }
 
-        // Ensure at least one modifier
+        // Context: Modifier required to prevent accidental triggers
         if shortcut.modifiers.isEmpty {
+            AppLogger.hotkeys.warning("Shortcut missing required modifier key")
             errorMessage = "Shortcut must include at least one modifier key"
             return
         }
 
         errorMessage = ""
+        AppLogger.hotkeys.debug("Shortcut validated: \(shortcut.hotkeyDisplayString)")
     }
 
-    /// Checks if current configuration can be saved
+    /// Determines if current configuration is valid for saving
+    ///
+    /// Flow:
+    /// 1. Validates window selection exists
+    /// 2. Confirms shortcut is configured
+    /// 3. Checks for validation errors
     private func canAddBinding() -> Bool {
         guard let window = selectedWindow,
               window.title != nil,
@@ -162,9 +201,15 @@ struct HotkeyBindingSheet: View {
         return true
     }
 
-    /// Adds current binding to settings and dismisses sheet
+    /// Saves current binding configuration and closes sheet
+    ///
+    /// Flow:
+    /// 1. Validates current shortcut
+    /// 2. Adds to global configuration
+    /// 3. Triggers sheet dismissal
     private func addBinding() {
         if let shortcut = currentShortcut {
+            AppLogger.hotkeys.info("Adding new hotkey binding: '\(shortcut.windowTitle)' -> \(shortcut.hotkeyDisplayString)")
             appSettings.hotkeyBindings.append(shortcut)
             dismiss()
         }
@@ -184,6 +229,8 @@ struct HotkeyBindingSheet: View {
 /// - Carbon Event Manager: Uses compatible key codes
 /// - AppSettings: Enables JSON persistence
 struct HotkeyBinding: Codable, Equatable, Hashable {
+    // MARK: - Properties
+
     /// Title of window this binding targets
     let windowTitle: String
 
@@ -195,11 +242,15 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     /// - Note: Private to ensure proper flag handling
     private let modifierFlags: UInt
 
+    // MARK: - Computed Properties
+
     /// Computed property for accessing modifier flags
     /// - Note: Ensures compatibility with AppKit/Carbon
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
+
+    // MARK: - Initialization
 
     /// Creates a new hotkey binding with validated parameters
     ///
@@ -217,8 +268,13 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
         self.windowTitle = windowTitle
         self.keyCode = keyCode
+        // Context: Only allow standard modifier keys for compatibility
         self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
+        
+        AppLogger.hotkeys.debug("Created binding for '\(windowTitle)' with key code \(keyCode)")
     }
+
+    // MARK: - Public Methods
 
     /// Generates human-readable shortcut representation
     ///
@@ -241,6 +297,8 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
         }
         return parts.joined(separator: "")
     }
+
+    // MARK: - Private Methods
 
     /// Converts Carbon key codes to displayable characters
     ///

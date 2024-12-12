@@ -35,6 +35,11 @@ import ScreenCaptureKit
 /// - CaptureManager: Coordinates stream updates during active capture
 /// - WindowAccessor: Aligns capture dimensions with window scaling
 class StreamConfigurationService {
+    // MARK: - Properties
+
+    /// Logger for stream configuration operations
+    private let logger = AppLogger.capture
+
     // MARK: - Public Methods
 
     /// Creates a new stream configuration and content filter for window capture
@@ -54,6 +59,8 @@ class StreamConfigurationService {
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
         SCStreamConfiguration, SCContentFilter
     ) {
+        logger.debug("Creating configuration for window: '\(window.title ?? "unknown")', frameRate: \(frameRate)")
+        
         let config = SCStreamConfiguration()
 
         // Context: Match stream resolution to window for optimal quality
@@ -93,11 +100,23 @@ class StreamConfigurationService {
     func updateConfiguration(_ stream: SCStream?, _ window: SCWindow, frameRate: Double)
         async throws
     {
-        guard let stream = stream else { return }
+        logger.debug("Updating stream configuration: frameRate=\(frameRate)")
+        
+        guard let stream = stream else {
+            logger.warning("Cannot update configuration: stream is nil")
+            return
+        }
+
         let (config, filter) = createConfiguration(window, frameRate: frameRate)
 
-        try await stream.updateConfiguration(config)
-        try await stream.updateContentFilter(filter)
+        do {
+            try await stream.updateConfiguration(config)
+            try await stream.updateContentFilter(filter)
+            logger.info("Stream configuration updated successfully")
+        } catch {
+            logger.error("Failed to update stream configuration: \(error.localizedDescription)")
+            throw error
+        }
     }
 }
 
@@ -118,6 +137,9 @@ class StreamConfigurationService {
 /// - WindowAccessor: Validates window properties for capture
 class WindowFilterService {
     // MARK: - Properties
+
+    /// Logger for window filtering operations
+    private let logger = AppLogger.windows
 
     /// System applications excluded from capture selection
     /// - Note: Critical system UI elements that shouldn't be captured
@@ -141,9 +163,14 @@ class WindowFilterService {
     ///
     /// - Note: Changes to system UI may require filter updates
     func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
-        windows.filter { window in
+        logger.debug("Filtering \(windows.count) windows")
+        
+        let filtered = windows.filter { window in
             isValidBasicWindow(window) && isNotSystemWindow(window)
         }
+        
+        logger.info("Found \(filtered.count) valid capture targets")
+        return filtered
     }
 
     // MARK: - Private Methods
@@ -159,12 +186,18 @@ class WindowFilterService {
     /// - Returns: Whether window meets basic requirements
     private func isValidBasicWindow(_ window: SCWindow) -> Bool {
         // Context: These requirements ensure stable capture and display
-        window.isOnScreen
+        let isValid = window.isOnScreen
             && window.frame.height > 100
             && window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
             && window.windowLayer == 0
             && window.title != nil
             && !window.title!.isEmpty
+            
+        if !isValid {
+            logger.debug("Window validation failed: '\(window.title ?? "unknown")'")
+        }
+        
+        return isValid
     }
 
     /// Checks if window belongs to excludable system service
@@ -190,7 +223,13 @@ class WindowFilterService {
         let isNotSystemApp = !systemAppBundleIDs.contains(
             window.owningApplication?.bundleIdentifier ?? "")
 
-        return isNotDesktop && isNotSystemUIServer && isNotSystemApp
+        let isNotSystem = isNotDesktop && isNotSystemUIServer && isNotSystemApp
+        
+        if !isNotSystem {
+            logger.debug("Excluding system window: '\(window.title ?? "unknown")'")
+        }
+        
+        return isNotSystem
     }
 }
 
@@ -211,9 +250,13 @@ class WindowFilterService {
 /// - PreviewView: Updates visual state based on focus
 /// - WindowAccessor: Coordinates window level changes during focus
 class WindowFocusService {
+    // MARK: - Properties
+    
+    /// Logger for window focus operations
+    private let logger = AppLogger.windows
+
     // MARK: - Public Methods
-    private let logger = Logger(
-        subsystem: "com.Overview.WindowFocusService", category: "WindowFocus")
+
     /// Activates the captured window's application when appropriate
     ///
     /// Flow:
@@ -233,16 +276,18 @@ class WindowFocusService {
         guard !isEditModeEnabled,
             let processID = window.owningApplication?.processID
         else {
-            logger.error(
-                "Cannot focus window: isEditModeEnabled=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)"
-            )
+            logger.warning("Cannot focus window: editMode=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)")
             return
         }
 
-        logger.info("Focusing application: processID=\(processID)")
+        logger.info("Focusing window: '\(window.title ?? "unknown")', processID=\(processID)")
 
-        NSRunningApplication(processIdentifier: pid_t(processID))?
-            .activate()
+        let success = NSRunningApplication(processIdentifier: pid_t(processID))?
+            .activate() ?? false
+            
+        if !success {
+            logger.error("Failed to activate window: processID=\(processID)")
+        }
     }
 
     /// Determines if specified window's application currently has focus
@@ -261,10 +306,15 @@ class WindowFocusService {
         guard let window = window,
             let activeApp = NSWorkspace.shared.frontmostApplication,
             let selectedApp = window.owningApplication
-        else { return false }
+        else {
+            logger.debug("Cannot determine focus state: window or app references missing")
+            return false
+        }
 
         // Context: Process ID comparison handles app bundles correctly
-        return activeApp.processIdentifier == selectedApp.processID
+        let isFocused = activeApp.processIdentifier == selectedApp.processID
+        logger.debug("Window focus state: '\(window.title ?? "unknown")', focused=\(isFocused)")
+        return isFocused
     }
 }
 
@@ -287,12 +337,8 @@ class WindowFocusService {
 class WindowTitleService {
     // MARK: - Properties
 
-    /// System logger for title update operations
-    /// - Note: Categorized for focused debugging
-    private let logger = Logger(
-        subsystem: "com.Overview.WindowTitleService",
-        category: "WindowTitle"
-    )
+    /// Logger for title update operations
+    private let logger = AppLogger.windows
 
     // MARK: - Public Methods
 
@@ -310,7 +356,10 @@ class WindowTitleService {
     /// - Warning: Title updates may fail if window is minimized
     /// - Note: Uses frame matching to handle multiple windows from same app
     func updateWindowTitle(for window: SCWindow?) async -> String? {
-        guard let window = window else { return nil }
+        guard let window = window else {
+            logger.debug("Cannot update title: window reference is nil")
+            return nil
+        }
 
         do {
             // Context: Exclude desktop to prevent false matches
@@ -318,10 +367,18 @@ class WindowTitleService {
                 false, onScreenWindowsOnly: true)
 
             // Context: Match both process and frame to handle multiple windows
-            return content.windows.first { updatedWindow in
+            let title = content.windows.first { updatedWindow in
                 updatedWindow.owningApplication?.processID == window.owningApplication?.processID
                     && updatedWindow.frame == window.frame
             }?.title
+            
+            if title != nil {
+                logger.debug("Updated window title: '\(title!)'")
+            } else {
+                logger.warning("Failed to find matching window for title update")
+            }
+            
+            return title
         } catch {
             logger.error("Failed to update window title: \(error.localizedDescription)")
             return nil
@@ -347,6 +404,9 @@ class WindowTitleService {
 /// - WindowTitleService: Triggers title updates
 class WindowObserverService {
     // MARK: - Properties
+
+    /// Logger for window observation operations
+    private let logger = AppLogger.windows
 
     /// Callback triggered when window focus changes
     /// - Note: Async to prevent blocking during updates
@@ -380,6 +440,7 @@ class WindowObserverService {
     /// - Warning: Must be balanced with stopObserving call
     /// - Note: Title checks run every second to catch manual changes
     func startObserving() {
+        logger.info("Starting window state observation")
         setupWorkspaceObserver()
         setupWindowObserver()
         startTitleChecks()
@@ -395,6 +456,8 @@ class WindowObserverService {
     ///
     /// - Warning: Must be called before service deallocation
     func stopObserving() {
+        logger.info("Stopping window state observation")
+        
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
@@ -413,6 +476,8 @@ class WindowObserverService {
     /// 2. Registers for activation events
     /// 3. Sets up async callback handling
     private func setupWorkspaceObserver() {
+        logger.debug("Setting up workspace observer")
+        
         // Context: Workspace notifications catch app-level focus changes
         workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -432,6 +497,8 @@ class WindowObserverService {
     /// 2. Registers for window focus events
     /// 3. Configures async state updates
     private func setupWindowObserver() {
+        logger.debug("Setting up window focus observer")
+        
         // Context: Window notifications catch window-level focus changes
         windowObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification,
@@ -456,6 +523,8 @@ class WindowObserverService {
     private func startTitleChecks() {
         titleCheckTimer?.invalidate()
 
+        logger.debug("Starting periodic title checks")
+        
         // Context: Regular checks catch title changes that don't trigger events
         titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
             [weak self] _ in
@@ -482,6 +551,11 @@ class WindowObserverService {
 /// - SelectionView: Uses window list for UI presentation
 /// - WindowFilterService: Receives raw window list for filtering
 class ShareableContentService {
+    // MARK: - Properties
+    
+    /// Logger for content access operations
+    private let logger = AppLogger.capture
+
     // MARK: - Public Methods
 
     /// Requests screen capture permission through system dialog
@@ -497,7 +571,14 @@ class ShareableContentService {
     /// - Warning: May trigger system permission dialog
     /// - Note: Permission persists across app launches
     func requestPermission() async throws {
-        try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        logger.info("Requesting screen capture permission")
+        do {
+            try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            logger.info("Screen capture permission granted")
+        } catch {
+            logger.error("Screen capture permission denied: \(error.localizedDescription)")
+            throw CaptureError.permissionDenied
+        }
     }
 
     /// Retrieves current list of windows available for capture
@@ -514,8 +595,15 @@ class ShareableContentService {
     /// - Warning: May fail if permission not granted
     /// - Note: Includes off-screen windows for complete listing
     func getAvailableWindows() async throws -> [SCWindow] {
-        let content = try await SCShareableContent.excludingDesktopWindows(
-            false, onScreenWindowsOnly: true)
-        return content.windows
+        logger.debug("Retrieving available windows")
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: true)
+            logger.info("Found \(content.windows.count) total windows")
+            return content.windows
+        } catch {
+            logger.error("Failed to get available windows: \(error.localizedDescription)")
+            throw error
+        }
     }
 }

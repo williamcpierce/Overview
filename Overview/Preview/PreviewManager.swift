@@ -6,6 +6,7 @@
 
  Manages multiple window preview instances and coordinates their lifecycle,
  providing centralized control of capture sessions and edit mode state.
+ Core orchestrator for Overview's window preview system.
 
  This file is part of Overview.
 
@@ -16,13 +17,13 @@
 
 import SwiftUI
 
-/// Manages multiple window preview instances and their shared state
+/// Manages multiple window preview instances and coordinates global preview state
 ///
 /// Key responsibilities:
 /// - Creates and manages CaptureManager instances for preview windows
 /// - Maintains global edit mode state across preview instances
 /// - Coordinates preview window lifecycle and resource cleanup
-/// - Handles capture manager creation and removal
+/// - Handles capture manager instance creation and disposal
 ///
 /// Coordinates with:
 /// - CaptureManager: Individual window capture and preview instances
@@ -56,6 +57,7 @@ final class PreviewManager: ObservableObject {
     /// - Parameter appSettings: User preferences for capture configuration
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
+        AppLogger.windows.debug("PreviewManager initialized")
     }
 
     // MARK: - Public Methods
@@ -70,8 +72,13 @@ final class PreviewManager: ObservableObject {
     /// - Returns: UUID for accessing the new capture manager
     func createNewCaptureManager() -> UUID {
         let id = UUID()
+        
+        AppLogger.windows.debug("Creating new capture manager with ID: \(id)")
+        
         let captureManager = CaptureManager(appSettings: appSettings)
         captureManagers[id] = captureManager
+        
+        AppLogger.windows.info("Created capture manager: \(id), total active: \(captureManagers.count)")
         return id
     }
 
@@ -85,11 +92,15 @@ final class PreviewManager: ObservableObject {
     /// - Parameter id: UUID of manager to remove
     /// - Note: Invalid IDs logged but not treated as errors
     func removeCaptureManager(id: UUID) {
+        AppLogger.windows.debug("Attempting to remove capture manager: \(id)")
+        
         guard captureManagers[id] != nil else {
-            print("Warning: Attempted to remove non-existent capture manager with ID \(id).")
+            AppLogger.windows.warning("Attempted to remove non-existent capture manager: \(id)")
             return
         }
+        
         captureManagers.removeValue(forKey: id)
+        AppLogger.windows.info("Removed capture manager: \(id), remaining active: \(captureManagers.count)")
     }
 
     /// Toggles global edit mode affecting all preview windows
@@ -98,5 +109,9 @@ final class PreviewManager: ObservableObject {
     /// temporarily adjusting window level for easier positioning
     func toggleEditMode() {
         isEditModeEnabled.toggle()
+        AppLogger.interface.info("Edit mode \(isEditModeEnabled ? "enabled" : "disabled")")
+        
+        // Context: Log active window count to help track edit mode impact
+        AppLogger.interface.debug("Active preview windows during toggle: \(captureManagers.count)")
     }
 }
