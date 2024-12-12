@@ -108,6 +108,11 @@ struct SelectionView: View {
                     }
                 }
                 .id(refreshID)
+                .onChange(of: selectedWindow) { oldValue, newValue in
+                    if let window = newValue {
+                        AppLogger.interface.info("Window selected: '\(window.title ?? "Untitled")'")
+                    }
+                }
 
                 Button(action: { Task { await refreshWindows(captureManager) } }) {
                     Image(systemName: "arrow.clockwise")
@@ -129,7 +134,10 @@ struct SelectionView: View {
     /// - Returns: Current CaptureManager if available
     /// - Note: Used throughout view for safe manager access
     private func getCaptureManager() -> CaptureManager? {
-        guard let id = captureManagerId else { return nil }
+        guard let id = captureManagerId else {
+            AppLogger.interface.warning("No capture manager ID available")
+            return nil
+        }
         return previewManager.captureManagers[id]
     }
 
@@ -143,18 +151,28 @@ struct SelectionView: View {
     ///
     /// - Important: Must complete before window selection
     private func setupCapture() async {
+        AppLogger.interface.debug("Starting capture setup")
+
         guard let captureManager = getCaptureManager() else {
+            AppLogger.interface.error("Setup failed: No valid capture manager")
             errorMessage = "Setup failed"
             isLoading = false
             return
         }
 
         do {
+            AppLogger.interface.debug("Requesting screen recording permission")
             try await captureManager.requestPermission()
+            
+            AppLogger.interface.debug("Updating available windows list")
             await captureManager.updateAvailableWindows()
+            
+            AppLogger.interface.info("Capture setup completed successfully")
             isLoading = false
         } catch {
-            // Context: Permission denied triggers settings access flow
+            AppLogger.logError(error,
+                             context: "Screen recording permission request",
+                             logger: AppLogger.interface)
             errorMessage = "Permission denied"
             isLoading = false
         }
@@ -168,9 +186,11 @@ struct SelectionView: View {
     ///
     /// - Parameter captureManager: Active manager instance
     private func refreshWindows(_ captureManager: CaptureManager) async {
+        AppLogger.interface.debug("Refreshing window list")
         await captureManager.updateAvailableWindows()
         await MainActor.run {
             refreshID = UUID()
+            AppLogger.interface.info("Window list refreshed, count: \(captureManager.availableWindows.count)")
         }
     }
 
@@ -185,14 +205,26 @@ struct SelectionView: View {
     /// - Parameter captureManager: Active manager instance
     /// - Warning: Must be called from main actor context
     private func startPreview(_ captureManager: CaptureManager) {
-        guard let window = selectedWindow else { return }
+        guard let window = selectedWindow else {
+            AppLogger.interface.warning("Attempted to start preview without window selection")
+            return
+        }
 
+        AppLogger.interface.debug("Starting preview for window: '\(window.title ?? "Untitled")'")
+        
         captureManager.selectedWindow = window
         selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
         showingSelection = false
 
         Task {
-            try? await captureManager.startCapture()
+            do {
+                try await captureManager.startCapture()
+                AppLogger.interface.info("Preview started successfully")
+            } catch {
+                AppLogger.logError(error,
+                                 context: "Starting window preview",
+                                 logger: AppLogger.interface)
+            }
         }
     }
 }

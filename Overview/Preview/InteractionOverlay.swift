@@ -60,12 +60,16 @@ struct InteractionOverlay: NSViewRepresentable {
     /// - Parameter context: View creation context
     /// - Returns: Configured NSView for window interactions
     func makeNSView(context: Context) -> NSView {
+        AppLogger.interface.debug("Creating interaction overlay view")
+        
         let view = ClickHandler()
         view.isEditModeEnabled = isEditModeEnabled
         view.isBringToFrontEnabled = isBringToFrontEnabled
         view.bringToFrontAction = bringToFrontAction
         view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextMenu(for: view)
+        
+        AppLogger.interface.info("Interaction overlay view configured")
         return view
     }
 
@@ -80,7 +84,12 @@ struct InteractionOverlay: NSViewRepresentable {
     ///   - nsView: View to update
     ///   - context: Update context
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let view = nsView as? ClickHandler else { return }
+        guard let view = nsView as? ClickHandler else {
+            AppLogger.interface.warning("Invalid view type in updateNSView")
+            return
+        }
+        
+        AppLogger.interface.debug("Updating interaction overlay state: editMode=\(isEditModeEnabled)")
         view.isEditModeEnabled = isEditModeEnabled
         view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
     }
@@ -102,6 +111,8 @@ struct InteractionOverlay: NSViewRepresentable {
     /// - Parameter view: Target interaction view
     /// - Returns: Configured NSMenu instance
     private func createContextMenu(for view: ClickHandler) -> NSMenu {
+        AppLogger.interface.debug("Creating context menu for interaction overlay")
+        
         let menu = NSMenu()
 
         // Context: Empty key equivalent prevents menu shortcut conflicts
@@ -171,8 +182,10 @@ private final class ClickHandler: NSView {
     /// - Parameter event: Mouse event to process
     override func mouseDown(with event: NSEvent) {
         if !isEditModeEnabled && isBringToFrontEnabled {
+            AppLogger.interface.debug("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
+            AppLogger.interface.debug("Mouse down handled by system: editMode=\(isEditModeEnabled)")
             super.mouseDown(with: event)
         }
     }
@@ -182,6 +195,7 @@ private final class ClickHandler: NSView {
     /// Context: Called by menu item, propagates change through
     /// parent overlay to maintain consistent window state
     @objc func toggleEditMode() {
+        AppLogger.interface.info("Edit mode toggled via context menu")
         toggleEditModeAction?()
     }
 }

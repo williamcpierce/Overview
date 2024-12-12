@@ -6,7 +6,7 @@
 
  Manages low-level screen capture operations using ScreenCaptureKit, handling
  frame capture, processing, and delivery to the UI layer with optimized performance.
-
+ 
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -20,91 +20,94 @@
 import OSLog
 import ScreenCaptureKit
 
-/// Encapsulates frame data for efficient display processing
+/// Encapsulates frame data for efficient display processing using hardware acceleration
 ///
 /// Key responsibilities:
 /// - Maintains IOSurface reference for hardware-accelerated rendering
 /// - Manages scaling factors for proper display density
 /// - Provides geometry information for layout calculations
+/// - Ensures safe resource management of system surfaces
 ///
 /// Coordinates with:
-/// - CaptureEngine: Source of captured frame data
-/// - Capture: Consumer for frame rendering
-/// - PreviewView: Handler for display sizing
+/// - CaptureEngine: Source of captured frame data and lifecycle
+/// - Capture: Consumer for frame rendering and display
+/// - PreviewView: Handler for display sizing and layout
+/// - WindowAccessor: Coordinates scaling with window properties
 struct CapturedFrame {
-    /// Represents invalid capture state
-    /// - Note: Used for initialization and error conditions
+    /// Represents invalid capture state for initialization and error handling
+    /// - Note: Used when capture fails or during state transitions
     static let invalid = CapturedFrame(
         surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
 
-    /// Raw pixel buffer for rendering
-    /// - Note: May be nil if capture fails
+    /// Raw pixel buffer for hardware-accelerated rendering
+    /// - Note: May be nil if capture fails or during initialization
     let surface: IOSurface?
 
-    /// Frame bounds in screen coordinates
+    /// Frame bounds in screen coordinates for proper positioning
     let contentRect: CGRect
 
-    /// Display scale for Retina rendering
+    /// Display scale factor for Retina rendering quality
     let contentScale: CGFloat
 
-    /// Window scale for proper sizing
+    /// Window scale for maintaining proper dimensions
     let scaleFactor: CGFloat
 
-    /// Convenience accessor for dimensions
+    /// Convenience accessor for frame dimensions
     var size: CGSize { contentRect.size }
 }
 
-/// Controls screen capture configuration and frame processing
+/// Controls screen capture configuration and frame processing with optimized performance
 ///
 /// Key responsibilities:
-/// - Manages SCStream lifecycle and configuration
+/// - Manages SCStream lifecycle and configuration updates
 /// - Processes captured frames into displayable format
 /// - Delivers frames through async stream interface
 /// - Handles capture errors and state transitions
+/// - Ensures proper resource cleanup
 ///
 /// Coordinates with:
-/// - CaptureManager: High-level capture coordination
-/// - StreamConfigurationService: Stream setup
-/// - WindowAccessor: Display scaling
-/// - PreviewView: Frame consumption
+/// - CaptureManager: High-level capture coordination and state
+/// - StreamConfigurationService: Stream setup and updates
+/// - WindowAccessor: Display scaling and dimensions
+/// - PreviewView: Frame consumption and display
 class CaptureEngine: NSObject, @unchecked Sendable {
     // MARK: - Properties
 
-    /// System logger for capture events
-    private let logger = Logger()
+    /// System logger for capture events and error tracking
+    private let logger = AppLogger.capture
 
-    /// Active capture stream
-    /// - Note: Nil when capture is inactive
+    /// Active capture stream for window content
+    /// - Note: Nil when capture is inactive or during initialization
     private(set) var stream: SCStream?
 
-    /// Handles stream output processing
+    /// Handles stream output processing and frame conversion
     private var streamOutput: CaptureEngineStreamOutput?
 
-    /// Dedicated queue for frame processing
-    /// - Important: Separate queue prevents frame drops
+    /// Dedicated queue for frame processing to prevent frame drops
+    /// - Note: Separate queue ensures smooth capture performance
     private let videoSampleBufferQueue = DispatchQueue(
         label: "com.example.apple-samplecode.VideoSampleBufferQueue")
 
-    /// Frame delivery continuation
-    /// - Warning: Must be updated on videoSampleBufferQueue
+    /// Frame delivery continuation for async stream interface
+    /// - Warning: Must only be updated on videoSampleBufferQueue
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 
     // MARK: - Public Methods
 
-    /// Begins screen content capture
+    /// Begins screen content capture with specified configuration
     ///
     /// Flow:
-    /// 1. Creates frame delivery stream
-    /// 2. Configures stream output
-    /// 3. Initializes capture stream
-    /// 4. Begins frame processing
+    /// 1. Creates frame delivery stream for async interface
+    /// 2. Configures stream output processor
+    /// 3. Initializes capture stream with settings
+    /// 4. Begins frame processing and delivery
     ///
     /// - Parameters:
-    ///   - configuration: Stream quality settings
-    ///   - filter: Content filter for capture source
+    ///   - configuration: Stream quality and performance settings
+    ///   - filter: Content filter defining capture source
     ///
-    /// - Returns: AsyncThrowingStream of CapturedFrames
-    /// - Throws: Stream configuration errors
+    /// - Returns: AsyncThrowingStream of processed CapturedFrames
+    /// - Throws: Stream configuration and initialization errors
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
     {
@@ -127,67 +130,74 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Stops active capture
+    /// Stops active capture and cleans up resources
     ///
     /// Flow:
-    /// 1. Stops SCStream if active
-    /// 2. Finishes frame delivery
-    /// 3. Cleans up resources
+    /// 1. Stops SCStream if currently active
+    /// 2. Finishes frame delivery stream
+    /// 3. Cleans up capture resources
+    /// 4. Handles cleanup errors gracefully
     ///
-    /// - Warning: Must be called before release
+    /// - Important: Must be called before release to prevent leaks
     func stopCapture() async {
+        logger.debug("Stopping capture stream")
+        
         do {
             try await stream?.stopCapture()
             continuation?.finish()
+            logger.info("Capture stream stopped successfully")
         } catch {
             logger.error("Failed to stop capture: \(error.localizedDescription)")
             continuation?.finish(throwing: error)
         }
     }
 
-    /// Updates stream configuration
+    /// Updates stream configuration during active capture
     ///
     /// Flow:
-    /// 1. Updates stream settings
-    /// 2. Updates content filter
-    /// 3. Maintains capture
+    /// 1. Updates stream quality settings
+    /// 2. Updates content filter bounds
+    /// 3. Maintains active capture state
+    /// 4. Handles update errors gracefully
     ///
     /// - Parameters:
-    ///   - configuration: New stream settings
-    ///   - filter: New content filter
+    ///   - configuration: New stream quality settings
+    ///   - filter: New content filter bounds
     ///
-    /// - Important: Updates without stopping stream
-    /// - Warning: May cause frame drops
+    /// - Important: Updates without stopping active capture
+    /// - Warning: May cause momentary frame drops during transition
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
+        logger.debug("Updating capture configuration")
+        
         do {
             try await stream?.updateConfiguration(configuration)
             try await stream?.updateContentFilter(filter)
+            logger.info("Stream configuration updated successfully")
         } catch {
-            logger.error("Failed to update stream: \(String(describing: error))")
+            logger.error("Failed to update stream: \(error.localizedDescription)")
         }
     }
 }
 
-/// Processes SCStream output and manages errors
+/// Processes SCStream output and manages error conditions
 ///
 /// Key responsibilities:
-/// - Converts raw frames to CapturedFrame format
-/// - Handles stream delegate callbacks
+/// - Converts raw frame data to CapturedFrame format
+/// - Handles stream delegate callbacks and errors
 /// - Manages frame delivery continuation
+/// - Ensures proper error propagation
 ///
 /// Coordinates with:
-/// - CaptureEngine: Frame delivery
-/// - SCStream: Raw capture data
+/// - CaptureEngine: Frame delivery and state
+/// - SCStream: Raw capture data processing
+/// - PreviewView: Frame consumption
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     // MARK: - Properties
 
     /// System logger for processing events
-    private let logger = Logger(
-        subsystem: "com.example.Overview",
-        category: "CaptureEngineStreamOutput"
-    )
+    private let logger = AppLogger.capture
 
-    /// Frame delivery callback
+    /// Frame delivery callback for UI updates
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
 
     /// Stream continuation for async delivery
@@ -195,7 +205,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     // MARK: - Initialization
 
-    /// Creates output processor
+    /// Creates output processor with continuation
     /// - Parameter continuation: Frame delivery continuation
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
@@ -203,17 +213,18 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     // MARK: - SCStreamOutput Methods
 
-    /// Processes incoming frame data
+    /// Processes incoming frame data for display
     ///
     /// Flow:
-    /// 1. Validates sample buffer
-    /// 2. Processes by output type
-    /// 3. Creates CapturedFrame
+    /// 1. Validates sample buffer integrity
+    /// 2. Routes processing by output type
+    /// 3. Creates CapturedFrame for display
+    /// 4. Delivers frame through handler
     ///
     /// - Parameters:
-    ///   - stream: Source stream
-    ///   - sampleBuffer: Raw frame data
-    ///   - outputType: Stream output type
+    ///   - stream: Source stream reference
+    ///   - sampleBuffer: Raw frame buffer data
+    ///   - outputType: Stream output classification
     ///
     /// - Note: Called on videoSampleBufferQueue
     func stream(
@@ -221,7 +232,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         of outputType: SCStreamOutputType
     ) {
         guard sampleBuffer.isValid else {
-            logger.error("Invalid sample buffer")
+            logger.error("Received invalid sample buffer")
             return
         }
 
@@ -231,7 +242,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
                 capturedFrameHandler?(frame)
             }
         case .audio:
-            logger.info("Audio stream ignored")
+            logger.debug("Audio stream output ignored")
         default:
             logger.error("Unknown output type: \(String(describing: outputType))")
             fatalError("Unknown output type: \(outputType)")
@@ -240,26 +251,27 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     // MARK: - Private Methods
 
-    /// Creates CapturedFrame from sample buffer
+    /// Creates CapturedFrame from raw sample buffer
     ///
     /// Flow:
-    /// 1. Extracts frame metadata
-    /// 2. Processes pixel buffer
-    /// 3. Constructs frame object
+    /// 1. Extracts frame metadata and properties
+    /// 2. Processes pixel buffer into IOSurface
+    /// 3. Constructs frame with scaling info
+    /// 4. Handles conversion failures gracefully
     ///
-    /// - Parameter sampleBuffer: Raw frame data
-    /// - Returns: CapturedFrame if successful
+    /// - Parameter sampleBuffer: Raw frame buffer data
+    /// - Returns: CapturedFrame if conversion succeeds
     private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         guard
             let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
                 sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]]
         else {
-            logger.error("Failed to get attachments")
+            logger.error("Failed to get sample buffer attachments")
             return nil
         }
 
         guard let attachments = attachmentsArray.first else {
-            logger.error("Empty attachments")
+            logger.error("Empty sample buffer attachments")
             return nil
         }
 
@@ -267,41 +279,43 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             let status = SCFrameStatus(rawValue: statusRawValue),
             status == .complete
         else {
+            logger.debug("Incomplete frame status")
             return nil
         }
 
         guard let pixelBuffer = sampleBuffer.imageBuffer else {
-            logger.error("No image buffer")
+            logger.error("Missing image buffer in sample")
             return nil
         }
 
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
-            logger.error("Failed to get IOSurface")
+            logger.error("Failed to get IOSurface from buffer")
             return nil
         }
 
         let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
 
         guard let contentRectDict = attachments[.contentRect] as! CFDictionary? else {
-            logger.error("Failed to get contentRect")
+            logger.error("Missing content rect in attachments")
             return nil
         }
 
         guard let contentRect = CGRect(dictionaryRepresentation: contentRectDict) else {
-            logger.error("Failed to convert contentRect")
+            logger.error("Failed to convert content rect dictionary")
             return nil
         }
 
         guard let contentScale = attachments[.contentScale] as? CGFloat else {
-            logger.error("Failed to get contentScale")
+            logger.error("Missing content scale in attachments")
             return nil
         }
 
         guard let scaleFactor = attachments[.scaleFactor] as? CGFloat else {
-            logger.error("Failed to get scaleFactor")
+            logger.error("Missing scale factor in attachments")
             return nil
         }
 
+        logger.debug("Created frame: size=\(contentRect.size), scale=\(contentScale)")
         return CapturedFrame(
             surface: surface,
             contentRect: contentRect,
@@ -312,13 +326,13 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     // MARK: - SCStreamDelegate Methods
 
-    /// Handles stream errors
+    /// Handles stream errors and completion
     ///
     /// - Parameters:
-    ///   - stream: Failed stream
-    ///   - error: Stream error
+    ///   - stream: Failed stream reference
+    ///   - error: Stream error description
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        logger.error("Stream error: \(error.localizedDescription)")
+        logger.error("Stream stopped with error: \(error.localizedDescription)")
         continuation?.finish(throwing: error)
     }
 }

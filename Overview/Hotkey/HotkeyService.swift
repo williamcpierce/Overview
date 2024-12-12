@@ -4,9 +4,9 @@
 
  Created by William Pierce on 12/8/24.
 
- Manages system-wide keyboard shortcuts for window focus operations, providing
- a centralized service for hotkey registration and event handling. Core part
- of Overview's window management system.
+ Manages system-wide keyboard shortcuts using Carbon Event Manager APIs, providing
+ centralized registration and handling of global hotkeys for window focus operations.
+ Core component of Overview's window management system.
 
  This file is part of Overview.
 
@@ -17,13 +17,21 @@
 
 import Carbon
 import Cocoa
-import OSLog
 
 /// Error types that can occur during hotkey operations
-/// - Note: Used for detailed error reporting and handling
+///
+/// Key responsibilities:
+/// - Provides specific error cases for hotkey registration failures
+/// - Enables detailed error handling and reporting
+/// - Maintains consistent error messaging
 enum HotkeyError: Error {
+    /// Carbon API registration failed with specific status code
     case registrationFailed(OSStatus)
+    
+    /// Event handler installation failed with specific status code
     case eventHandlerFailed(OSStatus)
+    
+    /// No valid modifier keys specified in binding
     case invalidModifiers
 }
 
@@ -37,9 +45,8 @@ enum HotkeyError: Error {
 ///
 /// Coordinates with:
 /// - HotkeyBinding: Provides hotkey configuration data
-/// - CaptureManager: Receives window focus requests
+/// - WindowManager: Executes window focus operations
 /// - AppSettings: Stores persistent hotkey configurations
-/// - WindowFocusService: Handles window activation
 ///
 /// Context: Uses Carbon Event Manager APIs as they provide system-wide hotkey
 /// functionality not available through AppKit or SwiftUI. This allows Overview
@@ -62,9 +69,6 @@ final class HotkeyService {
     /// - Note: Weak references prevent retain cycles
     private var focusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
 
-    /// System logger for debugging hotkey operations
-    private let logger = Logger(subsystem: "com.Overview.HotkeyService", category: "Hotkeys")
-
     /// Storage interface for persistent hotkey configuration
     private let storage: UserDefaults
 
@@ -79,12 +83,19 @@ final class HotkeyService {
         get {
             guard let data = storage.data(forKey: storageKey),
                 let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
-            else { return [] }
+            else {
+                AppLogger.hotkeys.debug("No stored bindings found")
+                return []
+            }
+            AppLogger.hotkeys.debug("Loaded \(decoded.count) stored bindings")
             return decoded
         }
         set {
             if let encoded = try? JSONEncoder().encode(newValue) {
                 storage.set(encoded, forKey: storageKey)
+                AppLogger.hotkeys.info("Saved \(newValue.count) bindings to storage")
+            } else {
+                AppLogger.hotkeys.error("Failed to encode hotkey bindings")
             }
         }
     }
@@ -92,13 +103,18 @@ final class HotkeyService {
     // MARK: - Initialization
 
     /// Creates service instance and configures event handling
+    /// - Parameter storage: UserDefaults instance for persistence
     /// - Note: Private to enforce singleton pattern
     private init(storage: UserDefaults = .standard) {
+        AppLogger.hotkeys.debug("Initializing HotkeyService")
         self.storage = storage
         do {
             try setupEventHandler()
+            AppLogger.hotkeys.info("HotkeyService initialized successfully")
         } catch {
-            logger.error("Failed to initialize hotkey service: \(error.localizedDescription)")
+            AppLogger.logError(error,
+                             context: "Failed to initialize HotkeyService",
+                             logger: AppLogger.hotkeys)
         }
     }
 
@@ -115,7 +131,9 @@ final class HotkeyService {
     ///   - owner: Object registering the callback
     ///   - callback: Focus handler to invoke
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
-        focusCallbacks[ObjectIdentifier(owner)] = callback
+        let identifier = ObjectIdentifier(owner)
+        focusCallbacks[identifier] = callback
+        AppLogger.hotkeys.debug("Registered callback for owner: \(identifier)")
     }
 
     /// Removes callback registration for specified owner
@@ -123,7 +141,9 @@ final class HotkeyService {
     /// - Parameter owner: Object whose callback should be removed
     /// - Note: Safe to call multiple times for same owner
     func removeCallback(for owner: AnyObject) {
-        focusCallbacks.removeValue(forKey: ObjectIdentifier(owner))
+        let identifier = ObjectIdentifier(owner)
+        focusCallbacks.removeValue(forKey: identifier)
+        AppLogger.hotkeys.debug("Removed callback for owner: \(identifier)")
     }
 
     /// Updates registered hotkeys with new binding configuration
@@ -136,15 +156,17 @@ final class HotkeyService {
     /// - Parameter bindings: New hotkey configuration
     /// - Warning: May throw if Carbon APIs fail during registration
     func registerHotkeys(_ bindings: [HotkeyBinding]) {
+        AppLogger.hotkeys.info("Registering \(bindings.count) hotkey bindings")
         unregisterAllHotkeys()
 
         for binding in bindings {
             do {
                 try register(binding)
+                AppLogger.hotkeys.debug("Registered hotkey for '\(binding.windowTitle)'")
             } catch {
-                logger.error(
-                    "Failed to register hotkey for '\(binding.windowTitle)': \(error.localizedDescription)"
-                )
+                AppLogger.logError(error,
+                                 context: "Failed to register hotkey for '\(binding.windowTitle)'",
+                                 logger: AppLogger.hotkeys)
             }
         }
 
@@ -163,6 +185,8 @@ final class HotkeyService {
     /// - Throws: HotkeyError if handler installation fails
     /// - Warning: Must be called during initialization
     private func setupEventHandler() throws {
+        AppLogger.hotkeys.debug("Setting up Carbon event handler")
+        
         let eventSpec = [
             EventTypeSpec(
                 eventClass: OSType(kEventClassKeyboard),
@@ -219,6 +243,8 @@ final class HotkeyService {
         )
 
         if result == noErr, let (_, binding) = registeredHotkeys[hotkeyID.id] {
+            AppLogger.hotkeys.debug("Hotkey pressed for window: '\(binding.windowTitle)'")
+            
             // Context: Small delay prevents focus race conditions
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.focusCallbacks.values.forEach { $0(binding.windowTitle) }
@@ -226,6 +252,7 @@ final class HotkeyService {
             return noErr
         }
 
+        AppLogger.hotkeys.warning("Failed to handle hotkey event: \(result)")
         return OSStatus(eventNotHandledErr)
     }
 
@@ -261,6 +288,7 @@ final class HotkeyService {
         if status == noErr, let hotkeyRef = hotkeyRef {
             registeredHotkeys[nextHotkeyID] = (hotkeyRef, binding)
             nextHotkeyID += 1
+            AppLogger.hotkeys.debug("Successfully registered hotkey: \(binding.hotkeyDisplayString)")
         } else {
             throw HotkeyError.registrationFailed(status)
         }
@@ -274,6 +302,7 @@ final class HotkeyService {
     ///
     /// - Warning: Must be called before updating registrations
     private func unregisterAllHotkeys() {
+        AppLogger.hotkeys.info("Unregistering all hotkeys")
         registeredHotkeys.values.forEach { registration in
             UnregisterEventHotKey(registration.0)
         }
@@ -283,6 +312,7 @@ final class HotkeyService {
     /// Cleanup registered hotkeys on deallocation
     /// - Warning: Required to prevent system hotkey leaks
     deinit {
+        AppLogger.hotkeys.debug("HotkeyService deinitializing")
         unregisterAllHotkeys()
     }
 }
