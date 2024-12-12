@@ -6,6 +6,7 @@
 
  Provides the settings interface for Overview, managing user preferences through
  a tabbed view system that handles all aspects of window preview behavior.
+ Coordinates real-time updates of capture configuration and window management.
 
  This file is part of Overview.
 
@@ -23,18 +24,29 @@ import SwiftUI
 /// - Validates and constrains settings within acceptable ranges
 /// - Provides immediate visual feedback for setting changes
 /// - Maintains persistent storage of user preferences
+/// - Manages hotkey binding configuration and removal
 ///
 /// Coordinates with:
 /// - AppSettings: Stores and manages setting values
 /// - PreviewView: Updates preview appearance in real-time
 /// - WindowAccessor: Applies window behavior changes
 /// - CaptureManager: Updates capture configuration
+/// - HotkeyManager: Processes keyboard shortcut configurations
 struct SettingsView: View {
     // MARK: - Properties
 
     /// Application settings and preferences manager
     /// - Note: Changes propagate immediately to all views
     @ObservedObject var appSettings: AppSettings
+
+    /// Coordinates window preview state and lifecycle
+    @ObservedObject var previewManager: PreviewManager
+
+    /// Controls visibility of hotkey binding sheet
+    @State private var isAddingHotkey = false
+
+    /// Controls visibility of settings reset confirmation
+    @State private var showingResetAlert = false
 
     /// Available frame rate options in frames per second
     /// - Note: Options balance preview smoothness with resource usage
@@ -53,21 +65,80 @@ struct SettingsView: View {
 
     // MARK: - Private Views
 
-    /// General settings for basic overlay preferences
+    /// General settings for basic overlay preferences and keyboard shortcuts
     /// - Note: Controls visibility of UI elements in preview windows
     private var generalTab: some View {
         Form {
+            // Overlay configuration section
             Section {
                 Text("Overlays")
                     .font(.headline)
                     .padding(.bottom, 4)
 
                 Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
+                    .onChange(of: appSettings.showFocusedBorder) { oldValue, newValue in
+                        AppLogger.settings.info("Window border visibility changed: \(newValue)")
+                    }
+
                 Toggle("Show window title", isOn: $appSettings.showWindowTitle)
+                    .onChange(of: appSettings.showWindowTitle) { oldValue, newValue in
+                        AppLogger.settings.info("Window title visibility changed: \(newValue)")
+                    }
+            }
+
+            // Keyboard shortcuts section
+            Section {
+                Text("Keyboard Shortcuts")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+
+                if appSettings.hotkeyBindings.isEmpty {
+                    Text("No shortcuts configured")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
+                        HStack {
+                            Text(binding.windowTitle)
+                            Spacer()
+                            Text(formatHotkey(binding))
+                                .foregroundColor(.secondary)
+
+                            Button(action: {
+                                removeHotkeyBinding(binding)
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                Button("Add Shortcut") {
+                    AppLogger.settings.debug("Opening hotkey binding sheet")
+                    isAddingHotkey = true
+                }
+            }
+            .sheet(isPresented: $isAddingHotkey) {
+                HotkeyBindingSheet(appSettings: appSettings)
             }
         }
         .formStyle(.grouped)
         .tabItem { Label("General", systemImage: "gear") }
+        .safeAreaInset(edge: .bottom) {
+            Button("Reset All Settings") {
+                showingResetAlert = true
+            }
+            .padding(.bottom, 8)
+        }
+        .alert("Reset Settings", isPresented: $showingResetAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                resetAllSettings()
+            }
+        } message: {
+            Text("This will reset all settings to their default values. This action cannot be undone.")
+        }
     }
 
     /// Window configuration for appearance and behavior settings
@@ -86,6 +157,10 @@ struct SettingsView: View {
                         minValue: 0.05,
                         maxValue: 1.0
                     )
+                    .onChange(of: appSettings.opacity) { oldValue, newValue in
+                        AppLogger.settings.info("Window opacity updated: \(Int(newValue * 100))%")
+                    }
+
                     Text("\(Int(appSettings.opacity * 100))%")
                         .foregroundColor(.secondary)
                         .frame(width: 40)
@@ -110,6 +185,9 @@ struct SettingsView: View {
                         TextField("", value: binding, formatter: NumberFormatter())
                             .frame(width: 120)
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: binding.wrappedValue) { oldValue, newValue in
+                                AppLogger.settings.info("Default window \(label.lowercased()) changed: \(newValue)px")
+                            }
                         Text("px")
                             .foregroundColor(.secondary)
                     }
@@ -123,10 +201,17 @@ struct SettingsView: View {
                     .padding(.bottom, 4)
 
                 Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
+                    .onChange(of: appSettings.managedByMissionControl) { oldValue, newValue in
+                        AppLogger.settings.info("Mission Control integration changed: \(newValue)")
+                    }
+
                 Toggle(
                     "Enable alignment help in edit mode",
                     isOn: $appSettings.enableEditModeAlignment
                 )
+                .onChange(of: appSettings.enableEditModeAlignment) { oldValue, newValue in
+                    AppLogger.settings.info("Edit mode alignment changed: \(newValue)")
+                }
 
                 Text(
                     "Alignment help will cause preview windows to show behind some other windows until edit mode is turned off."
@@ -155,6 +240,9 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: appSettings.frameRate) { oldValue, newValue in
+                    AppLogger.settings.info("Frame rate changed: \(Int(newValue)) FPS")
+                }
 
                 Text(
                     "Higher frame rates provide smoother previews but use more system resources."
@@ -165,6 +253,24 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Performance", systemImage: "gauge.medium") }
+    }
+
+    // MARK: - Private Methods
+
+    /// Removes a hotkey binding and updates configuration
+    /// - Parameter binding: The binding to remove
+    private func removeHotkeyBinding(_ binding: HotkeyBinding) {
+        AppLogger.settings.debug("Removing hotkey binding for window: '\(binding.windowTitle)'")
+        if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
+            appSettings.hotkeyBindings.remove(at: index)
+            AppLogger.settings.info("Hotkey binding removed: '\(binding.windowTitle)'")
+        }
+    }
+
+    /// Resets all settings to default values
+    private func resetAllSettings() {
+        AppLogger.settings.info("Resetting all settings to defaults")
+        appSettings.resetToDefaults()
     }
 }
 
@@ -183,14 +289,13 @@ struct SettingsView: View {
 struct SliderRepresentable: NSViewRepresentable {
     // MARK: - Properties
 
-    /// Current slider value
-    /// - Note: Updates trigger immediate visual changes
+    /// Current slider value (0.05-1.0)
     @Binding var value: Double
 
-    /// Minimum allowed value
+    /// Minimum allowed value (0.05)
     let minValue: Double
 
-    /// Maximum allowed value
+    /// Maximum allowed value (1.0)
     let maxValue: Double
 
     // MARK: - NSViewRepresentable Implementation
@@ -218,7 +323,6 @@ struct SliderRepresentable: NSViewRepresentable {
         nsView.doubleValue = value
     }
 
-    /// Creates value change coordinator
     func makeCoordinator() -> Coordinator {
         Coordinator(value: $value)
     }
@@ -232,20 +336,12 @@ struct SliderRepresentable: NSViewRepresentable {
     /// - Rounds values for consistent display
     /// - Updates SwiftUI binding
     class Coordinator: NSObject {
-        // MARK: - Properties
-
         /// Binding to current slider value
         var value: Binding<Double>
 
-        // MARK: - Initialization
-
-        /// Creates coordinator with value binding
-        /// - Parameter value: Binding to update with slider changes
         init(value: Binding<Double>) {
             self.value = value
         }
-
-        // MARK: - Event Handling
 
         /// Processes slider value changes
         ///
@@ -258,4 +354,11 @@ struct SliderRepresentable: NSViewRepresentable {
             value.wrappedValue = rounded
         }
     }
+}
+
+/// Formats a hotkey binding for display
+/// - Parameter binding: The binding to format
+/// - Returns: String representation using system key symbols
+private func formatHotkey(_ binding: HotkeyBinding) -> String {
+    return binding.hotkeyDisplayString
 }

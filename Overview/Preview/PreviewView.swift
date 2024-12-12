@@ -65,11 +65,17 @@ struct PreviewView: View {
         }
         .onAppear {
             // Initialize capture when view enters window hierarchy
-            Task { try? await captureManager.startCapture() }
+            Task {
+                AppLogger.interface.debug("PreviewView appeared, starting capture")
+                try? await captureManager.startCapture()
+            }
         }
         .onDisappear {
             // Ensure proper resource cleanup when view is removed
-            Task { await captureManager.stopCapture() }
+            Task {
+                AppLogger.interface.debug("PreviewView disappeared, stopping capture")
+                await captureManager.stopCapture()
+            }
         }
         .onChange(of: captureManager.isCapturing) { oldValue, newValue in
             handleCaptureStateChange(from: oldValue, to: newValue)
@@ -87,20 +93,27 @@ struct PreviewView: View {
     /// 4. Applies conditional visual overlays based on settings
     ///
     /// - Parameter frame: Current frame data for display
+    /// - Returns: Composed view hierarchy for preview display
     /// - Important: InteractionOverlay must be above Capture to receive mouse events but below
     ///             visual overlays (focus border, title) to maintain proper visual hierarchy.
     ///             This ensures both proper event handling and correct visual presentation.
     private func previewContent(frame: CapturedFrame) -> some View {
-        Capture(frame: frame)
+        AppLogger.interface.debug("Rendering preview content with frame size: \(frame.size)")
+
+        return Capture(frame: frame)
             .opacity(appSettings.opacity)
             .overlay(
                 InteractionOverlay(
                     isEditModeEnabled: $isEditModeEnabled,
                     isBringToFrontEnabled: true,
                     bringToFrontAction: {
+                        AppLogger.interface.info("User requested window focus")
                         captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
                     },
-                    toggleEditModeAction: { isEditModeEnabled.toggle() }
+                    toggleEditModeAction: {
+                        AppLogger.interface.info("User toggled edit mode: \(!isEditModeEnabled)")
+                        isEditModeEnabled.toggle()
+                    }
                 )
             )
             .overlay(
@@ -130,6 +143,7 @@ struct PreviewView: View {
     /// - Important: Prevents users from being stuck in non-functional preview
     private func handleCaptureStateChange(from oldValue: Bool, to newValue: Bool) {
         if !newValue {
+            AppLogger.interface.warning("Capture stopped unexpectedly, returning to selection view")
             showingSelection = true
         }
     }

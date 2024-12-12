@@ -18,29 +18,6 @@ import Combine
 import OSLog
 import ScreenCaptureKit
 
-/// Error cases that can occur during window capture operations
-enum CaptureError: LocalizedError {
-    /// Screen recording permission was denied by the user or system
-    case permissionDenied
-
-    /// Attempted to start capture without selecting a window
-    case noWindowSelected
-
-    /// Capture stream failed to initialize or encountered an error
-    case captureStreamFailed(Error)
-
-    var errorDescription: String? {
-        switch self {
-        case .permissionDenied:
-            return "Screen capture permission was denied"
-        case .noWindowSelected:
-            return "No window is selected for capture"
-        case .captureStreamFailed(let error):
-            return "Capture failed: \(error.localizedDescription)"
-        }
-    }
-}
-
 /// Manages window capture state and coordinates preview operations
 ///
 /// Key responsibilities:
@@ -59,6 +36,7 @@ class CaptureManager: ObservableObject {
     // MARK: - Properties
 
     /// Most recent frame from the source window
+    /// - Note: Updates trigger immediate UI refresh
     @Published private(set) var capturedFrame: CapturedFrame?
 
     /// Available windows for capture, filtered to remove system windows
@@ -74,6 +52,7 @@ class CaptureManager: ObservableObject {
     @Published private(set) var windowTitle: String?
 
     /// Currently selected window for capture
+    /// - Note: Changes trigger focus state updates
     @Published var selectedWindow: SCWindow? {
         didSet {
             windowTitle = selectedWindow?.title
@@ -82,9 +61,6 @@ class CaptureManager: ObservableObject {
     }
 
     // MARK: - Private Properties
-
-    /// System logger for capture operations
-    private let logger = Logger(subsystem: "com.Overview.CaptureManager", category: "ScreenCapture")
 
     /// Active Combine subscriptions for cleanup
     private var cancellables = Set<AnyCancellable>()
@@ -141,6 +117,8 @@ class CaptureManager: ObservableObject {
         windowObserver: WindowObserverService = WindowObserverService(),
         shareableContent: ShareableContentService = ShareableContentService()
     ) {
+        AppLogger.capture.debug("Initializing CaptureManager")
+        
         self.appSettings = appSettings
         self.captureEngine = captureEngine
         self.streamConfig = streamConfig
@@ -151,6 +129,8 @@ class CaptureManager: ObservableObject {
         self.shareableContent = shareableContent
 
         setupObservers()
+        
+        AppLogger.capture.info("CaptureManager initialized successfully")
     }
 
     // MARK: - Public Methods
@@ -158,7 +138,9 @@ class CaptureManager: ObservableObject {
     /// Requests screen capture permission from the system
     /// - Throws: CaptureError.permissionDenied if access is not granted
     func requestPermission() async throws {
+        AppLogger.capture.debug("Requesting screen capture permission")
         try await shareableContent.requestPermission()
+        AppLogger.capture.info("Screen capture permission granted")
     }
 
     /// Updates the list of available windows for capture
@@ -168,13 +150,18 @@ class CaptureManager: ObservableObject {
     /// 2. Filters out invalid capture targets
     /// 3. Updates available windows property
     func updateAvailableWindows() async {
+        AppLogger.capture.debug("Updating available windows list")
+        
         do {
             let windows = try await shareableContent.getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowFilter.filterWindows(windows)
             }
+            AppLogger.capture.info("Available windows updated, count: \(self.availableWindows.count)")
         } catch {
-            logger.error("Failed to get available windows: \(error.localizedDescription)")
+            AppLogger.logError(error,
+                             context: "Failed to get available windows",
+                             logger: AppLogger.capture)
         }
     }
 
@@ -189,10 +176,17 @@ class CaptureManager: ObservableObject {
     ///   - CaptureError.noWindowSelected if no window selected
     ///   - CaptureError.captureStreamFailed for initialization failures
     func startCapture() async throws {
-        guard !isCapturing else { return }
+        guard !isCapturing else {
+            AppLogger.capture.debug("Capture already active, ignoring start request")
+            return
+        }
+        
         guard let window = selectedWindow else {
+            AppLogger.capture.warning("Attempted to start capture with no window selected")
             throw CaptureError.noWindowSelected
         }
+
+        AppLogger.capture.debug("Starting capture for window: '\(window.title ?? "untitled")'")
 
         let (config, filter) = streamConfig.createConfiguration(
             window, frameRate: appSettings.frameRate)
@@ -200,6 +194,8 @@ class CaptureManager: ObservableObject {
 
         await startCaptureTask(frameStream: frameStream)
         isCapturing = true
+        
+        AppLogger.capture.info("Capture started successfully")
     }
 
     /// Stops the current capture session
@@ -209,7 +205,12 @@ class CaptureManager: ObservableObject {
     /// 2. Stops capture engine
     /// 3. Resets capture state
     func stopCapture() async {
-        guard isCapturing else { return }
+        guard isCapturing else {
+            AppLogger.capture.debug("No active capture to stop")
+            return
+        }
+
+        AppLogger.capture.debug("Stopping capture session")
 
         captureTask?.cancel()
         captureTask = nil
@@ -217,12 +218,19 @@ class CaptureManager: ObservableObject {
 
         isCapturing = false
         capturedFrame = nil
+        
+        AppLogger.capture.info("Capture stopped successfully")
     }
 
     /// Brings source window to front when preview is clicked
     /// - Parameter isEditModeEnabled: Whether edit mode is active
     func focusWindow(isEditModeEnabled: Bool) {
-        guard let window = selectedWindow else { return }
+        guard let window = selectedWindow else {
+            AppLogger.windows.warning("Attempted to focus window with no selection")
+            return
+        }
+        
+        AppLogger.windows.debug("Focusing window: '\(window.title ?? "untitled")'")
         windowFocus.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
     }
 
@@ -232,6 +240,8 @@ class CaptureManager: ObservableObject {
     /// - Parameter frameStream: Stream of captured frames from engine
     @MainActor
     private func startCaptureTask(frameStream: AsyncThrowingStream<CapturedFrame, Error>) async {
+        AppLogger.capture.debug("Initializing capture task")
+        
         captureTask?.cancel()
 
         captureTask = Task { @MainActor in
@@ -252,7 +262,9 @@ class CaptureManager: ObservableObject {
     /// 2. Stops capture session
     /// 3. Updates UI state
     private func handleCaptureError(_ error: Error) async {
-        logger.error("Capture error: \(error.localizedDescription)")
+        AppLogger.logError(error,
+                          context: "Capture stream error",
+                          logger: AppLogger.capture)
         await stopCapture()
     }
 
@@ -264,6 +276,8 @@ class CaptureManager: ObservableObject {
     /// 3. Starts observation
     /// 4. Configures frame rate handling
     private func setupObservers() {
+        AppLogger.capture.debug("Setting up window state observers")
+        
         windowObserver.onFocusStateChanged = { [weak self] in
             await self?.updateFocusState()
         }
@@ -274,7 +288,7 @@ class CaptureManager: ObservableObject {
 
         windowObserver.startObserving()
 
-        // WARNING: Frame rate changes require stream reconfiguration
+        // Context: Frame rate changes require stream reconfiguration
         appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in
@@ -283,23 +297,67 @@ class CaptureManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+            
+        AppLogger.capture.debug("Window state observers configured")
     }
 
     /// Updates focus state of the source window
     private func updateFocusState() async {
         isSourceWindowFocused = await windowFocus.updateFocusState(for: selectedWindow)
+        
+        if let window = selectedWindow {
+            AppLogger.windows.debug("Window focus state updated: '\(window.title ?? "untitled")' focused: \(isSourceWindowFocused)")
+        }
     }
 
     /// Updates title of the source window
     private func updateWindowTitle() async {
+        let oldTitle = windowTitle
         windowTitle = await titleService.updateWindowTitle(for: selectedWindow)
+        
+        if let newTitle = windowTitle, oldTitle != newTitle {
+            AppLogger.windows.debug("Window title updated: '\(newTitle)'")
+        }
     }
 
     /// Updates capture configuration when settings change
     /// - Warning: Frame rate changes require stream reconfiguration
     private func updateStreamConfiguration() async {
         guard isCapturing, let window = selectedWindow else { return }
-        try? await streamConfig.updateConfiguration(
-            captureEngine.stream, window, frameRate: appSettings.frameRate)
+        
+        AppLogger.capture.debug("Updating stream configuration, new frame rate: \(appSettings.frameRate)")
+        
+        do {
+            try await streamConfig.updateConfiguration(
+                captureEngine.stream, window, frameRate: appSettings.frameRate)
+            AppLogger.capture.info("Stream configuration updated successfully")
+        } catch {
+            AppLogger.logError(error,
+                             context: "Failed to update stream configuration",
+                             logger: AppLogger.capture)
+        }
+    }
+}
+
+/// Error cases that can occur during window capture operations
+enum CaptureError: LocalizedError {
+    /// Screen recording permission was denied by the user or system
+    case permissionDenied
+
+    /// Attempted to start capture without selecting a window
+    case noWindowSelected
+
+    /// Capture stream failed to initialize or encountered an error
+    case captureStreamFailed(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .permissionDenied:
+            return "Screen capture permission was denied"
+        case .noWindowSelected:
+            return "No window is selected for capture"
+        case .captureStreamFailed(let error):
+            return "Capture failed: \(error.localizedDescription)"
+        }
     }
 }

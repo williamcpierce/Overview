@@ -1,5 +1,5 @@
 /*
- InteractionView.swift
+ InteractionOverlay.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -50,26 +50,30 @@ struct InteractionOverlay: NSViewRepresentable {
 
     // MARK: - NSViewRepresentable Implementation
 
-    /// Creates and configures the interaction view with initial state
+    /// Creates and configures the interaction overlay with initial state
     ///
     /// Flow:
-    /// 1. Creates base interaction view instance
+    /// 1. Creates base interaction overlay instance
     /// 2. Configures window interaction properties
     /// 3. Sets up context menu with edit mode toggle
     ///
     /// - Parameter context: View creation context
     /// - Returns: Configured NSView for window interactions
     func makeNSView(context: Context) -> NSView {
-        let view = InteractionView()
+        AppLogger.interface.debug("Creating interaction overlay view")
+        
+        let view = ClickHandler()
         view.isEditModeEnabled = isEditModeEnabled
         view.isBringToFrontEnabled = isBringToFrontEnabled
         view.bringToFrontAction = bringToFrontAction
         view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextMenu(for: view)
+        
+        AppLogger.interface.info("Interaction overlay view configured")
         return view
     }
 
-    /// Updates interaction view state when bindings change
+    /// Updates interaction overlay state when bindings change
     ///
     /// Flow:
     /// 1. Validates view type
@@ -80,7 +84,12 @@ struct InteractionOverlay: NSViewRepresentable {
     ///   - nsView: View to update
     ///   - context: Update context
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let view = nsView as? InteractionView else { return }
+        guard let view = nsView as? ClickHandler else {
+            AppLogger.interface.warning("Invalid view type in updateNSView")
+            return
+        }
+        
+        AppLogger.interface.debug("Updating interaction overlay state: editMode=\(isEditModeEnabled)")
         view.isEditModeEnabled = isEditModeEnabled
         view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
     }
@@ -101,13 +110,15 @@ struct InteractionOverlay: NSViewRepresentable {
     ///
     /// - Parameter view: Target interaction view
     /// - Returns: Configured NSMenu instance
-    private func createContextMenu(for view: InteractionView) -> NSMenu {
+    private func createContextMenu(for view: ClickHandler) -> NSMenu {
+        AppLogger.interface.debug("Creating context menu for interaction overlay")
+        
         let menu = NSMenu()
 
         // Context: Empty key equivalent prevents menu shortcut conflicts
         let editModeItem = NSMenuItem(
             title: "Edit Mode",
-            action: #selector(InteractionView.toggleEditMode),
+            action: #selector(ClickHandler.toggleEditMode),
             keyEquivalent: ""
         )
         editModeItem.target = view
@@ -136,7 +147,7 @@ struct InteractionOverlay: NSViewRepresentable {
 ///
 /// Context: Uses NSView directly to bypass SwiftUI event handling,
 /// ensuring consistent behavior across window states and levels
-private final class InteractionView: NSView {
+private final class ClickHandler: NSView {
     // MARK: - Properties
 
     /// Controls whether window can be moved and resized
@@ -171,8 +182,10 @@ private final class InteractionView: NSView {
     /// - Parameter event: Mouse event to process
     override func mouseDown(with event: NSEvent) {
         if !isEditModeEnabled && isBringToFrontEnabled {
+            AppLogger.interface.debug("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
+            AppLogger.interface.debug("Mouse down handled by system: editMode=\(isEditModeEnabled)")
             super.mouseDown(with: event)
         }
     }
@@ -182,6 +195,7 @@ private final class InteractionView: NSView {
     /// Context: Called by menu item, propagates change through
     /// parent overlay to maintain consistent window state
     @objc func toggleEditMode() {
+        AppLogger.interface.info("Edit mode toggled via context menu")
         toggleEditModeAction?()
     }
 }

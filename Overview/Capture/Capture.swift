@@ -5,7 +5,8 @@
  Created by William Pierce on 12/6/24.
 
  Provides efficient rendering of captured window content using Core Animation layers,
- handling display scaling and frame updates with minimal overhead.
+ handling display scaling and frame updates with minimal overhead. The component
+ serves as the bridge between IOSurface capture data and SwiftUI rendering.
 
  This file is part of Overview.
 
@@ -44,12 +45,16 @@ struct Capture: NSViewRepresentable {
     /// 2. Enables layer backing for Core Animation
     /// 3. Returns configured view for layer updates
     ///
+    /// - Parameter context: View creation context
+    /// - Returns: Layer-backed NSView for frame rendering
     /// - Important: View must be layer-backed for proper rendering
     func makeNSView(context: Context) -> NSView {
         // Context: Using NSView for direct layer access provides
         // better performance with frequent frame updates
         let view = NSView()
         view.wantsLayer = true
+
+        AppLogger.capture.debug("Created layer-backed NSView for frame rendering")
         return view
     }
 
@@ -60,12 +65,18 @@ struct Capture: NSViewRepresentable {
     /// 2. Creates CALayer with proper scaling
     /// 3. Updates view's backing layer
     ///
+    /// - Parameters:
+    ///   - nsView: View to update
+    ///   - context: Update context
     /// - Important: Layer updates must occur on main thread
     /// - Warning: Must ensure proper IOSurface lifecycle
     func updateNSView(_ nsView: NSView, context: Context) {
         // Context: Direct layer replacement provides better performance
         // than updating existing layer properties
-        guard let surface = frame.surface else { return }
+        guard let surface = frame.surface else {
+            AppLogger.capture.warning("Attempted to update view with invalid surface")
+            return
+        }
 
         let layer = CALayer()
 

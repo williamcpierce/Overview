@@ -6,7 +6,7 @@
 
  Main application entry point that manages the app lifecycle, window configuration,
  and global state initialization. Serves as the root coordinator for all major
- app components.
+ app components, handling window presentation and global keyboard shortcuts.
 
  This file is part of Overview.
 
@@ -24,21 +24,30 @@ import SwiftUI
 /// - Configures main window appearance and style
 /// - Manages settings window presentation
 /// - Provides global menu commands
+/// - Coordinates hotkey system initialization
 ///
 /// Coordinates with:
 /// - PreviewManager: Global edit mode and preview window lifecycle
 /// - AppSettings: User preferences and window configuration
 /// - ContentView: Main window content and preview display
 /// - SettingsView: User preferences interface
+/// - HotkeyManager: Global keyboard shortcut handling
+/// - WindowManager: Window focus and management operations
 @main
 struct OverviewApp: App {
     // MARK: - Properties
 
     /// Controls preview window lifecycle and global edit mode
+    /// - Note: Created during initialization with settings reference
     @StateObject private var previewManager: PreviewManager
-
+    
     /// Manages persistent user preferences and window configuration
-    @StateObject private var appSettings = AppSettings()
+    /// - Note: Must be initialized before PreviewManager
+    @StateObject private var appSettings: AppSettings
+
+    /// Coordinates keyboard shortcuts for window focus operations
+    /// - Note: Requires WindowManager initialization before creation
+    @StateObject private var hotkeyManager: HotkeyManager
 
     // MARK: - Initialization
 
@@ -47,12 +56,30 @@ struct OverviewApp: App {
     /// Flow:
     /// 1. Creates AppSettings for user preferences
     /// 2. Initializes PreviewManager with settings reference
-    /// 3. Wraps managers in StateObjects for SwiftUI state management
+    /// 3. Ensures WindowManager singleton initialization
+    /// 4. Creates HotkeyManager for keyboard shortcuts
+    /// 5. Wraps managers in StateObjects for SwiftUI state management
+    /// 6. Registers saved hotkey bindings from settings
     init() {
+        AppLogger.interface.debug("Initializing application components")
+
         // Create settings first as PreviewManager depends on them
         let settings = AppSettings()
+        let preview = PreviewManager(appSettings: settings)
+
+        // Context: WindowManager must be initialized before HotkeyManager
+        // to ensure proper window focus handling
+        _ = WindowManager.shared
+        
         self._appSettings = StateObject(wrappedValue: settings)
-        self._previewManager = StateObject(wrappedValue: PreviewManager(appSettings: settings))
+        self._previewManager = StateObject(wrappedValue: preview)
+        self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
+        
+        AppLogger.hotkeys.debug("Registering saved hotkey bindings")
+        // Register any saved hotkeys from previous launch
+        HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)
+
+        AppLogger.interface.info("Application initialization complete")
     }
 
     // MARK: - Scene Configuration
@@ -65,7 +92,13 @@ struct OverviewApp: App {
                 isEditModeEnabled: $previewManager.isEditModeEnabled,
                 appSettings: appSettings
             )
+            .onAppear {
+                AppLogger.hotkeys.debug("Initializing hotkey system")
+                // Context: Ensures HotkeyService singleton initialization
+                _ = HotkeyService.shared
+            }
         }
+        // Context: Hidden title bar provides cleaner preview window appearance
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(
             width: appSettings.defaultWindowWidth,
@@ -79,7 +112,10 @@ struct OverviewApp: App {
 
         // MARK: Settings Scene
         Settings {
-            SettingsView(appSettings: appSettings)
+            SettingsView(
+                appSettings: appSettings,
+                previewManager: previewManager
+            )
         }
     }
 }

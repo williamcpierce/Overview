@@ -4,8 +4,9 @@
 
  Created by William Pierce on 9/15/24.
 
- Primary container that coordinates window preview lifecycle between selection and
- preview states, serving as the bridge for window management operations.
+ Serves as the root coordinator for window preview lifecycle, managing transitions
+ between window selection and preview states while maintaining proper window scaling
+ and interaction handling.
 
  This file is part of Overview.
 
@@ -16,25 +17,25 @@
 
 import SwiftUI
 
-/// Primary view container managing window preview lifecycle and state transitions
+/// Root view coordinator managing window preview lifecycle and state transitions
 ///
 /// Key responsibilities:
-/// - Coordinates window selection and preview mode transitions
-/// - Maintains window aspect ratio and size constraints
+/// - Coordinates view state transitions (selection ↔ preview)
+/// - Maintains window aspect ratio and scaling constraints
 /// - Manages capture manager instance lifecycle
-/// - Handles window interaction state (edit mode, focus)
+/// - Coordinates window interaction states
 ///
 /// Coordinates with:
-/// - PreviewManager: Global preview state and edit mode coordination
-/// - CaptureManager: Window capture and preview state management
-/// - SelectionView: Window selection and setup flow
-/// - PreviewView: Live window preview display
-/// - WindowAccessor: Window property management
+/// - PreviewManager: Global window capture and edit mode state
+/// - CaptureManager: Per-window capture stream management
+/// - SelectionView: Window target selection interface
+/// - PreviewView: Live window preview rendering
+/// - WindowAccessor: Low-level window property control
 struct ContentView: View {
     // MARK: - Properties
 
     /// Global preview manager coordinating window capture instances
-    /// - Note: Shared across all Overview windows
+    /// - Note: Single instance shared across all Overview windows
     @ObservedObject var previewManager: PreviewManager
 
     /// Application settings for window configuration and behavior
@@ -84,10 +85,12 @@ struct ContentView: View {
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
 
-        // Use settings-defined aspect ratio until window selection
+        // Context: Initial aspect ratio from settings until window selection
         self._aspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
+        
+        AppLogger.interface.debug("ContentView initialized with default aspect ratio: \(appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)")
     }
 
     // MARK: - View Layout
@@ -147,7 +150,7 @@ struct ContentView: View {
             Text("No capture manager found")
                 .foregroundColor(.red)
             Button("Retry") {
-                captureManagerId = previewManager.createNewCaptureManager()
+                retryManagerInitialization()
             }
             .padding()
         }
@@ -181,12 +184,15 @@ struct ContentView: View {
 
     /// Creates new capture manager instance on view appear
     private func handleAppear() {
+        AppLogger.interface.debug("ContentView appeared")
         captureManagerId = previewManager.createNewCaptureManager()
+        AppLogger.interface.info("Created new capture manager: \(captureManagerId?.uuidString ?? "nil")")
     }
 
     /// Removes capture manager instance on view disappear
     private func handleDisappear() {
         if let id = captureManagerId {
+            AppLogger.interface.debug("ContentView disappearing, removing capture manager: \(id.uuidString)")
             previewManager.removeCaptureManager(id: id)
         }
     }
@@ -195,7 +201,21 @@ struct ContentView: View {
     /// - Important: Maintains source window proportions for proper display
     private func handleWindowSizeChange(_ oldSize: CGSize?, _ newSize: CGSize?) {
         if let size = newSize {
-            aspectRatio = size.width / size.height
+            let newAspectRatio = size.width / size.height
+            AppLogger.interface.debug("Window size changed - New aspect ratio: \(newAspectRatio)")
+            aspectRatio = newAspectRatio
+        }
+    }
+    
+    /// Attempts to recreate capture manager after initialization failure
+    private func retryManagerInitialization() {
+        AppLogger.interface.warning("Retrying capture manager initialization")
+        captureManagerId = previewManager.createNewCaptureManager()
+        
+        if let id = captureManagerId {
+            AppLogger.interface.info("Successfully recreated capture manager: \(id.uuidString)")
+        } else {
+            AppLogger.interface.error("Failed to recreate capture manager")
         }
     }
 }
