@@ -101,7 +101,9 @@ struct SettingsView: View {
                 resetAllSettings()
             }
         } message: {
-            Text("This will reset all settings to their default values. This action cannot be undone.")
+            Text(
+                "This will reset all settings to their default values. This action cannot be undone."
+            )
         }
     }
 
@@ -150,7 +152,8 @@ struct SettingsView: View {
                             .frame(width: 120)
                             .textFieldStyle(.roundedBorder)
                             .onChange(of: binding.wrappedValue) { oldValue, newValue in
-                                AppLogger.settings.info("Default window \(label.lowercased()) changed: \(newValue)px")
+                                AppLogger.settings.info(
+                                    "Default window \(label.lowercased()) changed: \(newValue)px")
                             }
                         Text("px")
                             .foregroundColor(.secondary)
@@ -218,7 +221,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .tabItem { Label("Performance", systemImage: "gauge.medium") }
     }
-    
+
     /// Experimental features still under development
     private var experimentTab: some View {
         Form {
@@ -254,7 +257,7 @@ struct SettingsView: View {
                     AppLogger.settings.debug("Opening hotkey binding sheet")
                     isAddingHotkey = true
                 }
-                
+
                 Text(
                     "Hotkeys currently only work while Overview is in focus - this will be improved."
                 )

@@ -6,7 +6,7 @@
 
  Manages low-level screen capture operations using ScreenCaptureKit, handling
  frame capture, processing, and delivery to the UI layer with optimized performance.
- 
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -140,7 +140,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     /// - Important: Must be called before release to prevent leaks
     func stopCapture() async {
         logger.debug("Stopping capture stream")
-        
+
         do {
             try await stream?.stopCapture()
             continuation?.finish()
@@ -167,7 +167,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     /// - Warning: May cause momentary frame drops during transition
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
         logger.debug("Updating capture configuration")
-        
+
         do {
             try await stream?.updateConfiguration(configuration)
             try await stream?.updateContentFilter(filter)

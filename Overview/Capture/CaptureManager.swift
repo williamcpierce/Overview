@@ -117,7 +117,7 @@ class CaptureManager: ObservableObject {
         shareableContent: ShareableContentService = ShareableContentService()
     ) {
         AppLogger.capture.debug("Initializing CaptureManager")
-        
+
         self.appSettings = appSettings
         self.captureEngine = captureEngine
         self.streamConfig = streamConfig
@@ -128,7 +128,7 @@ class CaptureManager: ObservableObject {
         self.shareableContent = shareableContent
 
         setupObservers()
-        
+
         AppLogger.capture.info("CaptureManager initialized successfully")
     }
 
@@ -150,17 +150,19 @@ class CaptureManager: ObservableObject {
     /// 3. Updates available windows property
     func updateAvailableWindows() async {
         AppLogger.capture.debug("Updating available windows list")
-        
+
         do {
             let windows = try await shareableContent.getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowFilter.filterWindows(windows)
             }
-            AppLogger.capture.info("Available windows updated, count: \(self.availableWindows.count)")
+            AppLogger.capture.info(
+                "Available windows updated, count: \(self.availableWindows.count)")
         } catch {
-            AppLogger.logError(error,
-                             context: "Failed to get available windows",
-                             logger: AppLogger.capture)
+            AppLogger.logError(
+                error,
+                context: "Failed to get available windows",
+                logger: AppLogger.capture)
         }
     }
 
@@ -179,7 +181,7 @@ class CaptureManager: ObservableObject {
             AppLogger.capture.debug("Capture already active, ignoring start request")
             return
         }
-        
+
         guard let window = selectedWindow else {
             AppLogger.capture.warning("Attempted to start capture with no window selected")
             throw CaptureError.noWindowSelected
@@ -193,7 +195,7 @@ class CaptureManager: ObservableObject {
 
         await startCaptureTask(frameStream: frameStream)
         isCapturing = true
-        
+
         AppLogger.capture.info("Capture started successfully")
     }
 
@@ -217,7 +219,7 @@ class CaptureManager: ObservableObject {
 
         isCapturing = false
         capturedFrame = nil
-        
+
         AppLogger.capture.info("Capture stopped successfully")
     }
 
@@ -228,7 +230,7 @@ class CaptureManager: ObservableObject {
             AppLogger.windows.warning("Attempted to focus window with no selection")
             return
         }
-        
+
         AppLogger.windows.debug("Focusing window: '\(window.title ?? "untitled")'")
         windowFocus.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
     }
@@ -240,7 +242,7 @@ class CaptureManager: ObservableObject {
     @MainActor
     private func startCaptureTask(frameStream: AsyncThrowingStream<CapturedFrame, Error>) async {
         AppLogger.capture.debug("Initializing capture task")
-        
+
         captureTask?.cancel()
 
         captureTask = Task { @MainActor in
@@ -261,9 +263,10 @@ class CaptureManager: ObservableObject {
     /// 2. Stops capture session
     /// 3. Updates UI state
     private func handleCaptureError(_ error: Error) async {
-        AppLogger.logError(error,
-                          context: "Capture stream error",
-                          logger: AppLogger.capture)
+        AppLogger.logError(
+            error,
+            context: "Capture stream error",
+            logger: AppLogger.capture)
         await stopCapture()
     }
 
@@ -276,7 +279,7 @@ class CaptureManager: ObservableObject {
     /// 4. Configures frame rate handling
     private func setupObservers() {
         AppLogger.capture.debug("Setting up window state observers")
-        
+
         windowObserver.onFocusStateChanged = { [weak self] in
             await self?.updateFocusState()
         }
@@ -296,16 +299,18 @@ class CaptureManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
-            
+
         AppLogger.capture.debug("Window state observers configured")
     }
 
     /// Updates focus state of the source window
     private func updateFocusState() async {
         isSourceWindowFocused = await windowFocus.updateFocusState(for: selectedWindow)
-        
+
         if let window = selectedWindow {
-            AppLogger.windows.debug("Window focus state updated: '\(window.title ?? "untitled")' focused: \(isSourceWindowFocused)")
+            AppLogger.windows.debug(
+                "Window focus state updated: '\(window.title ?? "untitled")' focused: \(isSourceWindowFocused)"
+            )
         }
     }
 
@@ -313,7 +318,7 @@ class CaptureManager: ObservableObject {
     private func updateWindowTitle() async {
         let oldTitle = windowTitle
         windowTitle = await titleService.updateWindowTitle(for: selectedWindow)
-        
+
         if let newTitle = windowTitle, oldTitle != newTitle {
             AppLogger.windows.debug("Window title updated: '\(newTitle)'")
         }
@@ -323,17 +328,19 @@ class CaptureManager: ObservableObject {
     /// - Warning: Frame rate changes require stream reconfiguration
     private func updateStreamConfiguration() async {
         guard isCapturing, let window = selectedWindow else { return }
-        
-        AppLogger.capture.debug("Updating stream configuration, new frame rate: \(appSettings.frameRate)")
-        
+
+        AppLogger.capture.debug(
+            "Updating stream configuration, new frame rate: \(appSettings.frameRate)")
+
         do {
             try await streamConfig.updateConfiguration(
                 captureEngine.stream, window, frameRate: appSettings.frameRate)
             AppLogger.capture.info("Stream configuration updated successfully")
         } catch {
-            AppLogger.logError(error,
-                             context: "Failed to update stream configuration",
-                             logger: AppLogger.capture)
+            AppLogger.logError(
+                error,
+                context: "Failed to update stream configuration",
+                logger: AppLogger.capture)
         }
     }
 }

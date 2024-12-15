@@ -89,8 +89,10 @@ struct ContentView: View {
         self._aspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
-        
-        AppLogger.interface.debug("ContentView initialized with default aspect ratio: \(appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)")
+
+        AppLogger.interface.debug(
+            "ContentView initialized with default aspect ratio: \(appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)"
+        )
     }
 
     // MARK: - View Layout
@@ -186,13 +188,15 @@ struct ContentView: View {
     private func handleAppear() {
         AppLogger.interface.debug("ContentView appeared")
         captureManagerId = previewManager.createNewCaptureManager()
-        AppLogger.interface.info("Created new capture manager: \(captureManagerId?.uuidString ?? "nil")")
+        AppLogger.interface.info(
+            "Created new capture manager: \(captureManagerId?.uuidString ?? "nil")")
     }
 
     /// Removes capture manager instance on view disappear
     private func handleDisappear() {
         if let id = captureManagerId {
-            AppLogger.interface.debug("ContentView disappearing, removing capture manager: \(id.uuidString)")
+            AppLogger.interface.debug(
+                "ContentView disappearing, removing capture manager: \(id.uuidString)")
             previewManager.removeCaptureManager(id: id)
         }
     }
@@ -206,12 +210,12 @@ struct ContentView: View {
             aspectRatio = newAspectRatio
         }
     }
-    
+
     /// Attempts to recreate capture manager after initialization failure
     private func retryManagerInitialization() {
         AppLogger.interface.warning("Retrying capture manager initialization")
         captureManagerId = previewManager.createNewCaptureManager()
-        
+
         if let id = captureManagerId {
             AppLogger.interface.info("Successfully recreated capture manager: \(id.uuidString)")
         } else {

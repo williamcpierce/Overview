@@ -27,10 +27,10 @@ import Cocoa
 enum HotkeyError: Error {
     /// Carbon API registration failed with specific status code
     case registrationFailed(OSStatus)
-    
+
     /// Event handler installation failed with specific status code
     case eventHandlerFailed(OSStatus)
-    
+
     /// No valid modifier keys specified in binding
     case invalidModifiers
 }
@@ -112,9 +112,10 @@ final class HotkeyService {
             try setupEventHandler()
             AppLogger.hotkeys.info("HotkeyService initialized successfully")
         } catch {
-            AppLogger.logError(error,
-                             context: "Failed to initialize HotkeyService",
-                             logger: AppLogger.hotkeys)
+            AppLogger.logError(
+                error,
+                context: "Failed to initialize HotkeyService",
+                logger: AppLogger.hotkeys)
         }
     }
 
@@ -164,9 +165,10 @@ final class HotkeyService {
                 try register(binding)
                 AppLogger.hotkeys.debug("Registered hotkey for '\(binding.windowTitle)'")
             } catch {
-                AppLogger.logError(error,
-                                 context: "Failed to register hotkey for '\(binding.windowTitle)'",
-                                 logger: AppLogger.hotkeys)
+                AppLogger.logError(
+                    error,
+                    context: "Failed to register hotkey for '\(binding.windowTitle)'",
+                    logger: AppLogger.hotkeys)
             }
         }
 
@@ -186,7 +188,7 @@ final class HotkeyService {
     /// - Warning: Must be called during initialization
     private func setupEventHandler() throws {
         AppLogger.hotkeys.debug("Setting up Carbon event handler")
-        
+
         let eventSpec = [
             EventTypeSpec(
                 eventClass: OSType(kEventClassKeyboard),
@@ -244,7 +246,7 @@ final class HotkeyService {
 
         if result == noErr, let (_, binding) = registeredHotkeys[hotkeyID.id] {
             AppLogger.hotkeys.debug("Hotkey pressed for window: '\(binding.windowTitle)'")
-            
+
             // Context: Small delay prevents focus race conditions
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.focusCallbacks.values.forEach { $0(binding.windowTitle) }
@@ -288,7 +290,8 @@ final class HotkeyService {
         if status == noErr, let hotkeyRef = hotkeyRef {
             registeredHotkeys[nextHotkeyID] = (hotkeyRef, binding)
             nextHotkeyID += 1
-            AppLogger.hotkeys.debug("Successfully registered hotkey: \(binding.hotkeyDisplayString)")
+            AppLogger.hotkeys.debug(
+                "Successfully registered hotkey: \(binding.hotkeyDisplayString)")
         } else {
             throw HotkeyError.registrationFailed(status)
         }

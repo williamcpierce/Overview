@@ -61,14 +61,14 @@ struct InteractionOverlay: NSViewRepresentable {
     /// - Returns: Configured NSView for window interactions
     func makeNSView(context: Context) -> NSView {
         AppLogger.interface.debug("Creating interaction overlay view")
-        
+
         let view = ClickHandler()
         view.isEditModeEnabled = isEditModeEnabled
         view.isBringToFrontEnabled = isBringToFrontEnabled
         view.bringToFrontAction = bringToFrontAction
         view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextMenu(for: view)
-        
+
         AppLogger.interface.info("Interaction overlay view configured")
         return view
     }
@@ -88,8 +88,9 @@ struct InteractionOverlay: NSViewRepresentable {
             AppLogger.interface.warning("Invalid view type in updateNSView")
             return
         }
-        
-        AppLogger.interface.debug("Updating interaction overlay state: editMode=\(isEditModeEnabled)")
+
+        AppLogger.interface.debug(
+            "Updating interaction overlay state: editMode=\(isEditModeEnabled)")
         view.isEditModeEnabled = isEditModeEnabled
         view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
     }
@@ -112,7 +113,7 @@ struct InteractionOverlay: NSViewRepresentable {
     /// - Returns: Configured NSMenu instance
     private func createContextMenu(for view: ClickHandler) -> NSMenu {
         AppLogger.interface.debug("Creating context menu for interaction overlay")
-        
+
         let menu = NSMenu()
 
         // Context: Empty key equivalent prevents menu shortcut conflicts
