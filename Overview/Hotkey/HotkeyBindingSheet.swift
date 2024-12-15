@@ -225,30 +225,41 @@ struct HotkeyBindingSheet: View {
     }
 }
 
-/// Represents a keyboard shortcut binding to a specific window
+/// Represents a keyboard shortcut binding to a specific window with system-wide scope
 ///
 /// Key responsibilities:
-/// - Stores window identification and key combination
+/// - Stores window identification and key combination data
 /// - Provides consistent string representation of shortcuts
 /// - Manages modifier flag compatibility with system APIs
 /// - Ensures proper encoding for persistence
+/// - Validates modifier requirements and combinations
 ///
 /// Coordinates with:
-/// - HotkeyService: Provides binding data for registration
-/// - Carbon Event Manager: Uses compatible key codes
-/// - AppSettings: Enables JSON persistence
+/// - HotkeyService: Provides binding data for registration with Carbon APIs
+/// - CarbonEventManager: Uses compatible key codes for system-wide registration
+/// - AppSettings: Enables JSON persistence of binding configurations
+/// - PreviewManager: Coordinates window focus operations
+/// - WindowManager: Executes focus requests when shortcuts triggered
+///
+/// Technical Context:
+/// - Uses Carbon key codes for system-wide compatibility
+/// - Requires at least one modifier key for safety
+/// - Maintains thread safety for event handling
+/// - Handles potential window title conflicts
 struct HotkeyBinding: Codable, Equatable, Hashable {
     // MARK: - Properties
 
     /// Title of window this binding targets
+    /// - Note: Used for window lookup during focus operations
     let windowTitle: String
 
     /// Carbon key code for the binding
     /// - Note: Uses Carbon codes for system-wide compatibility
+    /// - Important: Must be valid Carbon virtual key code
     let keyCode: Int
 
     /// Raw modifier flag storage
-    /// - Note: Private to ensure proper flag handling
+    /// - Note: Private to ensure proper flag handling through computed property
     private let modifierFlags: UInt
 
     // MARK: - Computed Properties

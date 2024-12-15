@@ -4,9 +4,9 @@
 
  Created by William Pierce on 12/6/24.
 
- Provides core services for window capture operations, handling stream configuration,
- window filtering, focus management, and state observation. These services form the
- foundation for Overview's window capture capabilities.
+ Manages low-level window capture configuration and stream settings optimization,
+ providing a reliable foundation for Overview's window preview capabilities through
+ efficient ScreenCaptureKit integration.
 
  This file is part of Overview.
 
@@ -20,38 +20,38 @@ import ScreenCaptureKit
 
 // MARK: - Stream Configuration Service
 
-/// Manages stream configuration and optimization for window capture sessions
+/// Manages capture stream settings optimization and dynamic configuration updates
 ///
 /// Key responsibilities:
-/// - Creates and updates stream configurations based on window properties
-/// - Manages frame rate and content filter settings
-/// - Ensures optimal capture quality across different window types
-/// - Handles dynamic configuration updates during capture
+/// - Creates optimized stream configurations for window capture
+/// - Manages frame rate and quality settings adaptation
+/// - Handles dynamic stream updates during active capture
+/// - Maintains capture stability across configuration changes
 ///
 /// Coordinates with:
-/// - CaptureEngine: Provides configuration for capture stream initialization
+/// - CaptureManager: Provides high-level capture session management
+/// - CaptureEngine: Manages low-level stream operations
 /// - AppSettings: Receives frame rate and quality preferences
-/// - CaptureManager: Coordinates stream updates during active capture
-/// - PreviewAccessor: Aligns capture dimensions with preview window scaling
+/// - PreviewAccessor: Aligns capture dimensions with preview scaling
 class StreamConfigurationService {
     // MARK: - Properties
 
-    /// Logger for stream configuration operations
+    /// System logger for capture configuration operations
     private let logger = AppLogger.capture
 
     // MARK: - Public Methods
 
-    /// Creates a new stream configuration and content filter for window capture
+    /// Creates optimized stream configuration and content filter for window capture
     ///
     /// Flow:
-    /// 1. Configures stream dimensions matching source window
-    /// 2. Applies frame timing based on requested rate
+    /// 1. Configures capture dimensions to match source window
+    /// 2. Sets frame timing parameters for desired refresh rate
     /// 3. Optimizes queue depth for smooth playback
-    /// 4. Creates content filter for precise window bounds
+    /// 4. Creates precise window content filter
     ///
     /// - Parameters:
     ///   - window: Target window to capture
-    ///   - frameRate: Desired capture frequency in frames per second
+    ///   - frameRate: Desired capture frequency in FPS
     /// - Returns: Tuple containing stream configuration and content filter
     ///
     /// - Warning: Frame rate changes require full stream reconfiguration
@@ -64,27 +64,30 @@ class StreamConfigurationService {
 
         let config = SCStreamConfiguration()
 
-        // Context: Match stream resolution to window for optimal quality
+        // Context: Match stream resolution to window size for optimal quality
+        // Using Int conversion to handle potential dimension precision loss
         config.width = Int(window.frame.width)
         config.height = Int(window.frame.height)
 
         // Context: Frame interval controls capture rate and resource usage
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
 
-        // Context: Queue depth of 3 balances latency and smooth playback
+        // Context: Queue depth of 3 provides balance between latency and smooth playback
         config.queueDepth = 3
 
         // Context: Cursor adds visual noise to previews
         config.showsCursor = false
 
         let filter = SCContentFilter(desktopIndependentWindow: window)
+
+        logger.info("Configuration created successfully")
         return (config, filter)
     }
 
-    /// Updates an existing stream's configuration while maintaining capture
+    /// Updates active stream configuration while maintaining capture
     ///
     /// Flow:
-    /// 1. Generates new configuration with current settings
+    /// 1. Creates new configuration with current settings
     /// 2. Updates stream configuration atomically
     /// 3. Updates content filter to maintain window tracking
     /// 4. Validates successful application of changes
@@ -95,9 +98,8 @@ class StreamConfigurationService {
     ///   - frameRate: Desired capture frequency
     ///
     /// - Throws: SCStream configuration or filter update errors
-    ///
-    /// - Warning: Configuration updates may cause momentary frame drops
-    /// - Warning: Order matters - config must be updated before filter
+    /// - Warning: Frame rate changes require full stream reconfiguration
+    /// - Warning: Updates must apply configuration before filter
     func updateConfiguration(_ stream: SCStream?, _ window: SCWindow, frameRate: Double)
         async throws
     {
@@ -111,11 +113,13 @@ class StreamConfigurationService {
         let (config, filter) = createConfiguration(window, frameRate: frameRate)
 
         do {
+            // Context: Order matters - must update configuration before filter
+            // to maintain stream stability during transition
             try await stream.updateConfiguration(config)
             try await stream.updateContentFilter(filter)
             logger.info("Stream configuration updated successfully")
         } catch {
-            logger.error("Failed to update stream configuration: \(error.localizedDescription)")
+            logger.error("Failed to update stream: \(error.localizedDescription)")
             throw error
         }
     }
