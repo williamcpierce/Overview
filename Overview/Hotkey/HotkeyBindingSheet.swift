@@ -33,7 +33,7 @@ import SwiftUI
 /// - HotkeyRecorder: Handles keyboard input capture
 struct HotkeyBindingSheet: View {
     // MARK: - Properties
-    
+
     /// Provides sheet dismissal capability
     @Environment(\.dismiss) private var dismiss
 
@@ -141,7 +141,8 @@ struct HotkeyBindingSheet: View {
     /// 3. Updates error state for user feedback
     private func validateSelection() {
         guard let window = selectedWindow,
-              let title = window.title else {
+            let title = window.title
+        else {
             errorMessage = ""
             return
         }
@@ -171,10 +172,10 @@ struct HotkeyBindingSheet: View {
 
         // Check for duplicate bindings
         if appSettings.hotkeyBindings.contains(where: { binding in
-            binding.keyCode == shortcut.keyCode &&
-            binding.modifiers == shortcut.modifiers
+            binding.keyCode == shortcut.keyCode && binding.modifiers == shortcut.modifiers
         }) {
-            AppLogger.hotkeys.warning("Duplicate shortcut detected: \(shortcut.hotkeyDisplayString)")
+            AppLogger.hotkeys.warning(
+                "Duplicate shortcut detected: \(shortcut.hotkeyDisplayString)")
             errorMessage = "This shortcut is already in use"
             return
         }
@@ -198,9 +199,10 @@ struct HotkeyBindingSheet: View {
     /// 3. Checks for validation errors
     private func canAddBinding() -> Bool {
         guard let window = selectedWindow,
-              window.title != nil,
-              currentShortcut != nil,
-              errorMessage.isEmpty else {
+            window.title != nil,
+            currentShortcut != nil,
+            errorMessage.isEmpty
+        else {
             return false
         }
         return true
@@ -214,7 +216,9 @@ struct HotkeyBindingSheet: View {
     /// 3. Triggers sheet dismissal
     private func addBinding() {
         if let shortcut = currentShortcut {
-            AppLogger.hotkeys.info("Adding new hotkey binding: '\(shortcut.windowTitle)' -> \(shortcut.hotkeyDisplayString)")
+            AppLogger.hotkeys.info(
+                "Adding new hotkey binding: '\(shortcut.windowTitle)' -> \(shortcut.hotkeyDisplayString)"
+            )
             appSettings.hotkeyBindings.append(shortcut)
             dismiss()
         }
@@ -275,7 +279,7 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
         self.keyCode = keyCode
         // Context: Only allow standard modifier keys for compatibility
         self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
-        
+
         AppLogger.hotkeys.debug("Created binding for '\(windowTitle)' with key code \(keyCode)")
     }
 

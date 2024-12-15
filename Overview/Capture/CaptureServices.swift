@@ -16,7 +16,6 @@
 */
 
 import AppKit
-import OSLog
 import ScreenCaptureKit
 
 // MARK: - Stream Configuration Service
@@ -33,7 +32,7 @@ import ScreenCaptureKit
 /// - CaptureEngine: Provides configuration for capture stream initialization
 /// - AppSettings: Receives frame rate and quality preferences
 /// - CaptureManager: Coordinates stream updates during active capture
-/// - WindowAccessor: Aligns capture dimensions with window scaling
+/// - PreviewAccessor: Aligns capture dimensions with preview window scaling
 class StreamConfigurationService {
     // MARK: - Properties
 
@@ -59,8 +58,10 @@ class StreamConfigurationService {
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
         SCStreamConfiguration, SCContentFilter
     ) {
-        logger.debug("Creating configuration for window: '\(window.title ?? "unknown")', frameRate: \(frameRate)")
-        
+        logger.debug(
+            "Creating configuration for window: '\(window.title ?? "unknown")', frameRate: \(frameRate)"
+        )
+
         let config = SCStreamConfiguration()
 
         // Context: Match stream resolution to window for optimal quality
@@ -101,7 +102,7 @@ class StreamConfigurationService {
         async throws
     {
         logger.debug("Updating stream configuration: frameRate=\(frameRate)")
-        
+
         guard let stream = stream else {
             logger.warning("Cannot update configuration: stream is nil")
             return
@@ -134,7 +135,7 @@ class StreamConfigurationService {
 /// - ShareableContentService: Processes raw window listings
 /// - CaptureManager: Provides filtered window list for capture
 /// - SelectionView: Uses filtered windows in selection UI
-/// - WindowAccessor: Validates window properties for capture
+/// - PreviewAccessor: Validates preview window properties for capture
 class WindowFilterService {
     // MARK: - Properties
 
@@ -164,11 +165,11 @@ class WindowFilterService {
     /// - Note: Changes to system UI may require filter updates
     func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
         logger.debug("Filtering \(windows.count) windows")
-        
+
         let filtered = windows.filter { window in
             isValidBasicWindow(window) && isNotSystemWindow(window)
         }
-        
+
         logger.info("Found \(filtered.count) valid capture targets")
         return filtered
     }
@@ -186,17 +187,18 @@ class WindowFilterService {
     /// - Returns: Whether window meets basic requirements
     private func isValidBasicWindow(_ window: SCWindow) -> Bool {
         // Context: These requirements ensure stable capture and display
-        let isValid = window.isOnScreen
+        let isValid =
+            window.isOnScreen
             && window.frame.height > 100
             && window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
             && window.windowLayer == 0
             && window.title != nil
             && !window.title!.isEmpty
-            
+
         if !isValid {
             logger.debug("Window validation failed: '\(window.title ?? "unknown")'")
         }
-        
+
         return isValid
     }
 
@@ -224,11 +226,11 @@ class WindowFilterService {
             window.owningApplication?.bundleIdentifier ?? "")
 
         let isNotSystem = isNotDesktop && isNotSystemUIServer && isNotSystemApp
-        
+
         if !isNotSystem {
             logger.debug("Excluding system window: '\(window.title ?? "unknown")'")
         }
-        
+
         return isNotSystem
     }
 }
@@ -248,10 +250,10 @@ class WindowFilterService {
 /// - NSWorkspace: Monitors active application changes
 /// - InteractionOverlay: Triggers focus state transitions
 /// - PreviewView: Updates visual state based on focus
-/// - WindowAccessor: Coordinates window level changes during focus
+/// - PreviewAccessor: Coordinates preview window level changes during focus
 class WindowFocusService {
     // MARK: - Properties
-    
+
     /// Logger for window focus operations
     private let logger = AppLogger.windows
 
@@ -276,15 +278,18 @@ class WindowFocusService {
         guard !isEditModeEnabled,
             let processID = window.owningApplication?.processID
         else {
-            logger.warning("Cannot focus window: editMode=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)")
+            logger.warning(
+                "Cannot focus window: editMode=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)"
+            )
             return
         }
 
         logger.info("Focusing window: '\(window.title ?? "unknown")', processID=\(processID)")
 
-        let success = NSRunningApplication(processIdentifier: pid_t(processID))?
+        let success =
+            NSRunningApplication(processIdentifier: pid_t(processID))?
             .activate() ?? false
-            
+
         if !success {
             logger.error("Failed to activate window: processID=\(processID)")
         }
@@ -333,7 +338,7 @@ class WindowFocusService {
 /// - SCShareableContent: Retrieves updated window information
 /// - PreviewView: Displays current window titles
 /// - SelectionView: Shows window titles in selection UI
-/// - WindowAccessor: Updates window chrome with titles
+/// - PreviewAccessor: Updates preview window chrome with titles
 class WindowTitleService {
     // MARK: - Properties
 
@@ -371,13 +376,13 @@ class WindowTitleService {
                 updatedWindow.owningApplication?.processID == window.owningApplication?.processID
                     && updatedWindow.frame == window.frame
             }?.title
-            
+
             if title != nil {
                 logger.debug("Updated window title: '\(title!)'")
             } else {
                 logger.warning("Failed to find matching window for title update")
             }
-            
+
             return title
         } catch {
             logger.error("Failed to update window title: \(error.localizedDescription)")
@@ -457,7 +462,7 @@ class WindowObserverService {
     /// - Warning: Must be called before service deallocation
     func stopObserving() {
         logger.info("Stopping window state observation")
-        
+
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
@@ -477,7 +482,7 @@ class WindowObserverService {
     /// 3. Sets up async callback handling
     private func setupWorkspaceObserver() {
         logger.debug("Setting up workspace observer")
-        
+
         // Context: Workspace notifications catch app-level focus changes
         workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -498,7 +503,7 @@ class WindowObserverService {
     /// 3. Configures async state updates
     private func setupWindowObserver() {
         logger.debug("Setting up window focus observer")
-        
+
         // Context: Window notifications catch window-level focus changes
         windowObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification,
@@ -524,7 +529,7 @@ class WindowObserverService {
         titleCheckTimer?.invalidate()
 
         logger.debug("Starting periodic title checks")
-        
+
         // Context: Regular checks catch title changes that don't trigger events
         titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
             [weak self] _ in
@@ -552,7 +557,7 @@ class WindowObserverService {
 /// - WindowFilterService: Receives raw window list for filtering
 class ShareableContentService {
     // MARK: - Properties
-    
+
     /// Logger for content access operations
     private let logger = AppLogger.capture
 

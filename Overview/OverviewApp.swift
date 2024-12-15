@@ -40,7 +40,7 @@ struct OverviewApp: App {
     /// Controls preview window lifecycle and global edit mode
     /// - Note: Created during initialization with settings reference
     @StateObject private var previewManager: PreviewManager
-    
+
     /// Manages persistent user preferences and window configuration
     /// - Note: Must be initialized before PreviewManager
     @StateObject private var appSettings: AppSettings
@@ -70,11 +70,11 @@ struct OverviewApp: App {
         // Context: WindowManager must be initialized before HotkeyManager
         // to ensure proper window focus handling
         _ = WindowManager.shared
-        
+
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
         self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
-        
+
         AppLogger.hotkeys.debug("Registering saved hotkey bindings")
         // Register any saved hotkeys from previous launch
         HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)

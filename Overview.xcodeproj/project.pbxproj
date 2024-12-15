@@ -68,10 +68,10 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				InteractionOverlay.swift,
+				PreviewAccessor.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
 				SelectionView.swift,
-				WindowAccessor.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

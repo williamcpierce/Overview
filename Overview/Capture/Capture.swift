@@ -28,7 +28,7 @@ import SwiftUI
 /// Coordinates with:
 /// - CaptureEngine: Receives frame data and scaling information
 /// - PreviewView: Integrates into the SwiftUI view hierarchy
-/// - WindowAccessor: Coordinates window dimensions and scaling
+/// - PreviewAccessor: Coordinates preview window dimensions and scaling
 struct Capture: NSViewRepresentable {
     // MARK: - Properties
 
