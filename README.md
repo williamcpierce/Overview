@@ -31,7 +31,7 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 
 ## Installation
 
-1. Download the lastest version from GitHub [Releases](https://github.com/williamcpierce/Overview/releases).
+1. Download the latest version from GitHub [Releases](https://github.com/williamcpierce/Overview/releases).
 2. Mount the disk image and drag Overview into your Applications folder.
 
 ### On First Launch
