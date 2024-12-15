@@ -29,7 +29,7 @@ import SwiftUI
 /// Coordinates with:
 /// - AppSettings: Stores and manages setting values
 /// - PreviewView: Updates preview appearance in real-time
-/// - WindowAccessor: Applies window behavior changes
+/// - PreviewAccessor: Applies preview window behavior changes
 /// - CaptureManager: Updates capture configuration
 /// - HotkeyManager: Processes keyboard shortcut configurations
 struct SettingsView: View {

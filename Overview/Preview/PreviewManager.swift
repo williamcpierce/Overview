@@ -29,7 +29,7 @@ import SwiftUI
 /// - CaptureManager: Individual window capture and preview instances
 /// - AppSettings: Configuration for new capture managers
 /// - ContentView: Main window content and edit mode coordination
-/// - WindowAccessor: Window behavior during edit mode changes
+/// - PreviewAccessor: Preview window behavior during edit mode changes
 @MainActor
 final class PreviewManager: ObservableObject {
     // MARK: - Properties

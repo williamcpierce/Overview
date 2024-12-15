@@ -1,5 +1,5 @@
 /*
- WindowAccessor.swift
+ PreviewAccessor.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -14,7 +14,6 @@
  file at the root of this project.
 */
 
-import OSLog
 import SwiftUI
 
 /// Bridges SwiftUI window state with AppKit window properties for preview windows
@@ -30,7 +29,7 @@ import SwiftUI
 /// - PreviewView: Synchronizes window dimensions with content
 /// - ContentView: Processes edit mode state changes
 /// - NSWindow: Configures low-level window behavior
-struct WindowAccessor: NSViewRepresentable {
+struct PreviewAccessor: NSViewRepresentable {
     // MARK: - Properties
 
     /// Current width-to-height ratio for window sizing

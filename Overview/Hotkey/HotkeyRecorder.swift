@@ -16,7 +16,6 @@
 */
 
 import AppKit
-import OSLog
 import SwiftUI
 
 /// Records and validates keyboard shortcuts for window focus operations

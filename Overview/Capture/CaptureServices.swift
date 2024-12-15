@@ -16,7 +16,6 @@
 */
 
 import AppKit
-import OSLog
 import ScreenCaptureKit
 
 // MARK: - Stream Configuration Service
@@ -33,7 +32,7 @@ import ScreenCaptureKit
 /// - CaptureEngine: Provides configuration for capture stream initialization
 /// - AppSettings: Receives frame rate and quality preferences
 /// - CaptureManager: Coordinates stream updates during active capture
-/// - WindowAccessor: Aligns capture dimensions with window scaling
+/// - PreviewAccessor: Aligns capture dimensions with preview window scaling
 class StreamConfigurationService {
     // MARK: - Properties
 
@@ -134,7 +133,7 @@ class StreamConfigurationService {
 /// - ShareableContentService: Processes raw window listings
 /// - CaptureManager: Provides filtered window list for capture
 /// - SelectionView: Uses filtered windows in selection UI
-/// - WindowAccessor: Validates window properties for capture
+/// - PreviewAccessor: Validates preview window properties for capture
 class WindowFilterService {
     // MARK: - Properties
 
@@ -248,7 +247,7 @@ class WindowFilterService {
 /// - NSWorkspace: Monitors active application changes
 /// - InteractionOverlay: Triggers focus state transitions
 /// - PreviewView: Updates visual state based on focus
-/// - WindowAccessor: Coordinates window level changes during focus
+/// - PreviewAccessor: Coordinates preview window level changes during focus
 class WindowFocusService {
     // MARK: - Properties
     
@@ -333,7 +332,7 @@ class WindowFocusService {
 /// - SCShareableContent: Retrieves updated window information
 /// - PreviewView: Displays current window titles
 /// - SelectionView: Shows window titles in selection UI
-/// - WindowAccessor: Updates window chrome with titles
+/// - PreviewAccessor: Updates preview window chrome with titles
 class WindowTitleService {
     // MARK: - Properties
 

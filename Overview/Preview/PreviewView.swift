@@ -29,7 +29,7 @@ import SwiftUI
 /// - CaptureManager: Provides frame data and manages capture lifecycle
 /// - AppSettings: Controls visual appearance and overlay behavior
 /// - InteractionOverlay: Manages mouse events and window interactions
-/// - WindowAccessor: Handles window property updates and scaling
+/// - PreviewAccessor: Handles preview window property updates and scaling
 struct PreviewView: View {
     // MARK: - Properties
 

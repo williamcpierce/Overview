@@ -17,7 +17,6 @@
  which is licensed under the MIT License. See LICENSE.md for details.
 */
 
-import OSLog
 import ScreenCaptureKit
 
 /// Encapsulates frame data for efficient display processing using hardware acceleration
@@ -32,7 +31,7 @@ import ScreenCaptureKit
 /// - CaptureEngine: Source of captured frame data and lifecycle
 /// - Capture: Consumer for frame rendering and display
 /// - PreviewView: Handler for display sizing and layout
-/// - WindowAccessor: Coordinates scaling with window properties
+/// - PreviewAccessor: Coordinates preview scaling with window properties
 struct CapturedFrame {
     /// Represents invalid capture state for initialization and error handling
     /// - Note: Used when capture fails or during state transitions
@@ -68,7 +67,7 @@ struct CapturedFrame {
 /// Coordinates with:
 /// - CaptureManager: High-level capture coordination and state
 /// - StreamConfigurationService: Stream setup and updates
-/// - WindowAccessor: Display scaling and dimensions
+/// - PreviewAccessor: Display scaling and dimensions
 /// - PreviewView: Frame consumption and display
 class CaptureEngine: NSObject, @unchecked Sendable {
     // MARK: - Properties

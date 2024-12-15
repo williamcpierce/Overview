@@ -15,7 +15,6 @@
 */
 
 import Combine
-import OSLog
 import ScreenCaptureKit
 
 /// Manages window capture state and coordinates preview operations

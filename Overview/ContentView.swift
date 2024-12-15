@@ -30,7 +30,7 @@ import SwiftUI
 /// - CaptureManager: Per-window capture stream management
 /// - SelectionView: Window target selection interface
 /// - PreviewView: Live window preview rendering
-/// - WindowAccessor: Low-level window property control
+/// - PreviewAccessor: Low-level preview window property control
 struct ContentView: View {
     // MARK: - Properties
 
@@ -102,7 +102,7 @@ struct ContentView: View {
                 .aspectRatio(aspectRatio, contentMode: .fit)
                 .background(backgroundLayer)
                 .overlay(interactionLayer)
-                .background(windowAccessorLayer)
+                .background(previewAccessorLayer)
         }
         .onAppear(perform: handleAppear)
         .onDisappear(perform: handleDisappear)
@@ -172,8 +172,8 @@ struct ContentView: View {
     }
 
     /// Window property management and aspect ratio handling
-    private var windowAccessorLayer: some View {
-        WindowAccessor(
+    private var previewAccessorLayer: some View {
+        PreviewAccessor(
             aspectRatio: $aspectRatio,
             isEditModeEnabled: $isEditModeEnabled,
             appSettings: appSettings

@@ -15,7 +15,6 @@
  file at the root of this project.
 */
 
-import OSLog
 import SwiftUI
 
 /// Manages hotkey-triggered window focus operations across preview windows

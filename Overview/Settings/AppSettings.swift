@@ -9,7 +9,6 @@
 */
 
 import Foundation
-import OSLog
 
 /// Manages persistent application settings and real-time preference updates
 ///
@@ -21,7 +20,7 @@ import OSLog
 ///
 /// Coordinates with:
 /// - CaptureManager: Provides capture configuration settings
-/// - WindowAccessor: Controls window appearance and behavior
+/// - PreviewAccessor: Controls preview window appearance and behavior
 /// - PreviewView: Configures preview window properties
 /// - SettingsView: Enables preference modification
 /// - HotkeyService: Manages keyboard shortcut registration

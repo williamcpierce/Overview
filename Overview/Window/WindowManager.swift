@@ -16,7 +16,6 @@
 */
 
 import AppKit
-import OSLog
 import ScreenCaptureKit
 
 /// Manages window operations and state tracking across the application

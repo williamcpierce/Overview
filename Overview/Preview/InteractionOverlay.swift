@@ -27,7 +27,7 @@ import SwiftUI
 /// Coordinates with:
 /// - PreviewView: Provides window state and callback actions
 /// - CaptureManager: Handles window focus state changes
-/// - WindowAccessor: Controls window level during edit mode
+/// - PreviewAccessor: Controls preview window level during edit mode
 /// - AppSettings: Applies window interaction preferences
 struct InteractionOverlay: NSViewRepresentable {
     // MARK: - Properties
