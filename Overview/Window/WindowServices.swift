@@ -183,8 +183,9 @@ final class WindowObserverService {
 
     private let logger = AppLogger.windows
 
-    var onFocusStateChanged: (() async -> Void)?
-    var onWindowTitleChanged: (() async -> Void)?
+    /// Maps observer identifiers to their callbacks
+    private var focusObservers: [UUID: () async -> Void] = [:]
+    private var titleObservers: [UUID: () async -> Void] = [:]
 
     private var workspaceObserver: NSObjectProtocol?
     private var windowObserver: NSObjectProtocol?
@@ -198,14 +199,47 @@ final class WindowObserverService {
 
     // MARK: - Public Methods
 
-    func startObserving() {
+    /// Registers a new observer for window state changes
+    /// - Parameters:
+    ///   - id: Unique identifier for the observer
+    ///   - onFocusChanged: Focus state change callback
+    ///   - onTitleChanged: Title change callback
+    func addObserver(
+        id: UUID,
+        onFocusChanged: @escaping () async -> Void,
+        onTitleChanged: @escaping () async -> Void
+    ) {
+        logger.debug("Adding observer: \(id)")
+        focusObservers[id] = onFocusChanged
+        titleObservers[id] = onTitleChanged
+        
+        // Start observing if this is the first observer
+        if focusObservers.count == 1 {
+            startObserving()
+        }
+    }
+
+    /// Removes an observer and its callbacks
+    /// - Parameter id: Observer identifier to remove
+    func removeObserver(id: UUID) {
+        logger.debug("Removing observer: \(id)")
+        focusObservers.removeValue(forKey: id)
+        titleObservers.removeValue(forKey: id)
+        
+        // Stop observing if no observers remain
+        if focusObservers.isEmpty {
+            stopObserving()
+        }
+    }
+
+    private func startObserving() {
         logger.info("Starting window state observation")
         setupWorkspaceObserver()
         setupWindowObserver()
         startTitleChecks()
     }
 
-    func stopObserving() {
+    private func stopObserving() {
         logger.info("Stopping window state observation")
 
         if let observer = workspaceObserver {
@@ -228,7 +262,11 @@ final class WindowObserverService {
             queue: .main
         ) { [weak self] _ in
             Task { [weak self] in
-                await self?.onFocusStateChanged?()
+                guard let observers = self?.focusObservers else { return }
+                // Notify all registered focus observers
+                for callback in observers.values {
+                    await callback()
+                }
             }
         }
     }
@@ -242,7 +280,11 @@ final class WindowObserverService {
             queue: .main
         ) { [weak self] _ in
             Task { [weak self] in
-                await self?.onFocusStateChanged?()
+                guard let observers = self?.focusObservers else { return }
+                // Notify all registered focus observers
+                for callback in observers.values {
+                    await callback()
+                }
             }
         }
     }
@@ -255,7 +297,11 @@ final class WindowObserverService {
         titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
             [weak self] _ in
             Task { [weak self] in
-                await self?.onWindowTitleChanged?()
+                guard let observers = self?.titleObservers else { return }
+                // Notify all registered title observers
+                for callback in observers.values {
+                    await callback()
+                }
             }
         }
     }

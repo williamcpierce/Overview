@@ -67,6 +67,7 @@ class CaptureManager: ObservableObject {
     /// Current capture operation
     /// - Warning: Must be cancelled before starting new capture
     private var captureTask: Task<Void, Never>?
+    private var observerId: UUID?
 
     // MARK: - Service Dependencies
 
@@ -247,15 +248,18 @@ class CaptureManager: ObservableObject {
     private func setupObservers() {
         AppLogger.capture.debug("Setting up window state observers")
 
-        services.windowObserver.onFocusStateChanged = { [weak self] in
-            await self?.updateFocusState()
-        }
-
-        services.windowObserver.onWindowTitleChanged = { [weak self] in
-            await self?.updateWindowTitle()
-        }
-
-        services.windowObserver.startObserving()
+        // Register for window state updates with unique identifier
+        let observerId = UUID()
+        self.observerId = observerId
+        services.windowObserver.addObserver(
+            id: observerId,
+            onFocusChanged: { [weak self] in
+                await self?.updateFocusState()
+            },
+            onTitleChanged: { [weak self] in
+                await self?.updateWindowTitle()
+            }
+        )
 
         // Context: Frame rate changes require stream reconfiguration
         appSettings.$frameRate
