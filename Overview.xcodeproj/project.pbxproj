@@ -52,7 +52,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				WindowManager.swift,
-				WindowService.swift,
+				WindowServices.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

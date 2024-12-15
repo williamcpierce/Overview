@@ -70,6 +70,8 @@ class CaptureManager: ObservableObject {
 
     // MARK: - Service Dependencies
 
+    private let services = WindowServices.shared
+
     /// User-configured settings for capture behavior
     private let appSettings: AppSettings
 
@@ -79,53 +81,18 @@ class CaptureManager: ObservableObject {
     /// Capture stream parameters
     private let streamConfig: StreamConfigurationService
 
-    /// Window filtering for capture targets
-    private let windowFilter: WindowFilterService
-
-    /// Window focus state tracking
-    private let windowFocus: WindowFocusService
-
-    /// Window title updates
-    private let titleService: WindowTitleService
-
-    /// Window state change monitoring
-    private let windowObserver: WindowObserverService
-
-    /// Screen recording permissions
-    private let shareableContent: ShareableContentService
-
     // MARK: - Initialization
 
-    /// Creates capture manager with required services
-    ///
-    /// Flow:
-    /// 1. Stores service dependencies
-    /// 2. Sets up window state observers
-    /// 3. Configures frame rate monitoring
-    ///
-    /// - Parameters:
-    ///   - appSettings: User preferences
-    ///   - services: Optional service overrides for testing
     init(
         appSettings: AppSettings,
         captureEngine: CaptureEngine = CaptureEngine(),
-        streamConfig: StreamConfigurationService = StreamConfigurationService(),
-        windowFilter: WindowFilterService = WindowFilterService(),
-        windowFocus: WindowFocusService = WindowFocusService(),
-        titleService: WindowTitleService = WindowTitleService(),
-        windowObserver: WindowObserverService = WindowObserverService(),
-        shareableContent: ShareableContentService = ShareableContentService()
+        streamConfig: StreamConfigurationService = StreamConfigurationService()
     ) {
         AppLogger.capture.debug("Initializing CaptureManager")
 
         self.appSettings = appSettings
         self.captureEngine = captureEngine
         self.streamConfig = streamConfig
-        self.windowFilter = windowFilter
-        self.windowFocus = windowFocus
-        self.titleService = titleService
-        self.windowObserver = windowObserver
-        self.shareableContent = shareableContent
 
         setupObservers()
 
@@ -138,7 +105,7 @@ class CaptureManager: ObservableObject {
     /// - Throws: CaptureError.permissionDenied if access is not granted
     func requestPermission() async throws {
         AppLogger.capture.debug("Requesting screen capture permission")
-        try await shareableContent.requestPermission()
+        try await services.shareableContent.requestPermission()
         AppLogger.capture.info("Screen capture permission granted")
     }
 
@@ -152,9 +119,9 @@ class CaptureManager: ObservableObject {
         AppLogger.capture.debug("Updating available windows list")
 
         do {
-            let windows = try await shareableContent.getAvailableWindows()
+            let windows = try await services.shareableContent.getAvailableWindows()
             await MainActor.run {
-                self.availableWindows = windowFilter.filterWindows(windows)
+                self.availableWindows = services.windowFilter.filterWindows(windows)
             }
             AppLogger.capture.info(
                 "Available windows updated, count: \(self.availableWindows.count)")
@@ -232,7 +199,7 @@ class CaptureManager: ObservableObject {
         }
 
         AppLogger.windows.debug("Focusing window: '\(window.title ?? "untitled")'")
-        windowFocus.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
+        services.windowFocus.focusWindow(window: window, isEditModeEnabled: isEditModeEnabled)
     }
 
     // MARK: - Private Methods
@@ -280,15 +247,15 @@ class CaptureManager: ObservableObject {
     private func setupObservers() {
         AppLogger.capture.debug("Setting up window state observers")
 
-        windowObserver.onFocusStateChanged = { [weak self] in
+        services.windowObserver.onFocusStateChanged = { [weak self] in
             await self?.updateFocusState()
         }
 
-        windowObserver.onWindowTitleChanged = { [weak self] in
+        services.windowObserver.onWindowTitleChanged = { [weak self] in
             await self?.updateWindowTitle()
         }
 
-        windowObserver.startObserving()
+        services.windowObserver.startObserving()
 
         // Context: Frame rate changes require stream reconfiguration
         appSettings.$frameRate
@@ -305,7 +272,7 @@ class CaptureManager: ObservableObject {
 
     /// Updates focus state of the source window
     private func updateFocusState() async {
-        isSourceWindowFocused = await windowFocus.updateFocusState(for: selectedWindow)
+        isSourceWindowFocused = await services.windowFocus.updateFocusState(for: selectedWindow)
 
         if let window = selectedWindow {
             AppLogger.windows.debug(
@@ -317,7 +284,7 @@ class CaptureManager: ObservableObject {
     /// Updates title of the source window
     private func updateWindowTitle() async {
         let oldTitle = windowTitle
-        windowTitle = await titleService.updateWindowTitle(for: selectedWindow)
+        windowTitle = await services.titleService.updateWindowTitle(for: selectedWindow)
 
         if let newTitle = windowTitle, oldTitle != newTitle {
             AppLogger.windows.debug("Window title updated: '\(newTitle)'")

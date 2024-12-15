@@ -38,9 +38,8 @@ final class WindowManager {
     /// Shared instance for app-wide window management
     static let shared = WindowManager()
 
-    /// Service dependencies for window operations
-    private let windowFilter = WindowFilterService()
-    private let shareableContent = ShareableContentService()
+    /// Access to shared window services
+    private let services = WindowServices.shared
 
     /// Maps window titles to windows for efficient lookup
     /// - Note: Updated periodically to maintain accuracy
@@ -78,18 +77,19 @@ final class WindowManager {
     func getAvailableWindows() async -> [SCWindow] {
         AppLogger.windows.debug("Retrieving available windows")
         do {
-            let windows = try await shareableContent.getAvailableWindows()
-            let filtered = windowFilter.filterWindows(windows)
-            
+            let windows = try await services.shareableContent.getAvailableWindows()
+            let filtered = services.windowFilter.filterWindows(windows)
+
             // Update cache while we have fresh data
             updateWindowCache(filtered)
-            
+
             AppLogger.windows.info("Retrieved \(filtered.count) available windows")
             return filtered
         } catch {
-            AppLogger.logError(error,
-                             context: "Failed to get available windows",
-                             logger: AppLogger.windows)
+            AppLogger.logError(
+                error,
+                context: "Failed to get available windows",
+                logger: AppLogger.windows)
             return []
         }
     }
@@ -108,22 +108,24 @@ final class WindowManager {
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
         AppLogger.windows.debug("Attempting to focus window: '\(title)'")
-        
+
         guard let window = windowCache[title],
-              let processID = window.owningApplication?.processID else {
+            let processID = window.owningApplication?.processID
+        else {
             AppLogger.windows.warning("No window found with title: '\(title)'")
             return false
         }
-        
-        let success = NSRunningApplication(processIdentifier: pid_t(processID))?
+
+        let success =
+            NSRunningApplication(processIdentifier: pid_t(processID))?
             .activate() ?? false
-            
+
         if success {
             AppLogger.windows.info("Successfully focused window: '\(title)'")
         } else {
             AppLogger.windows.error("Failed to focus window: '\(title)'")
         }
-        
+
         return success
     }
 
@@ -139,14 +141,14 @@ final class WindowManager {
     /// - Important: Balance between freshness and performance
     private func setupWindowTracking() {
         AppLogger.windows.debug("Setting up window tracking")
-        
+
         // Update every 2 seconds to balance freshness and performance
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 _ = await self?.getAvailableWindows()
             }
         }
-        
+
         AppLogger.windows.info("Window tracking initialized with 2-second interval")
     }
 
@@ -161,14 +163,14 @@ final class WindowManager {
     /// - Important: Only caches windows with valid titles
     private func updateWindowCache(_ windows: [SCWindow]) {
         AppLogger.windows.debug("Updating window cache")
-        
+
         windowCache.removeAll()
         for window in windows {
             if let title = window.title {
                 windowCache[title] = window
             }
         }
-        
+
         AppLogger.windows.info("Window cache updated with \(windowCache.count) windows")
     }
 
