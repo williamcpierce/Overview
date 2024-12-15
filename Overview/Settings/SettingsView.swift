@@ -61,7 +61,7 @@ struct SettingsView: View {
             performanceTab
             experimentTab
         }
-        .frame(width: 360, height: 420)
+        .frame(width: 360, height: 430)
     }
 
     // MARK: - Private Views
@@ -70,9 +70,9 @@ struct SettingsView: View {
     /// - Note: Controls visibility of UI elements in preview windows
     private var generalTab: some View {
         Form {
-            // Overlay configuration section
+            // Border configuration section
             Section {
-                Text("Overlays")
+                Text("Border Overlay")
                     .font(.headline)
                     .padding(.bottom, 4)
 
@@ -81,10 +81,64 @@ struct SettingsView: View {
                         AppLogger.settings.info("Window border visibility changed: \(newValue)")
                     }
 
+                if appSettings.showFocusedBorder {
+                    HStack {
+                        Text("Border width")
+                        Spacer()
+                        TextField(
+                            "", value: $appSettings.focusBorderWidth,
+                            formatter: NumberFormatter()
+                        )
+                        .frame(width: 60)
+                        .textFieldStyle(.roundedBorder)
+                        Text("pt")
+                            .foregroundColor(.secondary)
+                    }
+                    ColorPicker("Border color", selection: $appSettings.focusBorderColor)
+                }
+            }
+
+            // Title configuration section
+            Section {
+                Text("Title Overlay")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+
                 Toggle("Show window title", isOn: $appSettings.showWindowTitle)
                     .onChange(of: appSettings.showWindowTitle) { oldValue, newValue in
                         AppLogger.settings.info("Window title visibility changed: \(newValue)")
                     }
+
+                if appSettings.showWindowTitle {
+                    HStack {
+                        Text("Font size")
+                        Spacer()
+                        TextField(
+                            "", value: $appSettings.titleFontSize, formatter: NumberFormatter()
+                        )
+                        .frame(width: 60)
+                        .textFieldStyle(.roundedBorder)
+                        Text("pt")
+                            .foregroundColor(.secondary)
+                    }
+
+                    VStack {
+                        HStack {
+                            Text("Background opacity")
+                            Spacer()
+                        }
+                        HStack(spacing: 8) {
+                            SliderRepresentable(
+                                value: $appSettings.titleBackgroundOpacity,
+                                minValue: 0.0,
+                                maxValue: 1.0
+                            )
+                            Text("\(Int(appSettings.titleBackgroundOpacity * 100))%")
+                                .foregroundColor(.secondary)
+                                .frame(width: 40)
+                        }
+                    }
+                }
             }
         }
         .formStyle(.grouped)
@@ -146,7 +200,7 @@ struct SettingsView: View {
                     ], id: \.0
                 ) { label, binding in
                     HStack {
-                        Text("\(label):")
+                        Text("\(label)")
                         Spacer()
                         TextField("", value: binding, formatter: NumberFormatter())
                             .frame(width: 120)
@@ -200,7 +254,7 @@ struct SettingsView: View {
                     .font(.headline)
                     .padding(.bottom, 4)
 
-                Picker("FPS:", selection: $appSettings.frameRate) {
+                Picker("FPS", selection: $appSettings.frameRate) {
                     ForEach(frameRateOptions, id: \.self) { rate in
                         Text("\(Int(rate))")
                             .tag(rate)

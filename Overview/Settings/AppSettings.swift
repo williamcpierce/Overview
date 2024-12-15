@@ -9,6 +9,7 @@
 */
 
 import Foundation
+import SwiftUI
 
 /// Manages persistent application settings and real-time preference updates
 ///
@@ -88,11 +89,47 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// Width of the focus border in points
+    @Published var focusBorderWidth: Double = UserDefaults.standard.double(
+        forKey: "focusBorderWidth")
+    {
+        didSet {
+            UserDefaults.standard.set(focusBorderWidth, forKey: "focusBorderWidth")
+            AppLogger.settings.info("Focus border width set to \(focusBorderWidth)pt")
+        }
+    }
+
+    /// Color of the focus border
+    @Published var focusBorderColor: Color = .gray {
+        didSet {
+            AppLogger.settings.info("Focus border color updated")
+        }
+    }
+
     /// Controls visibility of window title overlay
     @Published var showWindowTitle: Bool = UserDefaults.standard.bool(forKey: "showWindowTitle") {
         didSet {
             UserDefaults.standard.set(showWindowTitle, forKey: "showWindowTitle")
             AppLogger.settings.info("Window title visibility set to \(showWindowTitle)")
+        }
+    }
+
+    /// Font size for the window title overlay
+    @Published var titleFontSize: Double = UserDefaults.standard.double(forKey: "titleFontSize") {
+        didSet {
+            UserDefaults.standard.set(titleFontSize, forKey: "titleFontSize")
+            AppLogger.settings.info("Title font size set to \(titleFontSize)pt")
+        }
+    }
+
+    /// Background opacity for the window title overlay
+    @Published var titleBackgroundOpacity: Double = UserDefaults.standard.double(
+        forKey: "titleBackgroundOpacity")
+    {
+        didSet {
+            UserDefaults.standard.set(titleBackgroundOpacity, forKey: "titleBackgroundOpacity")
+            AppLogger.settings.info(
+                "Title background opacity set to \(Int(titleBackgroundOpacity * 100))%")
         }
     }
 
@@ -171,18 +208,30 @@ class AppSettings: ObservableObject {
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
 
-        // Reinitialize with defaults
+        // Window settings
         opacity = 0.95
         frameRate = 30.0
         defaultWindowWidth = 288
         defaultWindowHeight = 162
+
+        // Visibility settings
         showFocusedBorder = false
         showWindowTitle = false
         managedByMissionControl = false
         enableEditModeAlignment = false
-        hotkeyBindings = []
 
+        // Focus border settings
+        focusBorderWidth = 5.0
+        focusBorderColor = .gray
+
+        // Title settings
+        titleFontSize = 12.0
+        titleBackgroundOpacity = 0.4
+
+        // Clear hotkeys
+        hotkeyBindings = []
         HotkeyService.shared.registerHotkeys([])
+
         AppLogger.settings.info("Settings reset completed")
     }
 
@@ -192,18 +241,37 @@ class AppSettings: ObservableObject {
     private func initializeDefaults() {
         AppLogger.settings.debug("Checking for existing settings")
 
+        // Window opacity
         if UserDefaults.standard.double(forKey: "windowOpacity") == 0 {
             AppLogger.settings.info("Applying default opacity")
             opacity = 0.95  // High visibility default
         }
+
+        // Frame rate
         if UserDefaults.standard.double(forKey: "frameRate") == 0 {
             AppLogger.settings.info("Applying default frame rate")
             frameRate = 30  // Balance performance/smoothness
         }
+
+        // Window dimensions
         if UserDefaults.standard.double(forKey: "defaultWindowWidth") == 0 {
             AppLogger.settings.info("Applying default window dimensions")
             defaultWindowWidth = 288  // 16:9 aspect ratio
             defaultWindowHeight = 162
+        }
+
+        // Focus border settings
+        if UserDefaults.standard.double(forKey: "focusBorderWidth") == 0 {
+            AppLogger.settings.info("Applying default focus border settings")
+            focusBorderWidth = 5.0
+            focusBorderColor = .gray
+        }
+
+        // Title settings
+        if UserDefaults.standard.double(forKey: "titleFontSize") == 0 {
+            AppLogger.settings.info("Applying default title settings")
+            titleFontSize = 12.0
+            titleBackgroundOpacity = 0.4
         }
     }
 
@@ -245,6 +313,27 @@ class AppSettings: ObservableObject {
             AppLogger.settings.warning(
                 "Window height too small (\(defaultWindowHeight)), setting to default")
             defaultWindowHeight = 162
+        }
+
+        // Validate focus border width
+        if focusBorderWidth <= 0 {
+            AppLogger.settings.warning(
+                "Invalid border width (\(focusBorderWidth)), setting to default")
+            focusBorderWidth = 5.0
+        }
+
+        // Validate title font size
+        if titleFontSize <= 0 {
+            AppLogger.settings.warning("Invalid font size (\(titleFontSize)), setting to default")
+            titleFontSize = 12.0
+        }
+
+        // Clamp title background opacity
+        if titleBackgroundOpacity < 0.0 || titleBackgroundOpacity > 1.0 {
+            AppLogger.settings.warning(
+                "Invalid title background opacity (\(titleBackgroundOpacity)), clamping to valid range"
+            )
+            titleBackgroundOpacity = max(0.0, min(1.0, titleBackgroundOpacity))
         }
 
         AppLogger.settings.debug("Settings validation complete")
