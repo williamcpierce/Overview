@@ -374,7 +374,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.4.0-alpha-dev.x";
+				MARKETING_VERSION = "0.4.1-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -403,7 +403,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.4.0-alpha-dev.x";
+				MARKETING_VERSION = "0.4.1-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
