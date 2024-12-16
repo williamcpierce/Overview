@@ -59,14 +59,14 @@ struct SettingsView: View {
             generalTab
             windowTab
             performanceTab
-            experimentTab
+            hotkeyTab
         }
         .frame(width: 360, height: 430)
     }
 
     // MARK: - Private Views
 
-    /// General settings for basic overlay preferences and keyboard shortcuts
+    /// General settings for basic overlay preferences
     /// - Note: Controls visibility of UI elements in preview windows
     private var generalTab: some View {
         Form {
@@ -277,9 +277,9 @@ struct SettingsView: View {
     }
 
     /// Experimental features still under development
-    private var experimentTab: some View {
+    private var hotkeyTab: some View {
         Form {
-            // Keyboard shortcuts section
+            // Hotkey section
             Section {
                 Text("Hotkeys")
                     .font(.headline)
@@ -311,19 +311,13 @@ struct SettingsView: View {
                     AppLogger.settings.debug("Opening hotkey binding sheet")
                     isAddingHotkey = true
                 }
-
-                Text(
-                    "Hotkeys currently only work while Overview is in focus - this will be improved."
-                )
-                .font(.caption)
-                .foregroundColor(.red)
             }
             .sheet(isPresented: $isAddingHotkey) {
                 HotkeyBindingSheet(appSettings: appSettings)
             }
         }
         .formStyle(.grouped)
-        .tabItem { Label("Experimental", systemImage: "flask") }
+        .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
     }
 
     // MARK: - Private Methods
