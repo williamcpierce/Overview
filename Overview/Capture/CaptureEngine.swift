@@ -6,7 +6,7 @@
 
  Manages low-level screen capture operations using ScreenCaptureKit, handling
  frame capture, processing, and delivery to the UI layer with optimized performance.
- 
+
  This file is part of Overview.
 
  Overview is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@
  which is licensed under the MIT License. See LICENSE.md for details.
 */
 
-import OSLog
 import ScreenCaptureKit
 
 /// Encapsulates frame data for efficient display processing using hardware acceleration
@@ -32,7 +31,7 @@ import ScreenCaptureKit
 /// - CaptureEngine: Source of captured frame data and lifecycle
 /// - Capture: Consumer for frame rendering and display
 /// - PreviewView: Handler for display sizing and layout
-/// - WindowAccessor: Coordinates scaling with window properties
+/// - PreviewAccessor: Coordinates preview scaling with window properties
 struct CapturedFrame {
     /// Represents invalid capture state for initialization and error handling
     /// - Note: Used when capture fails or during state transitions
@@ -68,7 +67,7 @@ struct CapturedFrame {
 /// Coordinates with:
 /// - CaptureManager: High-level capture coordination and state
 /// - StreamConfigurationService: Stream setup and updates
-/// - WindowAccessor: Display scaling and dimensions
+/// - PreviewAccessor: Display scaling and dimensions
 /// - PreviewView: Frame consumption and display
 class CaptureEngine: NSObject, @unchecked Sendable {
     // MARK: - Properties
@@ -141,7 +140,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     /// - Important: Must be called before release to prevent leaks
     func stopCapture() async {
         logger.debug("Stopping capture stream")
-        
+
         do {
             try await stream?.stopCapture()
             continuation?.finish()
@@ -168,7 +167,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     /// - Warning: May cause momentary frame drops during transition
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
         logger.debug("Updating capture configuration")
-        
+
         do {
             try await stream?.updateConfiguration(configuration)
             try await stream?.updateContentFilter(filter)

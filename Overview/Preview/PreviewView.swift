@@ -29,7 +29,7 @@ import SwiftUI
 /// - CaptureManager: Provides frame data and manages capture lifecycle
 /// - AppSettings: Controls visual appearance and overlay behavior
 /// - InteractionOverlay: Manages mouse events and window interactions
-/// - WindowAccessor: Handles window property updates and scaling
+/// - PreviewAccessor: Handles preview window property updates and scaling
 struct PreviewView: View {
     // MARK: - Properties
 
@@ -120,12 +120,17 @@ struct PreviewView: View {
                 // Focus border aids in visual tracking of active window
                 // Only shown when source window has system focus
                 appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-                    ? RoundedRectangle(cornerRadius: 0).stroke(Color.gray, lineWidth: 5)
+                    ? RoundedRectangle(cornerRadius: 0)
+                        .stroke(
+                            appSettings.focusBorderColor, lineWidth: appSettings.focusBorderWidth)
                     : nil
             )
             .overlay(
                 appSettings.showWindowTitle
-                    ? TitleView(title: captureManager.windowTitle)
+                    ? TitleView(
+                        title: captureManager.windowTitle,
+                        fontSize: appSettings.titleFontSize,
+                        backgroundOpacity: appSettings.titleBackgroundOpacity)
                     : nil
             )
     }
@@ -155,16 +160,42 @@ struct PreviewView: View {
 /// - Renders window title with optimized visibility
 /// - Maintains proper positioning and layout
 /// - Handles null title states gracefully
+/// - Supports customizable font size and background opacity
 ///
 /// Coordinates with:
 /// - PreviewView: Receives title content and visibility state
-/// - AppSettings: Controls overlay visibility
+/// - AppSettings: Controls appearance customization
 struct TitleView: View {
     // MARK: - Properties
 
     /// Text to display in overlay
     /// - Note: nil handled gracefully with no display
     let title: String?
+
+    /// Font size for title text in points
+    /// - Note: Defaults to 12pt if not specified
+    let fontSize: Double
+
+    /// Background opacity for title overlay
+    /// - Note: Defaults to 0.4 if not specified
+    let backgroundOpacity: Double
+
+    // MARK: - Initialization
+
+    /// Creates title view with optional customization
+    /// - Parameters:
+    ///   - title: Text to display (nil for no display)
+    ///   - fontSize: Size of title text in points
+    ///   - backgroundOpacity: Opacity of black background (0.0-1.0)
+    init(
+        title: String?,
+        fontSize: Double = 12.0,
+        backgroundOpacity: Double = 0.4
+    ) {
+        self.title = title
+        self.fontSize = fontSize
+        self.backgroundOpacity = backgroundOpacity
+    }
 
     // MARK: - View Body
 
@@ -173,12 +204,12 @@ struct TitleView: View {
             VStack {
                 HStack {
                     Text(title)
-                        .font(.system(size: 12))
+                        .font(.system(size: fontSize))
                         .foregroundColor(.white)
                         .padding(4)
                         // Semi-transparent background ensures readability
                         // while preserving content visibility
-                        .background(Color.black.opacity(0.4))
+                        .background(Color.black.opacity(backgroundOpacity))
                     Spacer()
                 }
                 .padding(6)

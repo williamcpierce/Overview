@@ -16,7 +16,6 @@
 */
 
 import AppKit
-import OSLog
 import SwiftUI
 
 /// Records and validates keyboard shortcuts for window focus operations
@@ -56,7 +55,7 @@ struct HotkeyRecorder: NSViewRepresentable {
     /// - Returns: Configured recording button
     func makeNSView(context: Context) -> NSButton {
         let button = NSButton(frame: .zero)
-        
+
         AppLogger.hotkeys.debug("Creating recorder button for window: '\(windowTitle)'")
 
         // Context: Using rounded style for visual consistency
@@ -72,7 +71,7 @@ struct HotkeyRecorder: NSViewRepresentable {
 
         // Prevent layout recursion
         button.translatesAutoresizingMaskIntoConstraints = false
-        
+
         return button
     }
 
@@ -142,11 +141,13 @@ struct HotkeyRecorder: NSViewRepresentable {
         /// - Parameter sender: Button that triggered action
         @objc func buttonClicked(_ sender: NSButton) {
             if isRecording {
-                AppLogger.hotkeys.debug("Stopping recording for window: '\(self.parent.windowTitle)'")
+                AppLogger.hotkeys.debug(
+                    "Stopping recording for window: '\(self.parent.windowTitle)'")
                 stopRecording()
                 sender.title = parent.shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
             } else {
-                AppLogger.hotkeys.debug("Starting recording for window: '\(self.parent.windowTitle)'")
+                AppLogger.hotkeys.debug(
+                    "Starting recording for window: '\(self.parent.windowTitle)'")
                 startRecording(sender)
                 sender.title = "Type shortcut..."
             }

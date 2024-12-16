@@ -29,7 +29,7 @@ import SwiftUI
 /// - CaptureManager: Individual window capture and preview instances
 /// - AppSettings: Configuration for new capture managers
 /// - ContentView: Main window content and edit mode coordination
-/// - WindowAccessor: Window behavior during edit mode changes
+/// - PreviewAccessor: Preview window behavior during edit mode changes
 @MainActor
 final class PreviewManager: ObservableObject {
     // MARK: - Properties
@@ -72,13 +72,14 @@ final class PreviewManager: ObservableObject {
     /// - Returns: UUID for accessing the new capture manager
     func createNewCaptureManager() -> UUID {
         let id = UUID()
-        
+
         AppLogger.windows.debug("Creating new capture manager with ID: \(id)")
-        
+
         let captureManager = CaptureManager(appSettings: appSettings)
         captureManagers[id] = captureManager
-        
-        AppLogger.windows.info("Created capture manager: \(id), total active: \(captureManagers.count)")
+
+        AppLogger.windows.info(
+            "Created capture manager: \(id), total active: \(captureManagers.count)")
         return id
     }
 
@@ -93,14 +94,15 @@ final class PreviewManager: ObservableObject {
     /// - Note: Invalid IDs logged but not treated as errors
     func removeCaptureManager(id: UUID) {
         AppLogger.windows.debug("Attempting to remove capture manager: \(id)")
-        
+
         guard captureManagers[id] != nil else {
             AppLogger.windows.warning("Attempted to remove non-existent capture manager: \(id)")
             return
         }
-        
+
         captureManagers.removeValue(forKey: id)
-        AppLogger.windows.info("Removed capture manager: \(id), remaining active: \(captureManagers.count)")
+        AppLogger.windows.info(
+            "Removed capture manager: \(id), remaining active: \(captureManagers.count)")
     }
 
     /// Toggles global edit mode affecting all preview windows
@@ -110,7 +112,7 @@ final class PreviewManager: ObservableObject {
     func toggleEditMode() {
         isEditModeEnabled.toggle()
         AppLogger.interface.info("Edit mode \(isEditModeEnabled ? "enabled" : "disabled")")
-        
+
         // Context: Log active window count to help track edit mode impact
         AppLogger.interface.debug("Active preview windows during toggle: \(captureManagers.count)")
     }

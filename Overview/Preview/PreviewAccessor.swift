@@ -1,5 +1,5 @@
 /*
- WindowAccessor.swift
+ PreviewAccessor.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -14,7 +14,6 @@
  file at the root of this project.
 */
 
-import OSLog
 import SwiftUI
 
 /// Bridges SwiftUI window state with AppKit window properties for preview windows
@@ -30,7 +29,7 @@ import SwiftUI
 /// - PreviewView: Synchronizes window dimensions with content
 /// - ContentView: Processes edit mode state changes
 /// - NSWindow: Configures low-level window behavior
-struct WindowAccessor: NSViewRepresentable {
+struct PreviewAccessor: NSViewRepresentable {
     // MARK: - Properties
 
     /// Current width-to-height ratio for window sizing
@@ -129,14 +128,15 @@ struct WindowAccessor: NSViewRepresentable {
     /// 3. Adjusts window level for positioning
     private func updateEditModeProperties(for window: NSWindow) {
         AppLogger.windows.debug("Updating edit mode properties: isEnabled=\(isEditModeEnabled)")
-        
+
         // Window chrome and interaction state
         window.styleMask =
             isEditModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
         window.isMovable = isEditModeEnabled
 
         // Context: Window level changes help with positioning in edit mode
-        let newLevel = isEditModeEnabled && appSettings.enableEditModeAlignment
+        let newLevel =
+            isEditModeEnabled && appSettings.enableEditModeAlignment
             ? NSWindow.Level.floating  // Behind normal windows for alignment
             : NSWindow.Level.statusBar + 1  // Above most content
 
@@ -151,7 +151,8 @@ struct WindowAccessor: NSViewRepresentable {
     /// 2. Logs behavior changes for debugging
     private func updateWindowManagement(for window: NSWindow) {
         let shouldManage = appSettings.managedByMissionControl
-        AppLogger.windows.debug("Updating window management: managedByMissionControl=\(shouldManage)")
+        AppLogger.windows.debug(
+            "Updating window management: managedByMissionControl=\(shouldManage)")
 
         if shouldManage {
             window.collectionBehavior.insert(.managed)
@@ -177,8 +178,9 @@ struct WindowAccessor: NSViewRepresentable {
             let newSize = NSSize(width: currentSize.width, height: newHeight)
             window.setContentSize(newSize)
             window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
-            
-            AppLogger.windows.debug("""
+
+            AppLogger.windows.debug(
+                """
                 Window size updated: \(String(format: "%.1f", currentSize.width))x\
                 \(String(format: "%.1f", newHeight)) (ratio: \
                 \(String(format: "%.2f", aspectRatio)))

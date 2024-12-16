@@ -15,7 +15,6 @@
  file at the root of this project.
 */
 
-import OSLog
 import SwiftUI
 
 /// Manages hotkey-triggered window focus operations across preview windows
@@ -33,7 +32,7 @@ import SwiftUI
 @MainActor
 final class HotkeyManager: ObservableObject {
     // MARK: - Initialization
-    
+
     /// Creates hotkey manager and registers for hotkey events
     ///
     /// Flow:
@@ -42,7 +41,7 @@ final class HotkeyManager: ObservableObject {
     /// 3. Configures window focus handling
     init() {
         AppLogger.hotkeys.debug("Initializing HotkeyManager")
-        
+
         // Register for hotkey events with weak self reference
         // to prevent retain cycles during callback handling
         HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
@@ -50,12 +49,12 @@ final class HotkeyManager: ObservableObject {
                 self?.focusWindowByTitle(windowTitle)
             }
         }
-        
+
         AppLogger.hotkeys.info("HotkeyManager successfully initialized")
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Attempts to focus window with specified title
     ///
     /// Flow:
@@ -67,16 +66,16 @@ final class HotkeyManager: ObservableObject {
     /// - Note: Operation logged as warning if focus fails
     private func focusWindowByTitle(_ windowTitle: String) {
         AppLogger.hotkeys.debug("Focusing window: '\(windowTitle)'")
-        
+
         let success = WindowManager.shared.focusWindow(withTitle: windowTitle)
-        
+
         if success {
             AppLogger.hotkeys.info("Successfully focused window: '\(windowTitle)'")
         } else {
             AppLogger.hotkeys.warning("Failed to focus window: '\(windowTitle)'")
         }
     }
-    
+
     /// Removes hotkey callback registration on deallocation
     ///
     /// Flow:

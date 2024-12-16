@@ -163,16 +163,17 @@ struct SelectionView: View {
         do {
             AppLogger.interface.debug("Requesting screen recording permission")
             try await captureManager.requestPermission()
-            
+
             AppLogger.interface.debug("Updating available windows list")
             await captureManager.updateAvailableWindows()
-            
+
             AppLogger.interface.info("Capture setup completed successfully")
             isLoading = false
         } catch {
-            AppLogger.logError(error,
-                             context: "Screen recording permission request",
-                             logger: AppLogger.interface)
+            AppLogger.logError(
+                error,
+                context: "Screen recording permission request",
+                logger: AppLogger.interface)
             errorMessage = "Permission denied"
             isLoading = false
         }
@@ -190,7 +191,8 @@ struct SelectionView: View {
         await captureManager.updateAvailableWindows()
         await MainActor.run {
             refreshID = UUID()
-            AppLogger.interface.info("Window list refreshed, count: \(captureManager.availableWindows.count)")
+            AppLogger.interface.info(
+                "Window list refreshed, count: \(captureManager.availableWindows.count)")
         }
     }
 
@@ -211,7 +213,7 @@ struct SelectionView: View {
         }
 
         AppLogger.interface.debug("Starting preview for window: '\(window.title ?? "Untitled")'")
-        
+
         captureManager.selectedWindow = window
         selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
         showingSelection = false
@@ -221,9 +223,10 @@ struct SelectionView: View {
                 try await captureManager.startCapture()
                 AppLogger.interface.info("Preview started successfully")
             } catch {
-                AppLogger.logError(error,
-                                 context: "Starting window preview",
-                                 logger: AppLogger.interface)
+                AppLogger.logError(
+                    error,
+                    context: "Starting window preview",
+                    logger: AppLogger.interface)
             }
         }
     }

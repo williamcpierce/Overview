@@ -4,9 +4,10 @@
 
  Created by William Pierce on 12/10/24
 
- Provides centralized window management operations across the application, handling
- window discovery, focus operations, and state tracking. Acts as the primary interface
- for window-related operations in Overview.
+ Provides centralized window management operations across the application, serving as
+ the single source of truth for window state tracking and focus operations. Manages
+ window caching and periodic updates to ensure efficient window lookup with minimal
+ system overhead.
 
  This file is part of Overview.
 
@@ -16,167 +17,169 @@
 */
 
 import AppKit
-import OSLog
 import ScreenCaptureKit
 
-/// Manages window operations and state tracking across the application
+/// Manages window operations and state tracking across the application using a centralized cache
 ///
 /// Key responsibilities:
-/// - Maintains current window state with efficient caching
-/// - Handles window discovery and filtering operations
-/// - Manages window focus and activation requests
-/// - Provides periodic window state updates
+/// - Maintains efficient window title-to-window mapping for quick lookups
+/// - Provides filtered window lists excluding system windows
+/// - Executes window focus operations through system APIs
+/// - Updates window state periodically to maintain accuracy
 ///
 /// Coordinates with:
-/// - WindowFilterService: Validates and filters window listings
+/// - WindowFilterService: Filters out invalid capture targets
 /// - ShareableContentService: Retrieves system window information
-/// - HotkeyManager: Processes window focus requests
-/// - PreviewView: Provides window state for UI updates
+/// - HotkeyManager: Processes keyboard shortcut focus requests
+/// - PreviewView: Provides window state for display updates
+/// - WindowServices: Accesses shared window operations
 @MainActor
 final class WindowManager {
     // MARK: - Properties
 
     /// Shared instance for app-wide window management
+    /// - Note: Created once and reused across components
     static let shared = WindowManager()
 
-    /// Service dependencies for window operations
-    private let windowFilter = WindowFilterService()
-    private let shareableContent = ShareableContentService()
+    /// Provides access to shared window operation services
+    /// - Note: Single point of access for all window-related services
+    private let services = WindowServices.shared
 
-    /// Maps window titles to windows for efficient lookup
-    /// - Note: Updated periodically to maintain accuracy
+    /// Maps window titles to window objects for O(1) lookup time
+    /// - Note: Updated every 2 seconds to balance accuracy and performance
     private var windowCache: [String: SCWindow] = [:]
 
-    /// Timer for periodic window cache updates
-    /// - Note: Maintains 2-second refresh interval
+    /// Timer that triggers periodic window cache updates
+    /// - Warning: Must be invalidated in deinit to prevent memory leaks
     private var updateTimer: Timer?
 
     // MARK: - Initialization
 
-    /// Creates window manager and initializes tracking
+    /// Creates window manager and initializes window tracking system
     ///
     /// Flow:
-    /// 1. Creates shared instance
-    /// 2. Configures window tracking timer
-    /// 3. Initializes empty window cache
+    /// 1. Creates singleton instance
+    /// 2. Initializes empty window cache
+    /// 3. Starts periodic update timer
+    ///
+    /// - Important: Must be accessed through shared property
     private init() {
-        AppLogger.windows.debug("Initializing WindowManager")
+        AppLogger.windows.debug("Initializing WindowManager singleton")
         setupWindowTracking()
     }
 
     // MARK: - Public Methods
 
-    /// Retrieves filtered list of available windows
+    /// Retrieves filtered list of available windows for capture
     ///
     /// Flow:
-    /// 1. Requests current shareable content
-    /// 2. Applies window filters
-    /// 3. Updates window cache
-    /// 4. Returns filtered window list
+    /// 1. Requests raw window list from system
+    /// 2. Applies window filters to remove invalid targets
+    /// 3. Updates window cache with current state
+    /// 4. Returns filtered window collection
     ///
-    /// - Returns: Array of available windows meeting filter criteria
-    /// - Note: Updates window cache as side effect
+    /// - Returns: Array of available windows that can be captured
+    /// - Note: Updates window cache as side effect for efficient lookup
     func getAvailableWindows() async -> [SCWindow] {
-        AppLogger.windows.debug("Retrieving available windows")
+        AppLogger.windows.debug("Retrieving current window list from system")
+
         do {
-            let windows = try await shareableContent.getAvailableWindows()
-            let filtered = windowFilter.filterWindows(windows)
-            
-            // Update cache while we have fresh data
+            let windows = try await services.shareableContent.getAvailableWindows()
+            let filtered = services.windowFilter.filterWindows(windows)
+
+            // Context: Update cache while we have fresh window data to minimize system calls
             updateWindowCache(filtered)
-            
+
             AppLogger.windows.info("Retrieved \(filtered.count) available windows")
             return filtered
         } catch {
-            AppLogger.logError(error,
-                             context: "Failed to get available windows",
-                             logger: AppLogger.windows)
+            AppLogger.logError(
+                error,
+                context: "Failed to get available windows from system",
+                logger: AppLogger.windows
+            )
             return []
         }
     }
 
-    /// Activates window with specified title
+    /// Attempts to focus a window identified by its title
     ///
     /// Flow:
-    /// 1. Looks up window in cache by title
-    /// 2. Retrieves process information
-    /// 3. Attempts window activation
-    /// 4. Returns operation success
+    /// 1. Looks up window in cache using O(1) title lookup
+    /// 2. Retrieves owning application process ID
+    /// 3. Requests system window activation
+    /// 4. Returns operation success state
     ///
-    /// - Parameter title: Title of window to focus
-    /// - Returns: Whether focus operation succeeded
-    /// - Important: Uses cached window state for efficient lookup
+    /// - Parameter title: Title of window to bring to front
+    /// - Returns: True if window was successfully focused
+    /// - Important: Uses cached window state to minimize system calls
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
-        AppLogger.windows.debug("Attempting to focus window: '\(title)'")
-        
-        guard let window = windowCache[title],
-              let processID = window.owningApplication?.processID else {
-            AppLogger.windows.warning("No window found with title: '\(title)'")
-            return false
-        }
-        
-        let success = NSRunningApplication(processIdentifier: pid_t(processID))?
-            .activate() ?? false
-            
+        AppLogger.windows.debug("Requesting focus for window: '\(title)'")
+
+        // Context: WindowFocusService handles the actual focus operation to maintain
+        // proper window activation sequencing and state management
+        let success = services.windowFocus.focusWindow(withTitle: title)
+
         if success {
             AppLogger.windows.info("Successfully focused window: '\(title)'")
         } else {
-            AppLogger.windows.error("Failed to focus window: '\(title)'")
+            AppLogger.windows.error("Failed to activate window process: '\(title)'")
         }
-        
+
         return success
     }
 
     // MARK: - Private Methods
 
-    /// Configures periodic window cache updates
+    /// Configures timer for periodic window cache updates
     ///
     /// Flow:
-    /// 1. Creates update timer
-    /// 2. Sets 2-second refresh interval
-    /// 3. Initiates window tracking
+    /// 1. Creates repeating timer with 2-second interval
+    /// 2. Schedules async window list updates
+    /// 3. Maintains window cache freshness
     ///
-    /// - Important: Balance between freshness and performance
+    /// - Note: 2-second interval balances accuracy and performance
     private func setupWindowTracking() {
-        AppLogger.windows.debug("Setting up window tracking")
-        
-        // Update every 2 seconds to balance freshness and performance
+        AppLogger.windows.debug("Configuring window tracking timer")
+
+        // Context: 2-second interval provides good balance between state freshness
+        // and system load. More frequent updates could impact performance.
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 _ = await self?.getAvailableWindows()
             }
         }
-        
-        AppLogger.windows.info("Window tracking initialized with 2-second interval")
+
+        AppLogger.windows.info("Window tracking initialized with 2-second refresh")
     }
 
     /// Updates window cache with current window state
     ///
     /// Flow:
-    /// 1. Clears existing cache
-    /// 2. Maps windows by title
-    /// 3. Updates cache atomically
+    /// 1. Clears existing cache entries
+    /// 2. Maps valid windows by title for O(1) lookup
+    /// 3. Ignores windows without valid titles
     ///
     /// - Parameter windows: Current list of valid windows
-    /// - Important: Only caches windows with valid titles
+    /// - Important: Only windows with non-empty titles are cached
     private func updateWindowCache(_ windows: [SCWindow]) {
-        AppLogger.windows.debug("Updating window cache")
-        
+        AppLogger.windows.debug("Updating window title cache")
+
         windowCache.removeAll()
         for window in windows {
             if let title = window.title {
                 windowCache[title] = window
             }
         }
-        
-        AppLogger.windows.info("Window cache updated with \(windowCache.count) windows")
+
+        AppLogger.windows.info("Window cache updated with \(windowCache.count) entries")
     }
 
-    /// Cleanup timer on deallocation
+    /// Cleanup resources when instance is deallocated
     /// - Warning: Required to prevent timer resource leaks
     deinit {
-        AppLogger.windows.debug("WindowManager deinitializing")
+        AppLogger.windows.debug("WindowManager deallocating, stopping update timer")
         updateTimer?.invalidate()
     }
 }
