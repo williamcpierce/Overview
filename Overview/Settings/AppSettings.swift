@@ -165,8 +165,12 @@ class AppSettings: ObservableObject {
                 UserDefaults.standard.set(encoded, forKey: "hotkeyBindings")
                 // Skip registration during initialization to prevent conflicts
                 if !isInitializing {
-                    AppLogger.settings.info("Registering \(hotkeyBindings.count) hotkey bindings")
-                    HotkeyService.shared.registerHotkeys(hotkeyBindings)
+                    do {
+                        try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+                        AppLogger.settings.info("Registered \(hotkeyBindings.count) hotkey bindings")
+                    } catch {
+                        AppLogger.settings.error("Failed to register hotkeys: \(error.localizedDescription)")
+                    }
                 }
             }
         }
@@ -230,7 +234,12 @@ class AppSettings: ObservableObject {
 
         // Clear hotkeys
         hotkeyBindings = []
-        HotkeyService.shared.registerHotkeys([])
+        do {
+            try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+            AppLogger.settings.info("Registered \(hotkeyBindings.count) hotkey bindings")
+        } catch {
+            AppLogger.settings.error("Failed to register hotkeys: \(error.localizedDescription)")
+        }
 
         AppLogger.settings.info("Settings reset completed")
     }
