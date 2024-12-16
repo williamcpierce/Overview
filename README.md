@@ -1,5 +1,7 @@
 # Overview: Window Previews on macOS
 
+Overview is a macOS app that creates floating live previews of other application windows, and enables quick switching between them.
+
 ![Example Screenshot](https://github.com/user-attachments/assets/625fa194-d4dd-42cc-8570-33984070c1c5)
 
 ## Alpha Release
@@ -10,19 +12,17 @@ For development updates, please join our Discord:
 
 [![Discord Banner](https://discord.com/api/guilds/1295309622445473865/widget.png?style=banner2)](https://discord.gg/ZFXK5txaVh)
 
-## Overview
-
-Overview is a macOS app that allows you to create floating, semi-transparent windows that display live previews of other application windows. It's perfect for keeping an eye on background tasks, monitoring video streams, or maintaining visual context while working across multiple apps.
-
 ## Features
 
-- **Live Window Previews:** Capture and display real-time previews of any window on your Mac.
-- **Multi-Window Support:** Create multiple Overview windows to monitor several applications simultaneously.
-- **Bring to Front:** Quickly switch to the source window with a single click.
-- **Floating Windows:** Overview windows stay on top of other applications for constant visibility.
-- **Customizable Opacity:** Adjust the transparency of Overview windows to suit your workflow.
-- **Adjustable Frame Rate:** Set the refresh rate of previews to balance performance and system resources.
-- **Informational Overlays:** Optional preview overlays for focused window and window title
+- Live window previews
+- Support for multiple preview windows
+- Click preview windows to switch to source application
+- Previews float on top of other applications
+- Adjustable preview transparency and refresh rate
+- Preview overlays:
+  - Border highlighting for focused windows
+  - Window titles
+- Experimental: Hotkey support for application switching
 
 ## System Requirements
 
@@ -35,40 +35,45 @@ Overview is a macOS app that allows you to create floating, semi-transparent win
 2. Mount the disk image and drag Overview into your Applications folder.
 
 ### On First Launch
-- The app package is *unsigned* at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.  
+- The app package is *unsigned* at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.
+  - If you aren't comfortable running unsigned apps, you can also clone this project and build it yourself in Xcode 16. 
 - There will be an error and a notification to allow screen recording. This is necessary to show the preview windows. Allow screen recording permission in settings and then re-launch Overview. 
 
 ## Usage
 
 1. Launch Overview
 2. Select a window to capture from the available windows list
-3. Toggle Edit Mode (via the window context menu) to reposition or resize Overview windows
-4. Click on an Overview window (with Edit Mode disabled) to switch to the previewed application
-5. Create new Overview windows with ⌘N while in Edit Mode, or via the File menu
-6. Adjust Overview window frame rate and style in the Settings menu
-7. If you want Overview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
+3. To reposition or resize preview windows, right click and toggle Edit Mode
+4. To close preview windows, right click and select Close Window
+5. Left click on preview windows (with Edit Mode disabled) to switch to the previewed application
+6. Create new preview windows with ⌘N while in Edit Mode, or via the File menu
+7. Adjust preview frame rate, style, and behavior in the Settings menu
+8. If you want preview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
 
 ### Settings
 
-- Window opacity
-- Preview frame rate
-- Default window size for new Overview windows
-- Border for focused window
-- Window title overlay
+- General:
+  - Focused window border overlay
+  - Window title overlay
+- Previews: 
+  - Preview opacity
+  - Default preview window size
+  - Mission Control visibility
+  - Preview alignment help
+- Performance:
+  - Preview frame rate
+- Experimental:
+  - Hotkey bindings by window title
 
-## Acknowledgements
+## Known Issues/Limitations
 
-The design, features, and general purpose of Overview is heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview). 
-Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen. 
-
-## Known Issues
-
-- Unexpected behavior while Stage Manager is enabled
-- Only windows in the current space appear in the the selection menu
-- Resizing a window will not change the aspect ratio of the Overview window
-- Multiple windows from an application can be previewed, but clicking brings the application into focus, not a specific window
 - Performance is suboptimal
-- For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+- Hotkeys only work while Overview is in focus
+- Previews will be distorted when using Stage Manager
+- Previews cannot float over full-screen applications
+- Only windows in the current space appear in the the selection menu
+
+For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 ## Contributing
 
@@ -77,6 +82,11 @@ Contributions to Overview are welcome, but as the project is in its early stages
 ## License
 
 This project is MIT licensed, see the LICENSE file for full details. 
+
+## Acknowledgements
+
+The design, features, and general purpose of Overview is heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview). 
+Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen. 
 
 ## Disclaimer
 
