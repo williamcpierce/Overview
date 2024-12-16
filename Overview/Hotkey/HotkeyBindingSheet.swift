@@ -15,6 +15,9 @@
  file at the root of this project.
 */
 
+import AppKit
+import Carbon
+import CoreGraphics
 import ScreenCaptureKit
 import SwiftUI
 
@@ -329,15 +332,57 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     /// - Parameter keyCode: Carbon key code to convert
     /// - Returns: String representation if known code
     private static func keyCodeToString(_ keyCode: Int) -> String? {
-        let keyCodeMap: [Int: String] = [
-            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
-            8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
-            16: "Y", 17: "T", 32: "U", 34: "I", 31: "O", 35: "P",
-            37: "L", 38: "J", 39: "K", 40: "'", 41: ";", 42: "\\",
-            43: ",", 44: "/", 45: "N", 46: "M", 47: ".",
-            18: "1", 19: "2", 20: "3", 21: "4", 22: "5", 23: "6", 24: "7",
-            25: "8", 26: "9", 27: "0",
-        ]
-        return keyCodeMap[keyCode]
+        // Get current keyboard layout
+        guard let currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+            let layoutData = TISGetInputSourceProperty(
+                currentKeyboard, kTISPropertyUnicodeKeyLayoutData)
+        else {
+            return nil
+        }
+
+        let keyboardLayout = Unmanaged<CFData>.fromOpaque(layoutData).takeUnretainedValue() as Data
+
+        // Create buffer for translated characters
+        var chars = [UniChar](repeating: 0, count: 4)
+        var deadKeyState: UInt32 = 0
+        var actualStringLength = 0
+
+        // Convert using UCKeyTranslate
+        let status = keyboardLayout.withUnsafeBytes { buffer in
+            guard let layoutPtr = buffer.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self)
+            else {
+                return errSecInvalidKeychain
+            }
+
+            return UCKeyTranslate(
+                layoutPtr,
+                UInt16(keyCode),
+                UInt16(kUCKeyActionDisplay),
+                0,  // No modifiers for base character
+                UInt32(LMGetKbdType()),
+                OptionBits(kUCKeyTranslateNoDeadKeysBit),
+                &deadKeyState,
+                chars.count,
+                &actualStringLength,
+                &chars
+            )
+        }
+
+        guard status == noErr else { return nil }
+
+        // Special case handling for non-printing keys
+        switch keyCode {
+        case 36: return "Return"
+        case 48: return "Tab"
+        case 49: return "Space"
+        case 51: return "Delete"
+        case 53: return "Escape"
+        case 123: return "←"
+        case 124: return "→"
+        case 125: return "↓"
+        case 126: return "↑"
+        default:
+            return String(utf16CodeUnits: chars, count: actualStringLength).uppercased()
+        }
     }
 }
