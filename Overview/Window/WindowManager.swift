@@ -87,7 +87,7 @@ final class WindowManager {
             let windows = try await services.shareableContent.getAvailableWindows()
             let filtered = services.windowFilter.filterWindows(windows)
 
-            // Update cache while we have fresh window data
+            // Context: Update cache while we have fresh window data to minimize system calls
             updateWindowCache(filtered)
 
             AppLogger.windows.info("Retrieved \(filtered.count) available windows")
@@ -117,8 +117,8 @@ final class WindowManager {
     func focusWindow(withTitle title: String) -> Bool {
         AppLogger.windows.debug("Requesting focus for window: '\(title)'")
 
-        // The windowCache is used for metadata but we let WindowFocusService
-        // handle finding the actual application to focus
+        // Context: WindowFocusService handles the actual focus operation to maintain
+        // proper window activation sequencing and state management
         let success = services.windowFocus.focusWindow(withTitle: title)
 
         if success {
@@ -143,7 +143,8 @@ final class WindowManager {
     private func setupWindowTracking() {
         AppLogger.windows.debug("Configuring window tracking timer")
 
-        // Context: Using 2-second interval to balance state freshness and system load
+        // Context: 2-second interval provides good balance between state freshness
+        // and system load. More frequent updates could impact performance.
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 _ = await self?.getAvailableWindows()
