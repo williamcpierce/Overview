@@ -102,9 +102,10 @@ struct AppLogger {
     /// Logs a message with consistent formatting and context
     ///
     /// Flow:
-    /// 1. Extracts file name from path
-    /// 2. Formats message with context
-    /// 3. Logs through appropriate category logger
+    /// 1. If not in DEBUG, return early except for errors and faults
+    /// 2. Extracts file name from path
+    /// 3. Formats message with context
+    /// 4. Logs through appropriate category logger
     ///
     /// - Parameters:
     ///   - message: Content to log
@@ -119,6 +120,13 @@ struct AppLogger {
         file: String = #file,
         function: String = #function
     ) {
+        #if DEBUG
+        #else
+            guard level == .error || level == .fault else {
+                return
+            }
+        #endif
+
         let fileURL = URL(fileURLWithPath: file)
         let fileName = fileURL.lastPathComponent
         let logMessage = "[\(fileName):\(function)] \(message)"
