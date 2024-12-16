@@ -117,21 +117,14 @@ final class WindowManager {
     func focusWindow(withTitle title: String) -> Bool {
         AppLogger.windows.debug("Requesting focus for window: '\(title)'")
 
-        // Context: Process ID required for activation through AppKit
-        guard let window = windowCache[title],
-            let processID = window.owningApplication?.processID
-        else {
-            AppLogger.windows.warning("No window found in cache with title: '\(title)'")
-            return false
-        }
-
-        let success = NSRunningApplication(processIdentifier: pid_t(processID))?.activate() ?? false
+        // The windowCache is used for metadata but we let WindowFocusService
+        // handle finding the actual application to focus
+        let success = services.windowFocus.focusWindow(withTitle: title)
 
         if success {
-            AppLogger.windows.info("Window focus successful: '\(title)'")
+            AppLogger.windows.info("Successfully focused window: '\(title)'")
         } else {
-            AppLogger.windows.error(
-                "Failed to activate window process: '\(title)', pid: \(processID)")
+            AppLogger.windows.error("Failed to activate window process: '\(title)'")
         }
 
         return success

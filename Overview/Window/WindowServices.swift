@@ -215,13 +215,87 @@ final class WindowFocusService {
 
         logger.info("Focusing window: '\(window.title ?? "unknown")', processID=\(processID)")
 
-        let success =
-            NSRunningApplication(processIdentifier: pid_t(processID))?
-            .activate() ?? false
-
+        // When clicking preview window, Overview is already focused, so proceed directly
+        let success = activateTargetProcess(processID)
         if !success {
             logger.error("Failed to activate window: processID=\(processID)")
         }
+    }
+
+    /// Focuses a window by its title, ensuring Overview is briefly focused first
+    @MainActor
+    func focusWindow(withTitle title: String) -> Bool {
+        logger.debug("Focusing window by title: '\(title)'")
+
+        // Step 1: Find target process before activating Overview
+        guard let runningApp = findApplicationByWindowTitle(title) else {
+            logger.warning("No running application found with window title: '\(title)'")
+            return false
+        }
+
+        // Step 2: Bring Overview into focus first
+        // This is crucial for global hotkey handling
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Step 3: Activate target process
+        let success = runningApp.activate()
+
+        if success {
+            logger.info("Successfully focused window: '\(title)'")
+        } else {
+            logger.error("Failed to focus window: '\(title)'")
+        }
+
+        return success
+    }
+
+    /// Finds the running application that owns a window with the given title
+    private func findApplicationByWindowTitle(_ title: String) -> NSRunningApplication? {
+        // Get window list including minimized and hidden windows
+        let options = CGWindowListOption(arrayLiteral: .optionAll)
+        let windowList =
+            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
+
+        logger.debug("Searching \(windowList.count) windows for title: '\(title)'")
+
+        // Find window with matching title and get its owning PID
+        guard
+            let windowInfo = windowList.first(where: { info in
+                // Skip windows with empty titles
+                guard let windowTitle = info[kCGWindowName] as? String,
+                    !windowTitle.isEmpty
+                else { return false }
+                return windowTitle == title
+            }), let windowPID = windowInfo[kCGWindowOwnerPID] as? pid_t
+        else {
+            logger.warning("No window found with title: '\(title)'")
+            return nil
+        }
+
+        logger.debug("Found window with PID: \(windowPID)")
+
+        // Find running application with matching PID
+        let runningApp = NSWorkspace.shared.runningApplications.first { app in
+            app.processIdentifier == windowPID
+        }
+
+        if runningApp != nil {
+            logger.debug("Found matching application: \(runningApp?.localizedName ?? "unknown")")
+        } else {
+            logger.warning("No running application found for PID: \(windowPID)")
+        }
+
+        return runningApp
+    }
+
+    /// Activates a target process by its process ID
+    private func activateTargetProcess(_ processID: pid_t) -> Bool {
+        guard let app = NSRunningApplication(processIdentifier: processID) else {
+            logger.error("Failed to get running application for PID: \(processID)")
+            return false
+        }
+
+        return app.activate()
     }
 
     /// Checks if specified window currently has system focus
