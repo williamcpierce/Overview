@@ -77,7 +77,12 @@ struct OverviewApp: App {
 
         AppLogger.hotkeys.debug("Registering saved hotkey bindings")
         // Register any saved hotkeys from previous launch
-        HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)
+        do {
+            try HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)
+            AppLogger.settings.info("Registered \(settings.hotkeyBindings.count) hotkey bindings")
+        } catch {
+            AppLogger.settings.error("Failed to register hotkeys: \(error.localizedDescription)")
+        }
 
         AppLogger.interface.info("Application initialization complete")
     }

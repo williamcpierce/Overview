@@ -15,6 +15,9 @@
  file at the root of this project.
 */
 
+import AppKit
+import Carbon
+import CoreGraphics
 import ScreenCaptureKit
 import SwiftUI
 
@@ -225,119 +228,167 @@ struct HotkeyBindingSheet: View {
     }
 }
 
-/// Represents a keyboard shortcut binding to a specific window with system-wide scope
+/// Manages keyboard shortcut configuration for window focus operations
 ///
 /// Key responsibilities:
-/// - Stores window identification and key combination data
-/// - Provides consistent string representation of shortcuts
-/// - Manages modifier flag compatibility with system APIs
-/// - Ensures proper encoding for persistence
-/// - Validates modifier requirements and combinations
+/// - Stores and validates window-to-shortcut mappings
+/// - Translates between Carbon and AppKit key representations
+/// - Ensures thread-safe modifier flag handling
+/// - Provides persistence through Codable conformance
 ///
 /// Coordinates with:
-/// - HotkeyService: Provides binding data for registration with Carbon APIs
-/// - CarbonEventManager: Uses compatible key codes for system-wide registration
-/// - AppSettings: Enables JSON persistence of binding configurations
-/// - PreviewManager: Coordinates window focus operations
-/// - WindowManager: Executes focus requests when shortcuts triggered
-///
-/// Technical Context:
-/// - Uses Carbon key codes for system-wide compatibility
-/// - Requires at least one modifier key for safety
-/// - Maintains thread safety for event handling
-/// - Handles potential window title conflicts
+/// - HotkeyService: Receives binding data for system registration
+/// - WindowManager: Target window identification and focus
+/// - AppSettings: Persists binding configurations
 struct HotkeyBinding: Codable, Equatable, Hashable {
     // MARK: - Properties
 
-    /// Title of window this binding targets
-    /// - Note: Used for window lookup during focus operations
+    /// Title used to locate target window during focus operations
+    /// - Note: Must be unique to prevent focus ambiguity
     let windowTitle: String
 
-    /// Carbon key code for the binding
-    /// - Note: Uses Carbon codes for system-wide compatibility
-    /// - Important: Must be valid Carbon virtual key code
+    /// System-level key identifier for Carbon event registration
+    /// - Note: Uses virtual key codes for layout independence
     let keyCode: Int
 
-    /// Raw modifier flag storage
-    /// - Note: Private to ensure proper flag handling through computed property
+    /// Raw storage of keyboard modifier flags
+    /// - Note: Stored as UInt for Codable compatibility
     private let modifierFlags: UInt
 
     // MARK: - Computed Properties
 
-    /// Computed property for accessing modifier flags
-    /// - Note: Ensures compatibility with AppKit/Carbon
+    /// Provides AppKit-compatible access to stored modifier flags
+    /// - Note: Filters to supported modifier combinations
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
 
     // MARK: - Initialization
 
-    /// Creates a new hotkey binding with validated parameters
+    /// Creates hotkey binding with validated window and key configuration
     ///
     /// Flow:
-    /// 1. Stores window identifier
-    /// 2. Records key code
-    /// 3. Filters valid modifiers
+    /// 1. Validates window title uniqueness
+    /// 2. Normalizes modifier key combinations
+    /// 3. Initializes binding state
     ///
     /// - Parameters:
-    ///   - windowTitle: Title of target window
-    ///   - keyCode: Carbon key code for shortcut
-    ///   - modifiers: Required modifier keys
+    ///   - windowTitle: Unique identifier for target window
+    ///   - keyCode: Carbon virtual key code for trigger key
+    ///   - modifiers: Required modifier key combination
     ///
-    /// - Warning: Modifiers are filtered to prevent invalid combinations
+    /// - Important: Only standard modifiers (⌘,⌥,⌃,⇧) are supported
     init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
+        AppLogger.hotkeys.debug("Creating binding for window: '\(windowTitle)'")
+
         self.windowTitle = windowTitle
         self.keyCode = keyCode
-        // Context: Only allow standard modifier keys for compatibility
         self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
 
-        AppLogger.hotkeys.debug("Created binding for '\(windowTitle)' with key code \(keyCode)")
+        AppLogger.hotkeys.info("Binding created: '\(windowTitle)' -> \(self.hotkeyDisplayString)")
     }
 
     // MARK: - Public Methods
 
-    /// Generates human-readable shortcut representation
+    /// Formats binding as user-readable keyboard shortcut
     ///
     /// Flow:
-    /// 1. Builds ordered modifier symbols
-    /// 2. Adds key character if known
-    /// 3. Falls back to key code display
+    /// 1. Orders modifier symbols consistently
+    /// 2. Converts key code to localized character
+    /// 3. Combines into standard shortcut format
     ///
-    /// - Returns: String using standard system symbols (⌘, ⌥, etc.)
+    /// - Returns: String like "⌘⌥A" or "⌃⇧Tab"
     var hotkeyDisplayString: String {
+        AppLogger.hotkeys.debug("Generating display string for '\(windowTitle)' binding")
+
         var parts: [String] = []
         if modifiers.contains(.command) { parts.append("⌘") }
         if modifiers.contains(.option) { parts.append("⌥") }
         if modifiers.contains(.control) { parts.append("⌃") }
         if modifiers.contains(.shift) { parts.append("⇧") }
+
         if let keyChar = Self.keyCodeToString(keyCode) {
             parts.append(keyChar)
         } else {
+            AppLogger.hotkeys.warning("Unknown key code \(keyCode) for '\(windowTitle)'")
             parts.append("Key\(keyCode)")
         }
+
         return parts.joined(separator: "")
     }
 
     // MARK: - Private Methods
 
-    /// Converts Carbon key codes to displayable characters
+    /// Converts Carbon key codes to locale-aware character display
     ///
-    /// Context: Carbon key codes are used for system-wide hotkey registration
-    /// but need translation for user display. This mapping covers the most
-    /// common keys users are likely to bind.
+    /// Flow:
+    /// 1. Gets active keyboard layout
+    /// 2. Translates virtual key code
+    /// 3. Handles special case keys
     ///
-    /// - Parameter keyCode: Carbon key code to convert
-    /// - Returns: String representation if known code
+    /// - Parameter keyCode: Carbon virtual key code
+    /// - Returns: Localized key representation or nil
     private static func keyCodeToString(_ keyCode: Int) -> String? {
-        let keyCodeMap: [Int: String] = [
-            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
-            8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
-            16: "Y", 17: "T", 32: "U", 34: "I", 31: "O", 35: "P",
-            37: "L", 38: "J", 39: "K", 40: "'", 41: ";", 42: "\\",
-            43: ",", 44: "/", 45: "N", 46: "M", 47: ".",
-            18: "1", 19: "2", 20: "3", 21: "4", 22: "5", 23: "6", 24: "7",
-            25: "8", 26: "9", 27: "0",
-        ]
-        return keyCodeMap[keyCode]
+        AppLogger.hotkeys.debug("Converting key code: \(keyCode)")
+
+        // Get current keyboard layout
+        guard let currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+            let layoutData = TISGetInputSourceProperty(
+                currentKeyboard, kTISPropertyUnicodeKeyLayoutData)
+        else {
+            AppLogger.hotkeys.error("Failed to get keyboard layout for key code \(keyCode)")
+            return nil
+        }
+
+        let keyboardLayout = Unmanaged<CFData>.fromOpaque(layoutData).takeUnretainedValue() as Data
+
+        // Create translation buffer
+        var chars = [UniChar](repeating: 0, count: 4)
+        var deadKeyState: UInt32 = 0
+        var actualStringLength = 0
+
+        // Translate through system APIs
+        let status = keyboardLayout.withUnsafeBytes { buffer in
+            guard let layoutPtr = buffer.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self)
+            else {
+                AppLogger.hotkeys.error("Invalid keyboard layout pointer")
+                return errSecInvalidKeychain
+            }
+
+            return UCKeyTranslate(
+                layoutPtr,
+                UInt16(keyCode),
+                UInt16(kUCKeyActionDisplay),
+                0,  // No modifiers for base character
+                UInt32(LMGetKbdType()),
+                OptionBits(kUCKeyTranslateNoDeadKeysBit),
+                &deadKeyState,
+                chars.count,
+                &actualStringLength,
+                &chars
+            )
+        }
+
+        guard status == noErr else {
+            AppLogger.hotkeys.error("Key translation failed: \(status)")
+            return nil
+        }
+
+        // Handle common non-printing keys
+        switch keyCode {
+        case 36: return "Return"
+        case 48: return "Tab"
+        case 49: return "Space"
+        case 51: return "Delete"
+        case 53: return "Escape"
+        case 123: return "←"
+        case 124: return "→"
+        case 125: return "↓"
+        case 126: return "↑"
+        default:
+            let result = String(utf16CodeUnits: chars, count: actualStringLength).uppercased()
+            AppLogger.hotkeys.debug("Translated key code \(keyCode) to '\(result)'")
+            return result
+        }
     }
 }

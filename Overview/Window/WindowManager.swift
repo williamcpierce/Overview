@@ -87,7 +87,7 @@ final class WindowManager {
             let windows = try await services.shareableContent.getAvailableWindows()
             let filtered = services.windowFilter.filterWindows(windows)
 
-            // Update cache while we have fresh window data
+            // Context: Update cache while we have fresh window data to minimize system calls
             updateWindowCache(filtered)
 
             AppLogger.windows.info("Retrieved \(filtered.count) available windows")
@@ -117,21 +117,14 @@ final class WindowManager {
     func focusWindow(withTitle title: String) -> Bool {
         AppLogger.windows.debug("Requesting focus for window: '\(title)'")
 
-        // Context: Process ID required for activation through AppKit
-        guard let window = windowCache[title],
-            let processID = window.owningApplication?.processID
-        else {
-            AppLogger.windows.warning("No window found in cache with title: '\(title)'")
-            return false
-        }
-
-        let success = NSRunningApplication(processIdentifier: pid_t(processID))?.activate() ?? false
+        // Context: WindowFocusService handles the actual focus operation to maintain
+        // proper window activation sequencing and state management
+        let success = services.windowFocus.focusWindow(withTitle: title)
 
         if success {
-            AppLogger.windows.info("Window focus successful: '\(title)'")
+            AppLogger.windows.info("Successfully focused window: '\(title)'")
         } else {
-            AppLogger.windows.error(
-                "Failed to activate window process: '\(title)', pid: \(processID)")
+            AppLogger.windows.error("Failed to activate window process: '\(title)'")
         }
 
         return success
@@ -150,7 +143,8 @@ final class WindowManager {
     private func setupWindowTracking() {
         AppLogger.windows.debug("Configuring window tracking timer")
 
-        // Context: Using 2-second interval to balance state freshness and system load
+        // Context: 2-second interval provides good balance between state freshness
+        // and system load. More frequent updates could impact performance.
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 _ = await self?.getAvailableWindows()
