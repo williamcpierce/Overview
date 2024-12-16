@@ -2,7 +2,7 @@
 
 Overview is a macOS app that creates floating live previews of other application windows, and enables quick switching between them.
 
-![Example Screenshot](https://github.com/user-attachments/assets/625fa194-d4dd-42cc-8570-33984070c1c5)
+![Example Screenshot](https://downloads.williampierce.io/GitHub.jpg)
 
 ## Alpha Release
 
