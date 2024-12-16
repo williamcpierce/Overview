@@ -16,13 +16,13 @@ For development updates, please join our Discord:
 
 - Live window previews
 - Support for multiple preview windows
+- Hotkey support for application switching
 - Click preview windows to switch to source application
 - Previews float on top of other applications
 - Adjustable preview transparency and refresh rate
 - Preview overlays:
   - Border highlighting for focused windows
   - Window titles
-- Experimental: Hotkey support for application switching
 
 ## System Requirements
 
@@ -62,13 +62,12 @@ For development updates, please join our Discord:
   - Preview alignment help
 - Performance:
   - Preview frame rate
-- Experimental:
+- Hotkeys:
   - Hotkey bindings by window title
 
 ## Known Issues/Limitations
 
 - Performance is suboptimal
-- Hotkeys only work while Overview is in focus
 - Previews will be distorted when using Stage Manager
 - Previews cannot float over full-screen applications
 - Only windows in the current space appear in the the selection menu
