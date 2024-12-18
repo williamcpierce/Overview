@@ -386,7 +386,7 @@ final class WindowTitleService {
 
             let title = content.windows.first { updatedWindow in
                 updatedWindow.owningApplication?.processID == window.owningApplication?.processID
-                    && updatedWindow.frame == window.frame
+                    && updatedWindow.windowID == window.windowID
             }?.title
 
             if let title = title {
