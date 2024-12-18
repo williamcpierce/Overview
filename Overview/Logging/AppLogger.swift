@@ -6,191 +6,149 @@
 
  Provides centralized logging functionality across the application using OSLog,
  ensuring consistent log formatting, categorization, and level management.
-
- This file is part of Overview.
-
- Overview is free software: you can redistribute it and/or modify
- it under the terms of the MIT License as published in the LICENSE
- file at the root of this project.
 */
 
 import Foundation
 import OSLog
 
-/// Centralized logging system for Overview application
-///
-/// Key responsibilities:
-/// - Provides consistent logging interface across components
-/// - Manages log categories and subsystem organization
-/// - Ensures proper log level usage and formatting
-/// - Maintains debugging context for log entries
-///
-/// Usage:
-/// ```swift
-/// // Basic logging with category
-/// AppLogger.capture.debug("Starting frame capture")
-///
-/// // Structured logging with context
-/// AppLogger.log("User preference updated",
-///              level: .info,
-///              logger: AppLogger.settings)
-///
-/// // Error logging with context
-/// AppLogger.log("Failed to register hotkey: \(error)",
-///              level: .error,
-///              logger: AppLogger.hotkeys)
-/// ```
+/// Provides thread-safe logging across application components using OSLog
 struct AppLogger {
-    // MARK: - Properties
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.Overview"
 
-    /// Application-wide subsystem identifier for log organization
-    private static let subsystem = "com.Overview"
+    private static let loggers: [Category: Logger] = Category.allCases.reduce(into: [:]) {
+        dict, category in
+        dict[category] = Logger(subsystem: subsystem, category: category.rawValue)
+    }
 
-    // MARK: - Category Loggers
+    static let capture = CategoryLogger(category: .capture)
+    static let windows = CategoryLogger(category: .windows)
+    static let hotkeys = CategoryLogger(category: .hotkeys)
+    static let settings = CategoryLogger(category: .settings)
+    static let performance = CategoryLogger(category: .performance)
+    static let interface = CategoryLogger(category: .interface)
+}
 
-    /// Logging for capture operations and frame processing
-    static let capture = Logger(subsystem: subsystem, category: "Capture")
+extension AppLogger {
+    enum Category: String, CaseIterable {
+        case capture = "Capture"
+        case windows = "Windows"
+        case hotkeys = "Hotkeys"
+        case settings = "Settings"
+        case performance = "Performance"
+        case interface = "Interface"
+    }
 
-    /// Logging for window management and focus operations
-    static let windows = Logger(subsystem: subsystem, category: "Windows")
-
-    /// Logging for hotkey registration and event handling
-    static let hotkeys = Logger(subsystem: subsystem, category: "Hotkeys")
-
-    /// Logging for user settings and preferences
-    static let settings = Logger(subsystem: subsystem, category: "Settings")
-
-    /// Logging for performance metrics and optimization
-    static let performance = Logger(subsystem: subsystem, category: "Performance")
-
-    /// Logging for UI interactions and state management
-    static let interface = Logger(subsystem: subsystem, category: "Interface")
-
-    // MARK: - Log Levels
-
-    /// Semantic log levels with consistent OSLog mapping
     enum Level {
-        /// Detailed information for debugging purposes
         case debug
-
-        /// General information about program execution
         case info
-
-        /// Potentially harmful situations requiring attention
         case warning
-
-        /// Error events that might still allow the application to continue
         case error
-
-        /// Very severe error events that may lead to application termination
         case fault
 
-        /// Maps semantic levels to OSLog types
-        fileprivate var osLogType: OSLogType {
+        var osLogType: OSLogType {
             switch self {
             case .debug: return .debug
             case .info: return .info
-            case .warning: return .error
-            case .error: return .error
+            case .warning, .error: return .error
             case .fault: return .fault
             }
         }
     }
+}
 
-    // MARK: - Logging Methods
+extension AppLogger {
+    struct SourceLocation {
+        let file: String
+        let function: String
 
-    /// Logs a message with consistent formatting and context
-    ///
-    /// Flow:
-    /// 1. If not in DEBUG, return early except for errors and faults
-    /// 2. Extracts file name from path
-    /// 3. Formats message with context
-    /// 4. Logs through appropriate category logger
-    ///
-    /// - Parameters:
-    ///   - message: Content to log
-    ///   - level: Semantic logging level
-    ///   - logger: Category-specific logger instance
-    ///   - file: Source file (automatically provided)
-    ///   - function: Calling function (automatically provided)
+        var fileName: String {
+            URL(fileURLWithPath: file).lastPathComponent
+        }
+
+        var description: String {
+            "[\(fileName):\(function)]"
+        }
+    }
+
     static func log(
         _ message: String,
         level: Level,
-        logger: Logger,
-        file: String = #file,
-        function: String = #function
+        category: Category,
+        location: SourceLocation
     ) {
-        #if DEBUG
-        #else
-            guard level == .error || level == .fault else {
-                return
-            }
+        #if !DEBUG
+            guard level == .error || level == .fault else { return }
         #endif
 
-        let fileURL = URL(fileURLWithPath: file)
-        let fileName = fileURL.lastPathComponent
-        let logMessage = "[\(fileName):\(function)] \(message)"
-
-        logger.log(level: level.osLogType, "\(logMessage)")
+        let formattedMessage = "\(location.description) \(message)"
+        loggers[category]?.log(level: level.osLogType, "\(formattedMessage)")
     }
 
-    /// Logs an error with additional context and formatting
-    ///
-    /// Flow:
-    /// 1. Extracts error details and context
-    /// 2. Formats comprehensive error message
-    /// 3. Logs through error-specific logger
-    ///
-    /// - Parameters:
-    ///   - error: Error instance to log
-    ///   - context: Additional error context
-    ///   - logger: Category-specific logger instance
-    ///   - file: Source file (automatically provided)
-    ///   - function: Calling function (automatically provided)
     static func logError(
         _ error: Error,
         context: String? = nil,
-        logger: Logger,
-        file: String = #file,
-        function: String = #function
+        category: Category,
+        location: SourceLocation
     ) {
-        let fileURL = URL(fileURLWithPath: file)
-        let fileName = fileURL.lastPathComponent
-
-        var message = "[\(fileName):\(function)] Error: \(error.localizedDescription)"
+        var message = "\(location.description) Error: \(error.localizedDescription)"
         if let context = context {
             message += " - Context: \(context)"
         }
 
-        logger.error("\(message)")
+        loggers[category]?.error("\(message)")
     }
 }
 
-// MARK: - Convenience Extensions
+struct CategoryLogger {
+    private let category: AppLogger.Category
 
-extension Logger {
-    /// Logs debug message with consistent formatting
+    init(category: AppLogger.Category) {
+        self.category = category
+    }
+
+    private func log(
+        _ message: String,
+        level: AppLogger.Level,
+        location: AppLogger.SourceLocation = .init(file: #file, function: #function)
+    ) {
+        AppLogger.log(message, level: level, category: category, location: location)
+    }
+}
+
+extension CategoryLogger {
     func debug(_ message: String, file: String = #file, function: String = #function) {
-        AppLogger.log(message, level: .debug, logger: self, file: file, function: function)
+        log(message, level: .debug, location: .init(file: file, function: function))
     }
 
-    /// Logs info message with consistent formatting
     func info(_ message: String, file: String = #file, function: String = #function) {
-        AppLogger.log(message, level: .info, logger: self, file: file, function: function)
+        log(message, level: .info, location: .init(file: file, function: function))
     }
 
-    /// Logs warning message with consistent formatting
     func warning(_ message: String, file: String = #file, function: String = #function) {
-        AppLogger.log(message, level: .warning, logger: self, file: file, function: function)
+        log(message, level: .warning, location: .init(file: file, function: function))
     }
 
-    /// Logs error message with consistent formatting
     func error(_ message: String, file: String = #file, function: String = #function) {
-        AppLogger.log(message, level: .error, logger: self, file: file, function: function)
+        log(message, level: .error, location: .init(file: file, function: function))
     }
 
-    /// Logs fault message with consistent formatting
     func fault(_ message: String, file: String = #file, function: String = #function) {
-        AppLogger.log(message, level: .fault, logger: self, file: file, function: function)
+        log(message, level: .fault, location: .init(file: file, function: function))
+    }
+}
+
+extension CategoryLogger {
+    func logError(
+        _ error: Error,
+        context: String? = nil,
+        file: String = #file,
+        function: String = #function
+    ) {
+        AppLogger.logError(
+            error,
+            context: context,
+            category: category,
+            location: .init(file: file, function: function)
+        )
     }
 }
