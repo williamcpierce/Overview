@@ -103,20 +103,6 @@ struct PreviewView: View {
         return Capture(frame: frame)
             .opacity(appSettings.opacity)
             .overlay(
-                InteractionOverlay(
-                    isEditModeEnabled: $isEditModeEnabled,
-                    isBringToFrontEnabled: true,
-                    bringToFrontAction: {
-                        AppLogger.interface.info("User requested window focus")
-                        captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
-                    },
-                    toggleEditModeAction: {
-                        AppLogger.interface.info("User toggled edit mode: \(!isEditModeEnabled)")
-                        isEditModeEnabled.toggle()
-                    }
-                )
-            )
-            .overlay(
                 // Focus border aids in visual tracking of active window
                 // Only shown when source window has system focus
                 appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
@@ -132,6 +118,20 @@ struct PreviewView: View {
                         fontSize: appSettings.titleFontSize,
                         backgroundOpacity: appSettings.titleBackgroundOpacity)
                     : nil
+            )
+            .overlay(
+                InteractionOverlay(
+                    isEditModeEnabled: $isEditModeEnabled,
+                    isBringToFrontEnabled: true,
+                    bringToFrontAction: {
+                        AppLogger.interface.info("User requested window focus")
+                        captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
+                    },
+                    toggleEditModeAction: {
+                        AppLogger.interface.info("User toggled edit mode: \(!isEditModeEnabled)")
+                        isEditModeEnabled.toggle()
+                    }
+                )
             )
     }
 
