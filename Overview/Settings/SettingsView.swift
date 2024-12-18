@@ -1,5 +1,5 @@
 /*
- SettingsView.swift
+ Hotkey/SettingsView.swift
  Overview
 
  Created by William Pierce on 10/13/24.

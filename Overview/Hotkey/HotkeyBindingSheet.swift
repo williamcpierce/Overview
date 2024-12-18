@@ -1,5 +1,5 @@
 /*
- HotkeyBindingSheet.swift
+ Hotkey/HotkeyBindingSheet.swift
  Overview
 
  Created by William Pierce on 12/8/24.

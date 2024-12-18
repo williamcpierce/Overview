@@ -1,5 +1,5 @@
 /*
- WindowManager.swift
+ Hotkey/WindowManager.swift
  Overview
 
  Created by William Pierce on 12/10/24.

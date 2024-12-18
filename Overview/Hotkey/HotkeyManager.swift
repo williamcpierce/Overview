@@ -1,5 +1,5 @@
 /*
- HotkeyManager.swift
+ Hotkey/HotkeyManager.swift
  Overview
 
  Created by William Pierce on 12/9/24.

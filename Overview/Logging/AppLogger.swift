@@ -1,5 +1,5 @@
 /*
- AppLogger.swift
+ Hotkey/AppLogger.swift
  Overview
 
  Created by William Pierce on 12/11/24.
