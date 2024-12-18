@@ -1,5 +1,5 @@
 /*
- Hotkey/AppLogger.swift
+ Logging/AppLogger.swift
  Overview
 
  Created by William Pierce on 12/11/24.
@@ -8,7 +8,6 @@
  ensuring consistent log formatting, categorization, and level management.
 */
 
-import Foundation
 import OSLog
 
 struct AppLogger {

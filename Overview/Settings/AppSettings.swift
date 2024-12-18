@@ -1,5 +1,5 @@
 /*
- Hotkey/AppSettings.swift
+ Settings/AppSettings.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -8,7 +8,6 @@
  across the application through Combine publishers and UserDefaults storage.
 */
 
-import Foundation
 import SwiftUI
 
 class AppSettings: ObservableObject {

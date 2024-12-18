@@ -11,11 +11,6 @@
 
 import SwiftUI
 
-/// Thread-confined SwiftUI view bridge for hardware-accelerated window content rendering.
-/// Maintains IOSurface lifecycle and Core Animation layer management.
-///
-/// Performance: Uses direct layer replacement strategy to minimize compositing overhead
-/// and maintain smooth animation at high refresh rates.
 struct Capture: NSViewRepresentable {
     let frame: CapturedFrame
 

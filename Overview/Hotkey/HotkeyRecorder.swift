@@ -9,7 +9,6 @@
  reliable shortcut capture for window focusing operations.
 */
 
-import AppKit
 import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
