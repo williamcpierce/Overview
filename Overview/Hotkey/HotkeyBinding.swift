@@ -79,14 +79,3 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
         return String(utf16CodeUnits: chars, count: stringLength).uppercased()
     }
 }
-
-enum CarbonModifierTranslator {
-    static func convert(_ nsModifiers: NSEvent.ModifierFlags) -> UInt32 {
-        var carbonModifiers: UInt32 = 0
-        if nsModifiers.contains(.command) { carbonModifiers |= UInt32(cmdKey) }
-        if nsModifiers.contains(.option) { carbonModifiers |= UInt32(optionKey) }
-        if nsModifiers.contains(.control) { carbonModifiers |= UInt32(controlKey) }
-        if nsModifiers.contains(.shift) { carbonModifiers |= UInt32(shiftKey) }
-        return carbonModifiers
-    }
-}
