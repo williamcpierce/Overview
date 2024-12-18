@@ -382,7 +382,7 @@ final class WindowTitleService {
 
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(
-                false, onScreenWindowsOnly: true)
+                false, onScreenWindowsOnly: false)
 
             let title = content.windows.first { updatedWindow in
                 updatedWindow.owningApplication?.processID == window.owningApplication?.processID
