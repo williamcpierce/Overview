@@ -7,75 +7,20 @@
  Serves as the root coordinator for window preview lifecycle, managing transitions
  between window selection and preview states while maintaining proper window scaling
  and interaction handling.
-
- This file is part of Overview.
-
- Overview is free software: you can redistribute it and/or modify
- it under the terms of the MIT License as published in the LICENSE
- file at the root of this project.
 */
 
 import SwiftUI
 
-/// Root view coordinator managing window preview lifecycle and state transitions
-///
-/// Key responsibilities:
-/// - Coordinates view state transitions (selection ↔ preview)
-/// - Maintains window aspect ratio and scaling constraints
-/// - Manages capture manager instance lifecycle
-/// - Coordinates window interaction states
-///
-/// Coordinates with:
-/// - PreviewManager: Global window capture and edit mode state
-/// - CaptureManager: Per-window capture stream management
-/// - SelectionView: Window target selection interface
-/// - PreviewView: Live window preview rendering
-/// - PreviewAccessor: Low-level preview window property control
 struct ContentView: View {
-    // MARK: - Properties
-
-    /// Global preview manager coordinating window capture instances
-    /// - Note: Single instance shared across all Overview windows
     @ObservedObject var previewManager: PreviewManager
-
-    /// Application settings for window configuration and behavior
     @ObservedObject var appSettings: AppSettings
-
-    /// Controls window editing capabilities (move/resize)
-    /// - Note: Bound to global edit mode state in PreviewManager
     @Binding var isEditModeEnabled: Bool
 
-    // MARK: - Window State
+    @State private var activeManagerId: UUID?
+    @State private var isSelectionViewVisible = true
+    @State private var windowAspectRatio: CGFloat
+    @State private var capturedWindowDimensions: CGSize?
 
-    /// Unique identifier for this window's capture manager
-    /// - Note: Created during view lifecycle, removed on disappear
-    @State private var captureManagerId: UUID?
-
-    /// Controls visibility of window selection interface
-    /// - Note: True during initial setup and when capture stops
-    @State private var showingSelection = true
-
-    /// Current width/height ratio for window scaling
-    /// - Note: Updated when window selection changes
-    @State private var aspectRatio: CGFloat
-
-    /// Dimensions of the currently selected source window
-    /// - Note: Used to calculate correct preview scaling
-    @State private var selectedWindowSize: CGSize?
-
-    // MARK: - Initialization
-
-    /// Creates a content view with required managers and edit mode state
-    ///
-    /// Flow:
-    /// 1. Stores manager references for preview and settings
-    /// 2. Configures initial aspect ratio from settings
-    /// 3. Binds to global edit mode state
-    ///
-    /// - Parameters:
-    ///   - previewManager: Controls window previews and capture state
-    ///   - isEditModeEnabled: Binding to global edit mode toggle
-    ///   - appSettings: User preferences and window configuration
     init(
         previewManager: PreviewManager,
         isEditModeEnabled: Binding<Bool>,
@@ -85,8 +30,7 @@ struct ContentView: View {
         self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
 
-        // Context: Initial aspect ratio from settings until window selection
-        self._aspectRatio = State(
+        self._windowAspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
 
@@ -95,76 +39,67 @@ struct ContentView: View {
         )
     }
 
-    // MARK: - View Layout
-
     var body: some View {
         GeometryReader { geometry in
-            mainContent(geometry)
+            previewContainer(geometry)
                 .frame(width: geometry.size.width, height: geometry.size.height)
-                .aspectRatio(aspectRatio, contentMode: .fit)
-                .background(backgroundLayer)
-                .background(previewAccessorLayer)
+                .aspectRatio(windowAspectRatio, contentMode: .fit)
+                .background(windowBackground)
+                .background(windowPropertyController)
         }
-        .onAppear(perform: handleAppear)
-        .onDisappear(perform: handleDisappear)
-        .onChange(of: selectedWindowSize) { oldValue, newValue in
-            handleWindowSizeChange(oldValue, newValue)
+        .onAppear(perform: initializeCaptureManager)
+        .onDisappear(perform: cleanupCaptureManager)
+        .onChange(of: capturedWindowDimensions) { oldValue, newValue in
+            updateWindowAspectRatio(oldValue, newValue)
         }
     }
 
-    // MARK: - Private Views
-
-    /// Main content container switching between selection and preview
-    /// - Parameter geometry: Current geometry proxy from parent
-    private func mainContent(_ geometry: GeometryProxy) -> some View {
+    private func previewContainer(_ geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            if showingSelection {
+            if isSelectionViewVisible {
                 SelectionView(
                     previewManager: previewManager,
                     appSettings: appSettings,
-                    captureManagerId: $captureManagerId,
-                    showingSelection: $showingSelection,
-                    selectedWindowSize: $selectedWindowSize
+                    captureManagerId: $activeManagerId,
+                    showingSelection: $isSelectionViewVisible,
+                    selectedWindowSize: $capturedWindowDimensions
                 )
                 .frame(
                     width: appSettings.defaultWindowWidth,
                     height: appSettings.defaultWindowHeight
                 )
-                .overlay(interactionLayer)
-            } else if let id = captureManagerId,
+                .overlay(windowInteractionHandler)
+            } else if let id = activeManagerId,
                 let captureManager = previewManager.captureManagers[id]
             {
                 PreviewView(
                     captureManager: captureManager,
                     appSettings: appSettings,
                     isEditModeEnabled: $isEditModeEnabled,
-                    showingSelection: $showingSelection
+                    showingSelection: $isSelectionViewVisible
                 )
             } else {
-                retryView
+                managerRecoveryView
             }
         }
     }
 
-    /// Fallback view shown when capture manager initialization fails
-    private var retryView: some View {
+    private var managerRecoveryView: some View {
         VStack {
             Text("No capture manager found")
                 .foregroundColor(.red)
             Button("Retry") {
-                retryManagerInitialization()
+                recoverCaptureManager()
             }
             .padding()
         }
     }
 
-    /// Window background with configurable opacity
-    private var backgroundLayer: some View {
-        Color.black.opacity(showingSelection ? appSettings.opacity : 0)
+    private var windowBackground: some View {
+        Color.black.opacity(isSelectionViewVisible ? appSettings.opacity : 0)
     }
 
-    /// Mouse event and context menu handling layer
-    private var interactionLayer: some View {
+    private var windowInteractionHandler: some View {
         InteractionOverlay(
             isEditModeEnabled: $isEditModeEnabled,
             isBringToFrontEnabled: false,
@@ -173,50 +108,42 @@ struct ContentView: View {
         )
     }
 
-    /// Window property management and aspect ratio handling
-    private var previewAccessorLayer: some View {
+    private var windowPropertyController: some View {
         PreviewAccessor(
-            aspectRatio: $aspectRatio,
+            aspectRatio: $windowAspectRatio,
             isEditModeEnabled: $isEditModeEnabled,
             appSettings: appSettings
         )
     }
 
-    // MARK: - Event Handlers
-
-    /// Creates new capture manager instance on view appear
-    private func handleAppear() {
+    private func initializeCaptureManager() {
         AppLogger.interface.debug("ContentView appeared")
-        captureManagerId = previewManager.createNewCaptureManager()
+        activeManagerId = previewManager.createNewCaptureManager()
         AppLogger.interface.info(
-            "Created new capture manager: \(captureManagerId?.uuidString ?? "nil")")
+            "Created new capture manager: \(activeManagerId?.uuidString ?? "nil")")
     }
 
-    /// Removes capture manager instance on view disappear
-    private func handleDisappear() {
-        if let id = captureManagerId {
+    private func cleanupCaptureManager() {
+        if let id = activeManagerId {
             AppLogger.interface.debug(
                 "ContentView disappearing, removing capture manager: \(id.uuidString)")
             previewManager.removeCaptureManager(id: id)
         }
     }
 
-    /// Updates aspect ratio when window dimensions change
-    /// - Important: Maintains source window proportions for proper display
-    private func handleWindowSizeChange(_ oldSize: CGSize?, _ newSize: CGSize?) {
+    private func updateWindowAspectRatio(_ oldSize: CGSize?, _ newSize: CGSize?) {
         if let size = newSize {
             let newAspectRatio = size.width / size.height
             AppLogger.interface.debug("Window size changed - New aspect ratio: \(newAspectRatio)")
-            aspectRatio = newAspectRatio
+            windowAspectRatio = newAspectRatio
         }
     }
 
-    /// Attempts to recreate capture manager after initialization failure
-    private func retryManagerInitialization() {
+    private func recoverCaptureManager() {
         AppLogger.interface.warning("Retrying capture manager initialization")
-        captureManagerId = previewManager.createNewCaptureManager()
+        activeManagerId = previewManager.createNewCaptureManager()
 
-        if let id = captureManagerId {
+        if let id = activeManagerId {
             AppLogger.interface.info("Successfully recreated capture manager: \(id.uuidString)")
         } else {
             AppLogger.interface.error("Failed to recreate capture manager")
