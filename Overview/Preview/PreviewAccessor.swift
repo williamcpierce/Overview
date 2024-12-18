@@ -15,7 +15,6 @@ struct PreviewAccessor: NSViewRepresentable {
     @Binding var isEditModeEnabled: Bool
     @ObservedObject var appSettings: AppSettings
 
-    /// Prevents visual jitter by limiting window update frequency to 10Hz
     private let resizeThrottleInterval: TimeInterval = 0.1
 
     func makeNSView(context: Context) -> NSView {

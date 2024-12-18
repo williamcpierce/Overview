@@ -11,9 +11,6 @@
 
 import SwiftUI
 
-/// Provides a tabbed interface for managing application preferences with real-time updates
-/// across the application. Coordinates with AppSettings for persistence and PreviewManager
-/// for live preview updates.
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var previewManager: PreviewManager

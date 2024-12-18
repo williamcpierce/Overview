@@ -86,7 +86,6 @@ final class WindowFilterService {
     }
 }
 
-/// Thread-confined type - operations must be performed on the main actor
 @MainActor
 final class WindowFocusService {
     private let logger = AppLogger.windows
@@ -223,7 +222,6 @@ final class WindowTitleService {
     }
 }
 
-/// Observes window state changes with a 1-second polling interval for title updates
 final class WindowObserverService {
     private let logger = AppLogger.windows
     private var focusObservers: [UUID: () async -> Void] = [:]
@@ -330,7 +328,6 @@ final class WindowObserverService {
     }
 }
 
-/// Handles screen recording permissions and window content access
 final class ShareableContentService {
     private let logger = AppLogger.capture
 

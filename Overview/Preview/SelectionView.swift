@@ -11,14 +11,6 @@
 import ScreenCaptureKit
 import SwiftUI
 
-/// Coordinates window selection and capture initialization for Overview preview windows.
-/// Acts as the bridge between user selection, screen recording permissions, and the capture system.
-///
-/// Architectural relationships:
-/// - PreviewManager: Global window preview lifecycle coordination
-/// - CaptureManager: Screen recording permissions and window capture
-/// - ContentView: Window dimension and preview state transitions
-/// - AppSettings: Preview configuration preferences
 struct SelectionView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings

@@ -12,10 +12,6 @@
 import AppKit
 import SwiftUI
 
-/// Thread-confined user interface component that captures system-wide keyboard shortcuts
-/// while enforcing security and usability constraints.
-///
-/// Must be instantiated and accessed from the main thread to ensure proper event handling.
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
     let windowTitle: String
@@ -40,7 +36,6 @@ struct HotkeyRecorder: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject {
-        // Maintains memory lifecycle for keyboard event monitor
         private var parent: HotkeyRecorder
         private var isRecordingActive = false
         private var activeModifierKeys: NSEvent.ModifierFlags = []
@@ -131,7 +126,6 @@ struct HotkeyRecorder: NSViewRepresentable {
     }
 }
 
-/// Represents errors that can occur during keyboard shortcut recording
 enum ShortcutRecordingError: LocalizedError {
     case monitoringFailed
     case invalidModifiers

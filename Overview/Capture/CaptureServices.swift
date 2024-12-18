@@ -43,9 +43,6 @@ final class StreamConfigurationService: StreamConfigurator {
         return (config, filter)
     }
 
-    /// Thread-confined update operation - must be called serially to maintain stream stability.
-    /// Updates require synchronization with active capture state.
-    /// - Warning: Filter updates must follow configuration changes to prevent frame corruption
     func updateConfiguration(_ stream: SCStream?, _ window: SCWindow, frameRate: Double)
         async throws
     {

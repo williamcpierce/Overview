@@ -11,10 +11,6 @@
 
 import SwiftUI
 
-/// Configures and coordinates the application's core services and window presentation.
-/// Provides the central initialization point for global application state and window management.
-///
-/// Thread safety: Must be initialized on the main thread
 @main
 struct OverviewApp: App {
     @StateObject private var previewManager: PreviewManager

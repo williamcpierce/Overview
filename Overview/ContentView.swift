@@ -11,14 +11,6 @@
 
 import SwiftUI
 
-/// Coordinates window preview presentation and lifecycle within a single Overview window
-///
-/// Thread safety: Main actor only
-/// Lifecycle: Created and destroyed with each Overview window
-/// State transitions:
-///   - Selection → Preview: When user selects a window to capture
-///   - Preview → Selection: When capture fails or is stopped
-///   - Edit mode: Toggles window resizing/movement capabilities
 struct ContentView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings

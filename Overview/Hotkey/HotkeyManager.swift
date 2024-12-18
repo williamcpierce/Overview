@@ -11,9 +11,6 @@
 
 import SwiftUI
 
-/// Thread-confined type that coordinates global keyboard shortcuts with window management.
-/// Provides the architectural bridge between HotkeyService events and WindowManager operations.
-/// Must be instantiated and accessed on the main actor to ensure UI synchronization.
 @MainActor
 final class HotkeyManager: ObservableObject {
     init() {

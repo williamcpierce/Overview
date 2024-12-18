@@ -11,13 +11,6 @@
 
 import SwiftUI
 
-/// Thread-confined type that orchestrates window preview lifecycle and state management.
-/// Must be accessed only from the main actor to ensure state consistency.
-///
-/// Coordinates window preview configuration across all instances:
-/// - Window capture and preview rendering configuration
-/// - Global edit mode state synchronization
-/// - Preview window lifecycle and cleanup
 @MainActor
 final class PreviewManager: ObservableObject {
     @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
@@ -29,8 +22,6 @@ final class PreviewManager: ObservableObject {
         AppLogger.windows.debug("PreviewManager initialized")
     }
 
-    /// Creates and registers a new capture manager instance.
-    /// Returns a unique identifier for future capture manager access.
     func createNewCaptureManager() -> UUID {
         let managerId = UUID()
         let manager = CaptureManager(appSettings: userSettings)
@@ -41,8 +32,6 @@ final class PreviewManager: ObservableObject {
         return managerId
     }
 
-    /// Safely removes a capture manager instance and its associated resources.
-    /// Safe to call with invalid IDs - logs warning but takes no action.
     func removeCaptureManager(id: UUID) {
         guard captureManagers[id] != nil else {
             AppLogger.windows.warning("Attempted to remove non-existent capture manager: \(id)")
@@ -54,8 +43,6 @@ final class PreviewManager: ObservableObject {
             "Removed capture manager: \(id), remaining active: \(captureManagers.count)")
     }
 
-    /// Toggles window edit mode across all preview instances.
-    /// When enabled, windows can be moved and resized. Window level adjusts to facilitate positioning.
     func toggleEditMode() {
         isEditModeEnabled.toggle()
         AppLogger.interface.info("Edit mode \(isEditModeEnabled ? "enabled" : "disabled")")

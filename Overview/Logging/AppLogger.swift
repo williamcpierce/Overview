@@ -11,7 +11,6 @@
 import Foundation
 import OSLog
 
-/// Provides thread-safe logging across application components using OSLog
 struct AppLogger {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.Overview"
 

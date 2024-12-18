@@ -11,7 +11,6 @@
 
 import SwiftUI
 
-/// Thread-confined view component for live window preview rendering and state management
 @MainActor
 struct PreviewView: View {
     @ObservedObject private var captureManager: CaptureManager

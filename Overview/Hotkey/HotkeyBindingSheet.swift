@@ -160,7 +160,6 @@ struct HotkeyBindingSheet: View {
     }
 }
 
-/// Thread-safe hotkey configuration that maps windows to global keyboard shortcuts
 struct HotkeyBinding: Codable, Equatable, Hashable {
     let windowTitle: String
     let keyCode: Int

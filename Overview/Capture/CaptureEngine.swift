@@ -24,7 +24,6 @@ struct CapturedFrame {
     var size: CGSize { contentRect.size }
 }
 
-/// Coordinates hardware-accelerated window capture and frame delivery using ScreenCaptureKit
 class CaptureEngine: NSObject, @unchecked Sendable {
     private let logger = AppLogger.capture
     private(set) var stream: SCStream?
@@ -33,9 +32,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         label: "com.example.apple-samplecode.VideoSampleBufferQueue")
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 
-    /// Initiates window capture with the specified quality settings and content bounds
-    /// - Returns: An async stream of hardware-accelerated capture frames
-    /// - Throws: Configuration or initialization errors that prevent capture
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
     {
@@ -58,7 +54,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Gracefully terminates active capture and releases resources
     func stopCapture() async {
         logger.debug("Stopping capture stream")
 
@@ -72,7 +67,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         }
     }
 
-    /// Modifies capture parameters without interrupting the active stream
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
         logger.debug("Updating capture configuration")
 

@@ -11,9 +11,6 @@
 import Foundation
 import SwiftUI
 
-/// Provides thread-safe access to persistent application settings through Combine publishers.
-/// Settings changes automatically sync to UserDefaults and trigger consumer updates through
-/// Published properties. Hotkey registration is deferred during initialization.
 class AppSettings: ObservableObject {
     // MARK: Window Appearance
 

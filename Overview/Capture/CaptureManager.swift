@@ -13,15 +13,6 @@
 import Combine
 import ScreenCaptureKit
 
-/// Coordinates window preview lifecycle and state synchronization between UI and capture systems.
-/// Requires screen recording permission before capture operations can begin.
-///
-/// Key architectural relationships:
-/// - Provides capture frame data and window state to PreviewView
-/// - Receives window selection from SelectionView
-/// - Applies configuration from AppSettings
-/// - Delegates window operations to WindowServices
-/// - Manages CaptureEngine for low-level stream operations
 @MainActor
 class CaptureManager: ObservableObject {
     @Published private(set) var capturedFrame: CapturedFrame?
@@ -57,13 +48,10 @@ class CaptureManager: ObservableObject {
         initializeWindowStateObservers()
     }
 
-    /// Requests system screen recording authorization. Must be called before capture operations.
-    /// - Throws: CaptureError.permissionDenied if authorization is denied
     func requestPermission() async throws {
         try await windowServices.shareableContent.requestPermission()
     }
 
-    /// Refreshes available window list excluding system UI components
     func updateAvailableWindows() async {
         do {
             let windows = try await windowServices.shareableContent.getAvailableWindows()
@@ -77,9 +65,6 @@ class CaptureManager: ObservableObject {
         }
     }
 
-    /// Initiates window capture with current configuration
-    /// - Throws: CaptureError.noWindowSelected if no window is selected
-    ///          CaptureError.captureStreamFailed for stream initialization failures
     func startCapture() async throws {
         guard !isCapturing else { return }
         guard let targetWindow = selectedWindow else { throw CaptureError.noWindowSelected }
@@ -103,7 +88,6 @@ class CaptureManager: ObservableObject {
         capturedFrame = nil
     }
 
-    /// Activates the source window unless edit mode is enabled
     func focusWindow(isEditModeEnabled: Bool) {
         guard let targetWindow = selectedWindow else { return }
         windowServices.windowFocus.focusWindow(

@@ -10,8 +10,6 @@
 
 import SwiftUI
 
-/// Thread-confined NSView coordinator for window state transitions and input handling.
-/// Must be initialized and accessed from the main thread.
 struct InteractionOverlay: NSViewRepresentable {
     @Binding var isEditModeEnabled: Bool
     let isBringToFrontEnabled: Bool

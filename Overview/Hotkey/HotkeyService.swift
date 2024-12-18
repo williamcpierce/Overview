@@ -27,8 +27,6 @@ struct HotkeyEventProcessor {
     }
 }
 
-/// Thread-safe coordinator for system-wide keyboard shortcuts using Carbon Event Manager.
-/// Provides registration and focus-operation mappings that persist across app launches.
 final class HotkeyService {
     static let shared = HotkeyService()
 
@@ -102,8 +100,6 @@ final class HotkeyService {
         AppLogger.hotkeys.debug("Removed callback: \(identifier)")
     }
 
-    /// Thread-safe registration of system-wide keyboard shortcuts
-    /// Enforces registration limits and maintains persistent configuration
     func registerHotkeys(_ bindings: [HotkeyBinding]) throws {
         AppLogger.hotkeys.info("Registering \(bindings.count) configurations")
 
