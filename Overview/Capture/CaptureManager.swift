@@ -33,6 +33,7 @@ class CaptureManager: ObservableObject {
     private var windowStateObserverId: UUID?
 
     private let windowServices = WindowServices.shared
+    private let contentService = ShareableContentService.shared
     private let userSettings: AppSettings
     private let streamEngine: CaptureEngine
     private let streamConfigurationService: StreamConfigurationService
@@ -49,12 +50,12 @@ class CaptureManager: ObservableObject {
     }
 
     func requestPermission() async throws {
-        try await windowServices.shareableContent.requestPermission()
+        try await contentService.requestPermission()
     }
 
     func updateAvailableWindows() async {
         do {
-            let windows = try await windowServices.shareableContent.getAvailableWindows()
+            let windows = try await contentService.getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowServices.windowFilter.filterWindows(windows)
             }

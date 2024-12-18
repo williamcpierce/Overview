@@ -41,6 +41,7 @@
 		C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				HotkeyBinding.swift,
 				HotkeyBindingSheet.swift,
 				HotkeyManager.swift,
 				HotkeyRecorder.swift,
@@ -51,6 +52,10 @@
 		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Service/WindowFilterService.swift,
+				Service/WindowFocusService.swift,
+				Service/WindowObserverService.swift,
+				Service/WindowTitleService.swift,
 				WindowManager.swift,
 				WindowServices.swift,
 			);
@@ -81,7 +86,8 @@
 				Capture.swift,
 				CaptureEngine.swift,
 				CaptureManager.swift,
-				CaptureServices.swift,
+				Services/ShareableContentService.swift,
+				Services/StreamConfigurationService.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

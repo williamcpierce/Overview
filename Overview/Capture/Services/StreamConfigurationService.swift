@@ -1,5 +1,5 @@
 /*
- Capture/CaptureServices.swift
+ Capture/Service/StreamConfigurationService.swift
  Overview
 
  Created by William Pierce on 12/6/24.
@@ -9,7 +9,6 @@
  efficient ScreenCaptureKit integration.
 */
 
-import AppKit
 import ScreenCaptureKit
 
 protocol StreamConfigurator {

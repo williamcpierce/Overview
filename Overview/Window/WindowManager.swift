@@ -1,5 +1,5 @@
 /*
- Hotkey/WindowManager.swift
+ Window/WindowManager.swift
  Overview
 
  Created by William Pierce on 12/10/24.
@@ -10,12 +10,11 @@
  system overhead.
 */
 
-import AppKit
 import ScreenCaptureKit
 
 @MainActor
 protocol WindowManageable {
-    func getAvailableWindows() async -> [SCWindow]
+    func getFilteredWindows() async -> [SCWindow]
     func focusWindow(withTitle title: String) -> Bool
 }
 
@@ -24,6 +23,7 @@ final class WindowManager: WindowManageable {
     static let shared = WindowManager()
 
     private let windowServices = WindowServices.shared
+    private let contentService = ShareableContentService.shared
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 
@@ -31,9 +31,9 @@ final class WindowManager: WindowManageable {
         setupPeriodicCacheSync()
     }
 
-    func getAvailableWindows() async -> [SCWindow] {
+    func getFilteredWindows() async -> [SCWindow] {
         do {
-            let systemWindows = try await windowServices.shareableContent.getAvailableWindows()
+            let systemWindows = try await contentService.getAvailableWindows()
             let filteredWindows = windowServices.windowFilter.filterWindows(systemWindows)
             synchronizeTitleCache(with: filteredWindows)
             return filteredWindows
@@ -59,7 +59,7 @@ final class WindowManager: WindowManageable {
         cacheSyncTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
             [weak self] _ in
             Task { @MainActor [weak self] in
-                _ = await self?.getAvailableWindows()
+                _ = await self?.getFilteredWindows()
             }
         }
     }
