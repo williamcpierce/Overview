@@ -103,7 +103,6 @@ struct ContentView: View {
                 .frame(width: geometry.size.width, height: geometry.size.height)
                 .aspectRatio(aspectRatio, contentMode: .fit)
                 .background(backgroundLayer)
-                .overlay(interactionLayer)
                 .background(previewAccessorLayer)
         }
         .onAppear(perform: handleAppear)
@@ -131,6 +130,7 @@ struct ContentView: View {
                     width: appSettings.defaultWindowWidth,
                     height: appSettings.defaultWindowHeight
                 )
+                .overlay(interactionLayer)
             } else if let id = captureManagerId,
                 let captureManager = previewManager.captureManagers[id]
             {
