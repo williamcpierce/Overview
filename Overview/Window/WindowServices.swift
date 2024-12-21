@@ -14,7 +14,6 @@ import ScreenCaptureKit
 @MainActor
 final class WindowServices {
     static let shared = WindowServices()
-
     let windowFilter = WindowFilterService()
     let windowFocus = WindowFocusService()
     let titleService = WindowTitleService()

@@ -12,12 +12,10 @@ import OSLog
 
 struct AppLogger {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "com.Overview"
-
     private static let loggers: [Category: Logger] = Category.allCases.reduce(into: [:]) {
         dict, category in
         dict[category] = Logger(subsystem: subsystem, category: category.rawValue)
     }
-
     static let capture = CategoryLogger(category: .capture)
     static let windows = CategoryLogger(category: .windows)
     static let hotkeys = CategoryLogger(category: .hotkeys)

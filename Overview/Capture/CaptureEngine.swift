@@ -16,7 +16,6 @@ import ScreenCaptureKit
 struct CapturedFrame {
     static let invalid = CapturedFrame(
         surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
-
     let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat

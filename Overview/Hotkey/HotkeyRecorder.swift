@@ -13,6 +13,7 @@ import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
+ 
     let windowTitle: String
 
     func makeNSView(context: Context) -> NSButton {

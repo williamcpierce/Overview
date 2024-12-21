@@ -9,7 +9,6 @@ import ScreenCaptureKit
 
 final class ShareableContentService {
     static let shared = ShareableContentService()
-
     private let logger = AppLogger.capture
 
     func requestPermission() async throws {

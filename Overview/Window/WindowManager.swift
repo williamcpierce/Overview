@@ -15,10 +15,8 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
-
     private let windowServices = WindowServices.shared
     private let contentService = ShareableContentService.shared
-
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 

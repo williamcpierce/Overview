@@ -30,15 +30,14 @@ class CaptureManager: ObservableObject {
         }
     }
 
-    private var settingsSubscriptions = Set<AnyCancellable>()
-    private var activeFrameProcessingTask: Task<Void, Never>?
-    private var windowStateObserverId: UUID?
-
     private let windowServices = WindowServices.shared
     private let contentService = ShareableContentService.shared
     private let streamEngine: CaptureEngine
     private let streamConfigurationService: StreamConfigurationService
     private let logger = AppLogger.capture
+    private var settingsSubscriptions = Set<AnyCancellable>()
+    private var activeFrameProcessingTask: Task<Void, Never>?
+    private var windowStateObserverId: UUID?
 
     init(
         appSettings: AppSettings,

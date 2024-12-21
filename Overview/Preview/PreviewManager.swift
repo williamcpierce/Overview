@@ -14,6 +14,7 @@ import SwiftUI
 @MainActor
 final class PreviewManager: ObservableObject {
     @ObservedObject private var appSettings: AppSettings
+
     @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
     @Published var editMode = false
 

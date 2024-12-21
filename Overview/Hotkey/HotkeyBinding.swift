@@ -11,11 +11,10 @@ import Cocoa
 struct HotkeyBinding: Codable, Equatable, Hashable {
     let windowTitle: String
     let keyCode: Int
-    private let modifierFlags: UInt
-
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
+    private let modifierFlags: UInt
 
     init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
         self.windowTitle = windowTitle

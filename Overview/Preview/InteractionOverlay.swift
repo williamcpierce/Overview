@@ -19,7 +19,6 @@ struct InteractionOverlay: NSViewRepresentable {
     let toggleEditModeAction: () -> Void
 
     func makeNSView(context: Context) -> NSView {
-
         let view = InputHandler()
         view.editMode = editMode
         view.bringToFront = bringToFront

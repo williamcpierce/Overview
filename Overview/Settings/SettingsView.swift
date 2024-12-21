@@ -14,6 +14,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
+
     @State private var isAddingHotkey = false
     @State private var showingResetAlert = false
 
