@@ -19,7 +19,7 @@ final class WindowFilterService {
         let filtered = windows.filter { window in
             meetsBasicRequirements(window) && isNotSystemComponent(window)
         }
-        logger.info(
+        logger.debug(
             "Window filtering complete: valid=\(filtered.count), filtered=\(windows.count - filtered.count)"
         )
         return filtered

@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var isSelectionViewVisible = true
     @State private var windowAspectRatio: CGFloat
     @State private var capturedWindowDimensions: CGSize?
+    private let logger = AppLogger.interface
 
     init(
         previewManager: PreviewManager,
@@ -34,7 +35,7 @@ struct ContentView: View {
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
 
-        AppLogger.interface.debug(
+        logger.info(
             "ContentView initialized with default aspect ratio: \(appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)"
         )
     }
@@ -119,13 +120,13 @@ struct ContentView: View {
     private func initializeCaptureManager() {
         AppLogger.interface.debug("ContentView appeared")
         activeManagerId = previewManager.createNewCaptureManager()
-        AppLogger.interface.info(
+        logger.info(
             "Created new capture manager: \(activeManagerId?.uuidString ?? "nil")")
     }
 
     private func cleanupCaptureManager() {
         if let id = activeManagerId {
-            AppLogger.interface.debug(
+            logger.info(
                 "ContentView disappearing, removing capture manager: \(id.uuidString)")
             previewManager.removeCaptureManager(id: id)
         }
@@ -134,19 +135,19 @@ struct ContentView: View {
     private func updateWindowAspectRatio(_ oldSize: CGSize?, _ newSize: CGSize?) {
         if let size = newSize {
             let newAspectRatio = size.width / size.height
-            AppLogger.interface.debug("Window size changed - New aspect ratio: \(newAspectRatio)")
+            logger.info("Window size changed - New aspect ratio: \(newAspectRatio)")
             windowAspectRatio = newAspectRatio
         }
     }
 
     private func recoverCaptureManager() {
-        AppLogger.interface.warning("Retrying capture manager initialization")
+        logger.warning("Retrying capture manager initialization")
         activeManagerId = previewManager.createNewCaptureManager()
 
         if let id = activeManagerId {
-            AppLogger.interface.info("Successfully recreated capture manager: \(id.uuidString)")
+            logger.info("Successfully recreated capture manager: \(id.uuidString)")
         } else {
-            AppLogger.interface.error("Failed to recreate capture manager")
+            logger.error("Failed to recreate capture manager")
         }
     }
 }

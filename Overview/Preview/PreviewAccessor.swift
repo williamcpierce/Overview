@@ -14,23 +14,23 @@ struct PreviewAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
     @ObservedObject var appSettings: AppSettings
-
+    private let logger = AppLogger.windows
     private let resizeThrottleInterval: TimeInterval = 0.1
 
     func makeNSView(context: Context) -> NSView {
-        AppLogger.windows.debug("Creating window container view")
+        logger.info("Creating window container view")
         let view = NSView()
 
         DispatchQueue.main.async {
             guard let window = view.window else {
-                AppLogger.windows.warning("No window reference available during setup")
+                logger.warning("No window reference available during setup")
                 return
             }
 
             configureWindowDefaults(window)
             configureWindowSize(window)
 
-            AppLogger.windows.info(
+            logger.info(
                 "Window initialized with size: \(window.frame.width)x\(window.frame.height)")
         }
         return view
@@ -38,7 +38,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window = nsView.window else {
-            AppLogger.windows.warning("No window reference available during update")
+            logger.warning("No window reference available during update")
             return
         }
 
@@ -72,14 +72,14 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func synchronizeEditModeState(_ window: NSWindow) {
-        AppLogger.windows.debug("Updating edit mode properties: isEnabled=\(isEditModeEnabled)")
+        logger.debug("Updating edit mode properties: isEnabled=\(isEditModeEnabled)")
 
         window.styleMask =
             isEditModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
         window.isMovable = isEditModeEnabled
 
         window.level = calculateWindowLevel()
-        AppLogger.windows.info("Window level updated: \(window.level.rawValue)")
+        logger.debug("Window level updated: \(window.level.rawValue)")
     }
 
     private func calculateWindowLevel() -> NSWindow.Level {
@@ -91,7 +91,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     private func synchronizeMissionControlBehavior(_ window: NSWindow) {
         let shouldManage = appSettings.managedByMissionControl
-        AppLogger.windows.debug(
+        logger.debug(
             "Updating window management: managedByMissionControl=\(shouldManage)")
 
         if shouldManage {
@@ -112,7 +112,7 @@ struct PreviewAccessor: NSViewRepresentable {
         window.setContentSize(newSize)
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
 
-        AppLogger.windows.debug(
+        logger.debug(
             """
             Window size updated: \(String(format: "%.1f", currentSize.width))x\
             \(String(format: "%.1f", targetHeight)) (ratio: \

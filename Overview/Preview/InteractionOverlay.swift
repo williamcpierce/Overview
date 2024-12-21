@@ -12,7 +12,7 @@ import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
     @Binding var isEditModeEnabled: Bool
-    let isBringToFrontEnabled: Bool
+    private let logger = AppLogger.interface
     let bringToFrontAction: () -> Void
     let toggleEditModeAction: () -> Void
 
@@ -26,24 +26,24 @@ struct InteractionOverlay: NSViewRepresentable {
         view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextualMenu(for: view)
 
-        AppLogger.interface.info("Interaction overlay view configured")
+        logger.info("Interaction overlay view configured")
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let view = nsView as? InputHandler else {
-            AppLogger.interface.warning("Invalid view type in updateNSView")
+            logger.warning("Invalid view type in updateNSView")
             return
         }
 
-        AppLogger.interface.debug(
-            "Updating interaction overlay state: editMode=\(isEditModeEnabled)")
+        logger.info(
+            "Updating interaction overlay state: editMode=\(editMode)")
         view.isEditModeEnabled = isEditModeEnabled
         view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
     }
 
     private func createContextualMenu(for view: InputHandler) -> NSMenu {
-        AppLogger.interface.debug("Creating context menu for interaction overlay")
+        logger.info("Creating context menu for interaction overlay")
 
         let menu = NSMenu()
         let editModeItem = NSMenuItem(
@@ -77,16 +77,16 @@ private final class InputHandler: NSView {
 
     override func mouseDown(with event: NSEvent) {
         if !isEditModeEnabled && isBringToFrontEnabled {
-            AppLogger.interface.debug("Mouse down triggered window focus action")
+            logger.info("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
-            AppLogger.interface.debug("Mouse down handled by system: editMode=\(isEditModeEnabled)")
+            logger.info("Mouse down handled by system: editMode=\(editMode)")
             super.mouseDown(with: event)
         }
     }
 
     @objc func toggleEditMode() {
-        AppLogger.interface.info("Edit mode toggled via context menu")
+        logger.info("Edit mode toggled via context menu")
         toggleEditModeAction?()
     }
 }

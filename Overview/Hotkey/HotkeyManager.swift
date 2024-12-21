@@ -18,16 +18,12 @@ final class HotkeyManager: ObservableObject {
     }
 
     private func configureHotkeyEventHandling() {
-        AppLogger.hotkeys.debug("Initializing HotkeyManager")
-
         // Weak reference prevents retain cycles in callback chain
         HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
             Task { @MainActor in
                 self?.activateWindowWithTitle(windowTitle)
             }
         }
-
-        AppLogger.hotkeys.info("HotkeyManager successfully initialized")
     }
 
     private func activateWindowWithTitle(_ windowTitle: String) {
@@ -36,9 +32,9 @@ final class HotkeyManager: ObservableObject {
         let activationSucceeded = WindowManager.shared.focusWindow(withTitle: windowTitle)
 
         if activationSucceeded {
-            AppLogger.hotkeys.info("Successfully focused window: '\(windowTitle)'")
+            logger.info("Successfully focused window: '\(windowTitle)'")
         } else {
-            AppLogger.hotkeys.warning("Failed to focus window: '\(windowTitle)'")
+            logger.warning("Failed to focus window: '\(windowTitle)'")
         }
     }
 

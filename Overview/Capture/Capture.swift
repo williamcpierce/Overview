@@ -13,17 +13,18 @@ import SwiftUI
 
 struct Capture: NSViewRepresentable {
     let frame: CapturedFrame
+    private let logger = AppLogger.capture
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
-        AppLogger.capture.debug("Created layer-backed NSView for frame rendering")
+        logger.debug("Created layer-backed NSView for frame rendering")
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let surfaceContent = frame.surface else {
-            AppLogger.capture.warning("Attempted to update view with invalid surface")
+            logger.warning("Attempted to update view with invalid surface")
             return
         }
 

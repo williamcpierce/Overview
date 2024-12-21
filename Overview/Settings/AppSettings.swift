@@ -112,7 +112,6 @@ class AppSettings: ObservableObject {
 
                 do {
                     try HotkeyService.shared.registerHotkeys(hotkeyBindings)
-                    AppLogger.settings.info("Registered \(hotkeyBindings.count) hotkey bindings")
                 } catch {
                     AppLogger.settings.error(
                         "Failed to register hotkeys: \(error.localizedDescription)")
@@ -144,7 +143,7 @@ class AppSettings: ObservableObject {
         loadHotkeyBindings()
         validateAllSettings()
         isInitializing = false
-        AppLogger.settings.info("Settings initialization complete")
+        AppLogger.settings.debug("Settings initialization complete")
     }
 
     var defaultWindowSize: CGSize {

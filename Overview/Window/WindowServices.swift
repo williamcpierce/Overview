@@ -21,6 +21,6 @@ final class WindowServices {
     let windowObserver = WindowObserverService()
 
     private init() {
-        AppLogger.windows.info("Initializing window services container")
+        AppLogger.windows.debug("Initializing window services container")
     }
 }

@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var isAddingHotkey = false
     @State private var showingResetAlert = false
 
+    private let logger = AppLogger.settings
     private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
@@ -255,7 +256,7 @@ struct SettingsView: View {
                 .frame(width: 120)
                 .textFieldStyle(.roundedBorder)
                 .onChange(of: binding.wrappedValue) { _, newValue in
-                    AppLogger.settings.info(
+                    logger.info(
                         "Default window \(label.lowercased()) changed: \(newValue)px")
                 }
             Text("px")
@@ -266,14 +267,14 @@ struct SettingsView: View {
     private var missionControlToggle: some View {
         Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
             .onChange(of: appSettings.managedByMissionControl) { _, newValue in
-                AppLogger.settings.info("Mission Control integration changed: \(newValue)")
+                logger.info("Mission Control integration changed: \(newValue)")
             }
     }
 
     private var editModeAlignmentToggle: some View {
         Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
             .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in
-                AppLogger.settings.info("Edit mode alignment changed: \(newValue)")
+                logger.info("Edit mode alignment changed: \(newValue)")
             }
     }
 
@@ -287,7 +288,7 @@ struct SettingsView: View {
 
     private var addHotkeyButton: some View {
         Button("Add Hotkey") {
-            AppLogger.settings.debug("Opening hotkey binding sheet")
+            logger.debug("Opening hotkey binding sheet")
             isAddingHotkey = true
         }
     }
@@ -305,7 +306,7 @@ struct SettingsView: View {
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
-            AppLogger.settings.info("Hotkey binding removed: '\(binding.windowTitle)'")
+            logger.info("Hotkey binding removed: '\(binding.windowTitle)'")
         }
     }
 }

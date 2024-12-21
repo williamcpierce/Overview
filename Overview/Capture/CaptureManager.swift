@@ -37,6 +37,7 @@ class CaptureManager: ObservableObject {
     private let userSettings: AppSettings
     private let streamEngine: CaptureEngine
     private let streamConfigurationService: StreamConfigurationService
+    private let logger = AppLogger.capture
 
     init(
         appSettings: AppSettings,
@@ -60,7 +61,7 @@ class CaptureManager: ObservableObject {
                 self.availableWindows = windowServices.windowFilter.filterWindows(windows)
             }
         } catch {
-            AppLogger.capture.logError(
+            logger.logError(
                 error,
                 context: "Failed to get available windows")
         }
@@ -133,7 +134,7 @@ class CaptureManager: ObservableObject {
     }
 
     private func handleCaptureFailure(_ error: Error) async {
-        AppLogger.capture.logError(
+        logger.logError(
             error,
             context: "Capture stream error")
         await stopCapture()
@@ -157,7 +158,7 @@ class CaptureManager: ObservableObject {
                 targetWindow,
                 frameRate: userSettings.frameRate)
         } catch {
-            AppLogger.capture.logError(
+            logger.logError(
                 error,
                 context: "Failed to update stream configuration")
         }

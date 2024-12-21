@@ -30,6 +30,8 @@ struct HotkeyEventProcessor {
 final class HotkeyService {
     static let shared = HotkeyService()
 
+    private let logger = AppLogger.hotkeys
+
     /// Maximum concurrent hotkey registrations to prevent resource exhaustion
     private static let registrationLimit = 50
 
@@ -91,17 +93,17 @@ final class HotkeyService {
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks[identifier] = callback
-        AppLogger.hotkeys.debug("Registered callback: \(identifier)")
+        logger.debug("Registered callback: \(identifier)")
     }
 
     func removeCallback(for owner: AnyObject) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks.removeValue(forKey: identifier)
-        AppLogger.hotkeys.debug("Removed callback: \(identifier)")
+        logger.debug("Removed callback: \(identifier)")
     }
 
     func registerHotkeys(_ bindings: [HotkeyBinding]) throws {
-        AppLogger.hotkeys.info("Registering \(bindings.count) configurations")
+        logger.info("Registering \(bindings.count) bindings")
 
         guard bindings.count <= Self.registrationLimit else {
             throw HotkeyError.systemLimitReached
@@ -112,9 +114,9 @@ final class HotkeyService {
         for binding in bindings {
             do {
                 try registerSingleHotkey(binding)
-                AppLogger.hotkeys.debug("Registered: '\(binding.windowTitle)'")
+                logger.debug("Registered: '\(binding.windowTitle)'")
             } catch {
-                AppLogger.hotkeys.logError(
+                logger.logError(
                     error,
                     context: "Registration failed: '\(binding.windowTitle)'")
                 throw error
@@ -125,7 +127,7 @@ final class HotkeyService {
     }
 
     private func initializeEventHandler() throws {
-        AppLogger.hotkeys.debug("Configuring event handler")
+        logger.debug("Configuring event handler")
 
         let eventSpec = [
             EventTypeSpec(
@@ -178,14 +180,14 @@ final class HotkeyService {
                 guard let self = self else { return }
 
                 guard currentEvent.shouldProcess(after: self.previousEvent) else {
-                    AppLogger.hotkeys.debug("Debounced: \(hotkeyID.id)")
+                    logger.debug("Debounced: \(hotkeyID.id)")
                     return
                 }
 
                 self.previousEvent = currentEvent
 
                 if let (_, binding) = self.activeHotkeys[hotkeyID.id] {
-                    AppLogger.hotkeys.debug("Processing: '\(binding.windowTitle)'")
+                    logger.debug("Processing: '\(binding.windowTitle)'")
 
                     DispatchQueue.main.async { [weak self] in
                         self?.windowFocusCallbacks.values.forEach { $0(binding.windowTitle) }
@@ -196,7 +198,7 @@ final class HotkeyService {
             return noErr
         }
 
-        AppLogger.hotkeys.warning("Event processing failed: \(result)")
+        logger.warning("Event processing failed: \(result)")
         return OSStatus(eventNotHandledErr)
     }
 
@@ -222,14 +224,14 @@ final class HotkeyService {
         if status == noErr, let hotkeyRef = hotkeyRef {
             activeHotkeys[nextIdentifier] = (hotkeyRef, binding)
             nextIdentifier += 1
-            AppLogger.hotkeys.debug("Registration successful: \(binding.hotkeyDisplayString)")
+            logger.debug("Registration successful: \(binding.hotkeyDisplayString)")
         } else {
             throw HotkeyError.registrationFailed(status)
         }
     }
 
     private func unregisterExistingHotkeys() {
-        AppLogger.hotkeys.info("Removing existing registrations")
+        logger.debug("Removing existing registrations")
         activeHotkeys.values.forEach { registration in
             UnregisterEventHotKey(registration.0)
         }
@@ -237,7 +239,7 @@ final class HotkeyService {
     }
 
     private func cleanupResources() {
-        AppLogger.hotkeys.debug("Cleaning up resources")
+        logger.debug("Cleaning up resources")
         unregisterExistingHotkeys()
         if let handler = eventHandlerIdentifier {
             RemoveEventHandler(handler)

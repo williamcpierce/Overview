@@ -89,14 +89,14 @@ struct PreviewView: View {
 
     private func initializeCapture() {
         Task {
-            AppLogger.interface.debug("PreviewView appeared, starting capture")
+            AppLogger.interface.info("PreviewView appeared, starting capture")
             try? await captureManager.startCapture()
         }
     }
 
     private func cleanupCapture() {
         Task {
-            AppLogger.interface.debug("PreviewView disappeared, stopping capture")
+            AppLogger.interface.info("PreviewView disappeared, stopping capture")
             await captureManager.stopCapture()
         }
     }
@@ -113,8 +113,8 @@ struct PreviewView: View {
     }
 
     private func toggleEditMode() {
-        AppLogger.interface.info("User toggled edit mode: \(!isEditModeEnabled)")
-        isEditModeEnabled.toggle()
+        AppLogger.interface.info("User toggled edit mode: \(!editMode)")
+        editMode.toggle()
     }
 }
 

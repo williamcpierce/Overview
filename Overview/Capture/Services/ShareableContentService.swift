@@ -31,7 +31,7 @@ final class ShareableContentService {
             let content = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true)
 
-            logger.info("Retrieved \(content.windows.count) available windows")
+            logger.debug("Retrieved \(content.windows.count) available windows")
             return content.windows
         } catch {
             logger.error("Failed to get windows: \(error.localizedDescription)")

@@ -19,7 +19,7 @@ final class PreviewManager: ObservableObject {
 
     init(appSettings: AppSettings) {
         self.userSettings = appSettings
-        AppLogger.windows.debug("PreviewManager initialized")
+        AppLogger.windows.info("PreviewManager initialized")
     }
 
     func createNewCaptureManager() -> UUID {
@@ -44,8 +44,6 @@ final class PreviewManager: ObservableObject {
     }
 
     func toggleEditMode() {
-        isEditModeEnabled.toggle()
-        AppLogger.interface.info("Edit mode \(isEditModeEnabled ? "enabled" : "disabled")")
-        AppLogger.interface.debug("Active preview windows during toggle: \(captureManagers.count)")
+        AppLogger.interface.info("Edit mode \(editMode ? "enabled" : "disabled")")
     }
 }
