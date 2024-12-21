@@ -16,18 +16,20 @@ struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
 
-    @Binding private var editMode: Bool
+    @Binding private var editModeEnabled: Bool
     @Binding private var showingSelection: Bool
+
+    @State private var firstInitialization = true
 
     init(
         appSettings: AppSettings,
         captureManager: CaptureManager,
-        editMode: Binding<Bool>,
+        editModeEnabled: Binding<Bool>,
         showingSelection: Binding<Bool>
     ) {
         self.captureManager = captureManager
         self.appSettings = appSettings
-        self._editMode = editMode
+        self._editModeEnabled = editModeEnabled
         self._showingSelection = showingSelection
     }
 
@@ -53,7 +55,6 @@ struct PreviewView: View {
             .overlay(getFocusIndicatorOverlay())
             .overlay(getTitleOverlay())
             .opacity(appSettings.opacity)
-            .overlay(interactionLayer)
     }
 
     private func getFocusIndicatorOverlay() -> AnyView {
@@ -79,16 +80,12 @@ struct PreviewView: View {
         )
     }
 
-    private var interactionLayer: some View {
-        InteractionOverlay(
-            editMode: $editMode,
-            bringToFront: true,
-            bringToFrontAction: requestWindowFocus,
-            toggleEditModeAction: toggleEditMode
-        )
-    }
-
     private func initializeCapture() {
+        guard !firstInitialization else {
+            firstInitialization = false
+            return
+        }
+        
         Task {
             AppLogger.interface.info("PreviewView appeared, starting capture")
             try? await captureManager.startCapture()
@@ -106,16 +103,6 @@ struct PreviewView: View {
         if !newValue {
             showingSelection = true
         }
-    }
-
-    private func requestWindowFocus() {
-        AppLogger.interface.info("User requested window focus")
-        captureManager.focusWindow(isEditModeEnabled: editMode)
-    }
-
-    private func toggleEditMode() {
-        AppLogger.interface.info("User toggled edit mode: \(!editMode)")
-        editMode.toggle()
     }
 }
 

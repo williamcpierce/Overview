@@ -11,24 +11,20 @@ import ScreenCaptureKit
 final class WindowFocusService {
     private let logger = AppLogger.windows
 
-    func focusWindow(window: SCWindow, isEditModeEnabled: Bool) {
-        guard !isEditModeEnabled,
-            let processID = window.owningApplication?.processID
-        else {
-            logger.warning(
-                "Focus request blocked: editMode=\(isEditModeEnabled), processID=\(window.owningApplication?.processID ?? 0)"
-            )
+    func focusWindow(window: SCWindow) {
+        guard let processID = window.owningApplication?.processID else {
+            logger.warning("No process ID found for window: '\(window.title ?? "untitled")'")
             return
         }
 
-        logger.debug("Focusing window: '\(window.title ?? "untitled")', processID=\(processID)")
+        logger.debug("Focusing window: '\(window.title ?? "untitled")', processID=\(String(describing: processID))")
 
         let success = activateProcess(processID)
 
         if success {
             logger.info("Window successfully focused: '\(window.title ?? "untitled")'")
         } else {
-            logger.error("Window focus failed: processID=\(processID)")
+            logger.error("Window focus failed: processID=\(String(describing: processID))")
         }
     }
 

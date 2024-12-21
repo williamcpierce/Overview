@@ -11,19 +11,20 @@
 import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
-    @Binding var editMode: Bool
+    @Binding var editModeEnabled: Bool
+    @Binding var showingSelection: Bool
 
-    private let logger = AppLogger.interface
-    let bringToFront: Bool
+    let editModeAction: () -> Void
     let bringToFrontAction: () -> Void
-    let toggleEditModeAction: () -> Void
+    
+    private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {
         let view = InputHandler()
-        view.editMode = editMode
-        view.bringToFront = bringToFront
+        view.editModeEnabled = editModeEnabled
+        view.showingSelection = showingSelection
+        view.editModeAction = editModeAction
         view.bringToFrontAction = bringToFrontAction
-        view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextualMenu(for: view)
 
         logger.info("Interaction overlay view configured")
@@ -37,9 +38,10 @@ struct InteractionOverlay: NSViewRepresentable {
         }
 
         logger.debug(
-            "Updating interaction overlay state: editMode=\(editMode)")
-        view.editMode = editMode
-        view.editModeMenuItem?.state = editMode ? .on : .off
+            "Updating interaction overlay state: editMode=\(editModeEnabled)")
+        view.editModeEnabled = editModeEnabled
+        view.showingSelection = showingSelection
+        view.editModeMenuItem?.state = editModeEnabled ? .on : .off
     }
 
     private func createContextualMenu(for view: InputHandler) -> NSMenu {
@@ -70,24 +72,24 @@ struct InteractionOverlay: NSViewRepresentable {
 
 private final class InputHandler: NSView {
     private let logger = AppLogger.interface
-    var editMode = false
-    var bringToFront = false
+    var editModeEnabled = false
+    var showingSelection = false
+    var editModeAction: (() -> Void)?
     var bringToFrontAction: (() -> Void)?
-    var toggleEditModeAction: (() -> Void)?
     weak var editModeMenuItem: NSMenuItem?
 
     override func mouseDown(with event: NSEvent) {
-        if !editMode && bringToFront {
+        if !editModeEnabled && !showingSelection {
             logger.debug("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
-            logger.debug("Mouse down handled by system: editMode=\(editMode)")
+            logger.debug("Mouse down handled by system: editMode=\(editModeEnabled)")
             super.mouseDown(with: event)
         }
     }
 
     @objc func toggleEditMode() {
         logger.info("Edit mode toggled via context menu")
-        toggleEditModeAction?()
+        editModeAction?()
     }
 }

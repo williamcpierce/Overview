@@ -4,9 +4,8 @@
 
  Created by William Pierce on 9/15/24.
 
- Main application entry point that manages the app lifecycle, window configuration,
- and global state initialization. Serves as the root coordinator for all major
- app components, handling window presentation and global keyboard shortcuts.
+ Main application entry point that manages the app lifecycle global state
+ initialization. Serves as the root coordinator for all major app components.
 */
 
 import SwiftUI
@@ -20,9 +19,7 @@ struct OverviewApp: App {
 
     init() {
         let settings = AppSettings()
-        let preview = PreviewManager(
-            appSettings: settings
-        )
+        let preview = PreviewManager()
         let window = WindowManager()
         let hotkey = HotkeyManager(
             appSettings: settings,
@@ -49,7 +46,7 @@ struct OverviewApp: App {
         )
         .commands {
             CommandMenu("Edit") {
-                Toggle("Edit Mode", isOn: $previewManager.editMode)
+                Toggle("Edit Mode", isOn: $previewManager.editModeEnabled)
             }
         }
 

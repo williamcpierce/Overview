@@ -12,10 +12,9 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SelectionView: View {
-    @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
+    @ObservedObject var captureManager: CaptureManager
 
-    @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
 
@@ -23,33 +22,23 @@ struct SelectionView: View {
     @State private var isInitializing = true
     @State private var initializationError = ""
     @State private var windowListRefreshToken = UUID()
-    @State private var onFirstInitialization = true
-
+    @State private var firstInitialization = true
+    
     private let logger = AppLogger.interface
 
     var body: some View {
         VStack {
-            if isInitializing {
-                ProgressView("Loading windows...")
-            } else if let error = initializationError.isEmpty ? nil : initializationError {
+            if let error = initializationError.isEmpty ? nil : initializationError {
                 Text(error)
                     .foregroundColor(.red)
                     .padding()
-            } else if let captureManager = activeCaptureManager {
+            } else {
                 selectionInterface(captureManager)
             }
         }
         .task {
             await initializeCaptureSystem()
         }
-    }
-
-    private var activeCaptureManager: CaptureManager? {
-        guard let id = captureManagerId else {
-            logger.warning("No capture manager ID available")
-            return nil
-        }
-        return previewManager.captureManagers[id]
     }
 
     private func selectionInterface(_ captureManager: CaptureManager) -> some View {
@@ -66,9 +55,14 @@ struct SelectionView: View {
 
     private func windowSelectionPicker(_ captureManager: CaptureManager) -> some View {
         Picker("", selection: $selectedWindow) {
-            Text("Select a window").tag(nil as SCWindow?)
-            ForEach(captureManager.availableWindows, id: \.windowID) { window in
-                Text(window.title ?? "Untitled").tag(window as SCWindow?)
+            if isInitializing {
+                Text("Loading...").tag(nil as SCWindow?)
+            }
+            else {
+                Text("Select a window").tag(nil as SCWindow?)
+                ForEach(captureManager.availableWindows, id: \.windowID) { window in
+                    Text(window.title ?? "Untitled").tag(window as SCWindow?)
+                }
             }
         }
         .id(windowListRefreshToken)
@@ -93,18 +87,11 @@ struct SelectionView: View {
     }
 
     private func initializeCaptureSystem() async {
-        guard !onFirstInitialization else {
-            onFirstInitialization = false
+        guard !firstInitialization else {
+            firstInitialization = false
             return
         }
-
-        guard let captureManager = activeCaptureManager else {
-            logger.error("Setup failed: No valid capture manager")
-            initializationError = "Setup failed"
-            isInitializing = false
-            return
-        }
-
+        
         do {
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()

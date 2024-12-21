@@ -38,6 +38,7 @@ class CaptureManager: ObservableObject {
     private var settingsSubscriptions = Set<AnyCancellable>()
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var windowStateObserverId: UUID?
+    private var hasPermission: Bool
 
     init(
         appSettings: AppSettings,
@@ -47,11 +48,21 @@ class CaptureManager: ObservableObject {
         self.appSettings = appSettings
         self.streamEngine = captureEngine
         self.streamConfigurationService = streamConfig
+        self.hasPermission = false
         initializeWindowStateObservers()
     }
 
     func requestPermission() async throws {
-        try await contentService.requestPermission()
+        guard !hasPermission else { return }
+
+        do {
+            try await contentService.requestPermission()
+            hasPermission = true
+        } catch {
+            logger.logError(
+                error,
+                context: "Failed to request screen recording permission")
+        }
     }
 
     func updateAvailableWindows() async {
@@ -90,10 +101,10 @@ class CaptureManager: ObservableObject {
         capturedFrame = nil
     }
 
-    func focusWindow(isEditModeEnabled: Bool) {
+    func focusWindow() {
         guard let targetWindow = selectedWindow else { return }
         windowServices.windowFocus.focusWindow(
-            window: targetWindow, isEditModeEnabled: isEditModeEnabled)
+            window: targetWindow)
     }
 
     private func initializeWindowStateObservers() {

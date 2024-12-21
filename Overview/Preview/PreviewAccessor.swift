@@ -14,7 +14,7 @@ struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
 
     @Binding var aspectRatio: CGFloat
-    @Binding var isEditModeEnabled: Bool
+    @Binding var editModeEnabled: Bool
 
     private let logger = AppLogger.windows
     private let resizeThrottleInterval: TimeInterval = 0.1
@@ -74,18 +74,18 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func synchronizeEditModeState(_ window: NSWindow) {
-        logger.debug("Updating edit mode properties: isEnabled=\(isEditModeEnabled)")
+        logger.debug("Updating edit mode properties: isEnabled=\(editModeEnabled)")
 
         window.styleMask =
-            isEditModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
-        window.isMovable = isEditModeEnabled
+            editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
+        window.isMovable = editModeEnabled
 
         window.level = calculateWindowLevel()
         logger.debug("Window level updated: \(window.level.rawValue)")
     }
 
     private func calculateWindowLevel() -> NSWindow.Level {
-        if isEditModeEnabled && appSettings.enableEditModeAlignment {
+        if editModeEnabled && appSettings.enableEditModeAlignment {
             return .floating
         }
         return .statusBar + 1
