@@ -11,15 +11,7 @@
 
 import ScreenCaptureKit
 
-protocol StreamConfigurator {
-    func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
-        SCStreamConfiguration, SCContentFilter
-    )
-    func updateConfiguration(_ stream: SCStream?, _ window: SCWindow, frameRate: Double)
-        async throws
-}
-
-final class StreamConfigurationService: StreamConfigurator {
+final class StreamConfigurationService {
     private let logger = AppLogger.capture
 
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (

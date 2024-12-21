@@ -11,19 +11,14 @@
 */
 
 import ScreenCaptureKit
+import SwiftUI
 
 @MainActor
-protocol WindowManageable {
-    func getFilteredWindows() async -> [SCWindow]
-    func focusWindow(withTitle title: String) -> Bool
-}
-
-@MainActor
-final class WindowManager: WindowManageable {
-    static let shared = WindowManager()
+final class WindowManager: ObservableObject {
 
     private let windowServices = WindowServices.shared
     private let contentService = ShareableContentService.shared
+
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 

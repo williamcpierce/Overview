@@ -11,9 +11,11 @@
 import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
+    @ObservedObject var appSettings: AppSettings
+    
     @Binding var aspectRatio: CGFloat
     @Binding var isEditModeEnabled: Bool
-    @ObservedObject var appSettings: AppSettings
+    
     private let logger = AppLogger.windows
     private let resizeThrottleInterval: TimeInterval = 0.1
 

@@ -13,18 +13,18 @@ import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
+    @ObservedObject private var appSettings: AppSettings
     @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
-    @Published var isEditModeEnabled = false
-    private let userSettings: AppSettings
+    @Published var editMode = false
 
     init(appSettings: AppSettings) {
-        self.userSettings = appSettings
+        self.appSettings = appSettings
         AppLogger.windows.info("PreviewManager initialized")
     }
 
     func createNewCaptureManager() -> UUID {
         let managerId = UUID()
-        let manager = CaptureManager(appSettings: userSettings)
+        let manager = CaptureManager(appSettings: appSettings)
         captureManagers[managerId] = manager
 
         AppLogger.windows.info(
@@ -44,6 +44,7 @@ final class PreviewManager: ObservableObject {
     }
 
     func toggleEditMode() {
+        editMode.toggle()
         AppLogger.interface.info("Edit mode \(editMode ? "enabled" : "disabled")")
     }
 }

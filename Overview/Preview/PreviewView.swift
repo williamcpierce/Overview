@@ -13,20 +13,21 @@ import SwiftUI
 
 @MainActor
 struct PreviewView: View {
-    @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var appSettings: AppSettings
-    @Binding private var isEditModeEnabled: Bool
+    @ObservedObject private var captureManager: CaptureManager
+
+    @Binding private var editMode: Bool
     @Binding private var showingSelection: Bool
 
     init(
-        captureManager: CaptureManager,
         appSettings: AppSettings,
-        isEditModeEnabled: Binding<Bool>,
+        captureManager: CaptureManager,
+        editMode: Binding<Bool>,
         showingSelection: Binding<Bool>
     ) {
         self.captureManager = captureManager
         self.appSettings = appSettings
-        self._isEditModeEnabled = isEditModeEnabled
+        self._editMode = editMode
         self._showingSelection = showingSelection
     }
 
@@ -80,8 +81,8 @@ struct PreviewView: View {
 
     private var interactionLayer: some View {
         InteractionOverlay(
-            isEditModeEnabled: $isEditModeEnabled,
-            isBringToFrontEnabled: true,
+            editMode: $editMode,
+            bringToFront: true,
             bringToFrontAction: requestWindowFocus,
             toggleEditModeAction: toggleEditMode
         )
@@ -109,7 +110,7 @@ struct PreviewView: View {
 
     private func requestWindowFocus() {
         AppLogger.interface.info("User requested window focus")
-        captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
+        captureManager.focusWindow(isEditModeEnabled: editMode)
     }
 
     private func toggleEditMode() {

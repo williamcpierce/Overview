@@ -12,24 +12,23 @@
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
-    @Binding var isEditModeEnabled: Bool
+    @ObservedObject var previewManager: PreviewManager
 
     @State private var activeManagerId: UUID?
-    @State private var isSelectionViewVisible = true
+    @State private var showingSelection = true
     @State private var windowAspectRatio: CGFloat
     @State private var capturedWindowDimensions: CGSize?
+    @State private var onFirstInitialization = true
+
     private let logger = AppLogger.interface
 
     init(
-        previewManager: PreviewManager,
-        isEditModeEnabled: Binding<Bool>,
-        appSettings: AppSettings
+        appSettings: AppSettings,
+        previewManager: PreviewManager
     ) {
-        self.previewManager = previewManager
-        self._isEditModeEnabled = isEditModeEnabled
         self.appSettings = appSettings
+        self.previewManager = previewManager
 
         self._windowAspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
@@ -57,12 +56,12 @@ struct ContentView: View {
 
     private func previewContainer(_ geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            if isSelectionViewVisible {
+            if showingSelection {
                 SelectionView(
                     previewManager: previewManager,
                     appSettings: appSettings,
                     captureManagerId: $activeManagerId,
-                    showingSelection: $isSelectionViewVisible,
+                    showingSelection: $showingSelection,
                     selectedWindowSize: $capturedWindowDimensions
                 )
                 .frame(
@@ -74,10 +73,10 @@ struct ContentView: View {
                 let captureManager = previewManager.captureManagers[id]
             {
                 PreviewView(
-                    captureManager: captureManager,
                     appSettings: appSettings,
-                    isEditModeEnabled: $isEditModeEnabled,
-                    showingSelection: $isSelectionViewVisible
+                    captureManager: captureManager,
+                    editMode: $previewManager.editMode,
+                    showingSelection: $showingSelection
                 )
             } else {
                 managerRecoveryView
@@ -97,34 +96,40 @@ struct ContentView: View {
     }
 
     private var windowBackground: some View {
-        Color.black.opacity(isSelectionViewVisible ? appSettings.opacity : 0)
+        Color.black.opacity(showingSelection ? appSettings.opacity : 0)
     }
 
     private var windowInteractionHandler: some View {
         InteractionOverlay(
-            isEditModeEnabled: $isEditModeEnabled,
-            isBringToFrontEnabled: false,
+            editMode: $previewManager.editMode,
+            bringToFront: false,
             bringToFrontAction: {},
-            toggleEditModeAction: { isEditModeEnabled.toggle() }
+            toggleEditModeAction: { previewManager.editMode.toggle() }
         )
     }
 
     private var windowPropertyController: some View {
         PreviewAccessor(
+            appSettings: appSettings,
             aspectRatio: $windowAspectRatio,
-            isEditModeEnabled: $isEditModeEnabled,
-            appSettings: appSettings
+            isEditModeEnabled: $previewManager.editMode
         )
     }
 
     private func initializeCaptureManager() {
-        AppLogger.interface.debug("ContentView appeared")
+        guard !onFirstInitialization else {
+            onFirstInitialization = false
+            return
+        }
+
         activeManagerId = previewManager.createNewCaptureManager()
         logger.info(
             "Created new capture manager: \(activeManagerId?.uuidString ?? "nil")")
     }
 
     private func cleanupCaptureManager() {
+        guard !onFirstInitialization else { return }
+
         if let id = activeManagerId {
             logger.info(
                 "ContentView disappearing, removing capture manager: \(id.uuidString)")

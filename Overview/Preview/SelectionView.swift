@@ -14,6 +14,7 @@ import SwiftUI
 struct SelectionView: View {
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
+
     @Binding var captureManagerId: UUID?
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
@@ -22,6 +23,8 @@ struct SelectionView: View {
     @State private var isInitializing = true
     @State private var initializationError = ""
     @State private var windowListRefreshToken = UUID()
+    @State private var onFirstInitialization = true
+
     private let logger = AppLogger.interface
 
     var body: some View {
@@ -43,7 +46,7 @@ struct SelectionView: View {
 
     private var activeCaptureManager: CaptureManager? {
         guard let id = captureManagerId else {
-            AppLogger.interface.warning("No capture manager ID available")
+            logger.warning("No capture manager ID available")
             return nil
         }
         return previewManager.captureManagers[id]
@@ -71,7 +74,7 @@ struct SelectionView: View {
         .id(windowListRefreshToken)
         .onChange(of: selectedWindow) { oldValue, newValue in
             if let window = newValue {
-                AppLogger.interface.info("Window selected: '\(window.title ?? "Untitled")'")
+                logger.info("Window selected: '\(window.title ?? "Untitled")'")
             }
         }
     }
@@ -90,6 +93,11 @@ struct SelectionView: View {
     }
 
     private func initializeCaptureSystem() async {
+        guard !onFirstInitialization else {
+            onFirstInitialization = false
+            return
+        }
+
         guard let captureManager = activeCaptureManager else {
             logger.error("Setup failed: No valid capture manager")
             initializationError = "Setup failed"

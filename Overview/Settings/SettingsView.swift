@@ -13,7 +13,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
-    @ObservedObject var previewManager: PreviewManager
+    @ObservedObject var windowManager: WindowManager
     @State private var isAddingHotkey = false
     @State private var showingResetAlert = false
 
@@ -78,7 +78,7 @@ struct SettingsView: View {
             sectionHeader("Border Overlay")
             Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
                 .onChange(of: appSettings.showFocusedBorder) { _, newValue in
-                    AppLogger.settings.info("Window border visibility changed: \(newValue)")
+                    logger.info("Window border visibility changed: \(newValue)")
                 }
 
             if appSettings.showFocusedBorder {
@@ -104,7 +104,7 @@ struct SettingsView: View {
             sectionHeader("Title Overlay")
             Toggle("Show window title", isOn: $appSettings.showWindowTitle)
                 .onChange(of: appSettings.showWindowTitle) { _, newValue in
-                    AppLogger.settings.info("Window title visibility changed: \(newValue)")
+                    logger.info("Window title visibility changed: \(newValue)")
                 }
 
             if appSettings.showWindowTitle {
@@ -196,7 +196,7 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .onChange(of: appSettings.frameRate) { _, newValue in
-                AppLogger.settings.info("Frame rate changed: \(Int(newValue)) FPS")
+                logger.info("Frame rate changed: \(Int(newValue)) FPS")
             }
             Text("Higher frame rates provide smoother previews but use more system resources.")
                 .font(.caption)
@@ -213,7 +213,10 @@ struct SettingsView: View {
             addHotkeyButton
         }
         .sheet(isPresented: $isAddingHotkey) {
-            HotkeyBindingSheet(appSettings: appSettings)
+            HotkeyBindingSheet(
+                appSettings: appSettings,
+                windowManager: windowManager
+            )
         }
     }
 

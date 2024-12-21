@@ -15,6 +15,7 @@ import SwiftUI
 struct HotkeyBindingSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var appSettings: AppSettings
+    @ObservedObject var windowManager: WindowManager
 
     @State private var selectedWindow: SCWindow?
     @State private var currentShortcut: HotkeyBinding?
@@ -98,7 +99,7 @@ struct HotkeyBindingSheet: View {
 
     private func loadAvailableWindows() {
         Task {
-            availableWindows = await WindowManager.shared.getFilteredWindows()
+            availableWindows = await windowManager.getFilteredWindows()
             AppLogger.windows.info("Retrieved \(availableWindows.count) windows for binding")
         }
     }

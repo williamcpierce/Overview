@@ -11,17 +11,18 @@
 import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
-    @Binding var isEditModeEnabled: Bool
+    @Binding var editMode: Bool
+    
     private let logger = AppLogger.interface
+    let bringToFront: Bool
     let bringToFrontAction: () -> Void
     let toggleEditModeAction: () -> Void
 
     func makeNSView(context: Context) -> NSView {
-        AppLogger.interface.debug("Creating interaction overlay view")
 
         let view = InputHandler()
-        view.isEditModeEnabled = isEditModeEnabled
-        view.isBringToFrontEnabled = isBringToFrontEnabled
+        view.editMode = editMode
+        view.bringToFront = bringToFront
         view.bringToFrontAction = bringToFrontAction
         view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextualMenu(for: view)
@@ -38,8 +39,8 @@ struct InteractionOverlay: NSViewRepresentable {
 
         logger.info(
             "Updating interaction overlay state: editMode=\(editMode)")
-        view.isEditModeEnabled = isEditModeEnabled
-        view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
+        view.editMode = editMode
+        view.editModeMenuItem?.state = editMode ? .on : .off
     }
 
     private func createContextualMenu(for view: InputHandler) -> NSMenu {
@@ -69,14 +70,15 @@ struct InteractionOverlay: NSViewRepresentable {
 }
 
 private final class InputHandler: NSView {
-    var isEditModeEnabled = false
-    var isBringToFrontEnabled = false
+    private let logger = AppLogger.interface
+    var editMode = false
+    var bringToFront = false
     var bringToFrontAction: (() -> Void)?
     var toggleEditModeAction: (() -> Void)?
     weak var editModeMenuItem: NSMenuItem?
 
     override func mouseDown(with event: NSEvent) {
-        if !isEditModeEnabled && isBringToFrontEnabled {
+        if !editMode && bringToFront {
             logger.info("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {

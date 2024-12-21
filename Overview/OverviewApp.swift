@@ -13,32 +13,36 @@ import SwiftUI
 
 @main
 struct OverviewApp: App {
-    @StateObject private var previewManager: PreviewManager
     @StateObject private var appSettings: AppSettings
+    @StateObject private var previewManager: PreviewManager
+    @StateObject private var windowManager: WindowManager
     @StateObject private var hotkeyManager: HotkeyManager
 
     init() {
         let settings = AppSettings()
-        let preview = PreviewManager(appSettings: settings)
-
-        // WindowManager singleton must be initialized before HotkeyManager
-        _ = WindowManager.shared
-
+        let preview = PreviewManager(
+            appSettings: settings
+        )
+        let window = WindowManager(
+            appSettings: settings
+        )
+        let hotkey = HotkeyManager(
+            appSettings: settings,
+            windowManager: window
+        )
+        
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
-        self._hotkeyManager = StateObject(wrappedValue: HotkeyManager())
-
-        initializeStoredHotkeys(settings)
+        self._windowManager = StateObject(wrappedValue: window)
+        self._hotkeyManager = StateObject(wrappedValue: hotkey)
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView(
-                previewManager: previewManager,
-                isEditModeEnabled: $previewManager.isEditModeEnabled,
-                appSettings: appSettings
+                appSettings: appSettings,
+                previewManager: previewManager
             )
-            .onAppear(perform: initializeHotkeySystem)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(
@@ -47,27 +51,15 @@ struct OverviewApp: App {
         )
         .commands {
             CommandMenu("Edit") {
-                Toggle("Edit Mode", isOn: $previewManager.isEditModeEnabled)
+                Toggle("Edit Mode", isOn: $previewManager.editMode)
             }
         }
 
         Settings {
             SettingsView(
                 appSettings: appSettings,
-                previewManager: previewManager
+                windowManager: windowManager
             )
-        }
-    }
-
-    private func initializeHotkeySystem() {
-        _ = HotkeyService.shared
-    }
-
-    private func initializeStoredHotkeys(_ settings: AppSettings) {
-        do {
-            try HotkeyService.shared.registerHotkeys(settings.hotkeyBindings)
-        } catch {
-            AppLogger.settings.error("Failed to register hotkeys: \(error.localizedDescription)")
         }
     }
 }

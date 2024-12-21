@@ -12,15 +12,17 @@
 
 import Combine
 import ScreenCaptureKit
+import SwiftUI
 
 @MainActor
 class CaptureManager: ObservableObject {
+    @ObservedObject private var appSettings: AppSettings
+
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var availableWindows: [SCWindow] = []
     @Published private(set) var isCapturing = false
     @Published private(set) var isSourceWindowFocused = false
     @Published private(set) var windowTitle: String?
-
     @Published var selectedWindow: SCWindow? {
         didSet {
             windowTitle = selectedWindow?.title
@@ -34,7 +36,6 @@ class CaptureManager: ObservableObject {
 
     private let windowServices = WindowServices.shared
     private let contentService = ShareableContentService.shared
-    private let userSettings: AppSettings
     private let streamEngine: CaptureEngine
     private let streamConfigurationService: StreamConfigurationService
     private let logger = AppLogger.capture
@@ -44,7 +45,7 @@ class CaptureManager: ObservableObject {
         captureEngine: CaptureEngine = CaptureEngine(),
         streamConfig: StreamConfigurationService = StreamConfigurationService()
     ) {
-        self.userSettings = appSettings
+        self.appSettings = appSettings
         self.streamEngine = captureEngine
         self.streamConfigurationService = streamConfig
         initializeWindowStateObservers()
@@ -72,7 +73,7 @@ class CaptureManager: ObservableObject {
         guard let targetWindow = selectedWindow else { throw CaptureError.noWindowSelected }
 
         let (config, filter) = streamConfigurationService.createConfiguration(
-            targetWindow, frameRate: userSettings.frameRate)
+            targetWindow, frameRate: appSettings.frameRate)
         let frameStream = streamEngine.startCapture(configuration: config, filter: filter)
 
         await startFrameProcessing(stream: frameStream)
@@ -110,7 +111,7 @@ class CaptureManager: ObservableObject {
             }
         )
 
-        userSettings.$frameRate
+        appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in
                 Task { await self?.synchronizeStreamConfiguration() }
@@ -156,7 +157,7 @@ class CaptureManager: ObservableObject {
             try await streamConfigurationService.updateConfiguration(
                 streamEngine.stream,
                 targetWindow,
-                frameRate: userSettings.frameRate)
+                frameRate: appSettings.frameRate)
         } catch {
             logger.logError(
                 error,
