@@ -22,7 +22,7 @@ final class WindowManager: ObservableObject {
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 
-    private init() {
+    init() {
         setupPeriodicCacheSync()
     }
 

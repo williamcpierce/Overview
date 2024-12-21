@@ -23,14 +23,12 @@ struct OverviewApp: App {
         let preview = PreviewManager(
             appSettings: settings
         )
-        let window = WindowManager(
-            appSettings: settings
-        )
+        let window = WindowManager()
         let hotkey = HotkeyManager(
             appSettings: settings,
             windowManager: window
         )
-        
+
         self._appSettings = StateObject(wrappedValue: settings)
         self._previewManager = StateObject(wrappedValue: preview)
         self._windowManager = StateObject(wrappedValue: window)
