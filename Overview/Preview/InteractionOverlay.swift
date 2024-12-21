@@ -37,7 +37,7 @@ struct InteractionOverlay: NSViewRepresentable {
             return
         }
 
-        logger.info(
+        logger.debug(
             "Updating interaction overlay state: editMode=\(editMode)")
         view.editMode = editMode
         view.editModeMenuItem?.state = editMode ? .on : .off
@@ -79,10 +79,10 @@ private final class InputHandler: NSView {
 
     override func mouseDown(with event: NSEvent) {
         if !editMode && bringToFront {
-            logger.info("Mouse down triggered window focus action")
+            logger.debug("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
-            logger.info("Mouse down handled by system: editMode=\(editMode)")
+            logger.debug("Mouse down handled by system: editMode=\(editMode)")
             super.mouseDown(with: event)
         }
     }

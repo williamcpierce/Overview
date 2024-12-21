@@ -33,10 +33,6 @@ struct ContentView: View {
         self._windowAspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
-
-        logger.info(
-            "ContentView initialized with default aspect ratio: \(appSettings.defaultWindowWidth / appSettings.defaultWindowHeight)"
-        )
     }
 
     var body: some View {
