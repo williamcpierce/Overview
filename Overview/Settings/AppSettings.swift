@@ -199,6 +199,13 @@ class AppSettings: ObservableObject {
 
         hotkeyBindings = decoded
         AppLogger.settings.info("Loaded \(decoded.count) saved hotkey bindings")
+        
+        do {
+            try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+        } catch {
+            AppLogger.settings.error(
+                "Failed to register hotkeys: \(error.localizedDescription)")
+        }
     }
 
     private func clearHotkeyBindings() {
