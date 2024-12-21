@@ -12,7 +12,7 @@ import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
     @Binding var editMode: Bool
-    
+
     private let logger = AppLogger.interface
     let bringToFront: Bool
     let bringToFrontAction: () -> Void

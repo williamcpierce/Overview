@@ -15,7 +15,7 @@ import SwiftUI
 final class HotkeyManager: ObservableObject {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var windowManager: WindowManager
-    
+
     let hotkeyService = HotkeyService.shared
     private let logger = AppLogger.hotkeys
 
@@ -26,7 +26,7 @@ final class HotkeyManager: ObservableObject {
         logger.debug("Initializing HotkeyManager")
         self.appSettings = appSettings
         self.windowManager = windowManager
-        
+
         do {
             try hotkeyService.initializeEventHandler()
             logger.debug("HotkeyManager successfully initialized")
