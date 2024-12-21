@@ -11,21 +11,7 @@
 
 import Carbon
 import Cocoa
-
-struct HotkeyEventProcessor {
-    let id: UInt32
-    let timestamp: Date
-    private static let minimumProcessingInterval: TimeInterval = 0.2
-
-    func shouldProcess(after previousEvent: HotkeyEventProcessor?) -> Bool {
-        guard let previous = previousEvent,
-            id == previous.id
-        else {
-            return true
-        }
-        return timestamp.timeIntervalSince(previous.timestamp) > Self.minimumProcessingInterval
-    }
-}
+import SwiftUI
 
 final class HotkeyService {
     static let shared = HotkeyService()
@@ -40,51 +26,12 @@ final class HotkeyService {
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
 
-    /// Storage for persistent hotkey configurations
-    private let storage: UserDefaults
-    private let configurationKey = "hotkeyBindings"
-
     /// Thread-safe event processing queue with debounce support
     private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
     private var previousEvent: HotkeyEventProcessor?
 
     /// Registered callbacks mapped by object identity to prevent retain cycles
     private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
-
-    /// Persistent hotkey configurations with automatic storage synchronization
-    var configurations: [HotkeyBinding] {
-        get {
-            guard let data = storage.data(forKey: configurationKey),
-                let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
-            else {
-                AppLogger.hotkeys.debug("No stored configurations found")
-                return []
-            }
-            AppLogger.hotkeys.debug("Loaded \(decoded.count) stored configurations")
-            return decoded
-        }
-        set {
-            if let encoded = try? JSONEncoder().encode(newValue) {
-                storage.set(encoded, forKey: configurationKey)
-                AppLogger.hotkeys.info("Saved \(newValue.count) configurations")
-            } else {
-                AppLogger.hotkeys.error("Configuration encoding failed")
-            }
-        }
-    }
-
-    private init(storage: UserDefaults = .standard) {
-        AppLogger.hotkeys.debug("Initializing service")
-        self.storage = storage
-        do {
-            try initializeEventHandler()
-            AppLogger.hotkeys.info("Service initialized successfully")
-        } catch {
-            AppLogger.hotkeys.logError(
-                error,
-                context: "Event handler initialization failed")
-        }
-    }
 
     deinit {
         cleanupResources()
@@ -122,11 +69,9 @@ final class HotkeyService {
                 throw error
             }
         }
-
-        self.configurations = bindings
     }
 
-    private func initializeEventHandler() throws {
+    func initializeEventHandler() throws {
         logger.debug("Configuring event handler")
 
         let eventSpec = [
@@ -247,6 +192,21 @@ final class HotkeyService {
     }
 }
 
+struct HotkeyEventProcessor {
+    let id: UInt32
+    let timestamp: Date
+    private static let minimumProcessingInterval: TimeInterval = 0.2
+
+    func shouldProcess(after previousEvent: HotkeyEventProcessor?) -> Bool {
+        guard let previous = previousEvent,
+            id == previous.id
+        else {
+            return true
+        }
+        return timestamp.timeIntervalSince(previous.timestamp) > Self.minimumProcessingInterval
+    }
+}
+
 enum HotkeyError: LocalizedError {
     case registrationFailed(OSStatus)
     case eventHandlerFailed(OSStatus)
@@ -266,7 +226,6 @@ enum HotkeyError: LocalizedError {
         }
     }
 }
-
 
 enum CarbonModifierTranslator {
     static func convert(_ nsModifiers: NSEvent.ModifierFlags) -> UInt32 {
