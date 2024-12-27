@@ -20,8 +20,8 @@ class CaptureManager: ObservableObject {
 
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var availableWindows: [SCWindow] = []
-    @Published private(set) var isCapturing = false
-    @Published private(set) var isSourceWindowFocused = false
+    @Published private(set) var isCapturing: Bool = false
+    @Published private(set) var isSourceWindowFocused: Bool = false
     @Published private(set) var windowTitle: String?
     @Published var selectedWindow: SCWindow? {
         didSet {
@@ -35,10 +35,11 @@ class CaptureManager: ObservableObject {
     private let streamEngine: CaptureEngine
     private let streamConfigurationService: StreamConfigurationService
     private let logger = AppLogger.capture
+
     private var settingsSubscriptions = Set<AnyCancellable>()
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var windowStateObserverId: UUID?
-    private var hasPermission: Bool
+    private var hasPermission: Bool = false
 
     init(
         appSettings: AppSettings,
@@ -48,7 +49,6 @@ class CaptureManager: ObservableObject {
         self.appSettings = appSettings
         self.streamEngine = captureEngine
         self.streamConfigurationService = streamConfig
-        self.hasPermission = false
         initializeWindowStateObservers()
     }
 

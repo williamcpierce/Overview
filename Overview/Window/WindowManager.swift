@@ -15,6 +15,7 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
+    private let logger = AppLogger.windows
     private let windowServices = WindowServices.shared
     private let contentService = ShareableContentService.shared
     private var titleToWindowMap: [String: SCWindow] = [:]
@@ -31,7 +32,7 @@ final class WindowManager: ObservableObject {
             synchronizeTitleCache(with: filteredWindows)
             return filteredWindows
         } catch {
-            AppLogger.windows.logError(
+            logger.logError(
                 error,
                 context: "Failed to get available windows from system"
             )
@@ -43,7 +44,7 @@ final class WindowManager: ObservableObject {
     func focusWindow(withTitle title: String) -> Bool {
         let success = windowServices.windowFocus.focusWindow(withTitle: title)
         if !success {
-            AppLogger.windows.error("Failed to activate window process: '\(title)'")
+            logger.error("Failed to activate window process: '\(title)'")
         }
         return success
     }

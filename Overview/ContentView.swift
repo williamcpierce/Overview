@@ -16,7 +16,7 @@ struct ContentView: View {
     @ObservedObject var previewManager: PreviewManager
 
     @State private var captureManager: CaptureManager
-    @State private var showingSelection = true
+    @State private var showingSelection: Bool = true
     @State private var windowAspectRatio: CGFloat
     @State private var capturedWindowDimensions: CGSize?
 
@@ -78,7 +78,7 @@ struct ContentView: View {
             }
         )
     }
-    
+
     private var windowBackground: some View {
         Color.black.opacity(showingSelection ? appSettings.opacity : 0)
     }

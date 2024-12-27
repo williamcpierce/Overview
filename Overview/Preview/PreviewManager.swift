@@ -13,5 +13,5 @@ import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
-    @Published var editModeEnabled = false
+    @Published var editModeEnabled: Bool = false
 }

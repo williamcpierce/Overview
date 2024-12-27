@@ -120,7 +120,8 @@ class AppSettings: ObservableObject {
         }
     }
 
-    private var isInitializing = true
+    private let logger = AppLogger.settings
+    private var isInitializing: Bool = true
 
     init() {
         // Initialize with default values to ensure didSet triggers
@@ -138,12 +139,12 @@ class AppSettings: ObservableObject {
         self.enableEditModeAlignment = false
         self.hotkeyBindings = []
 
-        AppLogger.settings.debug("Initializing settings")
+        logger.debug("Initializing settings")
         initializeFromDefaults()
         loadHotkeyBindings()
         validateAllSettings()
         isInitializing = false
-        AppLogger.settings.debug("Settings initialization complete")
+        logger.debug("Settings initialization complete")
     }
 
     var defaultWindowSize: CGSize {
@@ -151,7 +152,7 @@ class AppSettings: ObservableObject {
     }
 
     func resetToDefaults() {
-        AppLogger.settings.info("Resetting to default settings")
+        logger.info("Resetting to default settings")
 
         let domain = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -160,7 +161,7 @@ class AppSettings: ObservableObject {
         applyDefaultSettings()
         clearHotkeyBindings()
 
-        AppLogger.settings.info("Settings reset completed")
+        logger.info("Settings reset completed")
     }
 
     private func initializeFromDefaults() {
@@ -198,12 +199,12 @@ class AppSettings: ObservableObject {
         else { return }
 
         hotkeyBindings = decoded
-        AppLogger.settings.info("Loaded \(decoded.count) saved hotkey bindings")
-        
+        logger.info("Loaded \(decoded.count) saved hotkey bindings")
+
         do {
             try HotkeyService.shared.registerHotkeys(hotkeyBindings)
         } catch {
-            AppLogger.settings.error(
+            logger.error(
                 "Failed to register hotkeys: \(error.localizedDescription)")
         }
     }
@@ -212,9 +213,9 @@ class AppSettings: ObservableObject {
         hotkeyBindings = []
         do {
             try HotkeyService.shared.registerHotkeys(hotkeyBindings)
-            AppLogger.settings.info("Cleared all hotkey bindings")
+            logger.info("Cleared all hotkey bindings")
         } catch {
-            AppLogger.settings.error("Failed to clear hotkeys: \(error.localizedDescription)")
+            logger.error("Failed to clear hotkeys: \(error.localizedDescription)")
         }
     }
 

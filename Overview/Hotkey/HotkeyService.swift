@@ -14,7 +14,7 @@ import Cocoa
 import SwiftUI
 
 final class HotkeyService {
-    static let shared = HotkeyService()
+    static let shared: HotkeyService = HotkeyService()
     private let logger = AppLogger.hotkeys
 
     /// Maximum concurrent hotkey registrations to prevent resource exhaustion

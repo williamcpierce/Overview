@@ -16,12 +16,12 @@ struct AppLogger {
         dict, category in
         dict[category] = Logger(subsystem: subsystem, category: category.rawValue)
     }
-    static let capture = CategoryLogger(category: .capture)
-    static let windows = CategoryLogger(category: .windows)
-    static let hotkeys = CategoryLogger(category: .hotkeys)
-    static let settings = CategoryLogger(category: .settings)
-    static let performance = CategoryLogger(category: .performance)
-    static let interface = CategoryLogger(category: .interface)
+    static let capture: CategoryLogger = CategoryLogger(category: .capture)
+    static let windows: CategoryLogger = CategoryLogger(category: .windows)
+    static let hotkeys: CategoryLogger = CategoryLogger(category: .hotkeys)
+    static let settings: CategoryLogger = CategoryLogger(category: .settings)
+    static let performance: CategoryLogger = CategoryLogger(category: .performance)
+    static let interface: CategoryLogger = CategoryLogger(category: .interface)
 }
 
 extension AppLogger {

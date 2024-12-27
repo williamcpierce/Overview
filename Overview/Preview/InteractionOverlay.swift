@@ -16,7 +16,7 @@ struct InteractionOverlay: NSViewRepresentable {
 
     let editModeAction: () -> Void
     let bringToFrontAction: () -> Void
-    
+
     private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {

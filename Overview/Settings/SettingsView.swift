@@ -15,8 +15,8 @@ struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
 
-    @State private var isAddingHotkey = false
-    @State private var showingResetAlert = false
+    @State private var isAddingHotkey: Bool = false
+    @State private var showingResetAlert: Bool = false
 
     private let logger = AppLogger.settings
     private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]

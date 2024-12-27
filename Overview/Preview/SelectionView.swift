@@ -19,11 +19,11 @@ struct SelectionView: View {
     @Binding var selectedWindowSize: CGSize?
 
     @State private var selectedWindow: SCWindow?
-    @State private var isInitializing = true
-    @State private var initializationError = ""
-    @State private var windowListRefreshToken = UUID()
-    @State private var firstInitialization = true
-    
+    @State private var isInitializing: Bool = true
+    @State private var initializationError: String = ""
+    @State private var windowListRefreshToken: UUID = UUID()
+    @State private var firstInitialization: Bool = true
+
     private let logger = AppLogger.interface
 
     var body: some View {
@@ -57,8 +57,7 @@ struct SelectionView: View {
         Picker("", selection: $selectedWindow) {
             if isInitializing {
                 Text("Loading...").tag(nil as SCWindow?)
-            }
-            else {
+            } else {
                 Text("Select a window").tag(nil as SCWindow?)
                 ForEach(captureManager.availableWindows, id: \.windowID) { window in
                     Text(window.title ?? "Untitled").tag(window as SCWindow?)
@@ -91,7 +90,7 @@ struct SelectionView: View {
             firstInitialization = false
             return
         }
-        
+
         do {
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()

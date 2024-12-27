@@ -19,7 +19,9 @@ struct PreviewView: View {
     @Binding private var editModeEnabled: Bool
     @Binding private var showingSelection: Bool
 
-    @State private var firstInitialization = true
+    @State private var firstInitialization: Bool = true
+
+    private let logger = AppLogger.interface
 
     init(
         appSettings: AppSettings,
@@ -85,16 +87,16 @@ struct PreviewView: View {
             firstInitialization = false
             return
         }
-        
+
         Task {
-            AppLogger.interface.info("PreviewView appeared, starting capture")
+            logger.info("PreviewView appeared, starting capture")
             try? await captureManager.startCapture()
         }
     }
 
     private func cleanupCapture() {
         Task {
-            AppLogger.interface.info("PreviewView disappeared, stopping capture")
+            logger.info("PreviewView disappeared, stopping capture")
             await captureManager.stopCapture()
         }
     }

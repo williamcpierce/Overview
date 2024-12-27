@@ -13,7 +13,7 @@ import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
- 
+
     let windowTitle: String
 
     func makeNSView(context: Context) -> NSButton {
@@ -36,6 +36,8 @@ struct HotkeyRecorder: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject {
+        private let logger = AppLogger.hotkeys
+
         private var parent: HotkeyRecorder
         private var isRecordingActive = false
         private var activeModifierKeys: NSEvent.ModifierFlags = []
@@ -44,7 +46,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         init(_ parent: HotkeyRecorder) {
             self.parent = parent
             super.init()
-            AppLogger.hotkeys.debug("Initializing recorder for window: '\(parent.windowTitle)'")
+            logger.debug("Initializing recorder for window: '\(parent.windowTitle)'")
         }
 
         @objc func buttonClicked(_ sender: NSButton) {
@@ -71,7 +73,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             }
 
             if keyboardMonitor == nil {
-                AppLogger.hotkeys.error("Event monitor creation failed")
+                logger.error("Event monitor creation failed")
             }
         }
 
@@ -104,7 +106,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         private func processKeyPress(_ event: NSEvent) {
             let securityRequiredModifiers: NSEvent.ModifierFlags = [.command, .control, .option]
             guard !securityRequiredModifiers.intersection(activeModifierKeys).isEmpty else {
-                AppLogger.hotkeys.warning("Rejected key press without required modifiers")
+                logger.warning("Rejected key press without required modifiers")
                 return
             }
 

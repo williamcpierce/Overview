@@ -18,8 +18,9 @@ final class WindowServices {
     let windowFocus = WindowFocusService()
     let titleService = WindowTitleService()
     let windowObserver = WindowObserverService()
+    private let logger = AppLogger.windows
 
     private init() {
-        AppLogger.windows.debug("Initializing window services container")
+        logger.debug("Initializing window services container")
     }
 }

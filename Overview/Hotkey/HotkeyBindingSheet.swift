@@ -19,7 +19,7 @@ struct HotkeyBindingSheet: View {
 
     @State private var selectedWindow: SCWindow?
     @State private var currentShortcut: HotkeyBinding?
-    @State private var validationError = ""
+    @State private var validationError: String = ""
     @State private var availableWindows: [SCWindow] = []
 
     var body: some View {
