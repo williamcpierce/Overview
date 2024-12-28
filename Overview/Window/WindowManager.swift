@@ -17,7 +17,7 @@ import SwiftUI
 final class WindowManager: ObservableObject {
     private let logger = AppLogger.windows
     private let windowServices = WindowServices.shared
-    private let contentService = ShareableContentService.shared
+    private let captureServices = CaptureServices.shared
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 
@@ -27,7 +27,7 @@ final class WindowManager: ObservableObject {
 
     func getFilteredWindows() async -> [SCWindow] {
         do {
-            let systemWindows = try await contentService.getAvailableWindows()
+            let systemWindows = try await captureServices.captureAvailability.getAvailableWindows()
             let filteredWindows = windowServices.windowFilter.filterWindows(systemWindows)
             synchronizeTitleCache(with: filteredWindows)
             return filteredWindows

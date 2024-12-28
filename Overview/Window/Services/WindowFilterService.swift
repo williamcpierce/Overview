@@ -1,5 +1,5 @@
 /*
- Window/Service/WindowFilterService.swift
+ Window/Services/WindowFilterService.swift
  Overview
 
  Created by William Pierce on 12/15/24.

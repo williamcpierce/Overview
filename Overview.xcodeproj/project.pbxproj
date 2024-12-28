@@ -52,10 +52,10 @@
 		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Service/WindowFilterService.swift,
-				Service/WindowFocusService.swift,
-				Service/WindowObserverService.swift,
-				Service/WindowTitleService.swift,
+				Services/WindowFilterService.swift,
+				Services/WindowFocusService.swift,
+				Services/WindowObserverService.swift,
+				Services/WindowTitleService.swift,
 				WindowManager.swift,
 				WindowServices.swift,
 			);
@@ -87,8 +87,9 @@
 				Capture.swift,
 				CaptureEngine.swift,
 				CaptureManager.swift,
-				Services/ShareableContentService.swift,
-				Services/StreamConfigurationService.swift,
+				CaptureServices.swift,
+				Services/CaptureAvailabilityService.swift,
+				Services/CaptureConfigurationService.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

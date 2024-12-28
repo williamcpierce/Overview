@@ -31,9 +31,8 @@ class CaptureManager: ObservableObject {
     }
 
     private let windowServices = WindowServices.shared
-    private let contentService = ShareableContentService.shared
-    private let streamEngine: CaptureEngine
-    private let streamConfigurationService: StreamConfigurationService
+    private let captureServices = CaptureServices.shared
+    private let captureEngine: CaptureEngine
     private let logger = AppLogger.capture
 
     private var settingsSubscriptions = Set<AnyCancellable>()
@@ -43,12 +42,10 @@ class CaptureManager: ObservableObject {
 
     init(
         appSettings: AppSettings,
-        captureEngine: CaptureEngine = CaptureEngine(),
-        streamConfig: StreamConfigurationService = StreamConfigurationService()
+        captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.appSettings = appSettings
-        self.streamEngine = captureEngine
-        self.streamConfigurationService = streamConfig
+        self.captureEngine = captureEngine
         initializeWindowStateObservers()
     }
 
@@ -56,7 +53,7 @@ class CaptureManager: ObservableObject {
         guard !hasPermission else { return }
 
         do {
-            try await contentService.requestPermission()
+            try await captureServices.captureAvailability.requestPermission()
             hasPermission = true
         } catch {
             logger.logError(
@@ -67,7 +64,7 @@ class CaptureManager: ObservableObject {
 
     func updateAvailableWindows() async {
         do {
-            let windows = try await contentService.getAvailableWindows()
+            let windows = try await captureServices.captureAvailability.getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowServices.windowFilter.filterWindows(windows)
             }
@@ -82,9 +79,9 @@ class CaptureManager: ObservableObject {
         guard !isCapturing else { return }
         guard let targetWindow = selectedWindow else { throw CaptureError.noWindowSelected }
 
-        let (config, filter) = streamConfigurationService.createConfiguration(
+        let (config, filter) = captureServices.captureConfiguration.createConfiguration(
             targetWindow, frameRate: appSettings.frameRate)
-        let frameStream = streamEngine.startCapture(configuration: config, filter: filter)
+        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
 
         await startFrameProcessing(stream: frameStream)
         isCapturing = true
@@ -95,7 +92,7 @@ class CaptureManager: ObservableObject {
 
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
-        await streamEngine.stopCapture()
+        await captureEngine.stopCapture()
 
         isCapturing = false
         capturedFrame = nil
@@ -164,8 +161,8 @@ class CaptureManager: ObservableObject {
         guard isCapturing, let targetWindow = selectedWindow else { return }
 
         do {
-            try await streamConfigurationService.updateConfiguration(
-                streamEngine.stream,
+            try await captureServices.captureConfiguration.updateConfiguration(
+                captureEngine.stream,
                 targetWindow,
                 frameRate: appSettings.frameRate)
         } catch {

@@ -11,7 +11,9 @@
 import SwiftUI
 
 class AppSettings: ObservableObject {
+    private let hotkeyService = HotkeyService.shared
     private let logger = AppLogger.settings
+
     private var isInitializing: Bool = true
 
     // MARK: - Default Values
@@ -27,7 +29,7 @@ class AppSettings: ObservableObject {
         static let showWindowTitle: Bool = true
         static let titleFontSize: Double = 12.0
         static let titleBackgroundOpacity: Double = 0.4
-        static let managedByMissionControl: Bool = false
+        static let managedByMissionControl: Bool = true
         static let enableEditModeAlignment: Bool = false
         static let hotkeyBindings: [HotkeyBinding] = []
     }
@@ -142,7 +144,7 @@ class AppSettings: ObservableObject {
             UserDefaults.standard.set(encoded, forKey: StorageKeys.hotkeyBindings)
 
             do {
-                try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+                try hotkeyService.registerHotkeys(hotkeyBindings)
             } catch {
                 logger.error("Failed to register hotkeys: \(error.localizedDescription)")
             }
@@ -229,7 +231,7 @@ class AppSettings: ObservableObject {
         logger.info("Loaded \(decoded.count) saved hotkey bindings")
 
         do {
-            try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+            try hotkeyService.registerHotkeys(hotkeyBindings)
         } catch {
             logger.error("Failed to register hotkeys: \(error.localizedDescription)")
         }
@@ -238,7 +240,7 @@ class AppSettings: ObservableObject {
     private func clearHotkeyBindings() {
         hotkeyBindings = Defaults.hotkeyBindings
         do {
-            try HotkeyService.shared.registerHotkeys(hotkeyBindings)
+            try hotkeyService.registerHotkeys(hotkeyBindings)
             logger.info("Cleared all hotkey bindings")
         } catch {
             logger.error("Failed to clear hotkeys: \(error.localizedDescription)")

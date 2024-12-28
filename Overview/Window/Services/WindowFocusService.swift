@@ -1,5 +1,5 @@
 /*
- Window/Service/WindowFocusService.swift
+ Window/Services/WindowFocusService.swift
  Overview
 
  Created by William Pierce on 12/15/24.

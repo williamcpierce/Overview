@@ -1,5 +1,5 @@
 /*
- Capture/Service/StreamConfigurationService.swift
+ Capture/Services/CaptureConfigurationService.swift
  Overview
 
  Created by William Pierce on 12/6/24.
@@ -11,7 +11,7 @@
 
 import ScreenCaptureKit
 
-final class StreamConfigurationService {
+final class CaptureConfigurationService {
     private let logger = AppLogger.capture
 
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (

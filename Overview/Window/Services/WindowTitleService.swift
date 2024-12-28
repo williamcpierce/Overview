@@ -1,5 +1,5 @@
 /*
- Window/WindowServices.swift
+ Window/Services/WindowTitleService.swift
  Overview
 
  Created by William Pierce on 12/15/24.

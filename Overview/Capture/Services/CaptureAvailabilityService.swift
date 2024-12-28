@@ -1,5 +1,5 @@
 /*
- Capture/Services/ShareableContentService.swift
+ Capture/Services/CaptureAvailabilityService.swift
  Overview
 
  Created by William Pierce on 12/15/24.
@@ -7,8 +7,7 @@
 
 import ScreenCaptureKit
 
-final class ShareableContentService {
-    static let shared = ShareableContentService()
+final class CaptureAvailabilityService {
     private let logger = AppLogger.capture
 
     func requestPermission() async throws {
