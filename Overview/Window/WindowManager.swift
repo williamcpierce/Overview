@@ -1,5 +1,5 @@
 /*
- Hotkey/WindowManager.swift
+ Window/WindowManager.swift
  Overview
 
  Created by William Pierce on 12/10/24.
@@ -10,35 +10,29 @@
  system overhead.
 */
 
-import AppKit
 import ScreenCaptureKit
+import SwiftUI
 
 @MainActor
-protocol WindowManageable {
-    func getAvailableWindows() async -> [SCWindow]
-    func focusWindow(withTitle title: String) -> Bool
-}
-
-@MainActor
-final class WindowManager: WindowManageable {
-    static let shared = WindowManager()
-
+final class WindowManager: ObservableObject {
+    private let logger = AppLogger.windows
     private let windowServices = WindowServices.shared
+    private let captureServices = CaptureServices.shared
     private var titleToWindowMap: [String: SCWindow] = [:]
     private var cacheSyncTimer: Timer?
 
-    private init() {
+    init() {
         setupPeriodicCacheSync()
     }
 
-    func getAvailableWindows() async -> [SCWindow] {
+    func getFilteredWindows() async -> [SCWindow] {
         do {
-            let systemWindows = try await windowServices.shareableContent.getAvailableWindows()
+            let systemWindows = try await captureServices.captureAvailability.getAvailableWindows()
             let filteredWindows = windowServices.windowFilter.filterWindows(systemWindows)
             synchronizeTitleCache(with: filteredWindows)
             return filteredWindows
         } catch {
-            AppLogger.windows.logError(
+            logger.logError(
                 error,
                 context: "Failed to get available windows from system"
             )
@@ -50,7 +44,7 @@ final class WindowManager: WindowManageable {
     func focusWindow(withTitle title: String) -> Bool {
         let success = windowServices.windowFocus.focusWindow(withTitle: title)
         if !success {
-            AppLogger.windows.error("Failed to activate window process: '\(title)'")
+            logger.error("Failed to activate window process: '\(title)'")
         }
         return success
     }
@@ -59,7 +53,7 @@ final class WindowManager: WindowManageable {
         cacheSyncTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
             [weak self] _ in
             Task { @MainActor [weak self] in
-                _ = await self?.getAvailableWindows()
+                _ = await self?.getFilteredWindows()
             }
         }
     }

@@ -13,20 +13,25 @@ import SwiftUI
 
 @MainActor
 struct PreviewView: View {
-    @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var appSettings: AppSettings
-    @Binding private var isEditModeEnabled: Bool
+    @ObservedObject private var captureManager: CaptureManager
+
+    @Binding private var editModeEnabled: Bool
     @Binding private var showingSelection: Bool
 
+    @State private var firstInitialization: Bool = true
+
+    private let logger = AppLogger.interface
+
     init(
-        captureManager: CaptureManager,
         appSettings: AppSettings,
-        isEditModeEnabled: Binding<Bool>,
+        captureManager: CaptureManager,
+        editModeEnabled: Binding<Bool>,
         showingSelection: Binding<Bool>
     ) {
         self.captureManager = captureManager
         self.appSettings = appSettings
-        self._isEditModeEnabled = isEditModeEnabled
+        self._editModeEnabled = editModeEnabled
         self._showingSelection = showingSelection
     }
 
@@ -44,15 +49,14 @@ struct PreviewView: View {
     }
 
     private var placeholderView: some View {
-        Color.black.opacity(appSettings.opacity)
+        Color.black.opacity(appSettings.windowOpacity)
     }
 
     private func previewWithOverlays(frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(getFocusIndicatorOverlay())
             .overlay(getTitleOverlay())
-            .opacity(appSettings.opacity)
-            .overlay(interactionLayer)
+            .opacity(appSettings.windowOpacity)
     }
 
     private func getFocusIndicatorOverlay() -> AnyView {
@@ -78,25 +82,21 @@ struct PreviewView: View {
         )
     }
 
-    private var interactionLayer: some View {
-        InteractionOverlay(
-            isEditModeEnabled: $isEditModeEnabled,
-            isBringToFrontEnabled: true,
-            bringToFrontAction: requestWindowFocus,
-            toggleEditModeAction: toggleEditMode
-        )
-    }
-
     private func initializeCapture() {
+        guard !firstInitialization else {
+            firstInitialization = false
+            return
+        }
+
         Task {
-            AppLogger.interface.debug("PreviewView appeared, starting capture")
+            logger.info("PreviewView appeared, starting capture")
             try? await captureManager.startCapture()
         }
     }
 
     private func cleanupCapture() {
         Task {
-            AppLogger.interface.debug("PreviewView disappeared, stopping capture")
+            logger.info("PreviewView disappeared, stopping capture")
             await captureManager.stopCapture()
         }
     }
@@ -105,16 +105,6 @@ struct PreviewView: View {
         if !newValue {
             showingSelection = true
         }
-    }
-
-    private func requestWindowFocus() {
-        AppLogger.interface.info("User requested window focus")
-        captureManager.focusWindow(isEditModeEnabled: isEditModeEnabled)
-    }
-
-    private func toggleEditMode() {
-        AppLogger.interface.info("User toggled edit mode: \(!isEditModeEnabled)")
-        isEditModeEnabled.toggle()
     }
 }
 

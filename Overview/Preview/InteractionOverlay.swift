@@ -11,39 +11,41 @@
 import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
-    @Binding var isEditModeEnabled: Bool
-    let isBringToFrontEnabled: Bool
+    @Binding var editModeEnabled: Bool
+    @Binding var showingSelection: Bool
+
+    let editModeAction: () -> Void
     let bringToFrontAction: () -> Void
-    let toggleEditModeAction: () -> Void
+
+    private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {
-        AppLogger.interface.debug("Creating interaction overlay view")
-
         let view = InputHandler()
-        view.isEditModeEnabled = isEditModeEnabled
-        view.isBringToFrontEnabled = isBringToFrontEnabled
+        view.editModeEnabled = editModeEnabled
+        view.showingSelection = showingSelection
+        view.editModeAction = editModeAction
         view.bringToFrontAction = bringToFrontAction
-        view.toggleEditModeAction = toggleEditModeAction
         view.menu = createContextualMenu(for: view)
 
-        AppLogger.interface.info("Interaction overlay view configured")
+        logger.info("Interaction overlay view configured")
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let view = nsView as? InputHandler else {
-            AppLogger.interface.warning("Invalid view type in updateNSView")
+            logger.warning("Invalid view type in updateNSView")
             return
         }
 
-        AppLogger.interface.debug(
-            "Updating interaction overlay state: editMode=\(isEditModeEnabled)")
-        view.isEditModeEnabled = isEditModeEnabled
-        view.editModeMenuItem?.state = isEditModeEnabled ? .on : .off
+        logger.debug(
+            "Updating interaction overlay state: editMode=\(editModeEnabled)")
+        view.editModeEnabled = editModeEnabled
+        view.showingSelection = showingSelection
+        view.editModeMenuItem?.state = editModeEnabled ? .on : .off
     }
 
     private func createContextualMenu(for view: InputHandler) -> NSMenu {
-        AppLogger.interface.debug("Creating context menu for interaction overlay")
+        logger.info("Creating context menu for interaction overlay")
 
         let menu = NSMenu()
         let editModeItem = NSMenuItem(
@@ -69,24 +71,25 @@ struct InteractionOverlay: NSViewRepresentable {
 }
 
 private final class InputHandler: NSView {
-    var isEditModeEnabled = false
-    var isBringToFrontEnabled = false
+    private let logger = AppLogger.interface
+    var editModeEnabled = false
+    var showingSelection = false
+    var editModeAction: (() -> Void)?
     var bringToFrontAction: (() -> Void)?
-    var toggleEditModeAction: (() -> Void)?
     weak var editModeMenuItem: NSMenuItem?
 
     override func mouseDown(with event: NSEvent) {
-        if !isEditModeEnabled && isBringToFrontEnabled {
-            AppLogger.interface.debug("Mouse down triggered window focus action")
+        if !editModeEnabled && !showingSelection {
+            logger.debug("Mouse down triggered window focus action")
             bringToFrontAction?()
         } else {
-            AppLogger.interface.debug("Mouse down handled by system: editMode=\(isEditModeEnabled)")
+            logger.debug("Mouse down handled by system: editMode=\(editModeEnabled)")
             super.mouseDown(with: event)
         }
     }
 
     @objc func toggleEditMode() {
-        AppLogger.interface.info("Edit mode toggled via context menu")
-        toggleEditModeAction?()
+        logger.info("Edit mode toggled via context menu")
+        editModeAction?()
     }
 }

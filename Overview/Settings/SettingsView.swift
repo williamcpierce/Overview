@@ -1,5 +1,5 @@
 /*
- Hotkey/SettingsView.swift
+ Settings/SettingsView.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -13,10 +13,12 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
-    @ObservedObject var previewManager: PreviewManager
-    @State private var isAddingHotkey = false
-    @State private var showingResetAlert = false
+    @ObservedObject var windowManager: WindowManager
 
+    @State private var isAddingHotkey: Bool = false
+    @State private var showingResetAlert: Bool = false
+
+    private let logger = AppLogger.settings
     private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
@@ -77,7 +79,7 @@ struct SettingsView: View {
             sectionHeader("Border Overlay")
             Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
                 .onChange(of: appSettings.showFocusedBorder) { _, newValue in
-                    AppLogger.settings.info("Window border visibility changed: \(newValue)")
+                    logger.info("Window border visibility changed: \(newValue)")
                 }
 
             if appSettings.showFocusedBorder {
@@ -103,7 +105,7 @@ struct SettingsView: View {
             sectionHeader("Title Overlay")
             Toggle("Show window title", isOn: $appSettings.showWindowTitle)
                 .onChange(of: appSettings.showWindowTitle) { _, newValue in
-                    AppLogger.settings.info("Window title visibility changed: \(newValue)")
+                    logger.info("Window title visibility changed: \(newValue)")
                 }
 
             if appSettings.showWindowTitle {
@@ -158,8 +160,8 @@ struct SettingsView: View {
         Section {
             sectionHeader("Opacity")
             HStack(spacing: 8) {
-                OpacitySlider(value: $appSettings.opacity)
-                Text("\(Int(appSettings.opacity * 100))%")
+                OpacitySlider(value: $appSettings.windowOpacity)
+                Text("\(Int(appSettings.windowOpacity * 100))%")
                     .foregroundColor(.secondary)
                     .frame(width: 40)
             }
@@ -195,7 +197,7 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .onChange(of: appSettings.frameRate) { _, newValue in
-                AppLogger.settings.info("Frame rate changed: \(Int(newValue)) FPS")
+                logger.info("Frame rate changed: \(Int(newValue)) FPS")
             }
             Text("Higher frame rates provide smoother previews but use more system resources.")
                 .font(.caption)
@@ -212,7 +214,10 @@ struct SettingsView: View {
             addHotkeyButton
         }
         .sheet(isPresented: $isAddingHotkey) {
-            HotkeyBindingSheet(appSettings: appSettings)
+            HotkeyBindingSheet(
+                appSettings: appSettings,
+                windowManager: windowManager
+            )
         }
     }
 
@@ -255,7 +260,7 @@ struct SettingsView: View {
                 .frame(width: 120)
                 .textFieldStyle(.roundedBorder)
                 .onChange(of: binding.wrappedValue) { _, newValue in
-                    AppLogger.settings.info(
+                    logger.info(
                         "Default window \(label.lowercased()) changed: \(newValue)px")
                 }
             Text("px")
@@ -266,14 +271,14 @@ struct SettingsView: View {
     private var missionControlToggle: some View {
         Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
             .onChange(of: appSettings.managedByMissionControl) { _, newValue in
-                AppLogger.settings.info("Mission Control integration changed: \(newValue)")
+                logger.info("Mission Control integration changed: \(newValue)")
             }
     }
 
     private var editModeAlignmentToggle: some View {
         Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
             .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in
-                AppLogger.settings.info("Edit mode alignment changed: \(newValue)")
+                logger.info("Edit mode alignment changed: \(newValue)")
             }
     }
 
@@ -287,7 +292,7 @@ struct SettingsView: View {
 
     private var addHotkeyButton: some View {
         Button("Add Hotkey") {
-            AppLogger.settings.debug("Opening hotkey binding sheet")
+            logger.debug("Opening hotkey binding sheet")
             isAddingHotkey = true
         }
     }
@@ -305,7 +310,7 @@ struct SettingsView: View {
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
-            AppLogger.settings.info("Hotkey binding removed: '\(binding.windowTitle)'")
+            logger.info("Hotkey binding removed: '\(binding.windowTitle)'")
         }
     }
 }

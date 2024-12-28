@@ -12,40 +12,33 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SelectionView: View {
-    @ObservedObject var previewManager: PreviewManager
     @ObservedObject var appSettings: AppSettings
-    @Binding var captureManagerId: UUID?
+    @ObservedObject var captureManager: CaptureManager
+
     @Binding var showingSelection: Bool
     @Binding var selectedWindowSize: CGSize?
 
     @State private var selectedWindow: SCWindow?
-    @State private var isInitializing = true
-    @State private var initializationError = ""
-    @State private var windowListRefreshToken = UUID()
+    @State private var isInitializing: Bool = true
+    @State private var initializationError: String = ""
+    @State private var windowListRefreshToken: UUID = UUID()
+    @State private var firstInitialization: Bool = true
+
+    private let logger = AppLogger.interface
 
     var body: some View {
         VStack {
-            if isInitializing {
-                ProgressView("Loading windows...")
-            } else if let error = initializationError.isEmpty ? nil : initializationError {
+            if let error = initializationError.isEmpty ? nil : initializationError {
                 Text(error)
                     .foregroundColor(.red)
                     .padding()
-            } else if let captureManager = activeCaptureManager {
+            } else {
                 selectionInterface(captureManager)
             }
         }
         .task {
             await initializeCaptureSystem()
         }
-    }
-
-    private var activeCaptureManager: CaptureManager? {
-        guard let id = captureManagerId else {
-            AppLogger.interface.warning("No capture manager ID available")
-            return nil
-        }
-        return previewManager.captureManagers[id]
     }
 
     private func selectionInterface(_ captureManager: CaptureManager) -> some View {
@@ -62,15 +55,19 @@ struct SelectionView: View {
 
     private func windowSelectionPicker(_ captureManager: CaptureManager) -> some View {
         Picker("", selection: $selectedWindow) {
-            Text("Select a window").tag(nil as SCWindow?)
-            ForEach(captureManager.availableWindows, id: \.windowID) { window in
-                Text(window.title ?? "Untitled").tag(window as SCWindow?)
+            if isInitializing {
+                Text("Loading...").tag(nil as SCWindow?)
+            } else {
+                Text("Select a window").tag(nil as SCWindow?)
+                ForEach(captureManager.availableWindows, id: \.windowID) { window in
+                    Text(window.title ?? "Untitled").tag(window as SCWindow?)
+                }
             }
         }
         .id(windowListRefreshToken)
         .onChange(of: selectedWindow) { oldValue, newValue in
             if let window = newValue {
-                AppLogger.interface.info("Window selected: '\(window.title ?? "Untitled")'")
+                logger.info("Window selected: '\(window.title ?? "Untitled")'")
             }
         }
     }
@@ -89,22 +86,19 @@ struct SelectionView: View {
     }
 
     private func initializeCaptureSystem() async {
-        guard let captureManager = activeCaptureManager else {
-            AppLogger.interface.error("Setup failed: No valid capture manager")
-            initializationError = "Setup failed"
-            isInitializing = false
+        guard !firstInitialization else {
+            firstInitialization = false
             return
         }
 
         do {
-            AppLogger.interface.debug("Requesting screen recording permission")
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()
 
-            AppLogger.interface.info("Capture setup completed successfully")
+            logger.info("Capture setup completed successfully")
             isInitializing = false
         } catch {
-            AppLogger.interface.logError(
+            logger.logError(
                 error,
                 context: "Screen recording permission request")
             initializationError = "Permission denied"
@@ -113,11 +107,11 @@ struct SelectionView: View {
     }
 
     private func refreshAvailableWindows(_ captureManager: CaptureManager) async {
-        AppLogger.interface.debug("Refreshing window list")
+        logger.debug("Refreshing window list")
         await captureManager.updateAvailableWindows()
         await MainActor.run {
             windowListRefreshToken = UUID()
-            AppLogger.interface.info(
+            logger.info(
                 "Window list refreshed, count: \(captureManager.availableWindows.count)")
         }
     }
@@ -125,11 +119,11 @@ struct SelectionView: View {
     @MainActor
     private func initiateWindowPreview(_ captureManager: CaptureManager) {
         guard let window = selectedWindow else {
-            AppLogger.interface.warning("Attempted to start preview without window selection")
+            logger.warning("Attempted to start preview without window selection")
             return
         }
 
-        AppLogger.interface.debug("Starting preview for window: '\(window.title ?? "Untitled")'")
+        logger.debug("Starting preview for window: '\(window.title ?? "Untitled")'")
 
         captureManager.selectedWindow = window
         selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
@@ -138,9 +132,9 @@ struct SelectionView: View {
         Task {
             do {
                 try await captureManager.startCapture()
-                AppLogger.interface.info("Preview started successfully")
+                logger.info("Preview started successfully")
             } catch {
-                AppLogger.interface.logError(
+                logger.logError(
                     error,
                     context: "Starting window preview")
             }

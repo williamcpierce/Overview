@@ -13,38 +13,55 @@ import SwiftUI
 
 @MainActor
 final class HotkeyManager: ObservableObject {
-    init() {
+    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var windowManager: WindowManager
+
+    let hotkeyService = HotkeyService.shared
+    private let logger = AppLogger.hotkeys
+
+    init(
+        appSettings: AppSettings,
+        windowManager: WindowManager
+    ) {
+        logger.debug("Initializing HotkeyManager")
+        self.appSettings = appSettings
+        self.windowManager = windowManager
+
+        do {
+            try hotkeyService.initializeEventHandler()
+            logger.debug("HotkeyManager successfully initialized")
+        } catch {
+            logger.logError(
+                error,
+                context: "HotkeyManager initialization failed")
+        }
         configureHotkeyEventHandling()
     }
 
-    private func configureHotkeyEventHandling() {
-        AppLogger.hotkeys.debug("Initializing HotkeyManager")
+    deinit {
+        logger.debug("Cleaning up HotkeyManager")
+        hotkeyService.removeCallback(for: self)
+        logger.debug("HotkeyManager cleanup completed")
+    }
 
+    private func configureHotkeyEventHandling() {
         // Weak reference prevents retain cycles in callback chain
-        HotkeyService.shared.registerCallback(owner: self) { [weak self] windowTitle in
+        hotkeyService.registerCallback(owner: self) { [weak self] windowTitle in
             Task { @MainActor in
                 self?.activateWindowWithTitle(windowTitle)
             }
         }
-
-        AppLogger.hotkeys.info("HotkeyManager successfully initialized")
     }
 
     private func activateWindowWithTitle(_ windowTitle: String) {
         AppLogger.hotkeys.debug("Focusing window: '\(windowTitle)'")
 
-        let activationSucceeded = WindowManager.shared.focusWindow(withTitle: windowTitle)
+        let activationSucceeded = windowManager.focusWindow(withTitle: windowTitle)
 
         if activationSucceeded {
-            AppLogger.hotkeys.info("Successfully focused window: '\(windowTitle)'")
+            logger.info("Successfully focused window: '\(windowTitle)'")
         } else {
-            AppLogger.hotkeys.warning("Failed to focus window: '\(windowTitle)'")
+            logger.warning("Failed to focus window: '\(windowTitle)'")
         }
-    }
-
-    deinit {
-        AppLogger.hotkeys.debug("Cleaning up HotkeyManager")
-        HotkeyService.shared.removeCallback(for: self)
-        AppLogger.hotkeys.info("HotkeyManager cleanup completed")
     }
 }

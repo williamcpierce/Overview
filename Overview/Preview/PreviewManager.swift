@@ -13,39 +13,5 @@ import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
-    @Published private(set) var captureManagers: [UUID: CaptureManager] = [:]
-    @Published var isEditModeEnabled = false
-    private let userSettings: AppSettings
-
-    init(appSettings: AppSettings) {
-        self.userSettings = appSettings
-        AppLogger.windows.debug("PreviewManager initialized")
-    }
-
-    func createNewCaptureManager() -> UUID {
-        let managerId = UUID()
-        let manager = CaptureManager(appSettings: userSettings)
-        captureManagers[managerId] = manager
-
-        AppLogger.windows.info(
-            "Created capture manager: \(managerId), total active: \(captureManagers.count)")
-        return managerId
-    }
-
-    func removeCaptureManager(id: UUID) {
-        guard captureManagers[id] != nil else {
-            AppLogger.windows.warning("Attempted to remove non-existent capture manager: \(id)")
-            return
-        }
-
-        captureManagers.removeValue(forKey: id)
-        AppLogger.windows.info(
-            "Removed capture manager: \(id), remaining active: \(captureManagers.count)")
-    }
-
-    func toggleEditMode() {
-        isEditModeEnabled.toggle()
-        AppLogger.interface.info("Edit mode \(isEditModeEnabled ? "enabled" : "disabled")")
-        AppLogger.interface.debug("Active preview windows during toggle: \(captureManagers.count)")
-    }
+    @Published var editModeEnabled: Bool = false
 }

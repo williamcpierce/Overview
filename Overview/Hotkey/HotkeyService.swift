@@ -11,24 +11,11 @@
 
 import Carbon
 import Cocoa
-
-struct HotkeyEventProcessor {
-    let id: UInt32
-    let timestamp: Date
-    private static let minimumProcessingInterval: TimeInterval = 0.2
-
-    func shouldProcess(after previousEvent: HotkeyEventProcessor?) -> Bool {
-        guard let previous = previousEvent,
-            id == previous.id
-        else {
-            return true
-        }
-        return timestamp.timeIntervalSince(previous.timestamp) > Self.minimumProcessingInterval
-    }
-}
+import SwiftUI
 
 final class HotkeyService {
-    static let shared = HotkeyService()
+    static let shared: HotkeyService = HotkeyService()
+    private let logger = AppLogger.hotkeys
 
     /// Maximum concurrent hotkey registrations to prevent resource exhaustion
     private static let registrationLimit = 50
@@ -38,51 +25,12 @@ final class HotkeyService {
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
 
-    /// Storage for persistent hotkey configurations
-    private let storage: UserDefaults
-    private let configurationKey = "hotkeyBindings"
-
     /// Thread-safe event processing queue with debounce support
     private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
     private var previousEvent: HotkeyEventProcessor?
 
     /// Registered callbacks mapped by object identity to prevent retain cycles
     private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
-
-    /// Persistent hotkey configurations with automatic storage synchronization
-    var configurations: [HotkeyBinding] {
-        get {
-            guard let data = storage.data(forKey: configurationKey),
-                let decoded = try? JSONDecoder().decode([HotkeyBinding].self, from: data)
-            else {
-                AppLogger.hotkeys.debug("No stored configurations found")
-                return []
-            }
-            AppLogger.hotkeys.debug("Loaded \(decoded.count) stored configurations")
-            return decoded
-        }
-        set {
-            if let encoded = try? JSONEncoder().encode(newValue) {
-                storage.set(encoded, forKey: configurationKey)
-                AppLogger.hotkeys.info("Saved \(newValue.count) configurations")
-            } else {
-                AppLogger.hotkeys.error("Configuration encoding failed")
-            }
-        }
-    }
-
-    private init(storage: UserDefaults = .standard) {
-        AppLogger.hotkeys.debug("Initializing service")
-        self.storage = storage
-        do {
-            try initializeEventHandler()
-            AppLogger.hotkeys.info("Service initialized successfully")
-        } catch {
-            AppLogger.hotkeys.logError(
-                error,
-                context: "Event handler initialization failed")
-        }
-    }
 
     deinit {
         cleanupResources()
@@ -91,17 +39,17 @@ final class HotkeyService {
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks[identifier] = callback
-        AppLogger.hotkeys.debug("Registered callback: \(identifier)")
+        logger.debug("Registered callback: \(identifier)")
     }
 
     func removeCallback(for owner: AnyObject) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks.removeValue(forKey: identifier)
-        AppLogger.hotkeys.debug("Removed callback: \(identifier)")
+        logger.debug("Removed callback: \(identifier)")
     }
 
     func registerHotkeys(_ bindings: [HotkeyBinding]) throws {
-        AppLogger.hotkeys.info("Registering \(bindings.count) configurations")
+        logger.info("Registering \(bindings.count) bindings")
 
         guard bindings.count <= Self.registrationLimit else {
             throw HotkeyError.systemLimitReached
@@ -112,20 +60,18 @@ final class HotkeyService {
         for binding in bindings {
             do {
                 try registerSingleHotkey(binding)
-                AppLogger.hotkeys.debug("Registered: '\(binding.windowTitle)'")
+                logger.debug("Registered: '\(binding.windowTitle)'")
             } catch {
-                AppLogger.hotkeys.logError(
+                logger.logError(
                     error,
                     context: "Registration failed: '\(binding.windowTitle)'")
                 throw error
             }
         }
-
-        self.configurations = bindings
     }
 
-    private func initializeEventHandler() throws {
-        AppLogger.hotkeys.debug("Configuring event handler")
+    func initializeEventHandler() throws {
+        logger.debug("Configuring event handler")
 
         let eventSpec = [
             EventTypeSpec(
@@ -178,14 +124,14 @@ final class HotkeyService {
                 guard let self = self else { return }
 
                 guard currentEvent.shouldProcess(after: self.previousEvent) else {
-                    AppLogger.hotkeys.debug("Debounced: \(hotkeyID.id)")
+                    logger.debug("Debounced: \(hotkeyID.id)")
                     return
                 }
 
                 self.previousEvent = currentEvent
 
                 if let (_, binding) = self.activeHotkeys[hotkeyID.id] {
-                    AppLogger.hotkeys.debug("Processing: '\(binding.windowTitle)'")
+                    logger.debug("Processing: '\(binding.windowTitle)'")
 
                     DispatchQueue.main.async { [weak self] in
                         self?.windowFocusCallbacks.values.forEach { $0(binding.windowTitle) }
@@ -196,7 +142,7 @@ final class HotkeyService {
             return noErr
         }
 
-        AppLogger.hotkeys.warning("Event processing failed: \(result)")
+        logger.warning("Event processing failed: \(result)")
         return OSStatus(eventNotHandledErr)
     }
 
@@ -222,14 +168,14 @@ final class HotkeyService {
         if status == noErr, let hotkeyRef = hotkeyRef {
             activeHotkeys[nextIdentifier] = (hotkeyRef, binding)
             nextIdentifier += 1
-            AppLogger.hotkeys.debug("Registration successful: \(binding.hotkeyDisplayString)")
+            logger.debug("Registration successful: \(binding.hotkeyDisplayString)")
         } else {
             throw HotkeyError.registrationFailed(status)
         }
     }
 
     private func unregisterExistingHotkeys() {
-        AppLogger.hotkeys.info("Removing existing registrations")
+        logger.debug("Removing existing registrations")
         activeHotkeys.values.forEach { registration in
             UnregisterEventHotKey(registration.0)
         }
@@ -237,11 +183,26 @@ final class HotkeyService {
     }
 
     private func cleanupResources() {
-        AppLogger.hotkeys.debug("Cleaning up resources")
+        logger.debug("Cleaning up resources")
         unregisterExistingHotkeys()
         if let handler = eventHandlerIdentifier {
             RemoveEventHandler(handler)
         }
+    }
+}
+
+struct HotkeyEventProcessor {
+    let id: UInt32
+    let timestamp: Date
+    private static let minimumProcessingInterval: TimeInterval = 0.2
+
+    func shouldProcess(after previousEvent: HotkeyEventProcessor?) -> Bool {
+        guard let previous = previousEvent,
+            id == previous.id
+        else {
+            return true
+        }
+        return timestamp.timeIntervalSince(previous.timestamp) > Self.minimumProcessingInterval
     }
 }
 
@@ -265,7 +226,7 @@ enum HotkeyError: LocalizedError {
     }
 }
 
-private enum CarbonModifierTranslator {
+enum CarbonModifierTranslator {
     static func convert(_ nsModifiers: NSEvent.ModifierFlags) -> UInt32 {
         var carbonModifiers: UInt32 = 0
         if nsModifiers.contains(.command) { carbonModifiers |= UInt32(cmdKey) }

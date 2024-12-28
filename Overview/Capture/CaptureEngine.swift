@@ -14,22 +14,23 @@
 import ScreenCaptureKit
 
 struct CapturedFrame {
-    static let invalid = CapturedFrame(
+    static let invalid: CapturedFrame = CapturedFrame(
         surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
-
     let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
+
     var size: CGSize { contentRect.size }
 }
 
 class CaptureEngine: NSObject, @unchecked Sendable {
+    private let frameProcessingQueue: DispatchQueue = DispatchQueue(
+        label: "com.example.apple-samplecode.VideoSampleBufferQueue")
     private let logger = AppLogger.capture
+
     private(set) var stream: SCStream?
     private var streamOutput: CaptureEngineStreamOutput?
-    private let frameProcessingQueue = DispatchQueue(
-        label: "com.example.apple-samplecode.VideoSampleBufferQueue")
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
@@ -82,6 +83,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     private let logger = AppLogger.capture
+
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
 

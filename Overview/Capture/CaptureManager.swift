@@ -12,15 +12,17 @@
 
 import Combine
 import ScreenCaptureKit
+import SwiftUI
 
 @MainActor
 class CaptureManager: ObservableObject {
+    @ObservedObject private var appSettings: AppSettings
+
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var availableWindows: [SCWindow] = []
-    @Published private(set) var isCapturing = false
-    @Published private(set) var isSourceWindowFocused = false
+    @Published private(set) var isCapturing: Bool = false
+    @Published private(set) var isSourceWindowFocused: Bool = false
     @Published private(set) var windowTitle: String?
-
     @Published var selectedWindow: SCWindow? {
         didSet {
             windowTitle = selectedWindow?.title
@@ -28,38 +30,46 @@ class CaptureManager: ObservableObject {
         }
     }
 
+    private let windowServices = WindowServices.shared
+    private let captureServices = CaptureServices.shared
+    private let captureEngine: CaptureEngine
+    private let logger = AppLogger.capture
+
     private var settingsSubscriptions = Set<AnyCancellable>()
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var windowStateObserverId: UUID?
-
-    private let windowServices = WindowServices.shared
-    private let userSettings: AppSettings
-    private let streamEngine: CaptureEngine
-    private let streamConfigurationService: StreamConfigurationService
+    private var hasPermission: Bool = false
 
     init(
         appSettings: AppSettings,
-        captureEngine: CaptureEngine = CaptureEngine(),
-        streamConfig: StreamConfigurationService = StreamConfigurationService()
+        captureEngine: CaptureEngine = CaptureEngine()
     ) {
-        self.userSettings = appSettings
-        self.streamEngine = captureEngine
-        self.streamConfigurationService = streamConfig
+        self.appSettings = appSettings
+        self.captureEngine = captureEngine
         initializeWindowStateObservers()
     }
 
     func requestPermission() async throws {
-        try await windowServices.shareableContent.requestPermission()
+        guard !hasPermission else { return }
+
+        do {
+            try await captureServices.captureAvailability.requestPermission()
+            hasPermission = true
+        } catch {
+            logger.logError(
+                error,
+                context: "Failed to request screen recording permission")
+        }
     }
 
     func updateAvailableWindows() async {
         do {
-            let windows = try await windowServices.shareableContent.getAvailableWindows()
+            let windows = try await captureServices.captureAvailability.getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowServices.windowFilter.filterWindows(windows)
             }
         } catch {
-            AppLogger.capture.logError(
+            logger.logError(
                 error,
                 context: "Failed to get available windows")
         }
@@ -69,9 +79,9 @@ class CaptureManager: ObservableObject {
         guard !isCapturing else { return }
         guard let targetWindow = selectedWindow else { throw CaptureError.noWindowSelected }
 
-        let (config, filter) = streamConfigurationService.createConfiguration(
-            targetWindow, frameRate: userSettings.frameRate)
-        let frameStream = streamEngine.startCapture(configuration: config, filter: filter)
+        let (config, filter) = captureServices.captureConfiguration.createConfiguration(
+            targetWindow, frameRate: appSettings.frameRate)
+        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
 
         await startFrameProcessing(stream: frameStream)
         isCapturing = true
@@ -82,16 +92,16 @@ class CaptureManager: ObservableObject {
 
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
-        await streamEngine.stopCapture()
+        await captureEngine.stopCapture()
 
         isCapturing = false
         capturedFrame = nil
     }
 
-    func focusWindow(isEditModeEnabled: Bool) {
+    func focusWindow() {
         guard let targetWindow = selectedWindow else { return }
         windowServices.windowFocus.focusWindow(
-            window: targetWindow, isEditModeEnabled: isEditModeEnabled)
+            window: targetWindow)
     }
 
     private func initializeWindowStateObservers() {
@@ -108,7 +118,7 @@ class CaptureManager: ObservableObject {
             }
         )
 
-        userSettings.$frameRate
+        appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in
                 Task { await self?.synchronizeStreamConfiguration() }
@@ -132,7 +142,7 @@ class CaptureManager: ObservableObject {
     }
 
     private func handleCaptureFailure(_ error: Error) async {
-        AppLogger.capture.logError(
+        logger.logError(
             error,
             context: "Capture stream error")
         await stopCapture()
@@ -151,12 +161,12 @@ class CaptureManager: ObservableObject {
         guard isCapturing, let targetWindow = selectedWindow else { return }
 
         do {
-            try await streamConfigurationService.updateConfiguration(
-                streamEngine.stream,
+            try await captureServices.captureConfiguration.updateConfiguration(
+                captureEngine.stream,
                 targetWindow,
-                frameRate: userSettings.frameRate)
+                frameRate: appSettings.frameRate)
         } catch {
-            AppLogger.capture.logError(
+            logger.logError(
                 error,
                 context: "Failed to update stream configuration")
         }
