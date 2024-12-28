@@ -17,14 +17,14 @@ class AppSettings: ObservableObject {
         didSet {
             let validatedValue = max(0.05, min(1.0, opacity))
             UserDefaults.standard.set(validatedValue, forKey: StorageKeys.opacity)
-            AppLogger.settings.info("Window opacity updated to \(Int(validatedValue * 100))%")
+            logger.info("Window opacity updated to \(Int(validatedValue * 100))%")
         }
     }
 
     @Published var frameRate: Double {
         didSet {
             UserDefaults.standard.set(frameRate, forKey: StorageKeys.frameRate)
-            AppLogger.settings.info("Frame rate updated to \(Int(frameRate)) FPS")
+            logger.info("Frame rate updated to \(Int(frameRate)) FPS")
         }
     }
 
@@ -33,14 +33,14 @@ class AppSettings: ObservableObject {
     @Published var defaultWindowWidth: Double {
         didSet {
             UserDefaults.standard.set(defaultWindowWidth, forKey: StorageKeys.defaultWidth)
-            AppLogger.settings.info("Default window width set to \(Int(defaultWindowWidth))px")
+            logger.info("Default window width set to \(Int(defaultWindowWidth))px")
         }
     }
 
     @Published var defaultWindowHeight: Double {
         didSet {
             UserDefaults.standard.set(defaultWindowHeight, forKey: StorageKeys.defaultHeight)
-            AppLogger.settings.info("Default window height set to \(Int(defaultWindowHeight))px")
+            logger.info("Default window height set to \(Int(defaultWindowHeight))px")
         }
     }
 
@@ -49,41 +49,42 @@ class AppSettings: ObservableObject {
     @Published var showFocusedBorder: Bool {
         didSet {
             UserDefaults.standard.set(showFocusedBorder, forKey: StorageKeys.showBorder)
-            AppLogger.settings.info("Focus border visibility set to \(showFocusedBorder)")
+            logger.info("Focus border visibility set to \(showFocusedBorder)")
         }
     }
 
     @Published var focusBorderWidth: Double {
         didSet {
             UserDefaults.standard.set(focusBorderWidth, forKey: StorageKeys.borderWidth)
-            AppLogger.settings.info("Focus border width set to \(focusBorderWidth)pt")
+            logger.info("Focus border width set to \(focusBorderWidth)pt")
         }
     }
 
     @Published var focusBorderColor: Color {
         didSet {
-            AppLogger.settings.info("Focus border color updated")
+            UserDefaults.standard.set(focusBorderColor, forKey: StorageKeys.borderColor)
+            logger.info("Focus border color updated")
         }
     }
 
     @Published var showWindowTitle: Bool {
         didSet {
             UserDefaults.standard.set(showWindowTitle, forKey: StorageKeys.showTitle)
-            AppLogger.settings.info("Window title visibility set to \(showWindowTitle)")
+            logger.info("Window title visibility set to \(showWindowTitle)")
         }
     }
 
     @Published var titleFontSize: Double {
         didSet {
             UserDefaults.standard.set(titleFontSize, forKey: StorageKeys.titleSize)
-            AppLogger.settings.info("Title font size set to \(titleFontSize)pt")
+            logger.info("Title font size set to \(titleFontSize)pt")
         }
     }
 
     @Published var titleBackgroundOpacity: Double {
         didSet {
             UserDefaults.standard.set(titleBackgroundOpacity, forKey: StorageKeys.titleOpacity)
-            AppLogger.settings.info(
+            logger.info(
                 "Title background opacity set to \(Int(titleBackgroundOpacity * 100))%")
         }
     }
@@ -93,14 +94,14 @@ class AppSettings: ObservableObject {
     @Published var managedByMissionControl: Bool {
         didSet {
             UserDefaults.standard.set(managedByMissionControl, forKey: StorageKeys.missionControl)
-            AppLogger.settings.info("Mission Control integration set to \(managedByMissionControl)")
+            logger.info("Mission Control integration set to \(managedByMissionControl)")
         }
     }
 
     @Published var enableEditModeAlignment: Bool {
         didSet {
             UserDefaults.standard.set(enableEditModeAlignment, forKey: StorageKeys.editAlignment)
-            AppLogger.settings.info("Edit mode alignment set to \(enableEditModeAlignment)")
+            logger.info("Edit mode alignment set to \(enableEditModeAlignment)")
         }
     }
 
@@ -113,7 +114,7 @@ class AppSettings: ObservableObject {
                 do {
                     try HotkeyService.shared.registerHotkeys(hotkeyBindings)
                 } catch {
-                    AppLogger.settings.error(
+                    logger.error(
                         "Failed to register hotkeys: \(error.localizedDescription)")
                 }
             }
@@ -140,9 +141,9 @@ class AppSettings: ObservableObject {
         self.hotkeyBindings = []
 
         logger.debug("Initializing settings")
-        initializeFromDefaults()
+        initializeFromStorage()
         loadHotkeyBindings()
-        validateAllSettings()
+        validateSettings()
         isInitializing = false
         logger.debug("Settings initialization complete")
     }
@@ -164,16 +165,17 @@ class AppSettings: ObservableObject {
         logger.info("Settings reset completed")
     }
 
-    private func initializeFromDefaults() {
+    private func initializeFromStorage() {
         opacity = UserDefaults.standard.double(forKey: StorageKeys.opacity)
         frameRate = UserDefaults.standard.double(forKey: StorageKeys.frameRate)
         defaultWindowWidth = UserDefaults.standard.double(forKey: StorageKeys.defaultWidth)
         defaultWindowHeight = UserDefaults.standard.double(forKey: StorageKeys.defaultHeight)
+        showFocusedBorder = UserDefaults.standard.bool(forKey: StorageKeys.showBorder)
         focusBorderWidth = UserDefaults.standard.double(forKey: StorageKeys.borderWidth)
+        focusBorderColor = UserDefaults.standard.color(forKey: StorageKeys.borderColor)
+        showWindowTitle = UserDefaults.standard.bool(forKey: StorageKeys.showTitle)
         titleFontSize = UserDefaults.standard.double(forKey: StorageKeys.titleSize)
         titleBackgroundOpacity = UserDefaults.standard.double(forKey: StorageKeys.titleOpacity)
-        showFocusedBorder = UserDefaults.standard.bool(forKey: StorageKeys.showBorder)
-        showWindowTitle = UserDefaults.standard.bool(forKey: StorageKeys.showTitle)
         managedByMissionControl = UserDefaults.standard.bool(forKey: StorageKeys.missionControl)
         enableEditModeAlignment = UserDefaults.standard.bool(forKey: StorageKeys.editAlignment)
     }
@@ -184,13 +186,13 @@ class AppSettings: ObservableObject {
         defaultWindowWidth = 288
         defaultWindowHeight = 162
         showFocusedBorder = false
-        showWindowTitle = false
-        managedByMissionControl = false
-        enableEditModeAlignment = false
         focusBorderWidth = 5.0
         focusBorderColor = .gray
+        showWindowTitle = false
         titleFontSize = 12.0
         titleBackgroundOpacity = 0.4
+        managedByMissionControl = false
+        enableEditModeAlignment = false
     }
 
     private func loadHotkeyBindings() {
@@ -219,7 +221,7 @@ class AppSettings: ObservableObject {
         }
     }
 
-    private func validateAllSettings() {
+    private func validateSettings() {
         validateOpacity()
         validateFrameRate()
         validateWindowDimensions()
@@ -263,6 +265,7 @@ private enum StorageKeys {
     static let defaultHeight = "defaultWindowHeight"
     static let showBorder = "showFocusedBorder"
     static let borderWidth = "focusBorderWidth"
+    static let borderColor = "focusBorderColor"
     static let showTitle = "showWindowTitle"
     static let titleSize = "titleFontSize"
     static let titleOpacity = "titleBackgroundOpacity"

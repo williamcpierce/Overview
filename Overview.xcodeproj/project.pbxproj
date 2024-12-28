@@ -65,6 +65,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppSettings.swift,
+				ColorExtension.swift,
 				SettingsView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
