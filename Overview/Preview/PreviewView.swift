@@ -49,14 +49,14 @@ struct PreviewView: View {
     }
 
     private var placeholderView: some View {
-        Color.black.opacity(appSettings.opacity)
+        Color.black.opacity(appSettings.windowOpacity)
     }
 
     private func previewWithOverlays(frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(getFocusIndicatorOverlay())
             .overlay(getTitleOverlay())
-            .opacity(appSettings.opacity)
+            .opacity(appSettings.windowOpacity)
     }
 
     private func getFocusIndicatorOverlay() -> AnyView {

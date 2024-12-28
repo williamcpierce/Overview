@@ -80,7 +80,7 @@ struct ContentView: View {
     }
 
     private var windowBackground: some View {
-        Color.black.opacity(showingSelection ? appSettings.opacity : 0)
+        Color.black.opacity(showingSelection ? appSettings.windowOpacity : 0)
     }
 
     private var windowPropertyController: some View {

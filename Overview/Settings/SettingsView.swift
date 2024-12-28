@@ -160,8 +160,8 @@ struct SettingsView: View {
         Section {
             sectionHeader("Opacity")
             HStack(spacing: 8) {
-                OpacitySlider(value: $appSettings.opacity)
-                Text("\(Int(appSettings.opacity * 100))%")
+                OpacitySlider(value: $appSettings.windowOpacity)
+                Text("\(Int(appSettings.windowOpacity * 100))%")
                     .foregroundColor(.secondary)
                     .frame(width: 40)
             }
