@@ -43,9 +43,11 @@ struct PreviewAccessor: NSViewRepresentable {
             logger.warning("No window reference available during update")
             return
         }
+        synchronizeEditModeState(window)
+        synchronizeMissionControlBehavior(window)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
-            synchronizeWindowConfiguration(window)
+            synchronizeAspectRatio(window)
         }
     }
 
@@ -65,12 +67,6 @@ struct PreviewAccessor: NSViewRepresentable {
         window.setContentSize(size)
         window.contentMinSize = size
         window.contentAspectRatio = size
-    }
-
-    private func synchronizeWindowConfiguration(_ window: NSWindow) {
-        synchronizeEditModeState(window)
-        synchronizeMissionControlBehavior(window)
-        synchronizeAspectRatio(window)
     }
 
     private func synchronizeEditModeState(_ window: NSWindow) {
