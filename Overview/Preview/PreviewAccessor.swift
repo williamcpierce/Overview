@@ -12,7 +12,6 @@ import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
-
     @Binding var aspectRatio: CGFloat
     @Binding var editModeEnabled: Bool
 
@@ -20,7 +19,6 @@ struct PreviewAccessor: NSViewRepresentable {
     private let resizeThrottleInterval: TimeInterval = 0.1
 
     func makeNSView(context: Context) -> NSView {
-        logger.info("Creating window container view")
         let view = NSView()
 
         DispatchQueue.main.async {
@@ -33,7 +31,7 @@ struct PreviewAccessor: NSViewRepresentable {
             configureWindowSize(window)
 
             logger.info(
-                "Window initialized with size: \(window.frame.width)x\(window.frame.height)")
+                "Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
         }
         return view
     }
@@ -43,8 +41,8 @@ struct PreviewAccessor: NSViewRepresentable {
             logger.warning("No window reference available during update")
             return
         }
-        synchronizeEditModeState(window)
-        synchronizeMissionControlBehavior(window)
+
+        synchronizeWindowConfiguration(window)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
             synchronizeAspectRatio(window)
@@ -69,30 +67,25 @@ struct PreviewAccessor: NSViewRepresentable {
         window.contentAspectRatio = size
     }
 
-    private func synchronizeEditModeState(_ window: NSWindow) {
-        logger.debug("Updating edit mode properties: isEnabled=\(editModeEnabled)")
+    private func synchronizeWindowConfiguration(_ window: NSWindow) {
+        updateEditModeState(window)
+        updateWindowLevel(window)
+        updateMissionControlBehavior(window)
+    }
 
+    private func updateEditModeState(_ window: NSWindow) {
         window.styleMask =
             editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
         window.isMovable = editModeEnabled
-
-        window.level = calculateWindowLevel()
-        logger.debug("Window level updated: \(window.level.rawValue)")
     }
 
-    private func calculateWindowLevel() -> NSWindow.Level {
-        if editModeEnabled && appSettings.enableEditModeAlignment {
-            return .floating
-        }
-        return .statusBar + 1
+    private func updateWindowLevel(_ window: NSWindow) {
+        let shouldFloat = editModeEnabled && appSettings.enableEditModeAlignment
+        window.level = shouldFloat ? .floating : .statusBar + 1
     }
 
-    private func synchronizeMissionControlBehavior(_ window: NSWindow) {
-        let shouldManage = appSettings.managedByMissionControl
-        logger.debug(
-            "Updating window management: managedByMissionControl=\(shouldManage)")
-
-        if shouldManage {
+    private func updateMissionControlBehavior(_ window: NSWindow) {
+        if appSettings.managedByMissionControl {
             window.collectionBehavior.insert(.managed)
         } else {
             window.collectionBehavior.remove(.managed)
@@ -100,22 +93,17 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
-        let currentSize = window.frame.size
-        let targetHeight = currentSize.width / aspectRatio
+        let windowWidth = window.frame.width
+        let windowHeight = window.frame.height
+        let desiredHeight = windowWidth / aspectRatio
 
-        let heightDifference = abs(currentSize.height - targetHeight)
+        let heightDifference = abs(windowHeight - desiredHeight)
         guard heightDifference > 1.0 else { return }
 
-        let newSize = NSSize(width: currentSize.width, height: targetHeight)
-        window.setContentSize(newSize)
+        let updatedSize = NSSize(width: windowWidth, height: desiredHeight)
+        window.setContentSize(updatedSize)
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
 
-        logger.debug(
-            """
-            Window size updated: \(String(format: "%.1f", currentSize.width))x\
-            \(String(format: "%.1f", targetHeight)) (ratio: \
-            \(String(format: "%.2f", aspectRatio)))
-            """
-        )
+        logger.debug("Window resized: \(Int(updatedSize.width))x\(Int(updatedSize.height))")
     }
 }

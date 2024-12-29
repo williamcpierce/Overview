@@ -22,7 +22,6 @@ struct SelectionView: View {
     @State private var isInitializing: Bool = true
     @State private var initializationError: String = ""
     @State private var windowListRefreshToken: UUID = UUID()
-    @State private var firstInitialization: Bool = true
 
     private let logger = AppLogger.interface
 
@@ -86,11 +85,6 @@ struct SelectionView: View {
     }
 
     private func initializeCaptureSystem() async {
-        guard !firstInitialization else {
-            firstInitialization = false
-            return
-        }
-
         do {
             try await captureManager.requestPermission()
             await captureManager.updateAvailableWindows()
