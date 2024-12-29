@@ -12,7 +12,6 @@ import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
-
     @Binding var aspectRatio: CGFloat
     @Binding var editModeEnabled: Bool
 
@@ -31,7 +30,6 @@ struct PreviewAccessor: NSViewRepresentable {
 
             configureWindowDefaults(window)
             configureWindowSize(window)
-
             logger.info(
                 "Window initialized with size: \(window.frame.width)x\(window.frame.height)")
         }
@@ -43,8 +41,18 @@ struct PreviewAccessor: NSViewRepresentable {
             logger.warning("No window reference available during update")
             return
         }
-        synchronizeEditModeState(window)
-        synchronizeMissionControlBehavior(window)
+
+        window.styleMask =
+            editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
+        window.isMovable = editModeEnabled
+        window.level =
+            editModeEnabled && appSettings.enableEditModeAlignment ? .floating : .statusBar + 1
+
+        if appSettings.managedByMissionControl {
+            window.collectionBehavior.insert(.managed)
+        } else {
+            window.collectionBehavior.remove(.managed)
+        }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
             synchronizeAspectRatio(window)
@@ -67,36 +75,6 @@ struct PreviewAccessor: NSViewRepresentable {
         window.setContentSize(size)
         window.contentMinSize = size
         window.contentAspectRatio = size
-    }
-
-    private func synchronizeEditModeState(_ window: NSWindow) {
-        logger.debug("Updating edit mode properties: isEnabled=\(editModeEnabled)")
-
-        window.styleMask =
-            editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
-        window.isMovable = editModeEnabled
-
-        window.level = calculateWindowLevel()
-        logger.debug("Window level updated: \(window.level.rawValue)")
-    }
-
-    private func calculateWindowLevel() -> NSWindow.Level {
-        if editModeEnabled && appSettings.enableEditModeAlignment {
-            return .floating
-        }
-        return .statusBar + 1
-    }
-
-    private func synchronizeMissionControlBehavior(_ window: NSWindow) {
-        let shouldManage = appSettings.managedByMissionControl
-        logger.debug(
-            "Updating window management: managedByMissionControl=\(shouldManage)")
-
-        if shouldManage {
-            window.collectionBehavior.insert(.managed)
-        } else {
-            window.collectionBehavior.remove(.managed)
-        }
     }
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
