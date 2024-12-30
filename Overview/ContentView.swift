@@ -12,13 +12,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var captureManager: CaptureManager
+    
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var previewManager: PreviewManager
 
-    @State private var captureManager: CaptureManager
     @State private var showingSelection: Bool = true
     @State private var windowAspectRatio: CGFloat
-    @State private var capturedWindowDimensions: CGSize?
 
     private let logger = AppLogger.interface
 
@@ -26,9 +26,11 @@ struct ContentView: View {
         appSettings: AppSettings,
         previewManager: PreviewManager
     ) {
+        let capture = CaptureManager(appSettings: appSettings)
+        
         self.appSettings = appSettings
         self.previewManager = previewManager
-        self.captureManager = CaptureManager(appSettings: appSettings)
+        self._captureManager = StateObject(wrappedValue: capture)
         self._windowAspectRatio = State(
             initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         )
@@ -42,10 +44,12 @@ struct ContentView: View {
                 .background(windowBackground)
                 .background(windowPropertyController)
         }
-        .onChange(of: capturedWindowDimensions) { oldValue, newValue in
+        .onAppear(perform: initializeCapture)
+        .onDisappear(perform: cleanupCapture)
+        .onChange(of: captureManager.capturedFrame?.size) { oldValue, newValue in
             updateWindowAspectRatio(oldValue, newValue)
         }
-        .overlay(interactionLayer)
+        .onChange(of: captureManager.isCapturing, handleCaptureStateTransition)
     }
 
     private func previewContainer(_ geometry: GeometryProxy) -> some View {
@@ -54,18 +58,15 @@ struct ContentView: View {
                 SelectionView(
                     appSettings: appSettings,
                     captureManager: captureManager,
-                    showingSelection: $showingSelection,
-                    selectedWindowSize: $capturedWindowDimensions
+                    previewManager: previewManager
                 )
             } else {
                 PreviewView(
                     appSettings: appSettings,
-                    captureManager: captureManager,
-                    editModeEnabled: $previewManager.editModeEnabled,
-                    showingSelection: $showingSelection
+                    captureManager: captureManager
                 )
             }
-        }
+        }.overlay(interactionLayer)
     }
 
     private var interactionLayer: some View {
@@ -90,12 +91,34 @@ struct ContentView: View {
             editModeEnabled: $previewManager.editModeEnabled
         )
     }
+    
+    private func initializeCapture() {
+        Task {
+            logger.info("ContentView appeared, initializing capture")
+            await previewManager.initializeCaptureSystem(captureManager: captureManager)
+        }
+    }
 
+    private func cleanupCapture() {
+        Task {
+            logger.info("ContentView disappeared, stopping capture")
+            await captureManager.stopCapture()
+        }
+    }
     private func updateWindowAspectRatio(_ oldSize: CGSize?, _ newSize: CGSize?) {
         if let size = newSize {
             let newAspectRatio = size.width / size.height
             logger.info("Window size changed - New aspect ratio: \(newAspectRatio)")
             windowAspectRatio = newAspectRatio
         }
+    }
+
+    private func handleCaptureStateTransition() {
+        if captureManager.isCapturing {
+            showingSelection = false
+        } else {
+            showingSelection = true
+        }
+        logger.info("Capture state updated, showingSelection=\(showingSelection)")
     }
 }

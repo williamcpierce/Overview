@@ -16,23 +16,14 @@ struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
 
-    @Binding private var editModeEnabled: Bool
-    @Binding private var showingSelection: Bool
-
-    @State private var firstInitialization: Bool = true
-
     private let logger = AppLogger.interface
 
     init(
         appSettings: AppSettings,
-        captureManager: CaptureManager,
-        editModeEnabled: Binding<Bool>,
-        showingSelection: Binding<Bool>
+        captureManager: CaptureManager
     ) {
-        self.captureManager = captureManager
         self.appSettings = appSettings
-        self._editModeEnabled = editModeEnabled
-        self._showingSelection = showingSelection
+        self.captureManager = captureManager
     }
 
     var body: some View {
@@ -43,9 +34,6 @@ struct PreviewView: View {
                 placeholderView
             }
         }
-        .onAppear(perform: initializeCapture)
-        .onDisappear(perform: cleanupCapture)
-        .onChange(of: captureManager.isCapturing, handleCaptureStateTransition)
     }
 
     private var placeholderView: some View {
@@ -80,31 +68,6 @@ struct PreviewView: View {
                 backgroundOpacity: appSettings.titleBackgroundOpacity
             )
         )
-    }
-
-    private func initializeCapture() {
-        guard !firstInitialization else {
-            firstInitialization = false
-            return
-        }
-
-        Task {
-            logger.info("PreviewView appeared, starting capture")
-            try? await captureManager.startCapture()
-        }
-    }
-
-    private func cleanupCapture() {
-        Task {
-            logger.info("PreviewView disappeared, stopping capture")
-            await captureManager.stopCapture()
-        }
-    }
-
-    private func handleCaptureStateTransition(from oldValue: Bool, to newValue: Bool) {
-        if !newValue {
-            showingSelection = true
-        }
     }
 }
 

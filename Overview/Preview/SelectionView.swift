@@ -14,47 +14,34 @@ import SwiftUI
 struct SelectionView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
-
-    @Binding var showingSelection: Bool
-    @Binding var selectedWindowSize: CGSize?
+    @ObservedObject var previewManager: PreviewManager
 
     @State private var selectedWindow: SCWindow?
-    @State private var isInitializing: Bool = true
-    @State private var initializationError: String = ""
     @State private var windowListRefreshToken: UUID = UUID()
 
     private let logger = AppLogger.interface
 
     var body: some View {
         VStack {
-            if let error = initializationError.isEmpty ? nil : initializationError {
-                Text(error)
-                    .foregroundColor(.red)
-                    .padding()
-            } else {
-                selectionInterface(captureManager)
-            }
-        }
-        .task {
-            await initializeCaptureSystem()
+            selectionInterface()
         }
     }
 
-    private func selectionInterface(_ captureManager: CaptureManager) -> some View {
+    private func selectionInterface() -> some View {
         VStack {
             HStack {
-                windowSelectionPicker(captureManager)
-                refreshButton(captureManager)
+                windowSelectionPicker()
+                refreshButton()
             }
             .padding()
 
-            startPreviewButton(captureManager)
+            startPreviewButton()
         }
     }
 
-    private func windowSelectionPicker(_ captureManager: CaptureManager) -> some View {
+    private func windowSelectionPicker() -> some View {
         Picker("", selection: $selectedWindow) {
-            if isInitializing {
+            if previewManager.isInitializing {
                 Text("Loading...").tag(nil as SCWindow?)
             } else {
                 Text("Select a window").tag(nil as SCWindow?)
@@ -71,67 +58,26 @@ struct SelectionView: View {
         }
     }
 
-    private func refreshButton(_ captureManager: CaptureManager) -> some View {
-        Button(action: { Task { await refreshAvailableWindows(captureManager) } }) {
+    private func refreshButton() -> some View {
+        Button(action: { Task { await refreshAvailableWindows() } }) {
             Image(systemName: "arrow.clockwise")
         }
     }
 
-    private func startPreviewButton(_ captureManager: CaptureManager) -> some View {
+    private func startPreviewButton() -> some View {
         Button("Start Preview") {
-            initiateWindowPreview(captureManager)
+            previewManager.initiateWindowPreview(captureManager: captureManager, window: selectedWindow)
         }
         .disabled(selectedWindow == nil)
     }
 
-    private func initializeCaptureSystem() async {
-        do {
-            try await captureManager.requestPermission()
-            await captureManager.updateAvailableWindows()
-
-            logger.info("Capture setup completed successfully")
-            isInitializing = false
-        } catch {
-            logger.logError(
-                error,
-                context: "Screen recording permission request")
-            initializationError = "Permission denied"
-            isInitializing = false
-        }
-    }
-
-    private func refreshAvailableWindows(_ captureManager: CaptureManager) async {
+    private func refreshAvailableWindows() async {
         logger.debug("Refreshing window list")
         await captureManager.updateAvailableWindows()
         await MainActor.run {
             windowListRefreshToken = UUID()
             logger.info(
                 "Window list refreshed, count: \(captureManager.availableWindows.count)")
-        }
-    }
-
-    @MainActor
-    private func initiateWindowPreview(_ captureManager: CaptureManager) {
-        guard let window = selectedWindow else {
-            logger.warning("Attempted to start preview without window selection")
-            return
-        }
-
-        logger.debug("Starting preview for window: '\(window.title ?? "Untitled")'")
-
-        captureManager.selectedWindow = window
-        selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
-        showingSelection = false
-
-        Task {
-            do {
-                try await captureManager.startCapture()
-                logger.info("Preview started successfully")
-            } catch {
-                logger.logError(
-                    error,
-                    context: "Starting window preview")
-            }
         }
     }
 }
