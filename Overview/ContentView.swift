@@ -69,9 +69,9 @@ struct ContentView: View {
     private var previewInteractionLayer: some View {
         InteractionOverlay(
             editModeEnabled: $previewManager.editModeEnabled,
-            showingSelection: $isSelectionViewVisible,
-            editModeAction: { previewManager.editModeEnabled.toggle() },
-            bringToFrontAction: { captureManager.focusWindow() }
+            isSelectionViewVisible: $isSelectionViewVisible,
+            onEditModeToggle: { previewManager.editModeEnabled.toggle() },
+            onSourceWindowFocus: { captureManager.focusWindow() }
         )
     }
 
