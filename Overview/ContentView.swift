@@ -13,48 +13,44 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var captureManager: CaptureManager
-    
-    @ObservedObject var appSettings: AppSettings
-    @ObservedObject var previewManager: PreviewManager
+    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var previewManager: PreviewManager
 
-    @State private var showingSelection: Bool = true
-    @State private var windowAspectRatio: CGFloat
+    @State private var isSelectionViewVisible: Bool = true
+    @State private var previewAspectRatio: CGFloat
 
     private let logger = AppLogger.interface
 
-    init(
-        appSettings: AppSettings,
-        previewManager: PreviewManager
-    ) {
-        let capture = CaptureManager(appSettings: appSettings)
-        
+    init(appSettings: AppSettings, previewManager: PreviewManager) {
         self.appSettings = appSettings
         self.previewManager = previewManager
+
+        let initialRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
+        self._previewAspectRatio = State(initialValue: initialRatio)
+
+        let capture = CaptureManager(appSettings: appSettings)
         self._captureManager = StateObject(wrappedValue: capture)
-        self._windowAspectRatio = State(
-            initialValue: appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
-        )
     }
 
     var body: some View {
         GeometryReader { geometry in
-            previewContainer(geometry)
+            previewContentStack(in: geometry)
                 .frame(width: geometry.size.width, height: geometry.size.height)
-                .aspectRatio(windowAspectRatio, contentMode: .fit)
-                .background(windowBackground)
-                .background(windowPropertyController)
+                .aspectRatio(previewAspectRatio, contentMode: .fit)
+                .background(previewBackgroundLayer)
+                .background(windowConfigurationLayer)
         }
-        .onAppear(perform: initializeCapture)
-        .onDisappear(perform: cleanupCapture)
-        .onChange(of: captureManager.capturedFrame?.size) { oldValue, newValue in
-            updateWindowAspectRatio(oldValue, newValue)
-        }
-        .onChange(of: captureManager.isCapturing, handleCaptureStateTransition)
+        .onAppear(perform: setupCapture)
+        .onDisappear(perform: teardownCapture)
+        .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
+        .onChange(of: captureManager.isCapturing, updateViewState)
     }
 
-    private func previewContainer(_ geometry: GeometryProxy) -> some View {
+    // MARK: - View Components
+
+    private func previewContentStack(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            if showingSelection {
+            if isSelectionViewVisible {
                 SelectionView(
                     appSettings: appSettings,
                     captureManager: captureManager,
@@ -66,59 +62,58 @@ struct ContentView: View {
                     captureManager: captureManager
                 )
             }
-        }.overlay(interactionLayer)
+        }
+        .overlay(previewInteractionLayer)
     }
 
-    private var interactionLayer: some View {
+    private var previewInteractionLayer: some View {
         InteractionOverlay(
             editModeEnabled: $previewManager.editModeEnabled,
-            showingSelection: $showingSelection,
+            showingSelection: $isSelectionViewVisible,
             editModeAction: { previewManager.editModeEnabled.toggle() },
-            bringToFrontAction: {
-                captureManager.focusWindow()
-            }
+            bringToFrontAction: { captureManager.focusWindow() }
         )
     }
 
-    private var windowBackground: some View {
-        Color.black.opacity(showingSelection ? appSettings.windowOpacity : 0)
+    private var previewBackgroundLayer: some View {
+        Color.black.opacity(isSelectionViewVisible ? appSettings.windowOpacity : 0)
     }
 
-    private var windowPropertyController: some View {
+    private var windowConfigurationLayer: some View {
         PreviewAccessor(
             appSettings: appSettings,
-            aspectRatio: $windowAspectRatio,
+            aspectRatio: $previewAspectRatio,
             editModeEnabled: $previewManager.editModeEnabled
         )
     }
-    
-    private func initializeCapture() {
+
+    // MARK: - Lifecycle Methods
+
+    private func setupCapture() {
         Task {
-            logger.info("ContentView appeared, initializing capture")
+            logger.info("Initializing capture system")
             await previewManager.initializeCaptureSystem(captureManager: captureManager)
         }
     }
 
-    private func cleanupCapture() {
+    private func teardownCapture() {
         Task {
-            logger.info("ContentView disappeared, stopping capture")
+            logger.info("Stopping capture system")
             await captureManager.stopCapture()
         }
     }
-    private func updateWindowAspectRatio(_ oldSize: CGSize?, _ newSize: CGSize?) {
-        if let size = newSize {
-            let newAspectRatio = size.width / size.height
-            logger.info("Window size changed - New aspect ratio: \(newAspectRatio)")
-            windowAspectRatio = newAspectRatio
-        }
+
+    // MARK: - State Updates
+
+    private func updatePreviewDimensions(from oldSize: CGSize?, to newSize: CGSize?) {
+        guard let size = newSize else { return }
+        let newRatio = size.width / size.height
+        logger.info("Updating preview ratio: \(newRatio)")
+        previewAspectRatio = newRatio
     }
 
-    private func handleCaptureStateTransition() {
-        if captureManager.isCapturing {
-            showingSelection = false
-        } else {
-            showingSelection = true
-        }
-        logger.info("Capture state updated, showingSelection=\(showingSelection)")
+    private func updateViewState() {
+        isSelectionViewVisible = !captureManager.isCapturing
+        logger.info("View state updated: selection=\(isSelectionViewVisible)")
     }
 }

@@ -29,49 +29,57 @@ struct PreviewView: View {
     var body: some View {
         Group {
             if let frame = captureManager.capturedFrame {
-                previewWithOverlays(frame: frame)
+                previewContent(for: frame)
             } else {
-                placeholderView
+                loadingPlaceholder
             }
         }
     }
 
-    private var placeholderView: some View {
+    // MARK: - View Components
+
+    private var loadingPlaceholder: some View {
         Color.black.opacity(appSettings.windowOpacity)
     }
 
-    private func previewWithOverlays(frame: CapturedFrame) -> some View {
+    private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
-            .overlay(getFocusIndicatorOverlay())
-            .overlay(getTitleOverlay())
+            .overlay(focusBorderOverlay)
+            .overlay(titleOverlay)
             .opacity(appSettings.windowOpacity)
     }
 
-    private func getFocusIndicatorOverlay() -> AnyView {
-        guard appSettings.showFocusedBorder && captureManager.isSourceWindowFocused else {
-            return AnyView(EmptyView())
+    private var focusBorderOverlay: some View {
+        Group {
+            if shouldShowFocusBorder {
+                focusBorder
+            }
         }
-        return AnyView(
-            RoundedRectangle(cornerRadius: 0)
-                .stroke(appSettings.focusBorderColor, lineWidth: appSettings.focusBorderWidth)
-        )
     }
 
-    private func getTitleOverlay() -> AnyView {
-        guard appSettings.showWindowTitle else {
-            return AnyView(EmptyView())
+    private var shouldShowFocusBorder: Bool {
+        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
+    }
+
+    private var focusBorder: some View {
+        RoundedRectangle(cornerRadius: 0)
+            .stroke(appSettings.focusBorderColor, lineWidth: appSettings.focusBorderWidth)
+    }
+
+    private var titleOverlay: some View {
+        Group {
+            if appSettings.showWindowTitle {
+                WindowTitleView(
+                    title: captureManager.windowTitle,
+                    fontSize: appSettings.titleFontSize,
+                    backgroundOpacity: appSettings.titleBackgroundOpacity
+                )
+            }
         }
-        return AnyView(
-            TitleView(
-                title: captureManager.windowTitle,
-                fontSize: appSettings.titleFontSize,
-                backgroundOpacity: appSettings.titleBackgroundOpacity
-            )
-        )
     }
 }
 
-struct TitleView: View {
+struct WindowTitleView: View {
     private let title: String?
     private let fontSize: Double
     private let backgroundOpacity: Double
@@ -88,12 +96,20 @@ struct TitleView: View {
 
     var body: some View {
         if let title = title {
-            TitleContainer(title: title, fontSize: fontSize, backgroundOpacity: backgroundOpacity)
+            titleContainer(for: title)
         }
+    }
+
+    private func titleContainer(for title: String) -> some View {
+        TitleContainerView(
+            title: title,
+            fontSize: fontSize,
+            backgroundOpacity: backgroundOpacity
+        )
     }
 }
 
-private struct TitleContainer: View {
+private struct TitleContainerView: View {
     let title: String
     let fontSize: Double
     let backgroundOpacity: Double
@@ -107,13 +123,21 @@ private struct TitleContainer: View {
 
     private var titleBar: some View {
         HStack {
-            Text(title)
-                .font(.system(size: fontSize))
-                .foregroundColor(.white)
-                .padding(4)
-                .background(Color.black.opacity(backgroundOpacity))
+            titleText
             Spacer()
         }
         .padding(6)
+    }
+
+    private var titleText: some View {
+        Text(title)
+            .font(.system(size: fontSize))
+            .foregroundColor(.white)
+            .padding(4)
+            .background(titleBackground)
+    }
+
+    private var titleBackground: some View {
+        Color.black.opacity(backgroundOpacity)
     }
 }

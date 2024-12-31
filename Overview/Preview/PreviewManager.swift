@@ -9,50 +9,60 @@
  Core orchestrator for Overview's window preview system.
 */
 
-import SwiftUI
 import ScreenCaptureKit
+import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
+    @Published private(set) var isInitializing: Bool = true
     @Published var editModeEnabled: Bool = false
-    @Published var isInitializing: Bool = true
-    
+
     private let logger = AppLogger.interface
 
-    init() {
-    }
-    
+    // MARK: - Capture System Management
+
     func initializeCaptureSystem(captureManager: CaptureManager) async {
         do {
-            try await captureManager.requestPermission()
-            await captureManager.updateAvailableWindows()
-
-            logger.info("Capture setup completed successfully")
-            isInitializing = false
+            try await requestCapturePermission(for: captureManager)
+            await updateAvailableWindows(using: captureManager)
+            completeInitialization()
         } catch {
-            logger.logError(
-                error,
-                context: "Screen recording permission request")
-            isInitializing = false
+            handleInitializationError(error)
         }
     }
-    
-    func initiateWindowPreview(captureManager: CaptureManager, window: SCWindow?) {
-        guard window != nil else { return }
-        
-        logger.debug("Starting preview for window: '\(window?.title ?? "Untitled")'")
 
-        captureManager.selectedWindow = window
-//        selectedWindowSize = CGSize(width: window.frame.width, height: window.frame.height)
+    private func requestCapturePermission(for captureManager: CaptureManager) async throws {
+        try await captureManager.requestPermission()
+    }
+
+    private func updateAvailableWindows(using captureManager: CaptureManager) async {
+        await captureManager.updateAvailableWindows()
+    }
+
+    private func completeInitialization() {
+        logger.info("Capture system initialized")
+        isInitializing = false
+    }
+
+    private func handleInitializationError(_ error: Error) {
+        logger.logError(error, context: "Capture system initialization failed")
+        isInitializing = false
+    }
+
+    // MARK: - Window Preview Management
+
+    func startWindowPreview(using captureManager: CaptureManager, for window: SCWindow?) {
+        guard let selectedWindow = window else { return }
+
+        logger.debug("Initiating preview: '\(selectedWindow.title ?? "Untitled")'")
+        captureManager.selectedWindow = selectedWindow
 
         Task {
             do {
                 try await captureManager.startCapture()
-                logger.info("Preview started successfully")
+                logger.info("Preview started")
             } catch {
-                logger.logError(
-                    error,
-                    context: "Starting window preview")
+                logger.logError(error, context: "Preview initialization failed")
             }
         }
     }

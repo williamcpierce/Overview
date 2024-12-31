@@ -12,72 +12,111 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SelectionView: View {
-    @ObservedObject var appSettings: AppSettings
-    @ObservedObject var captureManager: CaptureManager
-    @ObservedObject var previewManager: PreviewManager
+    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var captureManager: CaptureManager
+    @ObservedObject private var previewManager: PreviewManager
 
     @State private var selectedWindow: SCWindow?
-    @State private var windowListRefreshToken: UUID = UUID()
+    @State private var windowListVersion = UUID()
 
     private let logger = AppLogger.interface
 
+    init(
+        appSettings: AppSettings,
+        captureManager: CaptureManager,
+        previewManager: PreviewManager
+    ) {
+        self.appSettings = appSettings
+        self.captureManager = captureManager
+        self.previewManager = previewManager
+    }
+
     var body: some View {
         VStack {
-            selectionInterface()
+            windowSelectionContent
         }
     }
 
-    private func selectionInterface() -> some View {
+    // MARK: - View Components
+
+    private var windowSelectionContent: some View {
         VStack {
-            HStack {
-                windowSelectionPicker()
-                refreshButton()
-            }
-            .padding()
-
-            startPreviewButton()
+            selectionControls
+                .padding()
+            previewStartButton
         }
     }
 
-    private func windowSelectionPicker() -> some View {
+    private var selectionControls: some View {
+        HStack {
+            windowList
+            refreshButton
+        }
+    }
+
+    private var windowList: some View {
         Picker("", selection: $selectedWindow) {
-            if previewManager.isInitializing {
-                Text("Loading...").tag(nil as SCWindow?)
-            } else {
-                Text("Select a window").tag(nil as SCWindow?)
-                ForEach(captureManager.availableWindows, id: \.windowID) { window in
-                    Text(window.title ?? "Untitled").tag(window as SCWindow?)
+            Group {
+                if previewManager.isInitializing {
+                    loadingPlaceholder
+                } else {
+                    windowOptions
                 }
             }
         }
-        .id(windowListRefreshToken)
-        .onChange(of: selectedWindow) { oldValue, newValue in
-            if let window = newValue {
-                logger.info("Window selected: '\(window.title ?? "Untitled")'")
-            }
+        .id(windowListVersion)
+        .onChange(of: selectedWindow, handleWindowSelection)
+    }
+
+    private var loadingPlaceholder: some View {
+        Text("Loading...").tag(nil as SCWindow?)
+    }
+
+    private var windowOptions: some View {
+        Group {
+            Text("Select a window").tag(nil as SCWindow?)
+            availableWindowsList
         }
     }
 
-    private func refreshButton() -> some View {
-        Button(action: { Task { await refreshAvailableWindows() } }) {
+    private var availableWindowsList: some View {
+        ForEach(captureManager.availableWindows, id: \.windowID) { window in
+            Text(window.title ?? "Untitled").tag(window as SCWindow?)
+        }
+    }
+
+    private var refreshButton: some View {
+        Button(action: refreshWindowList) {
             Image(systemName: "arrow.clockwise")
         }
     }
 
-    private func startPreviewButton() -> some View {
+    private var previewStartButton: some View {
         Button("Start Preview") {
-            previewManager.initiateWindowPreview(captureManager: captureManager, window: selectedWindow)
+            previewManager.startWindowPreview(
+                using: captureManager,
+                for: selectedWindow
+            )
         }
         .disabled(selectedWindow == nil)
     }
 
-    private func refreshAvailableWindows() async {
-        logger.debug("Refreshing window list")
-        await captureManager.updateAvailableWindows()
-        await MainActor.run {
-            windowListRefreshToken = UUID()
-            logger.info(
-                "Window list refreshed, count: \(captureManager.availableWindows.count)")
+    // MARK: - Actions
+
+    private func refreshWindowList() {
+        Task {
+            logger.debug("Refreshing available windows")
+            await captureManager.updateAvailableWindows()
+            await MainActor.run {
+                windowListVersion = UUID()
+                logger.info("Window list updated: \(captureManager.availableWindows.count) windows")
+            }
+        }
+    }
+
+    private func handleWindowSelection(_ old: SCWindow?, _ new: SCWindow?) {
+        if let window = new {
+            logger.info("Selected window: '\(window.title ?? "Untitled")'")
         }
     }
 }
