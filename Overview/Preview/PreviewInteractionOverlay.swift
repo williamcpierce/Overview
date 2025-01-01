@@ -1,5 +1,5 @@
 /*
- Preview/InteractionOverlay.swift
+ Preview/PreviewInteractionOverlay.swift
  Overview
 
  Created by William Pierce on 10/13/24.
@@ -10,7 +10,7 @@
 
 import SwiftUI
 
-struct InteractionOverlay: NSViewRepresentable {
+struct PreviewInteractionOverlay: NSViewRepresentable {
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
     
@@ -20,13 +20,13 @@ struct InteractionOverlay: NSViewRepresentable {
     private let logger = AppLogger.interface
     
     func makeNSView(context: Context) -> NSView {
-        let handler = WindowInteractionHandler()
+        let handler = PreviewInteractionHandler()
         configureHandler(handler)
         return handler
     }
     
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let handler = nsView as? WindowInteractionHandler else {
+        guard let handler = nsView as? PreviewInteractionHandler else {
             logger.warning("Invalid handler type in updateNSView")
             return
         }
@@ -36,7 +36,7 @@ struct InteractionOverlay: NSViewRepresentable {
     
     // MARK: - Configuration
     
-    private func configureHandler(_ handler: WindowInteractionHandler) {
+    private func configureHandler(_ handler: PreviewInteractionHandler) {
         handler.editModeEnabled = editModeEnabled
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.onEditModeToggle = onEditModeToggle
@@ -46,13 +46,13 @@ struct InteractionOverlay: NSViewRepresentable {
         logger.info("Handler configured")
     }
     
-    private func updateHandlerState(_ handler: WindowInteractionHandler) {
+    private func updateHandlerState(_ handler: PreviewInteractionHandler) {
         handler.editModeEnabled = editModeEnabled
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
     }
     
-    private func createContextMenu(for handler: WindowInteractionHandler) -> NSMenu {
+    private func createContextMenu(for handler: PreviewInteractionHandler) -> NSMenu {
         let menu = NSMenu()
         
         let editModeItem = createEditModeMenuItem(for: handler)
@@ -64,10 +64,10 @@ struct InteractionOverlay: NSViewRepresentable {
         return menu
     }
     
-    private func createEditModeMenuItem(for handler: WindowInteractionHandler) -> NSMenuItem {
+    private func createEditModeMenuItem(for handler: PreviewInteractionHandler) -> NSMenuItem {
         let item = NSMenuItem(
             title: "Edit Mode",
-            action: #selector(WindowInteractionHandler.toggleEditMode),
+            action: #selector(PreviewInteractionHandler.toggleEditMode),
             keyEquivalent: ""
         )
         item.target = handler
@@ -83,7 +83,7 @@ struct InteractionOverlay: NSViewRepresentable {
     }
 }
 
-private final class WindowInteractionHandler: NSView {
+private final class PreviewInteractionHandler: NSView {
     var editModeEnabled = false
     var isSelectionViewVisible = false
     

@@ -2,141 +2,121 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 10/13/24.
+ Created by William Pierce on 9/15/24.
 
- Implements the core preview window rendering system, managing the visual presentation
- of captured window content and coordinating real-time updates between the capture
- system and user interface layers.
+ Serves as the root coordinator for window preview lifecycle, managing transitions
+ between window selection and preview states while maintaining proper window scaling
+ and interaction handling.
 */
 
 import SwiftUI
 
 struct PreviewView: View {
+    @ObservedObject private var captureManager: CaptureManager  // Change to ObservedObject
     @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var captureManager: CaptureManager
+    @ObservedObject private var previewManager: PreviewManager
+
+    @State private var isSelectionViewVisible: Bool = true
+    @State private var previewAspectRatio: CGFloat
+    @State private var hasInitialized: Bool = false
 
     private let logger = AppLogger.interface
 
-    init(
-        appSettings: AppSettings,
-        captureManager: CaptureManager
-    ) {
+    init(appSettings: AppSettings, previewManager: PreviewManager, captureManager: CaptureManager) {
         self.appSettings = appSettings
+        self.previewManager = previewManager
         self.captureManager = captureManager
+
+        let initialRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
+        self._previewAspectRatio = State(initialValue: initialRatio)
     }
 
     var body: some View {
-        Group {
-            if let frame = captureManager.capturedFrame {
-                previewContent(for: frame)
-            } else {
-                loadingPlaceholder
-            }
+        GeometryReader { geometry in
+            previewContentStack(in: geometry)
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .aspectRatio(previewAspectRatio, contentMode: .fit)
+                .background(previewBackgroundLayer)
+                .background(windowConfigurationLayer)
+                .overlay(previewInteractionLayer)
         }
+        .onAppear {
+            setupCapture()
+        }.onDisappear(perform: teardownCapture)
+        .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
+        .onChange(of: captureManager.isCapturing, updateViewState)
     }
 
     // MARK: - View Components
 
-    private var loadingPlaceholder: some View {
-        Color.black.opacity(appSettings.windowOpacity)
-    }
-
-    private func previewContent(for frame: CapturedFrame) -> some View {
-        Capture(frame: frame)
-            .overlay(focusBorderOverlay)
-            .overlay(titleOverlay)
-            .opacity(appSettings.windowOpacity)
-    }
-
-    private var focusBorderOverlay: some View {
-        Group {
-            if shouldShowFocusBorder {
-                focusBorder
-            }
-        }
-    }
-
-    private var shouldShowFocusBorder: Bool {
-        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-    }
-
-    private var focusBorder: some View {
-        RoundedRectangle(cornerRadius: 0)
-            .stroke(appSettings.focusBorderColor, lineWidth: appSettings.focusBorderWidth)
-    }
-
-    private var titleOverlay: some View {
-        Group {
-            if appSettings.showWindowTitle {
-                WindowTitleView(
-                    title: captureManager.windowTitle,
-                    fontSize: appSettings.titleFontSize,
-                    backgroundOpacity: appSettings.titleBackgroundOpacity
+    private func previewContentStack(in geometry: GeometryProxy) -> some View {
+        VStack(spacing: 0) {
+            if isSelectionViewVisible {
+                PreviewSelectionView(
+                    appSettings: appSettings,
+                    captureManager: captureManager,
+                    previewManager: previewManager
+                )
+            } else {
+                PreviewCaptureView(
+                    appSettings: appSettings,
+                    captureManager: captureManager
                 )
             }
         }
     }
-}
 
-struct WindowTitleView: View {
-    private let title: String?
-    private let fontSize: Double
-    private let backgroundOpacity: Double
-
-    init(
-        title: String?,
-        fontSize: Double = 12.0,
-        backgroundOpacity: Double = 0.4
-    ) {
-        self.title = title
-        self.fontSize = fontSize
-        self.backgroundOpacity = backgroundOpacity
-    }
-
-    var body: some View {
-        if let title = title {
-            titleContainer(for: title)
-        }
-    }
-
-    private func titleContainer(for title: String) -> some View {
-        TitleContainerView(
-            title: title,
-            fontSize: fontSize,
-            backgroundOpacity: backgroundOpacity
+    private var previewInteractionLayer: some View {
+        PreviewInteractionOverlay(
+            editModeEnabled: $previewManager.editModeEnabled,
+            isSelectionViewVisible: $isSelectionViewVisible,
+            onEditModeToggle: { previewManager.editModeEnabled.toggle() },
+            onSourceWindowFocus: { captureManager.focusWindow() }
         )
     }
-}
 
-private struct TitleContainerView: View {
-    let title: String
-    let fontSize: Double
-    let backgroundOpacity: Double
+    private var previewBackgroundLayer: some View {
+        Color.black.opacity(isSelectionViewVisible ? appSettings.windowOpacity : 0)
+    }
 
-    var body: some View {
-        VStack {
-            titleBar
-            Spacer()
+    private var windowConfigurationLayer: some View {
+        PreviewAccessor(
+            appSettings: appSettings,
+            aspectRatio: $previewAspectRatio,
+            editModeEnabled: $previewManager.editModeEnabled
+        )
+    }
+
+    // MARK: - Lifecycle Methods
+
+    private func setupCapture() {
+        guard !hasInitialized else { return }
+        hasInitialized = true
+
+        Task {
+            logger.info("Initializing capture system")
+            await previewManager.initializeCaptureSystem(captureManager)
         }
     }
 
-    private var titleBar: some View {
-        HStack {
-            titleText
-            Spacer()
+    private func teardownCapture() {
+        Task {
+            logger.info("Stopping capture system")
+            await captureManager.stopCapture()
         }
-        .padding(6)
     }
 
-    private var titleText: some View {
-        Text(title)
-            .font(.system(size: fontSize))
-            .foregroundColor(.white)
-            .padding(4)
-            .background(titleBackground)
+    // MARK: - State Updates
+
+    private func updatePreviewDimensions(from oldSize: CGSize?, to newSize: CGSize?) {
+        guard let size = newSize else { return }
+        let newRatio = size.width / size.height
+        logger.info("Updating preview ratio: \(newRatio)")
+        previewAspectRatio = newRatio
     }
 
-    private var titleBackground: some View {
-        Color.black.opacity(backgroundOpacity)
+    private func updateViewState() {
+        isSelectionViewVisible = !captureManager.isCapturing
+        logger.info("View state updated: selection=\(isSelectionViewVisible)")
     }
 }

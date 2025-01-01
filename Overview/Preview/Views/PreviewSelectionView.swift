@@ -1,17 +1,14 @@
 /*
- Preview/SelectionView.swift
+ Preview/Views/PreviewSelectionView.swift
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Manages window selection and capture initialization, providing the initial setup
- interface for Overview preview windows and handling permission flows.
 */
 
 import ScreenCaptureKit
 import SwiftUI
 
-struct SelectionView: View {
+struct PreviewSelectionView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
