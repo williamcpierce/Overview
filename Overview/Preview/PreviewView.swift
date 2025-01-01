@@ -11,7 +11,6 @@
 
 import SwiftUI
 
-@MainActor
 struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager

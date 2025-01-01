@@ -126,7 +126,6 @@ class CaptureManager: ObservableObject {
             .store(in: &settingsSubscriptions)
     }
 
-    @MainActor
     private func startFrameProcessing(stream: AsyncThrowingStream<CapturedFrame, Error>) async {
         activeFrameProcessingTask?.cancel()
 

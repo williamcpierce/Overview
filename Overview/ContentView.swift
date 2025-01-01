@@ -13,6 +13,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var captureManager: CaptureManager
+
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var previewManager: PreviewManager
 
@@ -39,6 +40,7 @@ struct ContentView: View {
                 .aspectRatio(previewAspectRatio, contentMode: .fit)
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
+                .overlay(previewInteractionLayer)
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
@@ -63,7 +65,6 @@ struct ContentView: View {
                 )
             }
         }
-        .overlay(previewInteractionLayer)
     }
 
     private var previewInteractionLayer: some View {
@@ -92,7 +93,7 @@ struct ContentView: View {
     private func setupCapture() {
         Task {
             logger.info("Initializing capture system")
-            await previewManager.initializeCaptureSystem(captureManager: captureManager)
+            await previewManager.initializeCaptureSystem(captureManager)
         }
     }
 

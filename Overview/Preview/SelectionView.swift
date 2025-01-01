@@ -94,8 +94,8 @@ struct SelectionView: View {
     private var previewStartButton: some View {
         Button("Start Preview") {
             previewManager.startWindowPreview(
-                using: captureManager,
-                for: selectedWindow
+                captureManager: captureManager,
+                window: selectedWindow
             )
         }
         .disabled(selectedWindow == nil)

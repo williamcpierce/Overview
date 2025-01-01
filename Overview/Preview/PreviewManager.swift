@@ -21,22 +21,14 @@ final class PreviewManager: ObservableObject {
 
     // MARK: - Capture System Management
 
-    func initializeCaptureSystem(captureManager: CaptureManager) async {
+    func initializeCaptureSystem(_ captureManager: CaptureManager) async {
         do {
-            try await requestCapturePermission(for: captureManager)
-            await updateAvailableWindows(using: captureManager)
+            try await captureManager.requestPermission()
+            await captureManager.updateAvailableWindows()
             completeInitialization()
         } catch {
             handleInitializationError(error)
         }
-    }
-
-    private func requestCapturePermission(for captureManager: CaptureManager) async throws {
-        try await captureManager.requestPermission()
-    }
-
-    private func updateAvailableWindows(using captureManager: CaptureManager) async {
-        await captureManager.updateAvailableWindows()
     }
 
     private func completeInitialization() {
@@ -51,7 +43,7 @@ final class PreviewManager: ObservableObject {
 
     // MARK: - Window Preview Management
 
-    func startWindowPreview(using captureManager: CaptureManager, for window: SCWindow?) {
+    func startWindowPreview(captureManager: CaptureManager, window: SCWindow?) {
         guard let selectedWindow = window else { return }
 
         logger.debug("Initiating preview: '\(selectedWindow.title ?? "Untitled")'")

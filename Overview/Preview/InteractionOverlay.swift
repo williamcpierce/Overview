@@ -11,11 +11,9 @@
 import SwiftUI
 
 struct InteractionOverlay: NSViewRepresentable {
-    // MARK: - Bindings
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
     
-    // MARK: - Callbacks
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
     
@@ -57,11 +55,8 @@ struct InteractionOverlay: NSViewRepresentable {
     private func createContextMenu(for handler: WindowInteractionHandler) -> NSMenu {
         let menu = NSMenu()
         
-        // Edit mode item
         let editModeItem = createEditModeMenuItem(for: handler)
         menu.addItem(editModeItem)
-        
-        // Separator and close window
         menu.addItem(NSMenuItem.separator())
         menu.addItem(createCloseWindowMenuItem())
         
@@ -89,15 +84,12 @@ struct InteractionOverlay: NSViewRepresentable {
 }
 
 private final class WindowInteractionHandler: NSView {
-    // MARK: - State
     var editModeEnabled = false
     var isSelectionViewVisible = false
     
-    // MARK: - Callbacks
     var onEditModeToggle: (() -> Void)?
     var onSourceWindowFocus: (() -> Void)?
     
-    // MARK: - Menu State
     weak var editModeMenuItem: NSMenuItem?
     
     private let logger = AppLogger.interface
