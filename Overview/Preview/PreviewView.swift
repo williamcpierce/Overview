@@ -18,7 +18,6 @@ struct PreviewView: View {
 
     @State private var isSelectionViewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
-    @State private var hasInitialized: Bool = false
 
     private let logger = AppLogger.interface
 
@@ -40,9 +39,8 @@ struct PreviewView: View {
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
         }
-        .onAppear {
-            setupCapture()
-        }.onDisappear(perform: teardownCapture)
+        .onAppear(perform: setupCapture)
+        .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
     }
@@ -90,9 +88,6 @@ struct PreviewView: View {
     // MARK: - Lifecycle Methods
 
     private func setupCapture() {
-        guard !hasInitialized else { return }
-        hasInitialized = true
-
         Task {
             logger.info("Initializing capture system")
             await previewManager.initializeCaptureSystem(captureManager)
