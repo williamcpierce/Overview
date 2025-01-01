@@ -34,7 +34,7 @@ struct OverviewApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(
+            PreviewWindowView(
                 appSettings: appSettings,
                 previewManager: previewManager
             )
@@ -56,5 +56,25 @@ struct OverviewApp: App {
                 windowManager: windowManager
             )
         }
+    }
+}
+
+struct PreviewWindowView: View {
+    @StateObject private var captureManager: CaptureManager
+    let appSettings: AppSettings
+    let previewManager: PreviewManager
+
+    init(appSettings: AppSettings, previewManager: PreviewManager) {
+        self.appSettings = appSettings
+        self.previewManager = previewManager
+        self._captureManager = StateObject(wrappedValue: CaptureManager(appSettings: appSettings))
+    }
+
+    var body: some View {
+        ContentView(
+            appSettings: appSettings,
+            previewManager: previewManager,
+            captureManager: captureManager
+        )
     }
 }

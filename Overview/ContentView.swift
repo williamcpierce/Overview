@@ -12,25 +12,23 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var captureManager: CaptureManager
-
+    @ObservedObject private var captureManager: CaptureManager  // Change to ObservedObject
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var previewManager: PreviewManager
 
     @State private var isSelectionViewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
+    @State private var hasInitialized: Bool = false
 
     private let logger = AppLogger.interface
 
-    init(appSettings: AppSettings, previewManager: PreviewManager) {
+    init(appSettings: AppSettings, previewManager: PreviewManager, captureManager: CaptureManager) {
         self.appSettings = appSettings
         self.previewManager = previewManager
+        self.captureManager = captureManager
 
         let initialRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         self._previewAspectRatio = State(initialValue: initialRatio)
-
-        let capture = CaptureManager(appSettings: appSettings)
-        self._captureManager = StateObject(wrappedValue: capture)
     }
 
     var body: some View {
@@ -42,8 +40,9 @@ struct ContentView: View {
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
         }
-        .onAppear(perform: setupCapture)
-        .onDisappear(perform: teardownCapture)
+        .onAppear {
+            setupCapture()
+        }.onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
     }
@@ -91,6 +90,9 @@ struct ContentView: View {
     // MARK: - Lifecycle Methods
 
     private func setupCapture() {
+        guard !hasInitialized else { return }
+        hasInitialized = true
+
         Task {
             logger.info("Initializing capture system")
             await previewManager.initializeCaptureSystem(captureManager)
