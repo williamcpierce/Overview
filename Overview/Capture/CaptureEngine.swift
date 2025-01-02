@@ -32,6 +32,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     private(set) var stream: SCStream?
     private var streamOutput: CaptureEngineStreamOutput?
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private var currentConfiguration: SCStreamConfiguration?
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
@@ -40,6 +41,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
             let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
             self.streamOutput = streamOutput
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
+            self.currentConfiguration = configuration
 
             do {
                 self.stream = SCStream(
@@ -48,10 +50,34 @@ class CaptureEngine: NSObject, @unchecked Sendable {
                 try self.stream?.addStreamOutput(
                     streamOutput, type: .screen, sampleHandlerQueue: self.frameProcessingQueue)
                 self.stream?.startCapture()
+                logger.info("Capture started with configuration: width=\(configuration.width), height=\(configuration.height)")
             } catch {
                 logger.error("Failed to start capture: \(error.localizedDescription)")
                 continuation.finish(throwing: error)
             }
+        }
+    }
+
+    func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
+        logger.debug("Updating capture configuration: width=\(configuration.width), height=\(configuration.height)")
+        
+        // Store new configuration before updating stream
+        self.currentConfiguration = configuration
+
+        do {
+            // Stop current capture
+            try await stream?.stopCapture()
+            
+            // Update configuration and filter
+            try await stream?.updateConfiguration(configuration)
+            try await stream?.updateContentFilter(filter)
+            
+            // Restart capture with new configuration
+            try await stream?.startCapture()
+            
+            logger.info("Stream configuration updated and restarted successfully")
+        } catch {
+            logger.error("Failed to update stream: \(error.localizedDescription)")
         }
     }
 
@@ -61,22 +87,11 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         do {
             try await stream?.stopCapture()
             frameStreamContinuation?.finish()
+            currentConfiguration = nil
             logger.info("Capture stream stopped successfully")
         } catch {
             logger.error("Failed to stop capture: \(error.localizedDescription)")
             frameStreamContinuation?.finish(throwing: error)
-        }
-    }
-
-    func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
-        logger.debug("Updating capture configuration")
-
-        do {
-            try await stream?.updateConfiguration(configuration)
-            try await stream?.updateContentFilter(filter)
-            logger.info("Stream configuration updated successfully")
-        } catch {
-            logger.error("Failed to update stream: \(error.localizedDescription)")
         }
     }
 }
@@ -86,9 +101,12 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private var lastFrameTime: TimeInterval = 0
+    private let frameDebounceInterval: TimeInterval = 0.1
 
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.frameStreamContinuation = continuation
+        super.init()
     }
 
     func stream(
@@ -100,9 +118,17 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return
         }
 
+        // Add frame timing logic
+        let currentTime = CACurrentMediaTime()
+        guard (currentTime - lastFrameTime) >= frameDebounceInterval else {
+            return
+        }
+        lastFrameTime = currentTime
+
         switch outputType {
         case .screen:
             if let frame = extractCapturedFrame(from: sampleBuffer) {
+                validateFrameDimensions(frame)
                 capturedFrameHandler?(frame)
             }
         case .audio:
@@ -111,6 +137,17 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             logger.error("Unknown output type: \(String(describing: outputType))")
             fatalError("Unknown output type: \(outputType)")
         }
+    }
+
+    private func validateFrameDimensions(_ frame: CapturedFrame) {
+        // Log detailed frame information
+        logger.debug("""
+            Frame validation:
+            Content rect: \(frame.contentRect)
+            Scale: \(frame.contentScale)
+            Scale factor: \(frame.scaleFactor)
+            Surface: \(frame.surface != nil ? "valid" : "invalid")
+            """)
     }
 
     private func extractCapturedFrame(from sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
@@ -167,13 +204,15 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return nil
         }
 
-        logger.debug("Created frame: size=\(contentRect.size), scale=\(contentScale)")
-        return CapturedFrame(
+        let frame = CapturedFrame(
             surface: surface,
             contentRect: contentRect,
             contentScale: contentScale,
             scaleFactor: scaleFactor
         )
+
+        logger.debug("Created frame: size=\(contentRect.size), scale=\(contentScale)")
+        return frame
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {

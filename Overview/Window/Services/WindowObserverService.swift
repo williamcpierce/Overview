@@ -11,9 +11,11 @@ final class WindowObserverService {
     private let logger = AppLogger.windows
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleObservers: [UUID: () async -> Void] = [:]
+    private var sizeObservers: [UUID: () async -> Void] = [:]
     private var workspaceObserver: NSObjectProtocol?
     private var windowObserver: NSObjectProtocol?
     private var titleCheckTimer: Timer?
+    private var sizeCheckTimer: Timer?
 
     deinit {
         stopObserving()
@@ -22,12 +24,14 @@ final class WindowObserverService {
     func addObserver(
         id: UUID,
         onFocusChanged: @escaping () async -> Void,
-        onTitleChanged: @escaping () async -> Void
+        onTitleChanged: @escaping () async -> Void,
+        onSizeChanged: @escaping () async -> Void
     ) {
         logger.debug("Adding state observer: \(id)")
 
         focusObservers[id] = onFocusChanged
         titleObservers[id] = onTitleChanged
+        sizeObservers[id] = onSizeChanged
 
         if focusObservers.count == 1 {
             startObserving()
@@ -38,6 +42,7 @@ final class WindowObserverService {
         logger.debug("Removing state observer: \(id)")
         focusObservers.removeValue(forKey: id)
         titleObservers.removeValue(forKey: id)
+        sizeObservers.removeValue(forKey: id)
 
         if focusObservers.isEmpty {
             stopObserving()
@@ -49,6 +54,7 @@ final class WindowObserverService {
         setupWorkspaceObserver()
         setupWindowObserver()
         startTitleChecks()
+        startSizeChecks()
     }
 
     private func stopObserving() {
@@ -61,6 +67,7 @@ final class WindowObserverService {
             NotificationCenter.default.removeObserver(observer)
         }
         titleCheckTimer?.invalidate()
+        sizeCheckTimer?.invalidate()
     }
 
     private func setupWorkspaceObserver() {
@@ -105,6 +112,21 @@ final class WindowObserverService {
             [weak self] _ in
             Task { [weak self] in
                 guard let observers = self?.titleObservers else { return }
+                for callback in observers.values {
+                    await callback()
+                }
+            }
+        }
+    }
+    
+    private func startSizeChecks() {
+        sizeCheckTimer?.invalidate()
+        logger.debug("Starting size check timer")
+
+        sizeCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {
+            [weak self] _ in
+            Task { [weak self] in
+                guard let observers = self?.sizeObservers else { return }
                 for callback in observers.values {
                     await callback()
                 }

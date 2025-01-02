@@ -18,19 +18,40 @@ final class CaptureConfigurationService {
         SCStreamConfiguration, SCContentFilter
     ) {
         logger.debug(
-            "Creating configuration for window: '\(window.title ?? "unknown")', frameRate: \(frameRate)"
+            """
+            Creating configuration for window:
+            Title: '\(window.title ?? "unknown")'
+            Frame: \(window.frame)
+            Frame rate: \(frameRate)
+            """
         )
 
         let config = SCStreamConfiguration()
-        config.width = Int(window.frame.width)
-        config.height = Int(window.frame.height)
+        
+        // Get the scaling factor from the main screen
+        let scaleFactor = NSScreen.main?.backingScaleFactor ?? 1.0
+        
+        // Get the actual pixel dimensions of the window
+        let width = Int(window.frame.width * scaleFactor)
+        let height = Int(window.frame.height * scaleFactor)
+        
+        config.width = width
+        config.height = height
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
         config.queueDepth = 3
         config.showsCursor = false
-
+        
+        // Set pixel format for better compatibility
+        config.pixelFormat = kCVPixelFormatType_32BGRA
+        
         let filter = SCContentFilter(desktopIndependentWindow: window)
 
-        logger.info("Configuration created successfully")
+        logger.info("""
+            Configuration created successfully:
+            Width: \(width)
+            Height: \(height)
+            Scale factor: \(scaleFactor)
+            """)
         return (config, filter)
     }
 
@@ -49,7 +70,11 @@ final class CaptureConfigurationService {
         do {
             try await stream.updateConfiguration(config)
             try await stream.updateContentFilter(filter)
-            logger.info("Stream configuration updated successfully")
+            logger.info("""
+                Stream configuration updated successfully:
+                Width: \(config.width)
+                Height: \(config.height)
+                """)
         } catch {
             logger.error("Failed to update stream: \(error.localizedDescription)")
             throw error

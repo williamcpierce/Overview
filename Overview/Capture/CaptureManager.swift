@@ -29,6 +29,7 @@ class CaptureManager: ObservableObject {
             Task { await synchronizeWindowFocusState() }
         }
     }
+    @Published private var lastKnownWindowSize: CGSize?
 
     private let windowServices = WindowServices.shared
     private let captureServices = CaptureServices.shared
@@ -115,6 +116,9 @@ class CaptureManager: ObservableObject {
             },
             onTitleChanged: { [weak self] in
                 await self?.synchronizeWindowTitle()
+            },
+            onSizeChanged: { [weak self] in
+                await self?.synchronizeWindowSize()
             }
         )
 
@@ -154,6 +158,29 @@ class CaptureManager: ObservableObject {
 
     private func synchronizeWindowTitle() async {
         windowTitle = await windowServices.titleService.updateWindowTitle(for: selectedWindow)
+    }
+
+    private func synchronizeWindowSize() async {
+            guard let window = selectedWindow else { return }
+            let newSize = window.frame.size
+            
+            if lastKnownWindowSize != newSize {
+                lastKnownWindowSize = newSize
+                await updateCaptureConfiguration()
+            }
+        }
+
+    private func updateCaptureConfiguration() async {
+        guard isCapturing, let targetWindow = selectedWindow else { return }
+        
+        do {
+            let (config, filter) = captureServices.captureConfiguration.createConfiguration(
+                targetWindow, frameRate: appSettings.frameRate)
+            try await captureEngine.update(configuration: config, filter: filter)
+            logger.debug("Updated capture configuration for window resize")
+        } catch {
+            logger.logError(error, context: "Failed to update capture configuration after resize")
+        }
     }
 
     private func synchronizeStreamConfiguration() async {
