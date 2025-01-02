@@ -12,9 +12,9 @@
 import SwiftUI
 
 struct PreviewView: View {
-    @ObservedObject private var captureManager: CaptureManager  // Change to ObservedObject
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var previewManager: PreviewManager
+    @ObservedObject private var captureManager: CaptureManager
 
     @State private var isSelectionViewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
@@ -80,8 +80,9 @@ struct PreviewView: View {
     private var windowConfigurationLayer: some View {
         PreviewAccessor(
             appSettings: appSettings,
-            aspectRatio: $previewAspectRatio,
-            editModeEnabled: $previewManager.editModeEnabled
+            captureManager: captureManager,
+            previewManager: previewManager,
+            aspectRatio: $previewAspectRatio
         )
     }
 

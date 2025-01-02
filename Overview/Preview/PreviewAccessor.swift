@@ -12,8 +12,10 @@ import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
+    @ObservedObject var captureManager: CaptureManager
+    @ObservedObject var previewManager: PreviewManager
+    
     @Binding var aspectRatio: CGFloat
-    @Binding var editModeEnabled: Bool
 
     private let logger = AppLogger.windows
     private let resizeThrottleInterval: TimeInterval = 0.1
@@ -28,7 +30,6 @@ struct PreviewAccessor: NSViewRepresentable {
             }
 
             configureWindowDefaults(window)
-            configureWindowSize(window)
 
             logger.info(
                 "Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
@@ -57,16 +58,6 @@ struct PreviewAccessor: NSViewRepresentable {
         window.collectionBehavior.insert(.fullScreenAuxiliary)
     }
 
-    private func configureWindowSize(_ window: NSWindow) {
-        let size = NSSize(
-            width: appSettings.defaultWindowWidth,
-            height: appSettings.defaultWindowHeight
-        )
-        window.setContentSize(size)
-        window.contentMinSize = size
-        window.contentAspectRatio = size
-    }
-
     private func synchronizeWindowConfiguration(_ window: NSWindow) {
         updateEditModeState(window)
         updateWindowLevel(window)
@@ -75,12 +66,12 @@ struct PreviewAccessor: NSViewRepresentable {
 
     private func updateEditModeState(_ window: NSWindow) {
         window.styleMask =
-            editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
-        window.isMovable = editModeEnabled
+            previewManager.editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
+        window.isMovable = previewManager.editModeEnabled
     }
 
     private func updateWindowLevel(_ window: NSWindow) {
-        let shouldFloat = editModeEnabled && appSettings.enableEditModeAlignment
+        let shouldFloat = previewManager.editModeEnabled && appSettings.enableEditModeAlignment
         window.level = shouldFloat ? .floating : .statusBar + 1
     }
 
@@ -93,6 +84,8 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
+        guard captureManager.isCapturing else { return }
+        
         let windowWidth = window.frame.width
         let windowHeight = window.frame.height
         let desiredHeight = windowWidth / aspectRatio
