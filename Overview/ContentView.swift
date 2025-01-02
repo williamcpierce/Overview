@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var previewManager: PreviewManager
+
     @StateObject private var captureManager: CaptureManager
-    let appSettings: AppSettings
-    let previewManager: PreviewManager
 
     init(appSettings: AppSettings, previewManager: PreviewManager) {
         self.appSettings = appSettings
