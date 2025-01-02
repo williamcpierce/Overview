@@ -73,11 +73,13 @@
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				InteractionOverlay.swift,
 				PreviewAccessor.swift,
+				PreviewInteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
-				SelectionView.swift,
+				Views/PreviewCaptureView.swift,
+				Views/PreviewSelectionView.swift,
+				Views/PreviewTitleView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -382,7 +384,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.4.2-alpha";
+				MARKETING_VERSION = "0.4.3-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -411,7 +413,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.4.2-alpha";
+				MARKETING_VERSION = "0.4.3-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

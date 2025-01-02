@@ -7,7 +7,6 @@
 
 import ScreenCaptureKit
 
-@MainActor
 final class WindowFocusService {
     private let logger = AppLogger.windows
 
