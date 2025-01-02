@@ -73,11 +73,13 @@
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				InteractionOverlay.swift,
 				PreviewAccessor.swift,
+				PreviewInteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
-				SelectionView.swift,
+				Views/PreviewCaptureView.swift,
+				Views/PreviewSelectionView.swift,
+				Views/PreviewTitleView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
