@@ -11,30 +11,29 @@
 import ScreenCaptureKit
 
 struct CapturedFrame {
-    static let invalid: CapturedFrame = CapturedFrame(
-        surface: nil, contentRect: .zero, contentScale: 0, scaleFactor: 0)
-    let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
-
+    let surface: IOSurface?
+    static let invalid: CapturedFrame = CapturedFrame(
+        contentRect: .zero, contentScale: 0, scaleFactor: 0, surface: nil)
     var size: CGSize { contentRect.size }
 }
 
 class CaptureEngine: NSObject, @unchecked Sendable {
+    private let logger = AppLogger.capture
     private let frameProcessingQueue: DispatchQueue = DispatchQueue(
         label: "com.example.apple-samplecode.VideoSampleBufferQueue")
-    private let logger = AppLogger.capture
-
-    private(set) var stream: SCStream?
-    private var streamOutput: CaptureEngineStreamOutput?
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private var streamOutput: CaptureEngineStreamOutput?
+    private(set) var stream: SCStream?
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
     {
         AsyncThrowingStream<CapturedFrame, Error> { continuation in
-            let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
+            let streamOutput = CaptureEngineStreamOutput(
+                continuation: continuation)
             self.streamOutput = streamOutput
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
 
@@ -112,14 +111,15 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     private func extractCapturedFrame(from sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         guard
-            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
-                sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]]
+            let attachmentsArray =
+                CMSampleBufferGetSampleAttachmentsArray(
+                    sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]]
         else {
             logger.error("Failed to get sample buffer attachments")
             return nil
         }
 
-        guard let attachments = attachmentsArray.first else {
+        guard let attachments: [SCStreamFrameInfo: Any] = attachmentsArray.first else {
             logger.error("Empty sample buffer attachments")
             return nil
         }
@@ -132,17 +132,20 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return nil
         }
 
-        guard let pixelBuffer = sampleBuffer.imageBuffer else {
+        guard let pixelBuffer: CVImageBuffer = sampleBuffer.imageBuffer else {
             logger.error("Missing image buffer in sample")
             return nil
         }
 
-        guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
+        guard
+            let surfaceRef: IOSurfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?
+                .takeUnretainedValue()
+        else {
             logger.error("Failed to get IOSurface from buffer")
             return nil
         }
 
-        let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
+        let surface: IOSurface = unsafeBitCast(surfaceRef, to: IOSurface.self)
 
         guard let contentRectDict = attachments[.contentRect] as! CFDictionary? else {
             logger.error("Missing content rect in attachments")
@@ -166,10 +169,10 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         logger.debug("Created frame: size=\(contentRect.size), scale=\(contentScale)")
         return CapturedFrame(
-            surface: surface,
             contentRect: contentRect,
             contentScale: contentScale,
-            scaleFactor: scaleFactor
+            scaleFactor: scaleFactor,
+            surface: surface
         )
     }
 

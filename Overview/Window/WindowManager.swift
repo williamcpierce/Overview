@@ -10,14 +10,16 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
+    private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.windows
-    private let windowServices = WindowServices.shared
-    private let captureServices = CaptureServices.shared
+    private let windowServices: WindowServices = WindowServices.shared
 
     func getFilteredWindows() async -> [SCWindow] {
         do {
-            let systemWindows = try await captureServices.captureAvailability.getAvailableWindows()
-            let filteredWindows = windowServices.windowFilter.filterWindows(systemWindows)
+            let systemWindows: [SCWindow] = try await captureServices.captureAvailability
+                .getAvailableWindows()
+            let filteredWindows: [SCWindow] = windowServices.windowFilter.filterWindows(
+                systemWindows)
             return filteredWindows
         } catch {
             logger.logError(
@@ -30,7 +32,7 @@ final class WindowManager: ObservableObject {
 
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
-        let success = windowServices.windowFocus.focusWindow(withTitle: title)
+        let success: Bool = windowServices.windowFocus.focusWindow(withTitle: title)
         if !success {
             logger.error("Failed to activate window process: '\(title)'")
         }

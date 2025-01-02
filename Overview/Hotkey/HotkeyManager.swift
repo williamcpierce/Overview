@@ -11,8 +11,7 @@ import SwiftUI
 final class HotkeyManager: ObservableObject {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var windowManager: WindowManager
-
-    let hotkeyService = HotkeyService.shared
+    let hotkeyService: HotkeyService = HotkeyService.shared
     private let logger = AppLogger.hotkeys
 
     init(
@@ -52,7 +51,7 @@ final class HotkeyManager: ObservableObject {
     private func activateWindowWithTitle(_ windowTitle: String) {
         AppLogger.hotkeys.debug("Focusing window: '\(windowTitle)'")
 
-        let activationSucceeded = windowManager.focusWindow(withTitle: windowTitle)
+        let activationSucceeded: Bool = windowManager.focusWindow(withTitle: windowTitle)
 
         if activationSucceeded {
             logger.info("Successfully focused window: '\(windowTitle)'")

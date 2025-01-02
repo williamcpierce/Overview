@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct PreviewTitleView: View {
-    private let title: String?
-    private let fontSize: Double
     private let backgroundOpacity: Double
+    private let fontSize: Double
+    private let title: String?
 
     init(
         title: String?,
@@ -23,7 +23,7 @@ struct PreviewTitleView: View {
     }
 
     var body: some View {
-        if let title = title {
+        if let title: String = title {
             titleContainer(for: title)
         }
     }

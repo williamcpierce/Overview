@@ -9,12 +9,12 @@ import ScreenCaptureKit
 
 @MainActor
 final class WindowServices {
-    static let shared = WindowServices()
+    let titleService = WindowTitleService()
     let windowFilter = WindowFilterService()
     let windowFocus = WindowFocusService()
-    let titleService = WindowTitleService()
     let windowObserver = WindowObserverService()
     private let logger = AppLogger.windows
+    static let shared = WindowServices()
 
     private init() {
         logger.debug("Initializing window services container")

@@ -19,7 +19,7 @@ struct Capture: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let surfaceContent = frame.surface else {
+        guard let surfaceContent: IOSurface = frame.surface else {
             logger.warning("Attempted to update view with invalid surface")
             return
         }

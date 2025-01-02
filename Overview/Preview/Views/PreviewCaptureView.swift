@@ -10,7 +10,6 @@ import SwiftUI
 struct PreviewCaptureView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
-
     private let logger = AppLogger.interface
 
     init(
@@ -23,7 +22,7 @@ struct PreviewCaptureView: View {
 
     var body: some View {
         Group {
-            if let frame = captureManager.capturedFrame {
+            if let frame: CapturedFrame = captureManager.capturedFrame {
                 previewContent(for: frame)
             } else {
                 loadingPlaceholder

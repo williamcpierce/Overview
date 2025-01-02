@@ -9,11 +9,10 @@ import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
-
     let windowTitle: String
 
     func makeNSView(context: Context) -> NSButton {
-        let recordingButton = NSButton(frame: .zero)
+        let recordingButton: NSButton = NSButton(frame: .zero)
         recordingButton.bezelStyle = .rounded
         recordingButton.setButtonType(.momentaryPushIn)
         recordingButton.title = shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
@@ -35,7 +34,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         private let logger = AppLogger.hotkeys
 
         private var parent: HotkeyRecorder
-        private var isRecordingActive = false
+        private var isRecordingActive: Bool = false
         private var activeModifierKeys: NSEvent.ModifierFlags = []
         private var keyboardMonitor: Any?
 
@@ -74,7 +73,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         }
 
         private func endRecordingSession() {
-            if let monitor = keyboardMonitor {
+            if let monitor: Any = keyboardMonitor {
                 NSEvent.removeMonitor(monitor)
                 keyboardMonitor = nil
             }
@@ -125,15 +124,15 @@ struct HotkeyRecorder: NSViewRepresentable {
 }
 
 enum ShortcutRecordingError: LocalizedError {
-    case monitoringFailed
     case invalidModifiers
+    case monitoringFailed
 
     var errorDescription: String? {
         switch self {
-        case .monitoringFailed:
-            return "Failed to start keyboard monitoring"
         case .invalidModifiers:
             return "Invalid modifier key combination"
+        case .monitoringFailed:
+            return "Failed to start keyboard monitoring"
         }
     }
 }

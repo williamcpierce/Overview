@@ -8,12 +8,10 @@
 import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
+    @Binding var aspectRatio: CGFloat
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
-
-    @Binding var aspectRatio: CGFloat
-
     private let logger = AppLogger.windows
     private let resizeThrottleInterval: TimeInterval = 0.1
 
@@ -21,7 +19,7 @@ struct PreviewAccessor: NSViewRepresentable {
         let view = NSView()
 
         DispatchQueue.main.async {
-            guard let window = view.window else {
+            guard let window: NSWindow = view.window else {
                 logger.warning("No window reference available during setup")
                 return
             }
@@ -35,7 +33,7 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let window = nsView.window else {
+        guard let window: NSWindow = nsView.window else {
             logger.warning("No window reference available during update")
             return
         }
@@ -69,7 +67,8 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func updateWindowLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && appSettings.enableEditModeAlignment
+        let shouldFloat: Bool =
+            previewManager.editModeEnabled && appSettings.enableEditModeAlignment
         window.level = shouldFloat ? .floating : .statusBar + 1
     }
 
@@ -84,11 +83,11 @@ struct PreviewAccessor: NSViewRepresentable {
     private func synchronizeAspectRatio(_ window: NSWindow) {
         guard captureManager.isCapturing else { return }
 
-        let windowWidth = window.frame.width
-        let windowHeight = window.frame.height
-        let desiredHeight = windowWidth / aspectRatio
+        let windowWidth: CGFloat = window.frame.width
+        let windowHeight: CGFloat = window.frame.height
+        let desiredHeight: CGFloat = windowWidth / aspectRatio
 
-        let heightDifference = abs(windowHeight - desiredHeight)
+        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
         guard heightDifference > 1.0 else { return }
 
         let updatedSize = NSSize(width: windowWidth, height: desiredHeight)

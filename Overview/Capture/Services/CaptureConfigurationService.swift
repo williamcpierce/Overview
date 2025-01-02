@@ -35,7 +35,7 @@ final class CaptureConfigurationService {
     {
         logger.debug("Updating stream configuration: frameRate=\(frameRate)")
 
-        guard let stream = stream else {
+        guard let stream: SCStream = stream else {
             logger.warning("Cannot update configuration: stream is nil")
             return
         }

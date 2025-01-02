@@ -10,10 +10,8 @@ import SwiftUI
 struct PreviewInteractionOverlay: NSViewRepresentable {
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
-
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
-
     private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {
@@ -52,7 +50,7 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
     private func createContextMenu(for handler: PreviewInteractionHandler) -> NSMenu {
         let menu = NSMenu()
 
-        let editModeItem = createEditModeMenuItem(for: handler)
+        let editModeItem: NSMenuItem = createEditModeMenuItem(for: handler)
         menu.addItem(editModeItem)
         menu.addItem(NSMenuItem.separator())
         menu.addItem(createCloseWindowMenuItem())
@@ -81,15 +79,12 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
 }
 
 private final class PreviewInteractionHandler: NSView {
-    var editModeEnabled = false
-    var isSelectionViewVisible = false
-
+    private let logger = AppLogger.interface
+    var editModeEnabled: Bool = false
+    var isSelectionViewVisible: Bool = false
     var onEditModeToggle: (() -> Void)?
     var onSourceWindowFocus: (() -> Void)?
-
     weak var editModeMenuItem: NSMenuItem?
-
-    private let logger = AppLogger.interface
 
     // MARK: - Mouse Events
 
