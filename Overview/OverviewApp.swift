@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Main application entry point that manages the app lifecycle global state
- initialization. Serves as the root coordinator for all major app components.
 */
 
 import SwiftUI

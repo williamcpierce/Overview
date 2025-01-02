@@ -2,11 +2,7 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- Serves as the root coordinator for window preview lifecycle, managing transitions
- between window selection and preview states while maintaining proper window scaling
- and interaction handling.
+ Created by William Pierce on 9/15/24..
 */
 
 import SwiftUI

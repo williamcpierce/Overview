@@ -16,7 +16,9 @@ final class WindowFocusService {
             return
         }
 
-        logger.debug("Focusing window: '\(window.title ?? "untitled")', processID=\(String(describing: processID))")
+        logger.debug(
+            "Focusing window: '\(window.title ?? "untitled")', processID=\(String(describing: processID))"
+        )
 
         let success = activateProcess(processID)
 
@@ -105,4 +107,3 @@ final class WindowFocusService {
         return isFocused
     }
 }
-

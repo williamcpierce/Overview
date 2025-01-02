@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/15/24.
-
- Provides a service-oriented architecture for window management, offering a set of
- specialized services for window filtering, focusing, title tracking, and state
- observation through a centralized singleton container.
 */
 
 import ScreenCaptureKit

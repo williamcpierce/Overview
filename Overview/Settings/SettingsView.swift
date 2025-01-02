@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Provides the settings interface for Overview, managing user preferences through
- a tabbed view system that handles all aspects of window preview behavior.
- Coordinates real-time updates of capture configuration and window management.
 */
 
 import SwiftUI

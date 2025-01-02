@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/9/24.
-
- Coordinates window focusing operations through keyboard shortcuts, serving as the bridge
- between the HotkeyService and WindowManager for hotkey-triggered window activation.
- Provides reliable window focus operations in response to global keyboard events.
 */
 
 import SwiftUI

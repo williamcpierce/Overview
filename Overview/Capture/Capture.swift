@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/6/24.
-
- Provides efficient rendering of captured window content using Core Animation layers,
- handling display scaling and frame updates with minimal overhead. The component
- serves as the bridge between IOSurface capture data and SwiftUI rendering.
 */
 
 import SwiftUI

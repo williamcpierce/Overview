@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/8/24.
-
- Provides interface for recording global keyboard shortcuts with robust event handling,
- validation, and integration with Overview's hotkey management system, ensuring
- reliable shortcut capture for window focusing operations.
 */
 
 import SwiftUI

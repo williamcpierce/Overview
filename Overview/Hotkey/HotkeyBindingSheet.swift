@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/8/24.
-
- Provides the interface for configuring keyboard shortcuts that can trigger window
- focus operations. Part of the hotkey management system that allows users to quickly
- switch between windows using global keyboard shortcuts.
 */
 
 import ScreenCaptureKit

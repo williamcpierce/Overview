@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 12/11/24.
-
- Provides centralized logging functionality across the application using OSLog,
- ensuring consistent log formatting, categorization, and level management.
 */
 
 import OSLog

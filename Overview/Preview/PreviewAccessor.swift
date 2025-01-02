@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Manages low-level window configuration through NSWindow APIs, providing a bridge
- between SwiftUI window state and AppKit window behavior for Overview's previews.
 */
 
 import SwiftUI
@@ -14,7 +11,7 @@ struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
-    
+
     @Binding var aspectRatio: CGFloat
 
     private let logger = AppLogger.windows
@@ -66,7 +63,8 @@ struct PreviewAccessor: NSViewRepresentable {
 
     private func updateEditModeState(_ window: NSWindow) {
         window.styleMask =
-            previewManager.editModeEnabled ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
+            previewManager.editModeEnabled
+            ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
         window.isMovable = previewManager.editModeEnabled
     }
 
@@ -85,7 +83,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
         guard captureManager.isCapturing else { return }
-        
+
         let windowWidth = window.frame.width
         let windowHeight = window.frame.height
         let desiredHeight = windowWidth / aspectRatio

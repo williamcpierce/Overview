@@ -3,11 +3,6 @@
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Coordinates window capture lifecycle and state management, serving as the bridge
- between low-level capture operations and UI components. Manages window selection,
- capture permissions, frame delivery, and window state tracking while maintaining
- proper state synchronization across the capture system.
 */
 
 import Combine

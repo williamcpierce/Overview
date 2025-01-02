@@ -4,9 +4,6 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages low-level screen capture operations using ScreenCaptureKit, handling
- frame capture, processing, and delivery to the UI layer with optimized performance.
-
  This file includes code derived from Apple Inc.'s ScreenRecorder code sample,
  which is licensed under the MIT License. See LICENSE.md for details.
 */

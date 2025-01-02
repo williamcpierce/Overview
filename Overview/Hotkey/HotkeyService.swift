@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/8/24
-
- Manages system-wide keyboard shortcuts using Carbon Event Manager APIs, providing a
- reliable and efficient implementation of global keyboard shortcuts. Primary coordinator
- for mapping keyboard combinations to window focus operations.
 */
 
 import Carbon
