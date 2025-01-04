@@ -27,6 +27,7 @@ class AppSettings: ObservableObject {
         static let titleFontSize: Double = 12.0
         static let titleBackgroundOpacity: Double = 0.4
         static let managedByMissionControl: Bool = true
+        static let closeOnCaptureStop: Bool = false
         static let hideInactiveApplications: Bool = false
         static let hideActiveWindow: Bool = false
         static let enableEditModeAlignment: Bool = false
@@ -124,6 +125,14 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var closeOnCaptureStop: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                closeOnCaptureStop, forKey: StorageKeys.closeOnCaptureStop)
+            logger.info("Close on capture stop set to \(closeOnCaptureStop)")
+        }
+    }
+
     @Published var hideInactiveApplications: Bool {
         didSet {
             UserDefaults.standard.set(
@@ -180,6 +189,7 @@ class AppSettings: ObservableObject {
         self.titleFontSize = Defaults.titleFontSize
         self.titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         self.managedByMissionControl = Defaults.managedByMissionControl
+        self.closeOnCaptureStop = Defaults.closeOnCaptureStop
         self.hideInactiveApplications = Defaults.hideInactiveApplications
         self.hideActiveWindow = Defaults.hideActiveWindow
         self.enableEditModeAlignment = Defaults.enableEditModeAlignment
@@ -212,9 +222,10 @@ class AppSettings: ObservableObject {
         showWindowTitle = Defaults.showWindowTitle
         titleFontSize = Defaults.titleFontSize
         titleBackgroundOpacity = Defaults.titleBackgroundOpacity
+        managedByMissionControl = Defaults.managedByMissionControl
+        closeOnCaptureStop = Defaults.closeOnCaptureStop
         hideInactiveApplications = Defaults.hideInactiveApplications
         hideActiveWindow = Defaults.hideActiveWindow
-        managedByMissionControl = Defaults.managedByMissionControl
         enableEditModeAlignment = Defaults.enableEditModeAlignment
 
         clearHotkeyBindings()
@@ -237,6 +248,8 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.titleBackgroundOpacity)
         managedByMissionControl = UserDefaults.standard.bool(
             forKey: StorageKeys.managedByMissionControl)
+        closeOnCaptureStop = UserDefaults.standard.bool(
+            forKey: StorageKeys.closeOnCaptureStop)
         hideInactiveApplications = UserDefaults.standard.bool(
             forKey: StorageKeys.hideInactiveApplications)
         hideActiveWindow = UserDefaults.standard.bool(
@@ -320,6 +333,7 @@ private enum StorageKeys {
     static let titleFontSize: String = "titleFontSize"
     static let titleBackgroundOpacity: String = "titleBackgroundOpacity"
     static let managedByMissionControl: String = "managedByMissionControl"
+    static let closeOnCaptureStop: String = "closeOnCaptureStop"
     static let hideInactiveApplications: String = "hideInactiveApplications"
     static let hideActiveWindow: String = "hideActiveWindow"
     static let enableEditModeAlignment: String = "enableEditModeAlignment"
