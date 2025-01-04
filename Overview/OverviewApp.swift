@@ -17,7 +17,7 @@ struct OverviewApp: App {
     init() {
         let settings = AppSettings()
         let window = WindowManager()
-        let preview = PreviewManager()
+        let preview = PreviewManager(windowManager: window)
         let hotkey = HotkeyManager(
             appSettings: settings,
             windowManager: window
