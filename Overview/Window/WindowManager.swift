@@ -17,6 +17,7 @@ final class WindowManager: ObservableObject {
     @Published private(set) var windowTitles: [WindowID: String] = [:]
 
     // MARK: - Dependencies
+    private let appSettings: AppSettings
     private let windowServices: WindowServices = WindowServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.windows
@@ -27,7 +28,8 @@ final class WindowManager: ObservableObject {
         let windowID: CGWindowID
     }
 
-    init() {
+    init(appSettings: AppSettings) {
+        self.appSettings = appSettings
         setupObservers()
     }
 
@@ -78,7 +80,11 @@ final class WindowManager: ObservableObject {
 
     func getFilteredWindows() async throws -> [SCWindow] {
         let availableWindows = try await captureServices.getAvailableWindows()
-        let filteredWindows = windowServices.windowFilter.filterWindows(availableWindows)
+        let filteredWindows = windowServices.windowFilter.filterWindows(
+            availableWindows,
+            appFilterNames: appSettings.appFilterNames,
+            isFilterBlocklist: appSettings.isFilterBlocklist
+        )
         return filteredWindows
     }
 }
