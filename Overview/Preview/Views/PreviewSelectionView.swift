@@ -12,10 +12,8 @@ struct PreviewSelectionView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-
     @State private var selectedWindow: SCWindow?
-    @State private var windowListVersion = UUID()
-
+    @State private var windowListVersion: UUID = UUID()
     private let logger = AppLogger.interface
 
     init(
@@ -112,7 +110,7 @@ struct PreviewSelectionView: View {
     }
 
     private func handleWindowSelection(_ old: SCWindow?, _ new: SCWindow?) {
-        if let window = new {
+        if let window: SCWindow = new {
             logger.info("Selected window: '\(window.title ?? "Untitled")'")
         }
     }

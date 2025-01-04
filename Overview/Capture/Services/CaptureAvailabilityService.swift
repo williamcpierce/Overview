@@ -26,7 +26,7 @@ final class CaptureAvailabilityService {
         logger.debug("Fetching available windows")
 
         do {
-            let content = try await SCShareableContent.excludingDesktopWindows(
+            let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true)
 
             logger.debug("Retrieved \(content.windows.count) available windows")

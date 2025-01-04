@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Provides the settings interface for Overview, managing user preferences through
- a tabbed view system that handles all aspects of window preview behavior.
- Coordinates real-time updates of capture configuration and window management.
 */
 
 import SwiftUI
@@ -14,12 +10,10 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
-
     @State private var isAddingHotkey: Bool = false
     @State private var showingResetAlert: Bool = false
-
+    private let availableFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
     private let logger = AppLogger.settings
-    private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
         TabView {
@@ -308,7 +302,7 @@ struct SettingsView: View {
     }
 
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
-        if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
+        if let index: Int = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
             logger.info("Hotkey binding removed: '\(binding.windowTitle)'")
         }

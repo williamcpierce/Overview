@@ -9,14 +9,14 @@ import ScreenCaptureKit
 
 final class WindowFilterService {
     private let logger = AppLogger.windows
-    private let systemAppBundleIDs = Set([
+    private let systemAppBundleIDs: Set<String> = Set([
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
     ])
 
     func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
         logger.debug("Starting window filtering: total=\(windows.count)")
-        let filtered = windows.filter { window in
+        let filtered: [SCWindow] = windows.filter { window in
             meetsBasicRequirements(window) && isNotSystemComponent(window)
         }
         logger.debug(
@@ -26,7 +26,7 @@ final class WindowFilterService {
     }
 
     private func meetsBasicRequirements(_ window: SCWindow) -> Bool {
-        let isValid =
+        let isValid: Bool =
             window.isOnScreen
             && window.frame.height > 100
             && window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
@@ -43,17 +43,17 @@ final class WindowFilterService {
     }
 
     private func isNotSystemComponent(_ window: SCWindow) -> Bool {
-        let isNotDesktopView =
+        let isNotDesktopView: Bool =
             window.owningApplication?.bundleIdentifier != "com.apple.finder"
             || window.title != "Desktop"
 
-        let isNotSystemUI =
+        let isNotSystemUI: Bool =
             window.owningApplication?.bundleIdentifier != "com.apple.systemuiserver"
 
-        let isNotSystemApp = !systemAppBundleIDs.contains(
+        let isNotSystemApp: Bool = !systemAppBundleIDs.contains(
             window.owningApplication?.bundleIdentifier ?? "")
 
-        let isNotSystem = isNotDesktopView && isNotSystemUI && isNotSystemApp
+        let isNotSystem: Bool = isNotDesktopView && isNotSystemUI && isNotSystemApp
 
         if !isNotSystem {
             logger.debug(

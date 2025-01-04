@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Manages multiple window preview instances and coordinates their lifecycle,
- providing centralized control of capture sessions and edit mode state.
- Core orchestrator for Overview's window preview system.
 */
 
 import ScreenCaptureKit
@@ -16,7 +12,6 @@ import SwiftUI
 final class PreviewManager: ObservableObject {
     @Published private(set) var isInitializing: Bool = true
     @Published var editModeEnabled: Bool = false
-
     private let logger = AppLogger.interface
 
     // MARK: - Capture System Management
@@ -44,7 +39,7 @@ final class PreviewManager: ObservableObject {
     // MARK: - Window Preview Management
 
     func startWindowPreview(captureManager: CaptureManager, window: SCWindow?) {
-        guard let selectedWindow = window else { return }
+        guard let selectedWindow: SCWindow = window else { return }
 
         logger.debug("Initiating preview: '\(selectedWindow.title ?? "Untitled")'")
         captureManager.selectedWindow = selectedWindow

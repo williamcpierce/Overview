@@ -3,11 +3,6 @@
  Overview
 
  Created by William Pierce on 12/10/24.
-
- Provides centralized window management operations across the application, serving as
- the single source of truth for window state tracking and focus operations. Manages
- window caching and periodic updates to ensure efficient window lookup with minimal
- system overhead.
 */
 
 import ScreenCaptureKit
@@ -15,21 +10,16 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
+    private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.windows
-    private let windowServices = WindowServices.shared
-    private let captureServices = CaptureServices.shared
-    private var titleToWindowMap: [String: SCWindow] = [:]
-    private var cacheSyncTimer: Timer?
-
-    init() {
-        setupPeriodicCacheSync()
-    }
+    private let windowServices: WindowServices = WindowServices.shared
 
     func getFilteredWindows() async -> [SCWindow] {
         do {
-            let systemWindows = try await captureServices.captureAvailability.getAvailableWindows()
-            let filteredWindows = windowServices.windowFilter.filterWindows(systemWindows)
-            synchronizeTitleCache(with: filteredWindows)
+            let systemWindows: [SCWindow] = try await captureServices.captureAvailability
+                .getAvailableWindows()
+            let filteredWindows: [SCWindow] = windowServices.windowFilter.filterWindows(
+                systemWindows)
             return filteredWindows
         } catch {
             logger.logError(
@@ -42,32 +32,11 @@ final class WindowManager: ObservableObject {
 
     @discardableResult
     func focusWindow(withTitle title: String) -> Bool {
-        let success = windowServices.windowFocus.focusWindow(withTitle: title)
+        let success: Bool = windowServices.windowFocus.focusWindow(withTitle: title)
         if !success {
             logger.error("Failed to activate window process: '\(title)'")
         }
         return success
     }
 
-    private func setupPeriodicCacheSync() {
-        cacheSyncTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
-            [weak self] _ in
-            Task { @MainActor [weak self] in
-                _ = await self?.getFilteredWindows()
-            }
-        }
-    }
-
-    private func synchronizeTitleCache(with windows: [SCWindow]) {
-        titleToWindowMap.removeAll()
-        windows.forEach { window in
-            if let title = window.title {
-                titleToWindowMap[title] = window
-            }
-        }
-    }
-
-    deinit {
-        cacheSyncTimer?.invalidate()
-    }
 }

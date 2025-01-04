@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Manages application preferences and settings persistence, providing real-time updates
- across the application through Combine publishers and UserDefaults storage.
 */
 
 import SwiftUI
@@ -13,7 +10,6 @@ import SwiftUI
 class AppSettings: ObservableObject {
     private let hotkeyService = HotkeyService.shared
     private let logger = AppLogger.settings
-
     private var isInitializing: Bool = true
 
     // MARK: - Default Values
@@ -261,7 +257,7 @@ class AppSettings: ObservableObject {
     }
 
     private func validateFrameRate() {
-        let validRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
+        let validRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
         guard !validRates.contains(frameRate) else { return }
         frameRate = 30.0
     }
