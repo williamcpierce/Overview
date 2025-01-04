@@ -3,11 +3,6 @@
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Coordinates window capture lifecycle and state management, serving as the bridge
- between low-level capture operations and UI components. Manages window selection,
- capture permissions, frame delivery, and window state tracking while maintaining
- proper state synchronization across the capture system.
 */
 
 import Combine
@@ -17,9 +12,8 @@ import SwiftUI
 @MainActor
 class CaptureManager: ObservableObject {
     @ObservedObject private var appSettings: AppSettings
-
-    @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var availableWindows: [SCWindow] = []
+    @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceWindowFocused: Bool = false
     @Published private(set) var windowTitle: String?
@@ -29,16 +23,14 @@ class CaptureManager: ObservableObject {
             Task { await synchronizeWindowFocusState() }
         }
     }
-
-    private let windowServices = WindowServices.shared
-    private let captureServices = CaptureServices.shared
     private let captureEngine: CaptureEngine
+    private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
-
-    private var settingsSubscriptions = Set<AnyCancellable>()
+    private let windowServices: WindowServices = WindowServices.shared
     private var activeFrameProcessingTask: Task<Void, Never>?
-    private var windowStateObserverId: UUID?
     private var hasPermission: Bool = false
+    private var settingsSubscriptions: Set<AnyCancellable> = Set<AnyCancellable>()
+    private var windowStateObserverId: UUID?
 
     init(
         appSettings: AppSettings,
@@ -64,7 +56,8 @@ class CaptureManager: ObservableObject {
 
     func updateAvailableWindows() async {
         do {
-            let windows = try await captureServices.captureAvailability.getAvailableWindows()
+            let windows: [SCWindow] = try await captureServices.captureAvailability
+                .getAvailableWindows()
             await MainActor.run {
                 self.availableWindows = windowServices.windowFilter.filterWindows(windows)
             }
@@ -77,11 +70,14 @@ class CaptureManager: ObservableObject {
 
     func startCapture() async throws {
         guard !isCapturing else { return }
-        guard let targetWindow = selectedWindow else { throw CaptureError.noWindowSelected }
+        guard let targetWindow: SCWindow = selectedWindow else {
+            throw CaptureError.noWindowSelected
+        }
 
         let (config, filter) = captureServices.captureConfiguration.createConfiguration(
             targetWindow, frameRate: appSettings.frameRate)
-        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
+        let frameStream: AsyncThrowingStream = captureEngine.startCapture(
+            configuration: config, filter: filter)
 
         await startFrameProcessing(stream: frameStream)
         isCapturing = true
@@ -99,7 +95,7 @@ class CaptureManager: ObservableObject {
     }
 
     func focusWindow() {
-        guard let targetWindow = selectedWindow else { return }
+        guard let targetWindow: SCWindow = selectedWindow else { return }
         windowServices.windowFocus.focusWindow(
             window: targetWindow)
     }
@@ -157,7 +153,7 @@ class CaptureManager: ObservableObject {
     }
 
     private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let targetWindow = selectedWindow else { return }
+        guard isCapturing, let targetWindow: SCWindow = selectedWindow else { return }
 
         do {
             try await captureServices.captureConfiguration.updateConfiguration(
@@ -173,18 +169,18 @@ class CaptureManager: ObservableObject {
 }
 
 enum CaptureError: LocalizedError {
-    case permissionDenied
-    case noWindowSelected
     case captureStreamFailed(Error)
+    case noWindowSelected
+    case permissionDenied
 
     var errorDescription: String? {
         switch self {
-        case .permissionDenied:
-            return "Screen capture permission was denied"
-        case .noWindowSelected:
-            return "No window is selected for capture"
         case .captureStreamFailed(let error):
             return "Capture failed: \(error.localizedDescription)"
+        case .noWindowSelected:
+            return "No window is selected for capture"
+        case .permissionDenied:
+            return "Screen capture permission was denied"
         }
     }
 }

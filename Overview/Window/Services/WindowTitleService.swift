@@ -11,21 +11,21 @@ final class WindowTitleService {
     private let logger = AppLogger.windows
 
     func updateWindowTitle(for window: SCWindow?) async -> String? {
-        guard let window = window else {
+        guard let window: SCWindow = window else {
             logger.debug("Title update skipped: nil window reference")
             return nil
         }
 
         do {
-            let content = try await SCShareableContent.excludingDesktopWindows(
+            let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)
 
-            let title = content.windows.first { updatedWindow in
+            let title: String? = content.windows.first { updatedWindow in
                 updatedWindow.owningApplication?.processID == window.owningApplication?.processID
                     && updatedWindow.windowID == window.windowID
             }?.title
 
-            if let title = title {
+            if let title: String = title {
                 logger.debug("Title updated: '\(title)'")
             } else {
                 logger.warning("No matching window found for title update")

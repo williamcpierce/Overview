@@ -3,21 +3,16 @@
  Overview
 
  Created by William Pierce on 12/8/24.
-
- Provides interface for recording global keyboard shortcuts with robust event handling,
- validation, and integration with Overview's hotkey management system, ensuring
- reliable shortcut capture for window focusing operations.
 */
 
 import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
-
     let windowTitle: String
 
     func makeNSView(context: Context) -> NSButton {
-        let recordingButton = NSButton(frame: .zero)
+        let recordingButton: NSButton = NSButton(frame: .zero)
         recordingButton.bezelStyle = .rounded
         recordingButton.setButtonType(.momentaryPushIn)
         recordingButton.title = shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
@@ -37,11 +32,10 @@ struct HotkeyRecorder: NSViewRepresentable {
 
     final class Coordinator: NSObject {
         private let logger = AppLogger.hotkeys
-
-        private var parent: HotkeyRecorder
-        private var isRecordingActive = false
         private var activeModifierKeys: NSEvent.ModifierFlags = []
+        private var isRecordingActive: Bool = false
         private var keyboardMonitor: Any?
+        private var parent: HotkeyRecorder
 
         init(_ parent: HotkeyRecorder) {
             self.parent = parent
@@ -78,7 +72,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         }
 
         private func endRecordingSession() {
-            if let monitor = keyboardMonitor {
+            if let monitor: Any = keyboardMonitor {
                 NSEvent.removeMonitor(monitor)
                 keyboardMonitor = nil
             }
@@ -129,15 +123,15 @@ struct HotkeyRecorder: NSViewRepresentable {
 }
 
 enum ShortcutRecordingError: LocalizedError {
-    case monitoringFailed
     case invalidModifiers
+    case monitoringFailed
 
     var errorDescription: String? {
         switch self {
-        case .monitoringFailed:
-            return "Failed to start keyboard monitoring"
         case .invalidModifiers:
             return "Invalid modifier key combination"
+        case .monitoringFailed:
+            return "Failed to start keyboard monitoring"
         }
     }
 }

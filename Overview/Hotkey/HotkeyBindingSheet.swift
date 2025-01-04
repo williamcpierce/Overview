@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/8/24.
-
- Provides the interface for configuring keyboard shortcuts that can trigger window
- focus operations. Part of the hotkey management system that allows users to quickly
- switch between windows using global keyboard shortcuts.
 */
 
 import ScreenCaptureKit
@@ -16,11 +12,10 @@ struct HotkeyBindingSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
-
-    @State private var selectedWindow: SCWindow?
-    @State private var currentShortcut: HotkeyBinding?
-    @State private var validationError: String = ""
     @State private var availableWindows: [SCWindow] = []
+    @State private var currentShortcut: HotkeyBinding?
+    @State private var selectedWindow: SCWindow?
+    @State private var validationError: String = ""
 
     var body: some View {
         VStack(spacing: 16) {
@@ -64,7 +59,7 @@ struct HotkeyBindingSheet: View {
 
     private var shortcutConfigurationSection: some View {
         Group {
-            if let window = selectedWindow, let title = window.title {
+            if let window: SCWindow = selectedWindow, let title = window.title {
                 VStack(alignment: .leading) {
                     Text("Hotkey:")
                     HotkeyRecorder(shortcut: $currentShortcut, windowTitle: title)
@@ -105,19 +100,19 @@ struct HotkeyBindingSheet: View {
     }
 
     private func validateWindowSelection() {
-        guard let window = selectedWindow,
-            let title = window.title
+        guard let window: SCWindow = selectedWindow,
+            let title: String = window.title
         else {
             validationError = ""
             return
         }
 
-        let hasDuplicateTitles = availableWindows.filter { $0.title == title }.count > 1
+        let hasDuplicateTitles: Bool = availableWindows.filter { $0.title == title }.count > 1
         validationError = hasDuplicateTitles ? "Warning: Multiple windows have this title" : ""
     }
 
     private func validateShortcutConfiguration() {
-        guard let shortcut = currentShortcut else {
+        guard let shortcut: HotkeyBinding = currentShortcut else {
             validationError = ""
             return
         }
@@ -142,7 +137,7 @@ struct HotkeyBindingSheet: View {
     }
 
     private func isValidConfiguration() -> Bool {
-        guard let window = selectedWindow,
+        guard let window: SCWindow = selectedWindow,
             window.title != nil,
             currentShortcut != nil,
             validationError.isEmpty
@@ -151,7 +146,7 @@ struct HotkeyBindingSheet: View {
     }
 
     private func saveHotkeyBinding() {
-        if let shortcut = currentShortcut {
+        if let shortcut: HotkeyBinding = currentShortcut {
             appSettings.hotkeyBindings.append(shortcut)
             dismiss()
         }

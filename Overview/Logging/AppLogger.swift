@@ -3,50 +3,47 @@
  Overview
 
  Created by William Pierce on 12/11/24.
-
- Provides centralized logging functionality across the application using OSLog,
- ensuring consistent log formatting, categorization, and level management.
 */
 
 import OSLog
 
 struct AppLogger {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.Overview"
     private static let loggers: [Category: Logger] = Category.allCases.reduce(into: [:]) {
         dict, category in
         dict[category] = Logger(subsystem: subsystem, category: category.rawValue)
     }
+    private static let subsystem: String = Bundle.main.bundleIdentifier ?? "com.Overview"
     static let capture: CategoryLogger = CategoryLogger(category: .capture)
-    static let windows: CategoryLogger = CategoryLogger(category: .windows)
     static let hotkeys: CategoryLogger = CategoryLogger(category: .hotkeys)
-    static let settings: CategoryLogger = CategoryLogger(category: .settings)
-    static let performance: CategoryLogger = CategoryLogger(category: .performance)
     static let interface: CategoryLogger = CategoryLogger(category: .interface)
+    static let performance: CategoryLogger = CategoryLogger(category: .performance)
+    static let settings: CategoryLogger = CategoryLogger(category: .settings)
+    static let windows: CategoryLogger = CategoryLogger(category: .windows)
 }
 
 extension AppLogger {
     enum Category: String, CaseIterable {
         case capture = "Capture"
-        case windows = "Windows"
         case hotkeys = "Hotkeys"
-        case settings = "Settings"
-        case performance = "Performance"
         case interface = "Interface"
+        case performance = "Performance"
+        case settings = "Settings"
+        case windows = "Windows"
     }
 
     enum Level {
         case debug
-        case info
-        case warning
         case error
         case fault
+        case info
+        case warning
 
         var osLogType: OSLogType {
             switch self {
             case .debug: return .debug
+            case .fault: return .fault
             case .info: return .info
             case .warning, .error: return .error
-            case .fault: return .fault
             }
         }
     }
@@ -56,11 +53,9 @@ extension AppLogger {
     struct SourceLocation {
         let file: String
         let function: String
-
         var fileName: String {
             URL(fileURLWithPath: file).lastPathComponent
         }
-
         var description: String {
             "[\(fileName):\(function)]"
         }
@@ -86,8 +81,8 @@ extension AppLogger {
         category: Category,
         location: SourceLocation
     ) {
-        var message = "\(location.description) Error: \(error.localizedDescription)"
-        if let context = context {
+        var message: String = "\(location.description) Error: \(error.localizedDescription)"
+        if let context: String = context {
             message += " - Context: \(context)"
         }
 
@@ -116,20 +111,20 @@ extension CategoryLogger {
         log(message, level: .debug, location: .init(file: file, function: function))
     }
 
-    func info(_ message: String, file: String = #file, function: String = #function) {
-        log(message, level: .info, location: .init(file: file, function: function))
-    }
-
-    func warning(_ message: String, file: String = #file, function: String = #function) {
-        log(message, level: .warning, location: .init(file: file, function: function))
-    }
-
     func error(_ message: String, file: String = #file, function: String = #function) {
         log(message, level: .error, location: .init(file: file, function: function))
     }
 
     func fault(_ message: String, file: String = #file, function: String = #function) {
         log(message, level: .fault, location: .init(file: file, function: function))
+    }
+
+    func info(_ message: String, file: String = #file, function: String = #function) {
+        log(message, level: .info, location: .init(file: file, function: function))
+    }
+
+    func warning(_ message: String, file: String = #file, function: String = #function) {
+        log(message, level: .warning, location: .init(file: file, function: function))
     }
 }
 

@@ -2,23 +2,17 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- Serves as the root coordinator for window preview lifecycle, managing transitions
- between window selection and preview states while maintaining proper window scaling
- and interaction handling.
+ Created by William Pierce on 9/15/24..
 */
 
 import SwiftUI
 
 struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var captureManager: CaptureManager
-
+    @ObservedObject private var previewManager: PreviewManager
     @State private var isSelectionViewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
-
     private let logger = AppLogger.interface
 
     init(appSettings: AppSettings, previewManager: PreviewManager, captureManager: CaptureManager) {
@@ -26,7 +20,7 @@ struct PreviewView: View {
         self.previewManager = previewManager
         self.captureManager = captureManager
 
-        let initialRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
+        let initialRatio: CGFloat = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         self._previewAspectRatio = State(initialValue: initialRatio)
     }
 
@@ -79,10 +73,10 @@ struct PreviewView: View {
 
     private var windowConfigurationLayer: some View {
         PreviewAccessor(
+            aspectRatio: $previewAspectRatio,
             appSettings: appSettings,
             captureManager: captureManager,
-            previewManager: previewManager,
-            aspectRatio: $previewAspectRatio
+            previewManager: previewManager
         )
     }
 
@@ -105,8 +99,8 @@ struct PreviewView: View {
     // MARK: - State Updates
 
     private func updatePreviewDimensions(from oldSize: CGSize?, to newSize: CGSize?) {
-        guard let size = newSize else { return }
-        let newRatio = size.width / size.height
+        guard let size: CGSize = newSize else { return }
+        let newRatio: CGFloat = size.width / size.height
         logger.info("Updating preview ratio: \(newRatio)")
         previewAspectRatio = newRatio
     }

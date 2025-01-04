@@ -9,10 +9,9 @@ import Carbon
 import Cocoa
 
 struct HotkeyBinding: Codable, Equatable, Hashable {
-    let windowTitle: String
     let keyCode: Int
+    let windowTitle: String
     private let modifierFlags: UInt
-
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
@@ -24,13 +23,13 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     }
 
     var hotkeyDisplayString: String {
-        var modifierSymbols = [String]()
+        var modifierSymbols: [String] = [String]()
         if modifiers.contains(.command) { modifierSymbols.append("⌘") }
         if modifiers.contains(.option) { modifierSymbols.append("⌥") }
         if modifiers.contains(.control) { modifierSymbols.append("⌃") }
         if modifiers.contains(.shift) { modifierSymbols.append("⇧") }
 
-        let keySymbol = Self.translateKeyCodeToSymbol(keyCode) ?? "Key\(keyCode)"
+        let keySymbol: String = Self.translateKeyCodeToSymbol(keyCode) ?? "Key\(keyCode)"
         modifierSymbols.append(keySymbol)
 
         return modifierSymbols.joined()
@@ -43,22 +42,27 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
             123: "←", 124: "→", 125: "↓", 126: "↑",
         ]
 
-        if let specialKey = specialKeys[keyCode] {
+        if let specialKey: String = specialKeys[keyCode] {
             return specialKey
         }
 
-        guard let currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
-            let layoutData = TISGetInputSourceProperty(
+        guard
+            let currentKeyboard: TISInputSource = TISCopyCurrentKeyboardLayoutInputSource()?
+                .takeRetainedValue(),
+            let layoutData: UnsafeMutableRawPointer = TISGetInputSourceProperty(
                 currentKeyboard, kTISPropertyUnicodeKeyLayoutData)
         else { return nil }
 
-        let keyboardLayout = Unmanaged<CFData>.fromOpaque(layoutData).takeUnretainedValue() as Data
-        var chars = [UniChar](repeating: 0, count: 4)
-        var stringLength = 0
+        let keyboardLayout: Data =
+            Unmanaged<CFData>.fromOpaque(layoutData).takeUnretainedValue() as Data
+        var chars: [UniChar] = [UniChar](repeating: 0, count: 4)
+        var stringLength: Int = 0
         var deadKeyState: UInt32 = 0
 
-        let status = keyboardLayout.withUnsafeBytes { buffer in
-            guard let layoutPtr = buffer.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self)
+        let status: OSStatus = keyboardLayout.withUnsafeBytes { buffer in
+            guard
+                let layoutPtr: UnsafePointer<UCKeyboardLayout> = buffer.baseAddress?
+                    .assumingMemoryBound(to: UCKeyboardLayout.self)
             else { return errSecInvalidKeychain }
 
             return UCKeyTranslate(

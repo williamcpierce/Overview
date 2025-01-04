@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Manages application preferences and settings persistence, providing real-time updates
- across the application through Combine publishers and UserDefaults storage.
 */
 
 import SwiftUI
