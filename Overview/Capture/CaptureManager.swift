@@ -15,12 +15,13 @@ final class CaptureManager: ObservableObject {
     @Published private(set) var availableWindows: [SCWindow] = []
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
+    @Published private(set) var isSourceAppFocused: Bool = false
     @Published private(set) var isSourceWindowFocused: Bool = false
     @Published private(set) var windowTitle: String?
     @Published var selectedWindow: SCWindow? {
         didSet {
             windowTitle = selectedWindow?.title
-            Task { await synchronizeWindowFocusState() }
+            Task { await synchronizeFocusState() }
         }
     }
 
@@ -113,8 +114,8 @@ final class CaptureManager: ObservableObject {
     }
 
     private func setupSubscriptions() {
-        windowManager.$focusedBundleId
-            .sink { [weak self] _ in Task { await self?.synchronizeWindowFocusState() } }
+        windowManager.$focusedProcessId
+            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
             .store(in: &subscriptions)
 
         windowManager.$windowTitles
@@ -127,14 +128,16 @@ final class CaptureManager: ObservableObject {
             .store(in: &subscriptions)
     }
 
-    private func synchronizeWindowFocusState() async {
-        guard let selectedWindow = selectedWindow,
-            let selectedBundleId = selectedWindow.owningApplication?.bundleIdentifier
-        else {
+    private func synchronizeFocusState() async {
+        guard let selectedWindow = selectedWindow else {
             isSourceWindowFocused = false
             return
         }
-        isSourceWindowFocused = selectedBundleId == windowManager.focusedBundleId
+        let selectedProcessId: pid_t? = selectedWindow.owningApplication?.processID
+        let selectedBundleId: String? = selectedWindow.owningApplication?.bundleIdentifier
+
+        isSourceWindowFocused = selectedProcessId == windowManager.focusedProcessId
+        isSourceAppFocused = selectedBundleId == windowManager.focusedBundleId
     }
 
     private func synchronizeWindowTitle(from titles: [WindowManager.WindowID: String]) {

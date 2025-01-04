@@ -12,6 +12,7 @@ import SwiftUI
 final class WindowManager: ObservableObject {
     // MARK: - Published State
     @Published private(set) var focusedBundleId: String?
+    @Published private(set) var focusedProcessId: pid_t?
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var windowTitles: [WindowID: String] = [:]
 
@@ -45,14 +46,18 @@ final class WindowManager: ObservableObject {
     private func setupObservers() {
         windowServices.windowObserver.addObserver(
             id: observerId,
-            onFocusChanged: { [weak self] in await self?.updateFocusedApp() },
+            onFocusChanged: { [weak self] in await self?.updateFocusedWindow() },
             onTitleChanged: { [weak self] in await self?.updateWindowTitles() }
         )
     }
 
-    private func updateFocusedApp() async {
-        focusedBundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        isOverviewActive = focusedBundleId == Bundle.main.bundleIdentifier
+    private func updateFocusedWindow() async {
+        guard let activeApp: NSRunningApplication = NSWorkspace.shared.frontmostApplication else {
+            return
+        }
+        focusedProcessId = activeApp.processIdentifier
+        focusedBundleId = activeApp.bundleIdentifier
+        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
     }
 
     private func updateWindowTitles() async {

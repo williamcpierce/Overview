@@ -46,7 +46,7 @@ struct PreviewView: View {
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
-        .onChange(of: captureManager.isSourceWindowFocused, updateWindowVisibility)
+        .onChange(of: captureManager.isSourceAppFocused, updateWindowVisibility)
         .onChange(of: windowManager.isOverviewActive, updateWindowVisibility)
         .onChange(of: appSettings.hideInactiveWindows, updateWindowVisibility)
     }
@@ -126,8 +126,8 @@ struct PreviewView: View {
     private func updateWindowVisibility() {
         if appSettings.hideInactiveWindows {
             isWindowVisible =
-                captureManager.isSourceWindowFocused || isSelectionViewVisible
-            || previewManager.editModeEnabled || windowManager.isOverviewActive
+                captureManager.isSourceAppFocused || isSelectionViewVisible
+                || previewManager.editModeEnabled || windowManager.isOverviewActive
             logger.debug(
                 "Window visibility updated: visible=\(isWindowVisible)"
             )

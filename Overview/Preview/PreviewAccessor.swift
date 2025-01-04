@@ -34,7 +34,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window: NSWindow = nsView.window else {
-            logger.warning("No window reference available during update")
+            logger.info("No window reference available during update")
             return
         }
 
