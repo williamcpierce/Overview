@@ -5,6 +5,7 @@
  Created by William Pierce on 10/13/24.
 */
 
+import Combine
 import ScreenCaptureKit
 import SwiftUI
 

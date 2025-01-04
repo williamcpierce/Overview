@@ -27,6 +27,7 @@ class AppSettings: ObservableObject {
         static let titleFontSize: Double = 12.0
         static let titleBackgroundOpacity: Double = 0.4
         static let managedByMissionControl: Bool = true
+        static let hideInactiveWindows: Bool = false
         static let enableEditModeAlignment: Bool = false
         static let hotkeyBindings: [HotkeyBinding] = []
     }
@@ -122,6 +123,14 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var hideInactiveWindows: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                hideInactiveWindows, forKey: StorageKeys.hideInactiveWindows)
+            logger.info("Hide inactive windows set to \(hideInactiveWindows)")
+        }
+    }
+
     @Published var enableEditModeAlignment: Bool {
         didSet {
             UserDefaults.standard.set(
@@ -162,6 +171,7 @@ class AppSettings: ObservableObject {
         self.titleFontSize = Defaults.titleFontSize
         self.titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         self.managedByMissionControl = Defaults.managedByMissionControl
+        self.hideInactiveWindows = Defaults.hideInactiveWindows
         self.enableEditModeAlignment = Defaults.enableEditModeAlignment
         self.hotkeyBindings = Defaults.hotkeyBindings
 
@@ -192,6 +202,7 @@ class AppSettings: ObservableObject {
         showWindowTitle = Defaults.showWindowTitle
         titleFontSize = Defaults.titleFontSize
         titleBackgroundOpacity = Defaults.titleBackgroundOpacity
+        hideInactiveWindows = Defaults.hideInactiveWindows
         managedByMissionControl = Defaults.managedByMissionControl
         enableEditModeAlignment = Defaults.enableEditModeAlignment
 
@@ -215,6 +226,8 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.titleBackgroundOpacity)
         managedByMissionControl = UserDefaults.standard.bool(
             forKey: StorageKeys.managedByMissionControl)
+        hideInactiveWindows = UserDefaults.standard.bool(
+            forKey: StorageKeys.hideInactiveWindows)
         enableEditModeAlignment = UserDefaults.standard.bool(
             forKey: StorageKeys.enableEditModeAlignment)
     }
@@ -294,6 +307,7 @@ private enum StorageKeys {
     static let titleFontSize: String = "titleFontSize"
     static let titleBackgroundOpacity: String = "titleBackgroundOpacity"
     static let managedByMissionControl: String = "managedByMissionControl"
+    static let hideInactiveWindows: String = "hideInactiveWindows"
     static let enableEditModeAlignment: String = "enableEditModeAlignment"
     static let hotkeyBindings: String = "hotkeyBindings"
 }
