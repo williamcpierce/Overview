@@ -12,7 +12,6 @@ import SwiftUI
 @MainActor
 final class CaptureManager: ObservableObject {
     // MARK: - Published State
-    @Published private(set) var availableWindows: [SCWindow] = []
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
@@ -54,14 +53,6 @@ final class CaptureManager: ObservableObject {
         guard !hasPermission else { return }
         try await captureServices.requestScreenRecordingPermission()
         hasPermission = true
-    }
-
-    func updateAvailableWindows() async {
-        do {
-            availableWindows = try await windowManager.getFilteredWindows()
-        } catch {
-            logger.logError(error, context: "Failed to get available windows")
-        }
     }
 
     func startCapture() async throws {

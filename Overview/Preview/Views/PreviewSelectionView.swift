@@ -13,7 +13,6 @@ struct PreviewSelectionView: View {
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @State private var selectedWindow: SCWindow?
-    @State private var windowListVersion: UUID = UUID()
     private let logger = AppLogger.interface
 
     init(
@@ -59,7 +58,7 @@ struct PreviewSelectionView: View {
                 }
             }
         }
-        .id(windowListVersion)
+        .id(previewManager.windowListVersion)
         .onChange(of: selectedWindow, handleWindowSelection)
     }
 
@@ -75,7 +74,7 @@ struct PreviewSelectionView: View {
     }
 
     private var availableWindowsList: some View {
-        ForEach(captureManager.availableWindows, id: \.windowID) { window in
+        ForEach(previewManager.availableWindows, id: \.windowID) { window in
             Text(window.title ?? "Untitled").tag(window as SCWindow?)
         }
     }
@@ -101,10 +100,9 @@ struct PreviewSelectionView: View {
     private func refreshWindowList() {
         Task {
             logger.debug("Refreshing available windows")
-            await captureManager.updateAvailableWindows()
+            await previewManager.updateAvailableWindows()
             await MainActor.run {
-                windowListVersion = UUID()
-                logger.info("Window list updated: \(captureManager.availableWindows.count) windows")
+                logger.info("Window list updated: \(previewManager.availableWindows.count) windows")
             }
         }
     }
