@@ -33,7 +33,7 @@ class AppSettings: ObservableObject {
         static let enableEditModeAlignment: Bool = false
         static let hotkeyBindings: [HotkeyBinding] = []
         static let appFilterNames: [String] = []
-        static let isFilterBlocklist: Bool = false
+        static let isFilterBlocklist: Bool = true
     }
 
     // MARK: - Window Appearance
