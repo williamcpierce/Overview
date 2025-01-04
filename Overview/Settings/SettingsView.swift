@@ -14,12 +14,9 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
-
     @State private var isAddingHotkey: Bool = false
     @State private var showingResetAlert: Bool = false
-
     private let logger = AppLogger.settings
-    private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
         TabView {
@@ -191,7 +188,7 @@ struct SettingsView: View {
         Section {
             sectionHeader("Frame Rate")
             Picker("FPS", selection: $appSettings.frameRate) {
-                ForEach(availableFrameRates, id: \.self) { rate in
+                ForEach(appSettings.availableFrameRates, id: \.self) { rate in
                     Text("\(Int(rate))").tag(rate)
                 }
             }

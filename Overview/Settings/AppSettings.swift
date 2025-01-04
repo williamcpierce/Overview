@@ -11,16 +11,16 @@
 import SwiftUI
 
 class AppSettings: ObservableObject {
+    let availableFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
     private let hotkeyService = HotkeyService.shared
     private let logger = AppLogger.settings
-
     private var isInitializing: Bool = true
 
     // MARK: - Default Values
 
     private struct Defaults {
         static let windowOpacity: Double = 0.95
-        static let frameRate: Double = 30.0
+        static let frameRate: Double = 10.0
         static let defaultWindowWidth: Double = 288
         static let defaultWindowHeight: Double = 162
         static let showFocusedBorder: Bool = true
@@ -257,29 +257,28 @@ class AppSettings: ObservableObject {
 
     private func validateOpacity() {
         guard windowOpacity < 0.05 || windowOpacity > 1.0 else { return }
-        windowOpacity = max(0.05, min(1.0, windowOpacity))
+        windowOpacity = Defaults.windowOpacity
     }
 
     private func validateFrameRate() {
-        let validRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
-        guard !validRates.contains(frameRate) else { return }
-        frameRate = 30.0
+        guard !availableFrameRates.contains(frameRate) else { return }
+        frameRate = Defaults.frameRate
     }
 
     private func validateWindowDimensions() {
-        if defaultWindowWidth < 100 { defaultWindowWidth = 288 }
-        if defaultWindowHeight < 100 { defaultWindowHeight = 162 }
+        if defaultWindowWidth < 100 { defaultWindowWidth = Defaults.defaultWindowWidth }
+        if defaultWindowHeight < 100 { defaultWindowHeight = Defaults.defaultWindowHeight }
     }
 
     private func validateBorderWidth() {
         guard focusBorderWidth <= 0 else { return }
-        focusBorderWidth = 5.0
+        focusBorderWidth = Defaults.focusBorderWidth
     }
 
     private func validateTitleSettings() {
-        if titleFontSize <= 0 { titleFontSize = 12.0 }
+        if titleFontSize <= 0 { titleFontSize = Defaults.titleFontSize }
         if titleBackgroundOpacity < 0.0 || titleBackgroundOpacity > 1.0 {
-            titleBackgroundOpacity = max(0.0, min(1.0, titleBackgroundOpacity))
+            titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         }
     }
 }
