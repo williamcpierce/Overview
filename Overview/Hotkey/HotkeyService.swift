@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/8/24
-
- Manages system-wide keyboard shortcuts using Carbon Event Manager APIs, providing a
- reliable and efficient implementation of global keyboard shortcuts. Primary coordinator
- for mapping keyboard combinations to window focus operations.
 */
 
 import Carbon
@@ -14,21 +10,18 @@ import Cocoa
 import SwiftUI
 
 final class HotkeyService {
-    static let shared: HotkeyService = HotkeyService()
     private let logger = AppLogger.hotkeys
-
+    static let shared: HotkeyService = HotkeyService()
     /// Maximum concurrent hotkey registrations to prevent resource exhaustion
-    private static let registrationLimit = 50
-
+    private static let registrationLimit: Int = 50
     /// O(1) hotkey event routing by ID
     private var activeHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
-
     /// Thread-safe event processing queue with debounce support
-    private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
+    private let processingQueue = DispatchQueue(
+        label: "com.Overview.HotkeyEventQueue")
     private var previousEvent: HotkeyEventProcessor?
-
     /// Registered callbacks mapped by object identity to prevent retain cycles
     private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
 
@@ -81,13 +74,19 @@ final class HotkeyService {
         ]
 
         var handlerRef: EventHandlerRef?
-        let selfPtr = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        let selfPtr = UnsafeMutableRawPointer(
+            Unmanaged.passUnretained(self).toOpaque())
 
-        let status = InstallEventHandler(
+        let status: OSStatus = InstallEventHandler(
             GetApplicationEventTarget(),
-            { (_, event, userData) -> OSStatus in
-                guard let userData = userData else { return OSStatus(eventNotHandledErr) }
-                let service = Unmanaged<HotkeyService>.fromOpaque(userData).takeUnretainedValue()
+            {
+                (_: EventHandlerCallRef?, event: EventRef?, userData: UnsafeMutableRawPointer?)
+                    -> OSStatus in
+                guard let userData: UnsafeMutableRawPointer = userData else {
+                    return OSStatus(eventNotHandledErr)
+                }
+                let service: HotkeyService = Unmanaged<HotkeyService>.fromOpaque(userData)
+                    .takeUnretainedValue()
                 return service.processHotkeyEvent(event)
             },
             1,
@@ -104,10 +103,10 @@ final class HotkeyService {
     }
 
     private func processHotkeyEvent(_ event: EventRef?) -> OSStatus {
-        guard let event = event else { return OSStatus(eventNotHandledErr) }
+        guard let event: EventRef = event else { return OSStatus(eventNotHandledErr) }
 
         var hotkeyID = EventHotKeyID()
-        let result = GetEventParameter(
+        let result: OSStatus = GetEventParameter(
             event,
             UInt32(kEventParamDirectObject),
             UInt32(typeEventHotKeyID),
@@ -118,7 +117,8 @@ final class HotkeyService {
         )
 
         if result == noErr {
-            let currentEvent = HotkeyEventProcessor(id: hotkeyID.id, timestamp: Date())
+            let currentEvent = HotkeyEventProcessor(
+                id: hotkeyID.id, timestamp: Date())
 
             processingQueue.async { [weak self] in
                 guard let self = self else { return }
@@ -147,16 +147,18 @@ final class HotkeyService {
     }
 
     private func registerSingleHotkey(_ binding: HotkeyBinding) throws {
-        let modifiers = binding.modifiers.intersection([.command, .option, .control, .shift])
+        let modifiers: NSEvent.ModifierFlags = binding.modifiers.intersection([
+            .command, .option, .control, .shift,
+        ])
         guard !modifiers.isEmpty else {
             throw HotkeyError.invalidModifiers
         }
 
         let hotkeyID = EventHotKeyID(signature: 0x4F56_5257, id: nextIdentifier)
-        let carbonModifiers = CarbonModifierTranslator.convert(modifiers)
+        let carbonModifiers: UInt32 = CarbonModifierTranslator.convert(modifiers)
 
         var hotkeyRef: EventHotKeyRef?
-        let status = RegisterEventHotKey(
+        let status: OSStatus = RegisterEventHotKey(
             UInt32(binding.keyCode),
             carbonModifiers,
             hotkeyID,
@@ -185,7 +187,7 @@ final class HotkeyService {
     private func cleanupResources() {
         logger.debug("Cleaning up resources")
         unregisterExistingHotkeys()
-        if let handler = eventHandlerIdentifier {
+        if let handler: EventHandlerRef = eventHandlerIdentifier {
             RemoveEventHandler(handler)
         }
     }
@@ -197,7 +199,7 @@ struct HotkeyEventProcessor {
     private static let minimumProcessingInterval: TimeInterval = 0.2
 
     func shouldProcess(after previousEvent: HotkeyEventProcessor?) -> Bool {
-        guard let previous = previousEvent,
+        guard let previous: HotkeyEventProcessor = previousEvent,
             id == previous.id
         else {
             return true
@@ -207,19 +209,19 @@ struct HotkeyEventProcessor {
 }
 
 enum HotkeyError: LocalizedError {
-    case registrationFailed(OSStatus)
     case eventHandlerFailed(OSStatus)
     case invalidModifiers
+    case registrationFailed(OSStatus)
     case systemLimitReached
 
     var errorDescription: String? {
         switch self {
-        case .registrationFailed(let status):
-            return "Registration failed: \(status)"
         case .eventHandlerFailed(let status):
             return "Event handler failed: \(status)"
         case .invalidModifiers:
             return "Invalid modifier combination"
+        case .registrationFailed(let status):
+            return "Registration failed: \(status)"
         case .systemLimitReached:
             return "Registration limit reached"
         }

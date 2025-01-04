@@ -9,15 +9,21 @@ import ScreenCaptureKit
 
 final class WindowFilterService {
     private let logger = AppLogger.windows
-    private let systemAppBundleIDs = Set([
+    private let systemAppBundleIDs: Set<String> = Set([
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
+        "com.apple.WindowManager",
     ])
 
-    func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
+    func filterWindows(
+        _ windows: [SCWindow], appFilterNames: [String],
+        isFilterBlocklist: Bool
+    ) -> [SCWindow] {
         logger.debug("Starting window filtering: total=\(windows.count)")
-        let filtered = windows.filter { window in
+        let filtered: [SCWindow] = windows.filter { window in
             meetsBasicRequirements(window) && isNotSystemComponent(window)
+                && passesFilter(
+                    window, appFilterNames: appFilterNames, isFilterBlocklist: isFilterBlocklist)
         }
         logger.debug(
             "Window filtering complete: valid=\(filtered.count), filtered=\(windows.count - filtered.count)"
@@ -26,9 +32,8 @@ final class WindowFilterService {
     }
 
     private func meetsBasicRequirements(_ window: SCWindow) -> Bool {
-        let isValid =
-            window.isOnScreen
-            && window.frame.height > 100
+        let isValid: Bool =
+            window.frame.height > 100
             && window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
             && window.windowLayer == 0
             && window.title != nil
@@ -43,17 +48,17 @@ final class WindowFilterService {
     }
 
     private func isNotSystemComponent(_ window: SCWindow) -> Bool {
-        let isNotDesktopView =
+        let isNotDesktopView: Bool =
             window.owningApplication?.bundleIdentifier != "com.apple.finder"
             || window.title != "Desktop"
 
-        let isNotSystemUI =
+        let isNotSystemUI: Bool =
             window.owningApplication?.bundleIdentifier != "com.apple.systemuiserver"
 
-        let isNotSystemApp = !systemAppBundleIDs.contains(
+        let isNotSystemApp: Bool = !systemAppBundleIDs.contains(
             window.owningApplication?.bundleIdentifier ?? "")
 
-        let isNotSystem = isNotDesktopView && isNotSystemUI && isNotSystemApp
+        let isNotSystem: Bool = isNotDesktopView && isNotSystemUI && isNotSystemApp
 
         if !isNotSystem {
             logger.debug(
@@ -62,5 +67,17 @@ final class WindowFilterService {
         }
 
         return isNotSystem
+    }
+
+    private func passesFilter(
+        _ window: SCWindow, appFilterNames: [String],
+        isFilterBlocklist: Bool
+    ) -> Bool {
+        let isMatchedByFilter: Bool = appFilterNames.contains(
+            window.owningApplication?.applicationName ?? "")
+
+        let passesFilter: Bool = isFilterBlocklist ? !isMatchedByFilter : isMatchedByFilter
+
+        return passesFilter
     }
 }

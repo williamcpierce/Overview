@@ -3,24 +3,21 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Manages application preferences and settings persistence, providing real-time updates
- across the application through Combine publishers and UserDefaults storage.
 */
 
 import SwiftUI
 
 class AppSettings: ObservableObject {
+    let availableFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
     private let hotkeyService = HotkeyService.shared
     private let logger = AppLogger.settings
-
     private var isInitializing: Bool = true
 
     // MARK: - Default Values
 
     private struct Defaults {
         static let windowOpacity: Double = 0.95
-        static let frameRate: Double = 30.0
+        static let frameRate: Double = 10.0
         static let defaultWindowWidth: Double = 288
         static let defaultWindowHeight: Double = 162
         static let showFocusedBorder: Bool = true
@@ -30,8 +27,13 @@ class AppSettings: ObservableObject {
         static let titleFontSize: Double = 12.0
         static let titleBackgroundOpacity: Double = 0.4
         static let managedByMissionControl: Bool = true
+        static let closeOnCaptureStop: Bool = false
+        static let hideInactiveApplications: Bool = false
+        static let hideActiveWindow: Bool = false
         static let enableEditModeAlignment: Bool = false
         static let hotkeyBindings: [HotkeyBinding] = []
+        static let appFilterNames: [String] = []
+        static let isFilterBlocklist: Bool = true
     }
 
     // MARK: - Window Appearance
@@ -125,6 +127,30 @@ class AppSettings: ObservableObject {
         }
     }
 
+    @Published var closeOnCaptureStop: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                closeOnCaptureStop, forKey: StorageKeys.closeOnCaptureStop)
+            logger.info("Close on capture stop set to \(closeOnCaptureStop)")
+        }
+    }
+
+    @Published var hideInactiveApplications: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                hideInactiveApplications, forKey: StorageKeys.hideInactiveApplications)
+            logger.info("Hide inactive applications set to \(hideInactiveApplications)")
+        }
+    }
+
+    @Published var hideActiveWindow: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                hideActiveWindow, forKey: StorageKeys.hideActiveWindow)
+            logger.info("Hide active window set to \(hideActiveWindow)")
+        }
+    }
+
     @Published var enableEditModeAlignment: Bool {
         didSet {
             UserDefaults.standard.set(
@@ -151,6 +177,24 @@ class AppSettings: ObservableObject {
         }
     }
 
+    // MARK: - Filters
+
+    @Published var appFilterNames: [String] {
+        didSet {
+            UserDefaults.standard.set(
+                appFilterNames, forKey: StorageKeys.appFilterNames)
+            logger.info("App filter names updated")
+        }
+    }
+
+    @Published var isFilterBlocklist: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                isFilterBlocklist, forKey: StorageKeys.isFilterBlocklist)
+            logger.info("Filter is blockist: \(isFilterBlocklist)")
+        }
+    }
+
     // MARK: - Initialization
 
     init() {
@@ -165,8 +209,13 @@ class AppSettings: ObservableObject {
         self.titleFontSize = Defaults.titleFontSize
         self.titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         self.managedByMissionControl = Defaults.managedByMissionControl
+        self.closeOnCaptureStop = Defaults.closeOnCaptureStop
+        self.hideInactiveApplications = Defaults.hideInactiveApplications
+        self.hideActiveWindow = Defaults.hideActiveWindow
         self.enableEditModeAlignment = Defaults.enableEditModeAlignment
         self.hotkeyBindings = Defaults.hotkeyBindings
+        self.appFilterNames = Defaults.appFilterNames
+        self.isFilterBlocklist = Defaults.isFilterBlocklist
 
         logger.debug("Initializing settings")
         initializeFromStorage()
@@ -196,7 +245,12 @@ class AppSettings: ObservableObject {
         titleFontSize = Defaults.titleFontSize
         titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         managedByMissionControl = Defaults.managedByMissionControl
+        closeOnCaptureStop = Defaults.closeOnCaptureStop
+        hideInactiveApplications = Defaults.hideInactiveApplications
+        hideActiveWindow = Defaults.hideActiveWindow
         enableEditModeAlignment = Defaults.enableEditModeAlignment
+        appFilterNames = Defaults.appFilterNames
+        isFilterBlocklist = Defaults.isFilterBlocklist
 
         clearHotkeyBindings()
         logger.info("Settings reset completed")
@@ -218,8 +272,19 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.titleBackgroundOpacity)
         managedByMissionControl = UserDefaults.standard.bool(
             forKey: StorageKeys.managedByMissionControl)
+        closeOnCaptureStop = UserDefaults.standard.bool(
+            forKey: StorageKeys.closeOnCaptureStop)
+        hideInactiveApplications = UserDefaults.standard.bool(
+            forKey: StorageKeys.hideInactiveApplications)
+        hideActiveWindow = UserDefaults.standard.bool(
+            forKey: StorageKeys.hideActiveWindow)
         enableEditModeAlignment = UserDefaults.standard.bool(
             forKey: StorageKeys.enableEditModeAlignment)
+        appFilterNames =
+            UserDefaults.standard.array(
+                forKey: StorageKeys.appFilterNames) as? [String] ?? []
+        enableEditModeAlignment = UserDefaults.standard.bool(
+            forKey: StorageKeys.isFilterBlocklist)
     }
 
     private func loadHotkeyBindings() {
@@ -257,29 +322,28 @@ class AppSettings: ObservableObject {
 
     private func validateOpacity() {
         guard windowOpacity < 0.05 || windowOpacity > 1.0 else { return }
-        windowOpacity = max(0.05, min(1.0, windowOpacity))
+        windowOpacity = Defaults.windowOpacity
     }
 
     private func validateFrameRate() {
-        let validRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
-        guard !validRates.contains(frameRate) else { return }
-        frameRate = 30.0
+        guard !availableFrameRates.contains(frameRate) else { return }
+        frameRate = Defaults.frameRate
     }
 
     private func validateWindowDimensions() {
-        if defaultWindowWidth < 100 { defaultWindowWidth = 288 }
-        if defaultWindowHeight < 100 { defaultWindowHeight = 162 }
+        if defaultWindowWidth < 100 { defaultWindowWidth = Defaults.defaultWindowWidth }
+        if defaultWindowHeight < 100 { defaultWindowHeight = Defaults.defaultWindowHeight }
     }
 
     private func validateBorderWidth() {
         guard focusBorderWidth <= 0 else { return }
-        focusBorderWidth = 5.0
+        focusBorderWidth = Defaults.focusBorderWidth
     }
 
     private func validateTitleSettings() {
-        if titleFontSize <= 0 { titleFontSize = 12.0 }
+        if titleFontSize <= 0 { titleFontSize = Defaults.titleFontSize }
         if titleBackgroundOpacity < 0.0 || titleBackgroundOpacity > 1.0 {
-            titleBackgroundOpacity = max(0.0, min(1.0, titleBackgroundOpacity))
+            titleBackgroundOpacity = Defaults.titleBackgroundOpacity
         }
     }
 }
@@ -298,6 +362,11 @@ private enum StorageKeys {
     static let titleFontSize: String = "titleFontSize"
     static let titleBackgroundOpacity: String = "titleBackgroundOpacity"
     static let managedByMissionControl: String = "managedByMissionControl"
+    static let closeOnCaptureStop: String = "closeOnCaptureStop"
+    static let hideInactiveApplications: String = "hideInactiveApplications"
+    static let hideActiveWindow: String = "hideActiveWindow"
     static let enableEditModeAlignment: String = "enableEditModeAlignment"
     static let hotkeyBindings: String = "hotkeyBindings"
+    static let appFilterNames: String = "appFilterNames"
+    static let isFilterBlocklist: String = "isFilterBlocklist"
 }

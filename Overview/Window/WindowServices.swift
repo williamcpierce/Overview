@@ -3,24 +3,26 @@
  Overview
 
  Created by William Pierce on 12/15/24.
-
- Provides a service-oriented architecture for window management, offering a set of
- specialized services for window filtering, focusing, title tracking, and state
- observation through a centralized singleton container.
 */
 
 import ScreenCaptureKit
 
 @MainActor
 final class WindowServices {
-    static let shared = WindowServices()
-    let windowFilter = WindowFilterService()
-    let windowFocus = WindowFocusService()
-    let titleService = WindowTitleService()
-    let windowObserver = WindowObserverService()
+    let windowFilter: WindowFilterService
+    let windowFocus: WindowFocusService
+    let windowObserver: WindowObserverService
     private let logger = AppLogger.windows
+    static let shared = WindowServices()
 
-    private init() {
-        logger.debug("Initializing window services container")
+    private init(
+        windowFilter: WindowFilterService = WindowFilterService(),
+        windowFocus: WindowFocusService = WindowFocusService(),
+        windowObserver: WindowObserverService = WindowObserverService()
+    ) {
+        self.windowFilter = windowFilter
+        self.windowFocus = windowFocus
+        self.windowObserver = windowObserver
+        logger.debug("Initializing window services")
     }
 }

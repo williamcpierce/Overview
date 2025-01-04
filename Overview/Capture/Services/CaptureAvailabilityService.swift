@@ -14,7 +14,7 @@ final class CaptureAvailabilityService {
         logger.info("Requesting screen recording permission")
 
         do {
-            try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             logger.info("Screen recording permission granted")
         } catch {
             logger.error("Screen recording permission denied: \(error.localizedDescription)")
@@ -26,8 +26,8 @@ final class CaptureAvailabilityService {
         logger.debug("Fetching available windows")
 
         do {
-            let content = try await SCShareableContent.excludingDesktopWindows(
-                false, onScreenWindowsOnly: true)
+            let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: false)
 
             logger.debug("Retrieved \(content.windows.count) available windows")
             return content.windows

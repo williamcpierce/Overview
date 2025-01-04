@@ -10,10 +10,10 @@ import ScreenCaptureKit
 final class WindowObserverService {
     private let logger = AppLogger.windows
     private var focusObservers: [UUID: () async -> Void] = [:]
-    private var titleObservers: [UUID: () async -> Void] = [:]
-    private var workspaceObserver: NSObjectProtocol?
-    private var windowObserver: NSObjectProtocol?
     private var titleCheckTimer: Timer?
+    private var titleObservers: [UUID: () async -> Void] = [:]
+    private var windowObserver: NSObjectProtocol?
+    private var workspaceObserver: NSObjectProtocol?
 
     deinit {
         stopObserving()

@@ -2,31 +2,34 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- Serves as the root coordinator for window preview lifecycle, managing transitions
- between window selection and preview states while maintaining proper window scaling
- and interaction handling.
+ Created by William Pierce on 9/15/24..
 */
 
 import SwiftUI
 
 struct PreviewView: View {
+    @Environment(\.dismiss) private var dismiss: DismissAction
     @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var captureManager: CaptureManager
-
+    @ObservedObject private var previewManager: PreviewManager
+    @ObservedObject private var windowManager: WindowManager
     @State private var isSelectionViewVisible: Bool = true
+    @State private var isWindowVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
-
     private let logger = AppLogger.interface
 
-    init(appSettings: AppSettings, previewManager: PreviewManager, captureManager: CaptureManager) {
+    init(
+        appSettings: AppSettings,
+        captureManager: CaptureManager,
+        previewManager: PreviewManager,
+        windowManager: WindowManager
+    ) {
         self.appSettings = appSettings
-        self.previewManager = previewManager
         self.captureManager = captureManager
+        self.previewManager = previewManager
+        self.windowManager = windowManager
 
-        let initialRatio = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
+        let initialRatio: CGFloat = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
         self._previewAspectRatio = State(initialValue: initialRatio)
     }
 
@@ -38,11 +41,18 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
+                .opacity(isWindowVisible ? 1 : 0)
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
+        .onChange(of: previewManager.editModeEnabled, updateWindowVisibility)
+        .onChange(of: captureManager.isSourceAppFocused, updateWindowVisibility)
+        .onChange(of: captureManager.isSourceWindowFocused, updateWindowVisibility)
+        .onChange(of: windowManager.isOverviewActive, updateWindowVisibility)
+        .onChange(of: appSettings.hideInactiveApplications, updateWindowVisibility)
+        .onChange(of: appSettings.hideActiveWindow, updateWindowVisibility)
     }
 
     // MARK: - View Components
@@ -79,10 +89,10 @@ struct PreviewView: View {
 
     private var windowConfigurationLayer: some View {
         PreviewAccessor(
+            aspectRatio: $previewAspectRatio,
             appSettings: appSettings,
             captureManager: captureManager,
-            previewManager: previewManager,
-            aspectRatio: $previewAspectRatio
+            previewManager: previewManager
         )
     }
 
@@ -105,14 +115,45 @@ struct PreviewView: View {
     // MARK: - State Updates
 
     private func updatePreviewDimensions(from oldSize: CGSize?, to newSize: CGSize?) {
-        guard let size = newSize else { return }
-        let newRatio = size.width / size.height
+        guard let size: CGSize = newSize else { return }
+        let newRatio: CGFloat = size.width / size.height
         logger.info("Updating preview ratio: \(newRatio)")
         previewAspectRatio = newRatio
     }
 
     private func updateViewState() {
+        if !captureManager.isCapturing && appSettings.closeOnCaptureStop {
+            dismiss()
+        }
+
         isSelectionViewVisible = !captureManager.isCapturing
+        updateWindowVisibility()
         logger.info("View state updated: selection=\(isSelectionViewVisible)")
+    }
+
+    private func updateWindowVisibility() {
+        let alwaysShown =
+            isSelectionViewVisible || previewManager.editModeEnabled
+            || windowManager.isOverviewActive
+
+        if alwaysShown {
+            isWindowVisible = true
+            return
+        }
+
+        let shouldHideForInactiveApp =
+            appSettings.hideInactiveApplications && !captureManager.isSourceAppFocused
+
+        let shouldHideForActiveWindow =
+            appSettings.hideActiveWindow && captureManager.isSourceWindowFocused
+
+        isWindowVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
+
+        logger.debug(
+            "Window visibility updated for \(captureManager.windowTitle ?? "Untitled"), "
+                + "visible=\(isWindowVisible), "
+                + "hideInactive=\(shouldHideForInactiveApp), "
+                + "hideActive=\(shouldHideForActiveWindow)"
+        )
     }
 }

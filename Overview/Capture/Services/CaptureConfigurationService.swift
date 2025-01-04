@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 12/6/24.
-
- Manages low-level window capture configuration and stream settings optimization,
- providing a reliable foundation for Overview's window preview capabilities through
- efficient ScreenCaptureKit integration.
 */
 
 import ScreenCaptureKit
@@ -39,7 +35,7 @@ final class CaptureConfigurationService {
     {
         logger.debug("Updating stream configuration: frameRate=\(frameRate)")
 
-        guard let stream = stream else {
+        guard let stream: SCStream = stream else {
             logger.warning("Cannot update configuration: stream is nil")
             return
         }

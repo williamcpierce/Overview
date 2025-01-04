@@ -3,10 +3,6 @@
  Overview
 
  Created by William Pierce on 10/13/24.
-
- Provides the settings interface for Overview, managing user preferences through
- a tabbed view system that handles all aspects of window preview behavior.
- Coordinates real-time updates of capture configuration and window management.
 */
 
 import SwiftUI
@@ -14,12 +10,10 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
-
     @State private var isAddingHotkey: Bool = false
     @State private var showingResetAlert: Bool = false
-
+    @State private var newAppFilterName: String = ""
     private let logger = AppLogger.settings
-    private let availableFrameRates = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 
     var body: some View {
         TabView {
@@ -27,8 +21,10 @@ struct SettingsView: View {
             windowTab
             performanceTab
             hotkeyTab
+            filterTab
         }
-        .frame(width: 360, height: 430)
+        .frame(width: 360)
+        .background(.ultraThickMaterial)
     }
 
     private var generalTab: some View {
@@ -44,6 +40,7 @@ struct SettingsView: View {
         .alert("Reset Settings", isPresented: $showingResetAlert) {
             resetSettingsAlert
         }
+        .frame(height: 430)
     }
 
     private var windowTab: some View {
@@ -54,6 +51,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Previews", systemImage: "macwindow") }
+        .frame(height: 540)
     }
 
     private var performanceTab: some View {
@@ -62,6 +60,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Performance", systemImage: "gauge.medium") }
+        .frame(height: 170)
     }
 
     private var hotkeyTab: some View {
@@ -70,6 +69,16 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
+        .frame(height: 430)
+    }
+
+    private var filterTab: some View {
+        Form {
+            filterConfiguration
+        }
+        .formStyle(.grouped)
+        .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
+        .frame(height: 430)
     }
 
     // MARK: - General Tab Components
@@ -142,7 +151,7 @@ struct SettingsView: View {
         Button("Reset All Settings") {
             showingResetAlert = true
         }
-        .padding(.bottom, 8)
+        .padding(.bottom, 10)
     }
 
     private var resetSettingsAlert: some View {
@@ -180,6 +189,9 @@ struct SettingsView: View {
         Section {
             sectionHeader("Behavior")
             missionControlToggle
+            closeOnCaptureStop
+            hideInactiveApplicationsToggle
+            hideActiveWindowToggle
             editModeAlignmentToggle
             alignmentHelpText
         }
@@ -191,7 +203,7 @@ struct SettingsView: View {
         Section {
             sectionHeader("Frame Rate")
             Picker("FPS", selection: $appSettings.frameRate) {
-                ForEach(availableFrameRates, id: \.self) { rate in
+                ForEach(appSettings.availableFrameRates, id: \.self) { rate in
                     Text("\(Int(rate))").tag(rate)
                 }
             }
@@ -244,6 +256,38 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Filter Tab Components
+
+    private var filterConfiguration: some View {
+        Section {
+            sectionHeader("Selection Dropdown Filter")
+            appFilterMode
+            appFilterList
+            addAppFilterButton
+        }
+    }
+
+    private var appFilterList: some View {
+        Group {
+            if appSettings.appFilterNames.isEmpty {
+                Text("No applications configured")
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(appSettings.appFilterNames, id: \.self) { appName in
+                    appFilterRow(appName)
+                }
+            }
+        }
+    }
+
+    private func appFilterRow(_ appName: String) -> some View {
+        HStack {
+            Text(appName)
+            Spacer()
+            removeAppButton(appName)
+        }
+    }
+
     // MARK: - Helper Views
 
     private func sectionHeader(_ text: String) -> some View {
@@ -275,6 +319,28 @@ struct SettingsView: View {
             }
     }
 
+    private var closeOnCaptureStop: some View {
+        Toggle("Close preview with source window", isOn: $appSettings.closeOnCaptureStop)
+            .onChange(of: appSettings.closeOnCaptureStop) { _, newValue in
+                logger.info("Close on capture stop changed: \(newValue)")
+            }
+    }
+
+    private var hideInactiveApplicationsToggle: some View {
+        Toggle(
+            "Hide previews for inactive applications", isOn: $appSettings.hideInactiveApplications
+        )
+        .onChange(of: appSettings.hideInactiveApplications) { _, newValue in
+            logger.info("Hide inactive applications changed: \(newValue)")
+        }
+    }
+
+    private var hideActiveWindowToggle: some View {
+        Toggle("Hide preview for active window", isOn: $appSettings.hideActiveWindow)
+            .onChange(of: appSettings.hideActiveWindow) { _, newValue in
+                logger.info("Hide active windows changed: \(newValue)")
+            }
+    }
     private var editModeAlignmentToggle: some View {
         Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
             .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in
@@ -307,15 +373,57 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    private var appFilterMode: some View {
+        Picker("Filter Mode", selection: $appSettings.isFilterBlocklist) {
+            Text("Blocklist").tag(true)
+            Text("Allowlist").tag(false)
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private var addAppFilterButton: some View {
+        HStack {
+            TextField("App Name", text: $newAppFilterName)
+                .textFieldStyle(.roundedBorder)
+                .disableAutocorrection(true)
+            Button("Add") { addAppFilterName() }
+                .disabled(newAppFilterName.isEmpty)
+        }
+    }
+
+    private func removeAppButton(_ appName: String) -> some View {
+        Button(action: {
+            removeAppFilterName(appName)
+        }) {
+            Image(systemName: "xmark.circle.fill")
+                .foregroundColor(.secondary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Actions
+
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
-        if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
+        if let index: Int = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
             logger.info("Hotkey binding removed: '\(binding.windowTitle)'")
         }
     }
+
+    private func addAppFilterName() {
+        guard !newAppFilterName.isEmpty else { return }
+        appSettings.appFilterNames.append(newAppFilterName)
+        newAppFilterName = ""
+    }
+
+    private func removeAppFilterName(_ appName: String) {
+        if let index: Int = appSettings.appFilterNames.firstIndex(of: appName) {
+            appSettings.appFilterNames.remove(at: index)
+            logger.info("App filter removed: '\(appName)'")
+        }
+    }
 }
 
-/// Provides a native slider for opacity control with precise decimal value handling
 struct OpacitySlider: NSViewRepresentable {
     @Binding var value: Double
 
@@ -327,7 +435,7 @@ struct OpacitySlider: NSViewRepresentable {
             target: context.coordinator,
             action: #selector(Coordinator.valueChanged(_:))
         )
-        slider.isContinuous = true
+        slider.isContinuous = false
         return slider
     }
 

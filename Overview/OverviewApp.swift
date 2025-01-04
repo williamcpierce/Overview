@@ -3,9 +3,6 @@
  Overview
 
  Created by William Pierce on 9/15/24.
-
- Main application entry point that manages the app lifecycle global state
- initialization. Serves as the root coordinator for all major app components.
 */
 
 import SwiftUI
@@ -13,22 +10,22 @@ import SwiftUI
 @main
 struct OverviewApp: App {
     @StateObject private var appSettings: AppSettings
-    @StateObject private var previewManager: PreviewManager
     @StateObject private var windowManager: WindowManager
+    @StateObject private var previewManager: PreviewManager
     @StateObject private var hotkeyManager: HotkeyManager
 
     init() {
         let settings = AppSettings()
-        let preview = PreviewManager()
-        let window = WindowManager()
+        let window = WindowManager(appSettings: settings)
+        let preview = PreviewManager(windowManager: window)
         let hotkey = HotkeyManager(
             appSettings: settings,
             windowManager: window
         )
 
         self._appSettings = StateObject(wrappedValue: settings)
-        self._previewManager = StateObject(wrappedValue: preview)
         self._windowManager = StateObject(wrappedValue: window)
+        self._previewManager = StateObject(wrappedValue: preview)
         self._hotkeyManager = StateObject(wrappedValue: hotkey)
     }
 
@@ -36,7 +33,8 @@ struct OverviewApp: App {
         WindowGroup {
             ContentView(
                 appSettings: appSettings,
-                previewManager: previewManager
+                previewManager: previewManager,
+                windowManager: windowManager
             )
         }
         .windowStyle(HiddenTitleBarWindowStyle())
