@@ -74,9 +74,30 @@ struct PreviewSelectionView: View {
     }
 
     private var availableWindowsList: some View {
-        ForEach(previewManager.availableWindows, id: \.windowID) { window in
-            Text(window.title ?? "Untitled").tag(window as SCWindow?)
+        let groupedWindows = Dictionary(
+            grouping: previewManager.availableWindows,
+            by: { $0.owningApplication?.applicationName ?? "Unknown" }
+        )
+
+        let sortedAppNames = groupedWindows.keys.sorted()
+
+        return ForEach(sortedAppNames, id: \.self) { appName in
+            if let windows = groupedWindows[appName] {
+                Section(header: Text(appName)) {
+                    ForEach(
+                        windows.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
+                        id: \.windowID
+                    ) { window in
+                        Text(truncateTitle(window.title ?? "Untitled"))
+                            .tag(Optional(window))
+                    }
+                }
+            }
         }
+    }
+
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 
     private var refreshButton: some View {
