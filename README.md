@@ -64,13 +64,15 @@ For development updates, please join our Discord:
   - Preview frame rate
 - Hotkeys:
   - Hotkey bindings by window title
+- Filters:
+  - Blocklist or allowlist
+  - Window picker filtering by application title
 
 ## Known Issues/Limitations
 
 - Performance is suboptimal
 - Previews will be distorted when using Stage Manager
 - Previews cannot float over full-screen applications
-- Only windows in the current space appear in the the selection menu
 
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
