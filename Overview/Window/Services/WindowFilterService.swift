@@ -12,6 +12,7 @@ final class WindowFilterService {
     private let systemAppBundleIDs: Set<String> = Set([
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
+        "com.apple.WindowManager",
     ])
 
     func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
@@ -27,8 +28,7 @@ final class WindowFilterService {
 
     private func meetsBasicRequirements(_ window: SCWindow) -> Bool {
         let isValid: Bool =
-            window.isOnScreen
-            && window.frame.height > 100
+            window.frame.height > 100
             && window.owningApplication?.bundleIdentifier != Bundle.main.bundleIdentifier
             && window.windowLayer == 0
             && window.title != nil
