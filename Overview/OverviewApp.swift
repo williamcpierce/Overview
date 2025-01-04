@@ -34,7 +34,8 @@ struct OverviewApp: App {
         WindowGroup {
             ContentView(
                 appSettings: appSettings,
-                previewManager: previewManager
+                previewManager: previewManager,
+                windowManager: windowManager
             )
             .onChange(of: windowManager.focusedBundleId) { _, bundleId in
                 previewManager.updateOverviewActive(focusedBundleId: bundleId)

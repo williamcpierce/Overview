@@ -11,7 +11,7 @@ import SwiftUI
 
 @MainActor
 class CaptureManager: ObservableObject {
-    @ObservedObject private var appSettings: AppSettings
+    // MARK: - Published State
     @Published private(set) var availableWindows: [SCWindow] = []
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
@@ -23,61 +23,56 @@ class CaptureManager: ObservableObject {
             Task { await synchronizeWindowFocusState() }
         }
     }
+
+    // MARK: - Dependencies
+    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var windowManager: WindowManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
-    private let windowServices: WindowServices = WindowServices.shared
+
+    // MARK: - Private State
+    private var hasPermission = false
     private var activeFrameProcessingTask: Task<Void, Never>?
-    private var hasPermission: Bool = false
-    private var settingsSubscriptions: Set<AnyCancellable> = Set<AnyCancellable>()
-    private var windowStateObserverId: UUID?
+    private var settingsSubscriptions = Set<AnyCancellable>()
 
     init(
         appSettings: AppSettings,
+        windowManager: WindowManager,
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.appSettings = appSettings
+        self.windowManager = windowManager
         self.captureEngine = captureEngine
-        initializeWindowStateObservers()
+        setupSubscriptions()
     }
+
+    // MARK: - Public Interface
 
     func requestPermission() async throws {
         guard !hasPermission else { return }
-
-        do {
-            try await captureServices.captureAvailability.requestPermission()
-            hasPermission = true
-        } catch {
-            logger.logError(
-                error,
-                context: "Failed to request screen recording permission")
-        }
+        try await captureServices.captureAvailability.requestPermission()
+        hasPermission = true
     }
 
     func updateAvailableWindows() async {
         do {
-            let windows: [SCWindow] = try await captureServices.captureAvailability
-                .getAvailableWindows()
+            let windows = try await captureServices.captureAvailability.getAvailableWindows()
             await MainActor.run {
-                self.availableWindows = windowServices.windowFilter.filterWindows(windows)
+                availableWindows = windowManager.windowServices.windowFilter.filterWindows(windows)
             }
         } catch {
-            logger.logError(
-                error,
-                context: "Failed to get available windows")
+            logger.logError(error, context: "Failed to get available windows")
         }
     }
 
     func startCapture() async throws {
         guard !isCapturing else { return }
-        guard let targetWindow: SCWindow = selectedWindow else {
-            throw CaptureError.noWindowSelected
-        }
+        guard let window = selectedWindow else { throw CaptureError.noWindowSelected }
 
         let (config, filter) = captureServices.captureConfiguration.createConfiguration(
-            targetWindow, frameRate: appSettings.frameRate)
-        let frameStream: AsyncThrowingStream = captureEngine.startCapture(
-            configuration: config, filter: filter)
+            window, frameRate: appSettings.frameRate)
+        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
 
         await startFrameProcessing(stream: frameStream)
         isCapturing = true
@@ -85,42 +80,19 @@ class CaptureManager: ObservableObject {
 
     func stopCapture() async {
         guard isCapturing else { return }
-
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
         await captureEngine.stopCapture()
-
         isCapturing = false
         capturedFrame = nil
     }
 
     func focusWindow() {
-        guard let targetWindow: SCWindow = selectedWindow else { return }
-        windowServices.windowFocus.focusWindow(
-            window: targetWindow)
+        guard let window = selectedWindow else { return }
+        windowManager.windowServices.windowFocus.focusWindow(window: window)
     }
 
-    private func initializeWindowStateObservers() {
-        let observerId = UUID()
-        self.windowStateObserverId = observerId
-
-        windowServices.windowObserver.addObserver(
-            id: observerId,
-            onFocusChanged: { [weak self] in
-                await self?.synchronizeWindowFocusState()
-            },
-            onTitleChanged: { [weak self] in
-                await self?.synchronizeWindowTitle()
-            }
-        )
-
-        appSettings.$frameRate
-            .dropFirst()
-            .sink { [weak self] _ in
-                Task { await self?.synchronizeStreamConfiguration() }
-            }
-            .store(in: &settingsSubscriptions)
-    }
+    // MARK: - Private Methods
 
     private func startFrameProcessing(stream: AsyncThrowingStream<CapturedFrame, Error>) async {
         activeFrameProcessingTask?.cancel()
@@ -143,13 +115,38 @@ class CaptureManager: ObservableObject {
         await stopCapture()
     }
 
-    private func synchronizeWindowFocusState() async {
-        isSourceWindowFocused = await windowServices.windowFocus.updateFocusState(
-            for: selectedWindow)
+    private func setupSubscriptions() {
+        windowManager.$focusedBundleId
+            .sink { [weak self] _ in Task { await self?.synchronizeWindowFocusState() } }
+            .store(in: &settingsSubscriptions)
+
+        windowManager.$windowTitles
+            .sink { [weak self] titles in self?.synchronizeWindowTitle(from: titles) }
+            .store(in: &settingsSubscriptions)
+
+        appSettings.$frameRate
+            .dropFirst()
+            .sink { [weak self] _ in Task { await self?.synchronizeStreamConfiguration() } }
+            .store(in: &settingsSubscriptions)
     }
 
-    private func synchronizeWindowTitle() async {
-        windowTitle = await windowServices.titleService.updateWindowTitle(for: selectedWindow)
+    private func synchronizeWindowFocusState() async {
+        guard let selectedWindow = selectedWindow,
+            let selectedBundleId = selectedWindow.owningApplication?.bundleIdentifier,
+            let focusedBundleId = windowManager.focusedBundleId
+        else {
+            isSourceWindowFocused = false
+            return
+        }
+        isSourceWindowFocused = selectedBundleId == focusedBundleId
+    }
+
+    private func synchronizeWindowTitle(from titles: [WindowManager.WindowID: String]) {
+        guard let window = selectedWindow,
+            let processID = window.owningApplication?.processID
+        else { return }
+        let windowID = WindowManager.WindowID(processID: processID, windowID: window.windowID)
+        windowTitle = titles[windowID]
     }
 
     private func synchronizeStreamConfiguration() async {

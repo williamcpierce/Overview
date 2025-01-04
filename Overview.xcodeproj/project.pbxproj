@@ -55,7 +55,6 @@
 				Services/WindowFilterService.swift,
 				Services/WindowFocusService.swift,
 				Services/WindowObserverService.swift,
-				Services/WindowTitleService.swift,
 				WindowManager.swift,
 				WindowServices.swift,
 			);

@@ -9,7 +9,6 @@ import ScreenCaptureKit
 
 @MainActor
 final class WindowServices {
-    let titleService = WindowTitleService()
     let windowFilter = WindowFilterService()
     let windowFocus = WindowFocusService()
     let windowObserver = WindowObserverService()
