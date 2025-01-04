@@ -283,7 +283,7 @@ class AppSettings: ObservableObject {
         appFilterNames =
             UserDefaults.standard.array(
                 forKey: StorageKeys.appFilterNames) as? [String] ?? []
-        enableEditModeAlignment = UserDefaults.standard.bool(
+        isFilterBlocklist = UserDefaults.standard.bool(
             forKey: StorageKeys.isFilterBlocklist)
     }
 
