@@ -24,8 +24,9 @@ struct ContentView: View {
     var body: some View {
         PreviewView(
             appSettings: appSettings,
+            captureManager: captureManager,
             previewManager: previewManager,
-            captureManager: captureManager
+            windowManager: windowManager
         )
     }
 }

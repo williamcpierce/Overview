@@ -10,7 +10,7 @@ import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
-class CaptureManager: ObservableObject {
+final class CaptureManager: ObservableObject {
     // MARK: - Published State
     @Published private(set) var availableWindows: [SCWindow] = []
     @Published private(set) var capturedFrame: CapturedFrame?
@@ -25,16 +25,16 @@ class CaptureManager: ObservableObject {
     }
 
     // MARK: - Dependencies
-    @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var windowManager: WindowManager
+    private let appSettings: AppSettings
+    private let windowManager: WindowManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
 
-    // MARK: - Private State
+    // MARK: - State Management
     private var hasPermission = false
     private var activeFrameProcessingTask: Task<Void, Never>?
-    private var settingsSubscriptions = Set<AnyCancellable>()
+    private var subscriptions = Set<AnyCancellable>()
 
     init(
         appSettings: AppSettings,
@@ -51,16 +51,13 @@ class CaptureManager: ObservableObject {
 
     func requestPermission() async throws {
         guard !hasPermission else { return }
-        try await captureServices.captureAvailability.requestPermission()
+        try await captureServices.requestScreenRecordingPermission()
         hasPermission = true
     }
 
     func updateAvailableWindows() async {
         do {
-            let windows = try await captureServices.captureAvailability.getAvailableWindows()
-            await MainActor.run {
-                availableWindows = windowManager.windowServices.windowFilter.filterWindows(windows)
-            }
+            availableWindows = try await windowManager.getFilteredWindows()
         } catch {
             logger.logError(error, context: "Failed to get available windows")
         }
@@ -70,11 +67,13 @@ class CaptureManager: ObservableObject {
         guard !isCapturing else { return }
         guard let window = selectedWindow else { throw CaptureError.noWindowSelected }
 
-        let (config, filter) = captureServices.captureConfiguration.createConfiguration(
-            window, frameRate: appSettings.frameRate)
-        let frameStream = captureEngine.startCapture(configuration: config, filter: filter)
+        let stream = try await captureServices.startCapture(
+            window: window,
+            engine: captureEngine,
+            frameRate: appSettings.frameRate
+        )
 
-        await startFrameProcessing(stream: frameStream)
+        await startFrameProcessing(stream: stream)
         isCapturing = true
     }
 
@@ -89,7 +88,7 @@ class CaptureManager: ObservableObject {
 
     func focusWindow() {
         guard let window = selectedWindow else { return }
-        windowManager.windowServices.windowFocus.focusWindow(window: window)
+        windowManager.focusWindow(window)
     }
 
     // MARK: - Private Methods
@@ -109,36 +108,33 @@ class CaptureManager: ObservableObject {
     }
 
     private func handleCaptureFailure(_ error: Error) async {
-        logger.logError(
-            error,
-            context: "Capture stream error")
+        logger.logError(error, context: "Capture stream error")
         await stopCapture()
     }
 
     private func setupSubscriptions() {
         windowManager.$focusedBundleId
             .sink { [weak self] _ in Task { await self?.synchronizeWindowFocusState() } }
-            .store(in: &settingsSubscriptions)
+            .store(in: &subscriptions)
 
         windowManager.$windowTitles
             .sink { [weak self] titles in self?.synchronizeWindowTitle(from: titles) }
-            .store(in: &settingsSubscriptions)
+            .store(in: &subscriptions)
 
         appSettings.$frameRate
             .dropFirst()
             .sink { [weak self] _ in Task { await self?.synchronizeStreamConfiguration() } }
-            .store(in: &settingsSubscriptions)
+            .store(in: &subscriptions)
     }
 
     private func synchronizeWindowFocusState() async {
         guard let selectedWindow = selectedWindow,
-            let selectedBundleId = selectedWindow.owningApplication?.bundleIdentifier,
-            let focusedBundleId = windowManager.focusedBundleId
+            let selectedBundleId = selectedWindow.owningApplication?.bundleIdentifier
         else {
             isSourceWindowFocused = false
             return
         }
-        isSourceWindowFocused = selectedBundleId == focusedBundleId
+        isSourceWindowFocused = selectedBundleId == windowManager.focusedBundleId
     }
 
     private func synchronizeWindowTitle(from titles: [WindowManager.WindowID: String]) {
@@ -150,34 +146,16 @@ class CaptureManager: ObservableObject {
     }
 
     private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let targetWindow: SCWindow = selectedWindow else { return }
+        guard isCapturing, let window = selectedWindow else { return }
 
         do {
-            try await captureServices.captureConfiguration.updateConfiguration(
-                captureEngine.stream,
-                targetWindow,
-                frameRate: appSettings.frameRate)
+            try await captureServices.updateStreamConfiguration(
+                window: window,
+                stream: captureEngine.stream,
+                frameRate: appSettings.frameRate
+            )
         } catch {
-            logger.logError(
-                error,
-                context: "Failed to update stream configuration")
-        }
-    }
-}
-
-enum CaptureError: LocalizedError {
-    case captureStreamFailed(Error)
-    case noWindowSelected
-    case permissionDenied
-
-    var errorDescription: String? {
-        switch self {
-        case .captureStreamFailed(let error):
-            return "Capture failed: \(error.localizedDescription)"
-        case .noWindowSelected:
-            return "No window is selected for capture"
-        case .permissionDenied:
-            return "Screen capture permission was denied"
+            logger.logError(error, context: "Failed to update stream configuration")
         }
     }
 }

@@ -10,24 +10,23 @@ import SwiftUI
 @main
 struct OverviewApp: App {
     @StateObject private var appSettings: AppSettings
-    @StateObject private var hotkeyManager: HotkeyManager
-    @StateObject private var previewManager: PreviewManager
     @StateObject private var windowManager: WindowManager
+    @StateObject private var previewManager: PreviewManager
+    @StateObject private var hotkeyManager: HotkeyManager
 
     init() {
-        let preview = PreviewManager()
         let settings = AppSettings()
         let window = WindowManager()
-
+        let preview = PreviewManager()
         let hotkey = HotkeyManager(
             appSettings: settings,
             windowManager: window
         )
 
         self._appSettings = StateObject(wrappedValue: settings)
-        self._hotkeyManager = StateObject(wrappedValue: hotkey)
-        self._previewManager = StateObject(wrappedValue: preview)
         self._windowManager = StateObject(wrappedValue: window)
+        self._previewManager = StateObject(wrappedValue: preview)
+        self._hotkeyManager = StateObject(wrappedValue: hotkey)
     }
 
     var body: some Scene {
@@ -37,9 +36,6 @@ struct OverviewApp: App {
                 previewManager: previewManager,
                 windowManager: windowManager
             )
-            .onChange(of: windowManager.focusedBundleId) { _, bundleId in
-                previewManager.updateOverviewActive(focusedBundleId: bundleId)
-            }
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(

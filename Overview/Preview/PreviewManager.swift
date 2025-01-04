@@ -5,12 +5,12 @@
  Created by William Pierce on 10/13/24.
 */
 
+import Combine
 import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
-    @Published private(set) var isOverviewActive: Bool = false
     @Published private(set) var isInitializing: Bool = true
     @Published var editModeEnabled: Bool = false
     private let logger = AppLogger.interface
@@ -53,12 +53,5 @@ final class PreviewManager: ObservableObject {
                 logger.logError(error, context: "Preview initialization failed")
             }
         }
-    }
-
-    // MARK: - Overview Focus State Management
-
-    func updateOverviewActive(focusedBundleId: String?) {
-        isOverviewActive = focusedBundleId == Bundle.main.bundleIdentifier
-        logger.debug("Overview active state updated: \(isOverviewActive)")
     }
 }

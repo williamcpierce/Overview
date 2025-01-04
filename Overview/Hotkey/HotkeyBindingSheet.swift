@@ -12,7 +12,7 @@ struct HotkeyBindingSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
-    @State private var availableWindows: [SCWindow] = []
+    @State private var filteredWindows: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
     @State private var selectedWindow: SCWindow?
     @State private var validationError: String = ""
@@ -32,7 +32,7 @@ struct HotkeyBindingSheet: View {
         .padding()
         .frame(width: 400)
         .task {
-            loadAvailableWindows()
+            loadFilteredWindows()
         }
     }
 
@@ -46,7 +46,7 @@ struct HotkeyBindingSheet: View {
             Text("Window:")
             Picker("", selection: $selectedWindow) {
                 Text("Select a window").tag(Optional<SCWindow>.none)
-                ForEach(availableWindows, id: \.windowID) { window in
+                ForEach(filteredWindows, id: \.windowID) { window in
                     Text(window.title ?? "Untitled").tag(Optional(window))
                 }
             }
@@ -92,10 +92,10 @@ struct HotkeyBindingSheet: View {
         .padding(.top)
     }
 
-    private func loadAvailableWindows() {
+    private func loadFilteredWindows() {
         Task {
-            availableWindows = await windowManager.getFilteredWindows()
-            AppLogger.windows.info("Retrieved \(availableWindows.count) windows for binding")
+            filteredWindows = try await windowManager.getFilteredWindows()
+            AppLogger.windows.info("Retrieved \(filteredWindows.count) windows for binding")
         }
     }
 
@@ -107,7 +107,7 @@ struct HotkeyBindingSheet: View {
             return
         }
 
-        let hasDuplicateTitles: Bool = availableWindows.filter { $0.title == title }.count > 1
+        let hasDuplicateTitles: Bool = filteredWindows.filter { $0.title == title }.count > 1
         validationError = hasDuplicateTitles ? "Warning: Multiple windows have this title" : ""
     }
 

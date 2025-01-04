@@ -10,10 +10,13 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
+    // MARK: - Published State
     @Published private(set) var focusedBundleId: String?
+    @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var windowTitles: [WindowID: String] = [:]
 
-    let windowServices: WindowServices = WindowServices.shared
+    // MARK: - Dependencies
+    private let windowServices: WindowServices = WindowServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.windows
     private let observerId = UUID()
@@ -27,23 +30,16 @@ final class WindowManager: ObservableObject {
         setupObservers()
     }
 
-    @discardableResult
+    func focusWindow(_ window: SCWindow) {
+        windowServices.windowFocus.focusWindow(window: window)
+    }
+
     func focusWindow(withTitle title: String) -> Bool {
         let success = windowServices.windowFocus.focusWindow(withTitle: title)
         if !success {
             logger.error("Failed to activate window: '\(title)'")
         }
         return success
-    }
-
-    func getFilteredWindows() async -> [SCWindow] {
-        do {
-            let windows = try await captureServices.captureAvailability.getAvailableWindows()
-            return windowServices.windowFilter.filterWindows(windows)
-        } catch {
-            logger.logError(error, context: "Failed to get available windows")
-            return []
-        }
     }
 
     private func setupObservers() {
@@ -56,11 +52,12 @@ final class WindowManager: ObservableObject {
 
     private func updateFocusedApp() async {
         focusedBundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        isOverviewActive = focusedBundleId == Bundle.main.bundleIdentifier
     }
 
     private func updateWindowTitles() async {
         do {
-            let windows = try await captureServices.captureAvailability.getAvailableWindows()
+            let windows = try await captureServices.getAvailableWindows()
             windowTitles = Dictionary(
                 uniqueKeysWithValues: windows.compactMap { window in
                     guard let processID = window.owningApplication?.processID,
@@ -72,5 +69,11 @@ final class WindowManager: ObservableObject {
         } catch {
             logger.logError(error, context: "Failed to update window titles")
         }
+    }
+
+    func getFilteredWindows() async throws -> [SCWindow] {
+        let availableWindows = try await captureServices.getAvailableWindows()
+        let filteredWindows = windowServices.windowFilter.filterWindows(availableWindows)
+        return filteredWindows
     }
 }
