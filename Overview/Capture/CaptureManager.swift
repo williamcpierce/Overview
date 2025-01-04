@@ -169,18 +169,18 @@ class CaptureManager: ObservableObject {
 }
 
 enum CaptureError: LocalizedError {
-    case permissionDenied
-    case noWindowSelected
     case captureStreamFailed(Error)
+    case noWindowSelected
+    case permissionDenied
 
     var errorDescription: String? {
         switch self {
-        case .permissionDenied:
-            return "Screen capture permission was denied"
-        case .noWindowSelected:
-            return "No window is selected for capture"
         case .captureStreamFailed(let error):
             return "Capture failed: \(error.localizedDescription)"
+        case .noWindowSelected:
+            return "No window is selected for capture"
+        case .permissionDenied:
+            return "Screen capture permission was denied"
         }
     }
 }

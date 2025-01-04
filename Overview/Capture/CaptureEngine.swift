@@ -79,9 +79,8 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     private let logger = AppLogger.capture
-
-    var capturedFrameHandler: ((CapturedFrame) -> Void)?
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    var capturedFrameHandler: ((CapturedFrame) -> Void)?
 
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.frameStreamContinuation = continuation

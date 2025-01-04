@@ -32,11 +32,10 @@ struct HotkeyRecorder: NSViewRepresentable {
 
     final class Coordinator: NSObject {
         private let logger = AppLogger.hotkeys
-
-        private var parent: HotkeyRecorder
-        private var isRecordingActive: Bool = false
         private var activeModifierKeys: NSEvent.ModifierFlags = []
+        private var isRecordingActive: Bool = false
         private var keyboardMonitor: Any?
+        private var parent: HotkeyRecorder
 
         init(_ parent: HotkeyRecorder) {
             self.parent = parent

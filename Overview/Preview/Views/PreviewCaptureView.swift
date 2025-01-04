@@ -64,9 +64,9 @@ struct PreviewCaptureView: View {
         Group {
             if appSettings.showWindowTitle {
                 PreviewTitleView(
-                    title: captureManager.windowTitle,
+                    backgroundOpacity: appSettings.titleBackgroundOpacity,
                     fontSize: appSettings.titleFontSize,
-                    backgroundOpacity: appSettings.titleBackgroundOpacity
+                    title: captureManager.windowTitle
                 )
             }
         }

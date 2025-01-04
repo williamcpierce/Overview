@@ -13,13 +13,13 @@ struct PreviewTitleView: View {
     private let title: String?
 
     init(
-        title: String?,
+        backgroundOpacity: Double = 0.4,
         fontSize: Double = 12.0,
-        backgroundOpacity: Double = 0.4
+        title: String?
     ) {
-        self.title = title
-        self.fontSize = fontSize
         self.backgroundOpacity = backgroundOpacity
+        self.fontSize = fontSize
+        self.title = title
     }
 
     var body: some View {
@@ -30,17 +30,17 @@ struct PreviewTitleView: View {
 
     private func titleContainer(for title: String) -> some View {
         TitleContainerView(
-            title: title,
+            backgroundOpacity: backgroundOpacity,
             fontSize: fontSize,
-            backgroundOpacity: backgroundOpacity
+            title: title
         )
     }
 }
 
 private struct TitleContainerView: View {
-    let title: String
-    let fontSize: Double
     let backgroundOpacity: Double
+    let fontSize: Double
+    let title: String
 
     var body: some View {
         VStack {

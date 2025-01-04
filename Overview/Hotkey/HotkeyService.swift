@@ -209,19 +209,19 @@ struct HotkeyEventProcessor {
 }
 
 enum HotkeyError: LocalizedError {
-    case registrationFailed(OSStatus)
     case eventHandlerFailed(OSStatus)
     case invalidModifiers
+    case registrationFailed(OSStatus)
     case systemLimitReached
 
     var errorDescription: String? {
         switch self {
-        case .registrationFailed(let status):
-            return "Registration failed: \(status)"
         case .eventHandlerFailed(let status):
             return "Event handler failed: \(status)"
         case .invalidModifiers:
             return "Invalid modifier combination"
+        case .registrationFailed(let status):
+            return "Registration failed: \(status)"
         case .systemLimitReached:
             return "Registration limit reached"
         }

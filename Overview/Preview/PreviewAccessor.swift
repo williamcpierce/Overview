@@ -46,11 +46,11 @@ struct PreviewAccessor: NSViewRepresentable {
     }
 
     private func configureWindowDefaults(_ window: NSWindow) {
-        window.styleMask = [.fullSizeContentView]
-        window.hasShadow = false
         window.backgroundColor = .clear
-        window.isMovableByWindowBackground = true
         window.collectionBehavior.insert(.fullScreenAuxiliary)
+        window.hasShadow = false
+        window.isMovableByWindowBackground = true
+        window.styleMask = [.fullSizeContentView]
     }
 
     private func synchronizeWindowConfiguration(_ window: NSWindow) {
