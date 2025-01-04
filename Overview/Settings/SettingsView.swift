@@ -173,6 +173,7 @@ struct SettingsView: View {
         Section {
             sectionHeader("Behavior")
             missionControlToggle
+            hideInactiveWindowsToggle
             editModeAlignmentToggle
             alignmentHelpText
         }
@@ -265,6 +266,13 @@ struct SettingsView: View {
         Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
             .onChange(of: appSettings.managedByMissionControl) { _, newValue in
                 logger.info("Mission Control integration changed: \(newValue)")
+            }
+    }
+    
+    private var hideInactiveWindowsToggle: some View {
+        Toggle("Hide previews for inactive applications", isOn: $appSettings.hideInactiveWindows)
+            .onChange(of: appSettings.hideInactiveWindows) { _, newValue in
+                logger.info("Hide inactive windows changed: \(newValue)")
             }
     }
 

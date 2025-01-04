@@ -12,6 +12,7 @@ struct PreviewView: View {
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @State private var isSelectionViewVisible: Bool = true
+    @State private var isWindowVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
     private let logger = AppLogger.interface
 
@@ -32,11 +33,18 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
+                .opacity(isWindowVisible ? 1 : 0)
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
+        .onChange(of: captureManager.isSourceWindowFocused) { _, isFocused in
+            updateWindowVisibility(isFocused: isFocused)
+        }
+        .onChange(of: appSettings.hideInactiveWindows) { _, _ in
+            updateWindowVisibility(isFocused: captureManager.isSourceWindowFocused)
+        }
     }
 
     // MARK: - View Components
@@ -107,6 +115,17 @@ struct PreviewView: View {
 
     private func updateViewState() {
         isSelectionViewVisible = !captureManager.isCapturing
+        updateWindowVisibility(isFocused: captureManager.isSourceWindowFocused)
         logger.info("View state updated: selection=\(isSelectionViewVisible)")
+    }
+    
+    private func updateWindowVisibility(isFocused: Bool) {
+        if appSettings.hideInactiveWindows {
+            isWindowVisible = isFocused || isSelectionViewVisible ||
+                previewManager.editModeEnabled || previewManager.isOverviewActive
+            logger.debug("Window visibility updated: visible=\(isWindowVisible), focused=\(isFocused), overviewActive=\(previewManager.isOverviewActive)")
+        } else {
+            isWindowVisible = true
+        }
     }
 }

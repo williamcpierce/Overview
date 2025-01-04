@@ -10,9 +10,15 @@ import SwiftUI
 
 @MainActor
 final class WindowManager: ObservableObject {
+    @Published private(set) var focusedBundleId: String?
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.windows
     private let windowServices: WindowServices = WindowServices.shared
+    private var observerId = UUID()
+    
+    init() {
+        setupObservers()
+    }
 
     func getFilteredWindows() async -> [SCWindow] {
         do {
@@ -39,4 +45,17 @@ final class WindowManager: ObservableObject {
         return success
     }
 
+    private func setupObservers() {
+        windowServices.windowObserver.addObserver(
+            id: observerId,
+            onFocusChanged: { [weak self] in
+                await self?.updateFocusedApp()
+            },
+            onTitleChanged: { }
+        )
+    }
+
+    private func updateFocusedApp() async {
+        focusedBundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+    }
 }

@@ -36,6 +36,9 @@ struct OverviewApp: App {
                 appSettings: appSettings,
                 previewManager: previewManager
             )
+            .onChange(of: windowManager.focusedBundleId) { _, bundleId in
+                previewManager.updateOverviewActive(focusedBundleId: bundleId)
+            }
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         .defaultSize(
