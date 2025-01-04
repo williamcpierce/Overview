@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PreviewView: View {
+    @Environment(\.dismiss) private var dismiss: DismissAction
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
@@ -121,6 +122,10 @@ struct PreviewView: View {
     }
 
     private func updateViewState() {
+        if !captureManager.isCapturing && appSettings.closeOnCaptureStop {
+            dismiss()
+        }
+
         isSelectionViewVisible = !captureManager.isCapturing
         updateWindowVisibility()
         logger.info("View state updated: selection=\(isSelectionViewVisible)")
@@ -146,9 +151,9 @@ struct PreviewView: View {
 
         logger.debug(
             "Window visibility updated for \(captureManager.windowTitle ?? "Untitled"), "
-            + "visible=\(isWindowVisible), "
-            + "hideInactive=\(shouldHideForInactiveApp), "
-            + "hideActive=\(shouldHideForActiveWindow)"
+                + "visible=\(isWindowVisible), "
+                + "hideInactive=\(shouldHideForInactiveApp), "
+                + "hideActive=\(shouldHideForActiveWindow)"
         )
     }
 }

@@ -21,7 +21,8 @@ struct SettingsView: View {
             performanceTab
             hotkeyTab
         }
-        .frame(width: 360, height: 500)
+        .frame(width: 360)
+        .background(.ultraThickMaterial)
     }
 
     private var generalTab: some View {
@@ -37,6 +38,7 @@ struct SettingsView: View {
         .alert("Reset Settings", isPresented: $showingResetAlert) {
             resetSettingsAlert
         }
+        .frame(height: 430)
     }
 
     private var windowTab: some View {
@@ -47,6 +49,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Previews", systemImage: "macwindow") }
+        .frame(height: 540)
     }
 
     private var performanceTab: some View {
@@ -55,6 +58,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Performance", systemImage: "gauge.medium") }
+        .frame(height: 170)
     }
 
     private var hotkeyTab: some View {
@@ -63,6 +67,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
+        .frame(height: 430)
     }
 
     // MARK: - General Tab Components
@@ -135,7 +140,7 @@ struct SettingsView: View {
         Button("Reset All Settings") {
             showingResetAlert = true
         }
-        .padding(.bottom, 8)
+        .padding(.bottom, 10)
     }
 
     private var resetSettingsAlert: some View {
@@ -173,6 +178,7 @@ struct SettingsView: View {
         Section {
             sectionHeader("Behavior")
             missionControlToggle
+            closeOnCaptureStop
             hideInactiveApplicationsToggle
             hideActiveWindowToggle
             editModeAlignmentToggle
@@ -270,6 +276,13 @@ struct SettingsView: View {
             }
     }
 
+    private var closeOnCaptureStop: some View {
+        Toggle("Close preview with source window", isOn: $appSettings.closeOnCaptureStop)
+            .onChange(of: appSettings.closeOnCaptureStop) { _, newValue in
+                logger.info("Close on capture stop changed: \(newValue)")
+            }
+    }
+
     private var hideInactiveApplicationsToggle: some View {
         Toggle(
             "Hide previews for inactive applications", isOn: $appSettings.hideInactiveApplications
@@ -325,7 +338,6 @@ struct SettingsView: View {
     }
 }
 
-/// Provides a native slider for opacity control with precise decimal value handling
 struct OpacitySlider: NSViewRepresentable {
     @Binding var value: Double
 
@@ -337,7 +349,7 @@ struct OpacitySlider: NSViewRepresentable {
             target: context.coordinator,
             action: #selector(Coordinator.valueChanged(_:))
         )
-        slider.isContinuous = true
+        slider.isContinuous = false
         return slider
     }
 
