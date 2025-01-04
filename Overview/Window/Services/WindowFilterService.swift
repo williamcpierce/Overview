@@ -15,10 +15,15 @@ final class WindowFilterService {
         "com.apple.WindowManager",
     ])
 
-    func filterWindows(_ windows: [SCWindow]) -> [SCWindow] {
+    func filterWindows(
+        _ windows: [SCWindow], appFilterNames: [String],
+        isFilterBlocklist: Bool
+    ) -> [SCWindow] {
         logger.debug("Starting window filtering: total=\(windows.count)")
         let filtered: [SCWindow] = windows.filter { window in
             meetsBasicRequirements(window) && isNotSystemComponent(window)
+                && passesFilter(
+                    window, appFilterNames: appFilterNames, isFilterBlocklist: isFilterBlocklist)
         }
         logger.debug(
             "Window filtering complete: valid=\(filtered.count), filtered=\(windows.count - filtered.count)"
@@ -62,5 +67,17 @@ final class WindowFilterService {
         }
 
         return isNotSystem
+    }
+
+    private func passesFilter(
+        _ window: SCWindow, appFilterNames: [String],
+        isFilterBlocklist: Bool
+    ) -> Bool {
+        let isMatchedByFilter: Bool = appFilterNames.contains(
+            window.owningApplication?.applicationName ?? "")
+
+        let passesFilter: Bool = isFilterBlocklist ? !isMatchedByFilter : isMatchedByFilter
+
+        return passesFilter
     }
 }

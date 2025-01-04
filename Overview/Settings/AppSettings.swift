@@ -32,6 +32,8 @@ class AppSettings: ObservableObject {
         static let hideActiveWindow: Bool = false
         static let enableEditModeAlignment: Bool = false
         static let hotkeyBindings: [HotkeyBinding] = []
+        static let appFilterNames: [String] = []
+        static let isFilterBlocklist: Bool = false
     }
 
     // MARK: - Window Appearance
@@ -175,6 +177,24 @@ class AppSettings: ObservableObject {
         }
     }
 
+    // MARK: - Filters
+
+    @Published var appFilterNames: [String] {
+        didSet {
+            UserDefaults.standard.set(
+                appFilterNames, forKey: StorageKeys.appFilterNames)
+            logger.info("App filter names updated")
+        }
+    }
+
+    @Published var isFilterBlocklist: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                isFilterBlocklist, forKey: StorageKeys.isFilterBlocklist)
+            logger.info("Filter is blockist: \(isFilterBlocklist)")
+        }
+    }
+
     // MARK: - Initialization
 
     init() {
@@ -194,6 +214,8 @@ class AppSettings: ObservableObject {
         self.hideActiveWindow = Defaults.hideActiveWindow
         self.enableEditModeAlignment = Defaults.enableEditModeAlignment
         self.hotkeyBindings = Defaults.hotkeyBindings
+        self.appFilterNames = Defaults.appFilterNames
+        self.isFilterBlocklist = Defaults.isFilterBlocklist
 
         logger.debug("Initializing settings")
         initializeFromStorage()
@@ -227,6 +249,8 @@ class AppSettings: ObservableObject {
         hideInactiveApplications = Defaults.hideInactiveApplications
         hideActiveWindow = Defaults.hideActiveWindow
         enableEditModeAlignment = Defaults.enableEditModeAlignment
+        appFilterNames = Defaults.appFilterNames
+        isFilterBlocklist = Defaults.isFilterBlocklist
 
         clearHotkeyBindings()
         logger.info("Settings reset completed")
@@ -256,6 +280,11 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.hideActiveWindow)
         enableEditModeAlignment = UserDefaults.standard.bool(
             forKey: StorageKeys.enableEditModeAlignment)
+        appFilterNames =
+            UserDefaults.standard.array(
+                forKey: StorageKeys.appFilterNames) as? [String] ?? []
+        enableEditModeAlignment = UserDefaults.standard.bool(
+            forKey: StorageKeys.isFilterBlocklist)
     }
 
     private func loadHotkeyBindings() {
@@ -338,4 +367,6 @@ private enum StorageKeys {
     static let hideActiveWindow: String = "hideActiveWindow"
     static let enableEditModeAlignment: String = "enableEditModeAlignment"
     static let hotkeyBindings: String = "hotkeyBindings"
+    static let appFilterNames: String = "appFilterNames"
+    static let isFilterBlocklist: String = "isFilterBlocklist"
 }
