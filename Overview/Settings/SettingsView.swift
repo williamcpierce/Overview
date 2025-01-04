@@ -21,7 +21,7 @@ struct SettingsView: View {
             performanceTab
             hotkeyTab
         }
-        .frame(width: 360, height: 430)
+        .frame(width: 360, height: 500)
     }
 
     private var generalTab: some View {
@@ -173,7 +173,8 @@ struct SettingsView: View {
         Section {
             sectionHeader("Behavior")
             missionControlToggle
-            hideInactiveWindowsToggle
+            hideInactiveApplicationsToggle
+            hideActiveWindowToggle
             editModeAlignmentToggle
             alignmentHelpText
         }
@@ -268,14 +269,22 @@ struct SettingsView: View {
                 logger.info("Mission Control integration changed: \(newValue)")
             }
     }
-    
-    private var hideInactiveWindowsToggle: some View {
-        Toggle("Hide previews for inactive applications", isOn: $appSettings.hideInactiveWindows)
-            .onChange(of: appSettings.hideInactiveWindows) { _, newValue in
-                logger.info("Hide inactive windows changed: \(newValue)")
-            }
+
+    private var hideInactiveApplicationsToggle: some View {
+        Toggle(
+            "Hide previews for inactive applications", isOn: $appSettings.hideInactiveApplications
+        )
+        .onChange(of: appSettings.hideInactiveApplications) { _, newValue in
+            logger.info("Hide inactive applications changed: \(newValue)")
+        }
     }
 
+    private var hideActiveWindowToggle: some View {
+        Toggle("Hide preview for active window", isOn: $appSettings.hideActiveWindow)
+            .onChange(of: appSettings.hideActiveWindow) { _, newValue in
+                logger.info("Hide active windows changed: \(newValue)")
+            }
+    }
     private var editModeAlignmentToggle: some View {
         Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
             .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in

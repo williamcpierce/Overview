@@ -52,7 +52,7 @@ struct PreviewCaptureView: View {
     }
 
     private var shouldShowFocusBorder: Bool {
-        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
+        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused && !appSettings.hideActiveWindow
     }
 
     private var focusBorder: some View {

@@ -46,9 +46,12 @@ struct PreviewView: View {
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
+        .onChange(of: previewManager.editModeEnabled, updateWindowVisibility)
         .onChange(of: captureManager.isSourceAppFocused, updateWindowVisibility)
+        .onChange(of: captureManager.isSourceWindowFocused, updateWindowVisibility)
         .onChange(of: windowManager.isOverviewActive, updateWindowVisibility)
-        .onChange(of: appSettings.hideInactiveWindows, updateWindowVisibility)
+        .onChange(of: appSettings.hideInactiveApplications, updateWindowVisibility)
+        .onChange(of: appSettings.hideActiveWindow, updateWindowVisibility)
     }
 
     // MARK: - View Components
@@ -124,15 +127,28 @@ struct PreviewView: View {
     }
 
     private func updateWindowVisibility() {
-        if appSettings.hideInactiveWindows {
-            isWindowVisible =
-                captureManager.isSourceAppFocused || isSelectionViewVisible
-                || previewManager.editModeEnabled || windowManager.isOverviewActive
-            logger.debug(
-                "Window visibility updated: visible=\(isWindowVisible)"
-            )
-        } else {
+        let alwaysShown =
+            isSelectionViewVisible || previewManager.editModeEnabled
+            || windowManager.isOverviewActive
+
+        if alwaysShown {
             isWindowVisible = true
+            return
         }
+
+        let shouldHideForInactiveApp =
+            appSettings.hideInactiveApplications && !captureManager.isSourceAppFocused
+
+        let shouldHideForActiveWindow =
+            appSettings.hideActiveWindow && captureManager.isSourceWindowFocused
+
+        isWindowVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
+
+        logger.debug(
+            "Window visibility updated for \(captureManager.windowTitle ?? "Untitled"), "
+            + "visible=\(isWindowVisible), "
+            + "hideInactive=\(shouldHideForInactiveApp), "
+            + "hideActive=\(shouldHideForActiveWindow)"
+        )
     }
 }
