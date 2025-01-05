@@ -10,10 +10,7 @@
 import ScreenCaptureKit
 
 final class CaptureAvailabilityService {
-    // MARK: - Dependencies
     private let logger = AppLogger.capture
-
-    // MARK: - Permission Management
 
     func requestPermission() async throws {
         logger.info("Requesting screen recording permission")
@@ -22,12 +19,10 @@ final class CaptureAvailabilityService {
             try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             logger.info("Screen recording permission granted")
         } catch {
-            logger.error("Screen recording permission denied: \(error.localizedDescription)")
+            logger.logError(error, context: "Screen recording permission denied")
             throw CaptureError.permissionDenied
         }
     }
-
-    // MARK: - Window Management
 
     func getAvailableWindows() async throws -> [SCWindow] {
         logger.debug("Fetching available windows")
@@ -39,7 +34,7 @@ final class CaptureAvailabilityService {
             logger.debug("Retrieved \(content.windows.count) available windows")
             return content.windows
         } catch {
-            logger.error("Failed to get windows: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to get windows")
             throw error
         }
     }

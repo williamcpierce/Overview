@@ -14,12 +14,10 @@ import SwiftUI
 
 final class HotkeyService {
     // MARK: - Constants
-
     private static let registrationLimit: Int = 50
     static let shared: HotkeyService = HotkeyService()
 
     // MARK: - Properties
-
     private let logger = AppLogger.hotkeys
     private var activeHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
     private var eventHandlerIdentifier: EventHandlerRef?

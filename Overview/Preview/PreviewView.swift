@@ -19,12 +19,12 @@ struct PreviewView: View {
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var windowManager: WindowManager
+    private let logger = AppLogger.interface
 
     // MARK: - State
     @State private var isSelectionViewVisible: Bool = true
     @State private var isWindowVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
-    private let logger = AppLogger.interface
 
     init(
         appSettings: AppSettings,

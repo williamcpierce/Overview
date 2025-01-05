@@ -33,14 +33,12 @@ struct CapturedFrame {
 /// Manages the lifecycle and processing of screen capture streams
 class CaptureEngine: NSObject, @unchecked Sendable {
     // MARK: - Dependencies
-
     private let logger = AppLogger.capture
     private let frameProcessingQueue: DispatchQueue = DispatchQueue(
         label: "com.example.apple-samplecode.VideoSampleBufferQueue"
     )
 
     // MARK: - State Management
-
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private var streamOutput: CaptureEngineStreamOutput?
     private(set) var stream: SCStream?

@@ -11,15 +11,15 @@ import SwiftUI
 /// Manages the interface for creating new hotkey bindings, including window selection
 /// and hotkey recording with validation
 struct HotkeyBindingSheet: View {
-    // MARK: - Dependencies
-
+    // MARK: - Environment
     @Environment(\.dismiss) private var dismiss
+
+    // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
     private let logger = AppLogger.hotkeys
 
     // MARK: - View State
-
     @State private var filteredWindows: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
     @State private var selectedWindow: SCWindow?
@@ -110,7 +110,7 @@ struct HotkeyBindingSheet: View {
                 filteredWindows = try await windowManager.getFilteredWindows()
                 logger.info("Retrieved \(filteredWindows.count) windows for binding selection")
             } catch {
-                logger.error("Failed to load windows for binding: \(error.localizedDescription)")
+                logger.logError(error, context: "Failed to load windows for binding")
             }
         }
     }
