@@ -11,10 +11,7 @@
 import ScreenCaptureKit
 
 final class CaptureConfigurationService {
-    // MARK: - Dependencies
     private let logger = AppLogger.capture
-
-    // MARK: - Configuration Management
 
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
         SCStreamConfiguration, SCContentFilter
@@ -53,7 +50,7 @@ final class CaptureConfigurationService {
             try await stream.updateContentFilter(filter)
             logger.info("Stream configuration updated successfully")
         } catch {
-            logger.error("Failed to update stream: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to update stream")
             throw error
         }
     }

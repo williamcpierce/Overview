@@ -13,17 +13,15 @@ import SwiftUI
 /// Centralizes application settings management with SwiftUI property wrapper support
 /// and automatic persistence to UserDefaults.
 class AppSettings: ObservableObject {
-    // MARK: - Properties
-
-    private let logger = AppLogger.settings
-    private let hotkeyService = HotkeyService.shared
+    // MARK: - Private State
     private var isInitializing: Bool = true
 
-    /// Available frame rates for capture configuration
+    // MARK: - Dependancies
+    private let logger = AppLogger.settings
+    private let hotkeyService = HotkeyService.shared
+    
+    // MARK: - Constants
     let availableFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
-
-    // MARK: - Default Values
-
     private struct Defaults {
         static let windowOpacity: Double = 0.95
         static let frameRate: Double = 10.0

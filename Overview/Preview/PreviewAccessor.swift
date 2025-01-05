@@ -11,11 +11,14 @@
 import SwiftUI
 
 struct PreviewAccessor: NSViewRepresentable {
+    // MARK: - Dependancies
     @Binding var aspectRatio: CGFloat
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
     private let logger = AppLogger.windows
+
+    // MARK: - Constants
     private let resizeThrottleInterval: TimeInterval = 0.1
 
     func makeNSView(context: Context) -> NSView {

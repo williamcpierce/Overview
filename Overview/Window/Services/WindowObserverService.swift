@@ -15,7 +15,7 @@ final class WindowObserverService {
     private let logger = AppLogger.windows
 
     // MARK: - Private State
-
+    
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]

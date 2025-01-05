@@ -17,6 +17,7 @@ final class CaptureServices {
     private let availabilityService = CaptureAvailabilityService()
     private let logger = AppLogger.capture
 
+    // MARK: - Constants
     static let shared = CaptureServices()
 
     private init() {

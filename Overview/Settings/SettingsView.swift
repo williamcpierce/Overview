@@ -14,16 +14,14 @@ import SwiftUI
 /// Primary settings view containing all application configuration options organized into tabs
 struct SettingsView: View {
     // MARK: - Dependencies
-
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
+    private let logger = AppLogger.settings
 
     // MARK: - View State
-
     @State private var isAddingHotkey: Bool = false
     @State private var showingResetAlert: Bool = false
     @State private var newAppFilterName: String = ""
-    private let logger = AppLogger.settings
 
     // MARK: - View Structure
 

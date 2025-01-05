@@ -14,14 +14,12 @@ import SwiftUI
 @MainActor
 final class WindowManager: ObservableObject {
     // MARK: - Published State
-
     @Published private(set) var focusedBundleId: String?
     @Published private(set) var focusedProcessId: pid_t?
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var windowTitles: [WindowID: String] = [:]
 
     // MARK: - Dependencies
-
     private let appSettings: AppSettings
     private let windowServices: WindowServices = WindowServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared

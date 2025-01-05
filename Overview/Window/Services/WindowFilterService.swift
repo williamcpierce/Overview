@@ -13,9 +13,6 @@ import ScreenCaptureKit
 /// user-defined filters, and application-specific rules.
 final class WindowFilterService {
     private let logger = AppLogger.windows
-
-    // MARK: - Constants
-
     private let systemAppBundleIDs: Set<String> = Set([
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
