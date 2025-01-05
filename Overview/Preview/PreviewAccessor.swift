@@ -111,6 +111,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
         guard captureManager.isCapturing else { return }
+        guard aspectRatio != 0 else { return }
 
         let windowWidth: CGFloat = window.frame.width
         let windowHeight: CGFloat = window.frame.height
