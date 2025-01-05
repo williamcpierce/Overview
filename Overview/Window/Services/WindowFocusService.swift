@@ -3,12 +3,18 @@
  Overview
 
  Created by William Pierce on 12/15/24.
+
+ Manages window focus operations and application activation.
 */
 
 import ScreenCaptureKit
 
+/// Handles window focusing operations including process activation
+/// and window-specific focus management.
 final class WindowFocusService {
     private let logger = AppLogger.windows
+
+    // MARK: - Public Methods
 
     func focusWindow(window: SCWindow) {
         guard let processID: pid_t = window.owningApplication?.processID else {
@@ -16,16 +22,14 @@ final class WindowFocusService {
             return
         }
 
-        logger.debug(
-            "Focusing window: '\(window.title ?? "untitled")', processID=\(String(describing: processID))"
-        )
+        logger.debug("Focusing window: '\(window.title ?? "untitled")', processID=\(processID)")
 
         let success: Bool = activateProcess(processID)
 
         if success {
             logger.info("Window successfully focused: '\(window.title ?? "untitled")'")
         } else {
-            logger.error("Window focus failed: processID=\(String(describing: processID))")
+            logger.error("Window focus failed: processID=\(processID)")
         }
     }
 
@@ -49,6 +53,8 @@ final class WindowFocusService {
         return success
     }
 
+    // MARK: - Private Methods
+
     private func findApplication(forWindowTitle title: String) -> NSRunningApplication? {
         let options = CGWindowListOption(arrayLiteral: .optionAll)
         let windowList =
@@ -68,14 +74,13 @@ final class WindowFocusService {
             return nil
         }
 
-        let runningApp = NSWorkspace.shared.runningApplications.first { app in
+        let runningApp: NSRunningApplication? = NSWorkspace.shared.runningApplications.first {
+            app in
             app.processIdentifier == windowPID
         }
 
         if let app: NSRunningApplication = runningApp {
             logger.debug("Found application: '\(app.localizedName ?? "unknown")', pid=\(windowPID)")
-        } else {
-            logger.warning("No running application for pid=\(windowPID)")
         }
 
         return runningApp
@@ -87,23 +92,5 @@ final class WindowFocusService {
             return false
         }
         return app.activate()
-    }
-
-    func updateFocusState(for window: SCWindow?) async -> Bool {
-        guard let window: SCWindow = window,
-            let activeApp: NSRunningApplication = NSWorkspace.shared.frontmostApplication,
-            let selectedApp: SCRunningApplication = window.owningApplication
-        else {
-            logger.debug("Focus state check failed: missing window or app reference")
-            return false
-        }
-
-        let isFocused: Bool = activeApp.processIdentifier == selectedApp.processID
-
-        if isFocused {
-            logger.debug("Window is focused: '\(window.title ?? "untitled")'")
-        }
-
-        return isFocused
     }
 }

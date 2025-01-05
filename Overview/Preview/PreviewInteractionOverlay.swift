@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 10/13/24.
+
+ Manages user interaction with preview windows, including context menus
+ and edit mode toggling functionality.
 */
 
 import SwiftUI
@@ -17,12 +20,13 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let handler = PreviewInteractionHandler()
         configureHandler(handler)
+        logger.debug("Created interaction handler view")
         return handler
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let handler = nsView as? PreviewInteractionHandler else {
-            logger.warning("Invalid handler type in updateNSView")
+            logger.warning("Invalid handler type during update")
             return
         }
 
@@ -38,19 +42,24 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         handler.onSourceWindowFocus = onSourceWindowFocus
         handler.menu = createContextMenu(for: handler)
 
-        logger.info("Handler configured")
+        logger.debug("Handler configured with initial state")
     }
 
     private func updateHandlerState(_ handler: PreviewInteractionHandler) {
+        let previousEditMode: Bool = handler.editModeEnabled
         handler.editModeEnabled = editModeEnabled
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
+
+        if previousEditMode != editModeEnabled {
+            logger.info("Edit mode state updated: \(editModeEnabled)")
+        }
     }
 
     private func createContextMenu(for handler: PreviewInteractionHandler) -> NSMenu {
         let menu = NSMenu()
-
         let editModeItem: NSMenuItem = createEditModeMenuItem(for: handler)
+
         menu.addItem(editModeItem)
         menu.addItem(NSMenuItem.separator())
         menu.addItem(createCloseWindowMenuItem())
@@ -86,7 +95,7 @@ private final class PreviewInteractionHandler: NSView {
     var onSourceWindowFocus: (() -> Void)?
     weak var editModeMenuItem: NSMenuItem?
 
-    // MARK: - Mouse Events
+    // MARK: - Mouse Event Handling
 
     override func mouseDown(with event: NSEvent) {
         if shouldHandleMouseClick {
@@ -101,19 +110,19 @@ private final class PreviewInteractionHandler: NSView {
     }
 
     private func handleMouseClick() {
-        logger.debug("Focusing source window")
+        logger.debug("Processing mouse click for source window focus")
         onSourceWindowFocus?()
     }
 
     private func handleSystemMouseEvent(_ event: NSEvent) {
-        logger.debug("Delegating mouse event to system")
+        logger.debug("Delegating mouse event to system handler")
         super.mouseDown(with: event)
     }
 
     // MARK: - Menu Actions
 
     @objc func toggleEditMode() {
-        logger.info("Edit mode toggled via menu")
+        logger.info("Edit mode toggled via context menu")
         onEditModeToggle?()
     }
 }

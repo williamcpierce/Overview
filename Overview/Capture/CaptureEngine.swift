@@ -4,62 +4,89 @@
 
  Created by William Pierce on 9/15/24.
 
+ Manages screen capture operations using ScreenCaptureKit, handling frame
+ processing, stream management, and error handling for captured content.
+
  This file includes code derived from Apple Inc.'s ScreenRecorder code sample,
  which is licensed under the MIT License. See LICENSE.md for details.
 */
 
 import ScreenCaptureKit
 
+/// Represents a single captured frame with associated metadata
 struct CapturedFrame {
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
     let surface: IOSurface?
+
     static let invalid: CapturedFrame = CapturedFrame(
-        contentRect: .zero, contentScale: 0, scaleFactor: 0, surface: nil)
+        contentRect: .zero,
+        contentScale: 0,
+        scaleFactor: 0,
+        surface: nil
+    )
+
     var size: CGSize { contentRect.size }
 }
 
+/// Manages the lifecycle and processing of screen capture streams
 class CaptureEngine: NSObject, @unchecked Sendable {
+    // MARK: - Dependencies
+
     private let logger = AppLogger.capture
     private let frameProcessingQueue: DispatchQueue = DispatchQueue(
-        label: "com.example.apple-samplecode.VideoSampleBufferQueue")
+        label: "com.example.apple-samplecode.VideoSampleBufferQueue"
+    )
+
+    // MARK: - State Management
+
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private var streamOutput: CaptureEngineStreamOutput?
     private(set) var stream: SCStream?
+
+    // MARK: - Capture Control
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
     {
         AsyncThrowingStream<CapturedFrame, Error> { continuation in
-            let streamOutput = CaptureEngineStreamOutput(
-                continuation: continuation)
+            logger.debug("Initializing capture stream with filter")
+
+            let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
             self.streamOutput = streamOutput
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
 
             do {
                 self.stream = SCStream(
-                    filter: filter, configuration: configuration, delegate: streamOutput)
+                    filter: filter,
+                    configuration: configuration,
+                    delegate: streamOutput
+                )
 
                 try self.stream?.addStreamOutput(
-                    streamOutput, type: .screen, sampleHandlerQueue: self.frameProcessingQueue)
+                    streamOutput,
+                    type: .screen,
+                    sampleHandlerQueue: self.frameProcessingQueue
+                )
                 self.stream?.startCapture()
+                logger.info("Capture stream started successfully")
             } catch {
-                logger.error("Failed to start capture: \(error.localizedDescription)")
+                logger.logError(error, context: "Failed to initialize capture stream")
                 continuation.finish(throwing: error)
             }
         }
     }
 
     func stopCapture() async {
-        logger.debug("Stopping capture stream")
+        logger.debug("Initiating capture stream shutdown")
 
         do {
             try await stream?.stopCapture()
             frameStreamContinuation?.finish()
             logger.info("Capture stream stopped successfully")
         } catch {
-            logger.error("Failed to stop capture: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to stop capture stream")
             frameStreamContinuation?.finish(throwing: error)
         }
     }
@@ -72,11 +99,12 @@ class CaptureEngine: NSObject, @unchecked Sendable {
             try await stream?.updateContentFilter(filter)
             logger.info("Stream configuration updated successfully")
         } catch {
-            logger.error("Failed to update stream: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to update stream configuration")
         }
     }
 }
 
+/// Handles stream output processing and delegate callbacks
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     private let logger = AppLogger.capture
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
@@ -84,10 +112,13 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.frameStreamContinuation = continuation
+        super.init()
+        logger.debug("Initialized stream output handler")
     }
 
     func stream(
-        _ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+        _ stream: SCStream,
+        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
         of outputType: SCStreamOutputType
     ) {
         guard sampleBuffer.isValid else {
@@ -103,16 +134,17 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         case .audio:
             logger.debug("Audio stream output ignored")
         default:
-            logger.error("Unknown output type: \(String(describing: outputType))")
+            logger.error("Received unknown output type: \(String(describing: outputType))")
             fatalError("Unknown output type: \(outputType)")
         }
     }
 
     private func extractCapturedFrame(from sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         guard
-            let attachmentsArray =
-                CMSampleBufferGetSampleAttachmentsArray(
-                    sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]]
+            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
+                sampleBuffer,
+                createIfNecessary: false
+            ) as? [[SCStreamFrameInfo: Any]]
         else {
             logger.error("Failed to get sample buffer attachments")
             return nil
@@ -127,7 +159,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             let status = SCFrameStatus(rawValue: statusRawValue),
             status == .complete
         else {
-            logger.debug("Incomplete frame status")
+            logger.debug("Received incomplete frame status")
             return nil
         }
 
@@ -166,7 +198,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return nil
         }
 
-        logger.debug("Created frame: size=\(contentRect.size), scale=\(contentScale)")
+        logger.debug("Frame extracted: size=\(contentRect.size), scale=\(contentScale)")
         return CapturedFrame(
             contentRect: contentRect,
             contentScale: contentScale,
@@ -176,7 +208,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        logger.error("Stream stopped with error: \(error.localizedDescription)")
+        logger.logError(error, context: "Stream stopped unexpectedly")
         frameStreamContinuation?.finish(throwing: error)
     }
 }

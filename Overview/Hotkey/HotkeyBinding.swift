@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 12/8/24.
+
+ Represents a configurable keyboard shortcut binding that maps
+ specific key combinations to window management actions.
 */
 
 import Carbon
@@ -12,6 +15,7 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     let keyCode: Int
     let windowTitle: String
     private let modifierFlags: UInt
+
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }

@@ -8,11 +8,14 @@
 import OSLog
 
 struct AppLogger {
+    // MARK: - Configuration
+
     private static let loggers: [Category: Logger] = Category.allCases.reduce(into: [:]) {
         dict, category in
         dict[category] = Logger(subsystem: subsystem, category: category.rawValue)
     }
     private static let subsystem: String = Bundle.main.bundleIdentifier ?? "com.Overview"
+
     static let capture: CategoryLogger = CategoryLogger(category: .capture)
     static let hotkeys: CategoryLogger = CategoryLogger(category: .hotkeys)
     static let interface: CategoryLogger = CategoryLogger(category: .interface)
@@ -53,9 +56,11 @@ extension AppLogger {
     struct SourceLocation {
         let file: String
         let function: String
+
         var fileName: String {
             URL(fileURLWithPath: file).lastPathComponent
         }
+
         var description: String {
             "[\(fileName):\(function)]"
         }
@@ -71,7 +76,7 @@ extension AppLogger {
             guard level == .error || level == .fault else { return }
         #endif
 
-        let formattedMessage = "\(location.description) \(message)"
+        let formattedMessage: String = "\(location.description) \(message)"
         loggers[category]?.log(level: level.osLogType, "\(formattedMessage)")
     }
 

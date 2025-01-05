@@ -7,12 +7,14 @@
 
 import SwiftUI
 
+/// Records keyboard input to create hotkey bindings, managing the recording state
+/// and keyboard event monitoring with proper security constraints
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
     let windowTitle: String
 
     func makeNSView(context: Context) -> NSButton {
-        let recordingButton: NSButton = NSButton(frame: .zero)
+        let recordingButton = NSButton(frame: .zero)
         recordingButton.bezelStyle = .rounded
         recordingButton.setButtonType(.momentaryPushIn)
         recordingButton.title = shortcut?.hotkeyDisplayString ?? "Click to record shortcut"
@@ -30,6 +32,8 @@ struct HotkeyRecorder: NSViewRepresentable {
         Coordinator(self)
     }
 
+    // MARK: - Coordinator
+
     final class Coordinator: NSObject {
         private let logger = AppLogger.hotkeys
         private var activeModifierKeys: NSEvent.ModifierFlags = []
@@ -42,6 +46,13 @@ struct HotkeyRecorder: NSViewRepresentable {
             super.init()
             logger.debug("Initializing recorder for window: '\(parent.windowTitle)'")
         }
+
+        deinit {
+            endRecordingSession()
+            logger.debug("Cleaning up recorder for window: '\(parent.windowTitle)'")
+        }
+
+        // MARK: - Event Handling
 
         @objc func buttonClicked(_ sender: NSButton) {
             if isRecordingActive {
@@ -67,7 +78,9 @@ struct HotkeyRecorder: NSViewRepresentable {
             }
 
             if keyboardMonitor == nil {
-                logger.error("Event monitor creation failed")
+                logger.error("Failed to create keyboard event monitor")
+            } else {
+                logger.debug("Started recording session for '\(parent.windowTitle)'")
             }
         }
 
@@ -75,6 +88,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             if let monitor: Any = keyboardMonitor {
                 NSEvent.removeMonitor(monitor)
                 keyboardMonitor = nil
+                logger.debug("Ended recording session")
             }
             isRecordingActive = false
             activeModifierKeys = []
@@ -100,7 +114,7 @@ struct HotkeyRecorder: NSViewRepresentable {
         private func processKeyPress(_ event: NSEvent) {
             let securityRequiredModifiers: NSEvent.ModifierFlags = [.command, .control, .option]
             guard !securityRequiredModifiers.intersection(activeModifierKeys).isEmpty else {
-                logger.warning("Rejected key press without required modifiers")
+                logger.warning("Rejected key press without required security modifiers")
                 return
             }
 
@@ -114,13 +128,13 @@ struct HotkeyRecorder: NSViewRepresentable {
                 keyCode: Int(event.keyCode),
                 modifiers: activeModifierKeys
             )
-        }
-
-        deinit {
-            endRecordingSession()
+            logger.info(
+                "Created hotkey binding: \(parent.shortcut?.hotkeyDisplayString ?? "unknown")")
         }
     }
 }
+
+// MARK: - Error Definitions
 
 enum ShortcutRecordingError: LocalizedError {
     case invalidModifiers
