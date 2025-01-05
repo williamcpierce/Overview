@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 9/15/24.
+
+ Manages window configuration and layout for preview windows,
+ handling resizing, aspect ratio maintenance, and window behavior.
 */
 
 import SwiftUI
@@ -20,12 +23,11 @@ struct PreviewAccessor: NSViewRepresentable {
 
         DispatchQueue.main.async {
             guard let window: NSWindow = view.window else {
-                logger.warning("No window reference available during setup")
+                logger.warning("Window reference unavailable during initialization")
                 return
             }
 
             configureWindowDefaults(window)
-
             logger.info(
                 "Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
         }
@@ -34,7 +36,7 @@ struct PreviewAccessor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let window: NSWindow = nsView.window else {
-            logger.info("No window reference available during update")
+            logger.debug("Window reference unavailable during update")
             return
         }
 
@@ -45,40 +47,67 @@ struct PreviewAccessor: NSViewRepresentable {
         }
     }
 
+    // MARK: - Window Configuration
+
     private func configureWindowDefaults(_ window: NSWindow) {
         window.backgroundColor = .clear
         window.collectionBehavior.insert(.fullScreenAuxiliary)
         window.hasShadow = false
         window.isMovableByWindowBackground = true
-        window.styleMask = [.fullSizeContentView]
+        window.styleMask = NSWindow.StyleMask.fullSizeContentView
+
+        logger.debug("Applied default window configuration")
     }
 
     private func synchronizeWindowConfiguration(_ window: NSWindow) {
+        let previousLevel: NSWindow.Level = window.level
+
         updateEditModeState(window)
         updateWindowLevel(window)
         updateMissionControlBehavior(window)
+
+        if window.level != previousLevel {
+            logger.info("Window level changed: \(window.level.rawValue)")
+        }
     }
 
     private func updateEditModeState(_ window: NSWindow) {
-        window.styleMask =
+        let newStyleMask: NSWindow.StyleMask =
             previewManager.editModeEnabled
-            ? [.fullSizeContentView, .resizable] : [.fullSizeContentView]
-        window.isMovable = previewManager.editModeEnabled
+            ? [.fullSizeContentView, .resizable]
+            : .fullSizeContentView
+
+        if window.styleMask != newStyleMask {
+            window.styleMask = newStyleMask
+            window.isMovable = previewManager.editModeEnabled
+            logger.debug("Edit mode state updated: \(previewManager.editModeEnabled)")
+        }
     }
 
     private func updateWindowLevel(_ window: NSWindow) {
         let shouldFloat: Bool =
             previewManager.editModeEnabled && appSettings.enableEditModeAlignment
-        window.level = shouldFloat ? .floating : .statusBar + 1
+        let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
+
+        if window.level != newLevel {
+            window.level = newLevel
+            logger.debug("Window level updated: floating=\(shouldFloat)")
+        }
     }
 
     private func updateMissionControlBehavior(_ window: NSWindow) {
-        if appSettings.managedByMissionControl {
+        let shouldManage: Bool = appSettings.managedByMissionControl
+
+        if shouldManage {
             window.collectionBehavior.insert(.managed)
         } else {
             window.collectionBehavior.remove(.managed)
         }
+
+        logger.debug("Mission Control behavior updated: managed=\(shouldManage)")
     }
+
+    // MARK: - Layout Management
 
     private func synchronizeAspectRatio(_ window: NSWindow) {
         guard captureManager.isCapturing else { return }
@@ -94,6 +123,6 @@ struct PreviewAccessor: NSViewRepresentable {
         window.setContentSize(updatedSize)
         window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
 
-        logger.debug("Window resized: \(Int(updatedSize.width))x\(Int(updatedSize.height))")
+        logger.info("Window resized: \(Int(updatedSize.width))x\(Int(updatedSize.height))")
     }
 }

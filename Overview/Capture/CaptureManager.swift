@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 9/15/24.
+
+ Manages the lifecycle of screen capture operations, coordinating window selection,
+ frame processing, and state synchronization across the application.
 */
 
 import Combine
@@ -32,7 +35,7 @@ final class CaptureManager: ObservableObject {
     private let logger = AppLogger.capture
 
     // MARK: - State Management
-    private var hasPermission = false
+    private var hasPermission: Bool = false
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var subscriptions = Set<AnyCancellable>()
 
@@ -51,14 +54,20 @@ final class CaptureManager: ObservableObject {
 
     func requestPermission() async throws {
         guard !hasPermission else { return }
+        logger.debug("Requesting screen recording permission")
         try await captureServices.requestScreenRecordingPermission()
         hasPermission = true
+        logger.info("Screen recording permission granted")
     }
 
     func startCapture() async throws {
         guard !isCapturing else { return }
-        guard let window = selectedWindow else { throw CaptureError.noWindowSelected }
+        guard let window: SCWindow = selectedWindow else {
+            logger.error("Capture failed: No window selected")
+            throw CaptureError.noWindowSelected
+        }
 
+        logger.debug("Starting capture for window: '\(window.title ?? "Untitled")'")
         let stream = try await captureServices.startCapture(
             window: window,
             engine: captureEngine,
@@ -67,19 +76,24 @@ final class CaptureManager: ObservableObject {
 
         await startFrameProcessing(stream: stream)
         isCapturing = true
+        logger.info("Capture started: '\(window.title ?? "Untitled")'")
     }
 
     func stopCapture() async {
         guard isCapturing else { return }
+        logger.debug("Stopping capture")
+
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
         await captureEngine.stopCapture()
         isCapturing = false
         capturedFrame = nil
+        logger.info("Capture stopped")
     }
 
     func focusWindow() {
-        guard let window = selectedWindow else { return }
+        guard let window: SCWindow = selectedWindow else { return }
+        logger.debug("Focusing window: '\(window.title ?? "Untitled")'")
         windowManager.focusWindow(window)
     }
 
@@ -120,27 +134,34 @@ final class CaptureManager: ObservableObject {
     }
 
     private func synchronizeFocusState() async {
-        guard let selectedWindow = selectedWindow else {
+        guard let selectedWindow: SCWindow = selectedWindow else {
             isSourceWindowFocused = false
             return
         }
+
         let selectedProcessId: pid_t? = selectedWindow.owningApplication?.processID
         let selectedBundleId: String? = selectedWindow.owningApplication?.bundleIdentifier
 
         isSourceWindowFocused = selectedProcessId == windowManager.focusedProcessId
         isSourceAppFocused = selectedBundleId == windowManager.focusedBundleId
+
+        logger.debug(
+            "Focus state updated: window=\(isSourceWindowFocused), app=\(isSourceAppFocused)"
+        )
     }
 
     private func synchronizeWindowTitle(from titles: [WindowManager.WindowID: String]) {
-        guard let window = selectedWindow,
-            let processID = window.owningApplication?.processID
+        guard let window: SCWindow = selectedWindow,
+            let processID: pid_t = window.owningApplication?.processID
         else { return }
+
         let windowID = WindowManager.WindowID(processID: processID, windowID: window.windowID)
         windowTitle = titles[windowID]
     }
 
     private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let window = selectedWindow else { return }
+        guard isCapturing, let window: SCWindow = selectedWindow else { return }
+        logger.debug("Updating stream configuration: frameRate=\(appSettings.frameRate)")
 
         do {
             try await captureServices.updateStreamConfiguration(
@@ -148,6 +169,7 @@ final class CaptureManager: ObservableObject {
                 stream: captureEngine.stream,
                 frameRate: appSettings.frameRate
             )
+            logger.info("Stream configuration updated successfully")
         } catch {
             logger.logError(error, context: "Failed to update stream configuration")
         }

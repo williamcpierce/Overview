@@ -2,17 +2,25 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 9/15/24..
+ Created by William Pierce on 9/15/24.
+
+ Manages the main preview interface, coordinating capture state, window visibility,
+ and user interactions across the application's preview functionality.
 */
 
 import SwiftUI
 
 struct PreviewView: View {
+    // MARK: - Environment
     @Environment(\.dismiss) private var dismiss: DismissAction
+
+    // MARK: - Dependencies
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var windowManager: WindowManager
+
+    // MARK: - State
     @State private var isSelectionViewVisible: Bool = true
     @State private var isWindowVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
@@ -117,18 +125,19 @@ struct PreviewView: View {
     private func updatePreviewDimensions(from oldSize: CGSize?, to newSize: CGSize?) {
         guard let size: CGSize = newSize else { return }
         let newRatio: CGFloat = size.width / size.height
-        logger.info("Updating preview ratio: \(newRatio)")
+        logger.debug("Updating preview dimensions: \(Int(size.width))x\(Int(size.height))")
         previewAspectRatio = newRatio
     }
 
     private func updateViewState() {
         if !captureManager.isCapturing && appSettings.closeOnCaptureStop {
+            logger.info("Closing preview window on capture stop")
             dismiss()
         }
 
         isSelectionViewVisible = !captureManager.isCapturing
         updateWindowVisibility()
-        logger.info("View state updated: selection=\(isSelectionViewVisible)")
+        logger.debug("View state updated: selection=\(isSelectionViewVisible)")
     }
 
     private func updateWindowVisibility() {
@@ -150,10 +159,11 @@ struct PreviewView: View {
         isWindowVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
 
         logger.debug(
-            "Window visibility updated for \(captureManager.windowTitle ?? "Untitled"), "
-                + "visible=\(isWindowVisible), "
-                + "hideInactive=\(shouldHideForInactiveApp), "
-                + "hideActive=\(shouldHideForActiveWindow)"
-        )
+            """
+            Window visibility updated: \
+            visible=\(isWindowVisible), \
+            hideInactive=\(shouldHideForInactiveApp), \
+            hideActive=\(shouldHideForActiveWindow)
+            """)
     }
 }
