@@ -37,8 +37,7 @@ struct PreviewView: View {
         self.previewManager = previewManager
         self.windowManager = windowManager
 
-        let initialRatio: CGFloat = appSettings.defaultWindowWidth / appSettings.defaultWindowHeight
-        self._previewAspectRatio = State(initialValue: initialRatio)
+        self._previewAspectRatio = State(initialValue: 0)
     }
 
     var body: some View {
