@@ -3,12 +3,18 @@
  Overview
 
  Created by William Pierce on 12/6/24.
+
+ Handles stream configuration for window capture, including frame rate
+ and filter settings.
 */
 
 import ScreenCaptureKit
 
 final class CaptureConfigurationService {
+    // MARK: - Dependencies
     private let logger = AppLogger.capture
+
+    // MARK: - Configuration Management
 
     func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
         SCStreamConfiguration, SCContentFilter
