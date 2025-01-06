@@ -1,5 +1,5 @@
 /*
- Preview/PreviewAccessor.swift
+ Window/WindowAccessor.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -10,7 +10,7 @@
 
 import SwiftUI
 
-struct PreviewAccessor: NSViewRepresentable {
+struct WindowAccessor: NSViewRepresentable {
     // MARK: - Dependancies
     @Binding var aspectRatio: CGFloat
     @ObservedObject var appSettings: AppSettings

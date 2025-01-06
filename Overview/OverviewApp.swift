@@ -9,6 +9,7 @@
 */
 
 import SwiftUI
+import Cocoa
 
 @main
 struct OverviewApp: App {
@@ -90,5 +91,34 @@ struct OverviewApp: App {
         DispatchQueue.main.async {
             windowService.restoreWindowStates()
         }
+    }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private let windowService: WindowService
+    private let logger = AppLogger.interface
+    
+    init(windowService: WindowService) {
+        self.windowService = windowService
+        super.init()
+        configureTerminationHandler()
+    }
+    
+    private func configureTerminationHandler() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate(_:)),
+            name: NSApplication.willTerminateNotification,
+            object: nil
+        )
+    }
+    
+    @objc func applicationWillTerminate(_ notification: Notification) {
+        windowService.saveWindowStates()
+        logger.info("Application terminating, window states saved")
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

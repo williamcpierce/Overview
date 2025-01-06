@@ -95,7 +95,7 @@ struct PreviewView: View {
     }
 
     private var windowConfigurationLayer: some View {
-        PreviewAccessor(
+        WindowAccessor(
             aspectRatio: $previewAspectRatio,
             appSettings: appSettings,
             captureManager: captureManager,
