@@ -39,14 +39,14 @@ struct PreviewCaptureView: View {
     // MARK: - View Components
 
     private var loadingPlaceholder: some View {
-        Color.black.opacity(appSettings.windowOpacity)
+        Color.black.opacity(appSettings.previewOpacity)
     }
 
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(focusBorderOverlay)
             .overlay(titleOverlay)
-            .opacity(appSettings.windowOpacity)
+            .opacity(appSettings.previewOpacity)
     }
 
     private var focusBorderOverlay: some View {
@@ -59,8 +59,8 @@ struct PreviewCaptureView: View {
 
     private var shouldShowFocusBorder: Bool {
         let shouldShow: Bool =
-            appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-            && !appSettings.hideActiveWindow
+            appSettings.focusBorderEnabled && captureManager.isSourceWindowFocused
+            && !appSettings.previewHideActiveWindow
 
         logger.debug("Focus border visibility: \(shouldShow)")
         return shouldShow
@@ -73,10 +73,10 @@ struct PreviewCaptureView: View {
 
     private var titleOverlay: some View {
         Group {
-            if appSettings.showWindowTitle {
+            if appSettings.sourceTitleEnabled {
                 PreviewTitleView(
-                    backgroundOpacity: appSettings.titleBackgroundOpacity,
-                    fontSize: appSettings.titleFontSize,
+                    backgroundOpacity: appSettings.sourceTitleBackgroundOpacity,
+                    fontSize: appSettings.sourceTitleFontSize,
                     title: captureManager.sourceTitle
                 )
             }

@@ -71,7 +71,7 @@ final class CaptureManager: ObservableObject {
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
-            frameRate: appSettings.frameRate
+            frameRate: appSettings.captureFrameRate
         )
 
         await startFrameProcessing(stream: stream)
@@ -127,7 +127,7 @@ final class CaptureManager: ObservableObject {
             .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
             .store(in: &subscriptions)
 
-        appSettings.$frameRate
+        appSettings.$captureFrameRate
             .dropFirst()
             .sink { [weak self] _ in Task { await self?.synchronizeStreamConfiguration() } }
             .store(in: &subscriptions)
@@ -161,13 +161,13 @@ final class CaptureManager: ObservableObject {
 
     private func synchronizeStreamConfiguration() async {
         guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(appSettings.frameRate)")
+        logger.debug("Updating stream configuration: frameRate=\(appSettings.captureFrameRate)")
 
         do {
             try await captureServices.updateStreamConfiguration(
                 source: source,
                 stream: captureEngine.stream,
-                frameRate: appSettings.frameRate
+                frameRate: appSettings.captureFrameRate
             )
             logger.info("Stream configuration updated successfully")
         } catch {

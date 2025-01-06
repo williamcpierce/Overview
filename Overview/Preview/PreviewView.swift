@@ -58,8 +58,8 @@ struct PreviewView: View {
         .onChange(of: captureManager.isSourceAppFocused, updatePreviewVisibility)
         .onChange(of: captureManager.isSourceWindowFocused, updatePreviewVisibility)
         .onChange(of: sourceManager.isOverviewActive, updatePreviewVisibility)
-        .onChange(of: appSettings.hideInactiveApplications, updatePreviewVisibility)
-        .onChange(of: appSettings.hideActiveWindow, updatePreviewVisibility)
+        .onChange(of: appSettings.previewHideInactiveApplications, updatePreviewVisibility)
+        .onChange(of: appSettings.previewHideActiveWindow, updatePreviewVisibility)
     }
 
     // MARK: - View Components
@@ -91,7 +91,7 @@ struct PreviewView: View {
     }
 
     private var previewBackgroundLayer: some View {
-        Color.black.opacity(isSelectionViewVisible ? appSettings.windowOpacity : 0)
+        Color.black.opacity(isSelectionViewVisible ? appSettings.previewOpacity : 0)
     }
 
     private var windowConfigurationLayer: some View {
@@ -129,7 +129,7 @@ struct PreviewView: View {
     }
 
     private func updateViewState() {
-        if !captureManager.isCapturing && appSettings.closeOnCaptureStop {
+        if !captureManager.isCapturing && appSettings.previewCloseOnCaptureStop {
             logger.info("Closing preview window on capture stop")
             dismiss()
         }
@@ -149,19 +149,19 @@ struct PreviewView: View {
             return
         }
 
-        let shouldHideForInactiveApp =
-            appSettings.hideInactiveApplications && !captureManager.isSourceAppFocused
+        let shouldHideForInactiveApps =
+            appSettings.previewHideInactiveApplications && !captureManager.isSourceAppFocused
 
         let shouldHideForActiveWindow =
-            appSettings.hideActiveWindow && captureManager.isSourceWindowFocused
+            appSettings.previewHideActiveWindow && captureManager.isSourceWindowFocused
 
-        isPreviewVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
+        isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
 
         logger.debug(
             """
             Preview visibility updated: \
             visible=\(isPreviewVisible), \
-            hideInactive=\(shouldHideForInactiveApp), \
+            hideInactive=\(shouldHideForInactiveApps), \
             hideActive=\(shouldHideForActiveWindow)
             """)
     }

@@ -66,8 +66,8 @@ final class SourceManager: ObservableObject {
         let availableSources = try await captureServices.getAvailableSources()
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
-            appFilterNames: appSettings.appFilterNames,
-            isFilterBlocklist: appSettings.isFilterBlocklist
+            appFilterNames: appSettings.filterAppNames,
+            isFilterBlocklist: appSettings.filterBlocklist
         )
 
         logger.info("Retrieved \(filteredSources.count) filtered source window")

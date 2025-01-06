@@ -30,8 +30,8 @@ final class WindowService {
     func createPreviewWindow(at frame: NSRect? = nil) {
         let defaultFrame = NSRect(
             x: 100, y: 100,
-            width: settings.defaultWindowWidth,
-            height: settings.defaultWindowHeight
+            width: settings.previewDefaultWidth,
+            height: settings.previewDefaultHeight
         )
         
         let window = NSWindow(

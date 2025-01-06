@@ -42,7 +42,7 @@ struct WindowAccessor: NSViewRepresentable {
             logger.debug("Window reference unavailable during update")
             return
         }
-        
+
         synchronizeEditModeState(window)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
@@ -62,7 +62,7 @@ struct WindowAccessor: NSViewRepresentable {
 
         logger.debug("Applied default window configuration")
     }
-    
+
     private func synchronizeEditModeState(_ window: NSWindow) {
         let newStyleMask: NSWindow.StyleMask =
             previewManager.editModeEnabled
@@ -87,7 +87,7 @@ struct WindowAccessor: NSViewRepresentable {
 
     private func updateWindowLevel(_ window: NSWindow) {
         let shouldFloat: Bool =
-            previewManager.editModeEnabled && appSettings.enableEditModeAlignment
+            previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         if window.level != newLevel {
@@ -97,7 +97,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateMissionControlBehavior(_ window: NSWindow) {
-        let shouldManage: Bool = appSettings.managedByMissionControl
+        let shouldManage: Bool = appSettings.previewManagedByMissionControl
 
         if shouldManage {
             window.collectionBehavior.insert(.managed)
