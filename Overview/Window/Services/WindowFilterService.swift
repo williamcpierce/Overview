@@ -3,10 +3,14 @@
  Overview
 
  Created by William Pierce on 12/15/24.
+
+ Handles window filtering operations based on system requirements and user preferences.
 */
 
 import ScreenCaptureKit
 
+/// Provides window filtering capabilities based on system requirements,
+/// user-defined filters, and application-specific rules.
 final class WindowFilterService {
     private let logger = AppLogger.windows
     private let systemAppBundleIDs: Set<String> = Set([
@@ -15,21 +19,29 @@ final class WindowFilterService {
         "com.apple.WindowManager",
     ])
 
+    // MARK: - Public Methods
+
     func filterWindows(
-        _ windows: [SCWindow], appFilterNames: [String],
+        _ windows: [SCWindow],
+        appFilterNames: [String],
         isFilterBlocklist: Bool
     ) -> [SCWindow] {
         logger.debug("Starting window filtering: total=\(windows.count)")
+
         let filtered: [SCWindow] = windows.filter { window in
-            meetsBasicRequirements(window) && isNotSystemComponent(window)
+            meetsBasicRequirements(window)
+                && isNotSystemComponent(window)
                 && passesFilter(
                     window, appFilterNames: appFilterNames, isFilterBlocklist: isFilterBlocklist)
         }
+
         logger.debug(
             "Window filtering complete: valid=\(filtered.count), filtered=\(windows.count - filtered.count)"
         )
         return filtered
     }
+
+    // MARK: - Private Methods
 
     private func meetsBasicRequirements(_ window: SCWindow) -> Bool {
         let isValid: Bool =
@@ -70,7 +82,8 @@ final class WindowFilterService {
     }
 
     private func passesFilter(
-        _ window: SCWindow, appFilterNames: [String],
+        _ window: SCWindow,
+        appFilterNames: [String],
         isFilterBlocklist: Bool
     ) -> Bool {
         let isMatchedByFilter: Bool = appFilterNames.contains(

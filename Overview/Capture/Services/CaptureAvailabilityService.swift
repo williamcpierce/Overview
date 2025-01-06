@@ -3,6 +3,8 @@
  Overview
 
  Created by William Pierce on 12/15/24.
+
+ Manages screen recording permissions and window availability checks.
 */
 
 import ScreenCaptureKit
@@ -17,7 +19,7 @@ final class CaptureAvailabilityService {
             try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             logger.info("Screen recording permission granted")
         } catch {
-            logger.error("Screen recording permission denied: \(error.localizedDescription)")
+            logger.logError(error, context: "Screen recording permission denied")
             throw CaptureError.permissionDenied
         }
     }
@@ -32,7 +34,7 @@ final class CaptureAvailabilityService {
             logger.debug("Retrieved \(content.windows.count) available windows")
             return content.windows
         } catch {
-            logger.error("Failed to get windows: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to get windows")
             throw error
         }
     }

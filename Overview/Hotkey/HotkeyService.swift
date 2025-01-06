@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 12/8/24
+
+ Manages system-level hotkey registration and event processing,
+ providing a centralized service for keyboard shortcut handling.
 */
 
 import Carbon
@@ -10,39 +13,39 @@ import Cocoa
 import SwiftUI
 
 final class HotkeyService {
-    private let logger = AppLogger.hotkeys
-    static let shared: HotkeyService = HotkeyService()
-    /// Maximum concurrent hotkey registrations to prevent resource exhaustion
+    // MARK: - Constants
     private static let registrationLimit: Int = 50
-    /// O(1) hotkey event routing by ID
+    static let shared: HotkeyService = HotkeyService()
+
+    // MARK: - Properties
+    private let logger = AppLogger.hotkeys
     private var activeHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
-    /// Thread-safe event processing queue with debounce support
-    private let processingQueue = DispatchQueue(
-        label: "com.Overview.HotkeyEventQueue")
     private var previousEvent: HotkeyEventProcessor?
-    /// Registered callbacks mapped by object identity to prevent retain cycles
     private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
+    private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
 
     deinit {
         cleanupResources()
     }
 
+    // MARK: - Public Interface
+
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks[identifier] = callback
-        logger.debug("Registered callback: \(identifier)")
+        logger.debug("Registered callback handler: \(identifier)")
     }
 
     func removeCallback(for owner: AnyObject) {
         let identifier = ObjectIdentifier(owner)
         windowFocusCallbacks.removeValue(forKey: identifier)
-        logger.debug("Removed callback: \(identifier)")
+        logger.debug("Removed callback handler: \(identifier)")
     }
 
     func registerHotkeys(_ bindings: [HotkeyBinding]) throws {
-        logger.info("Registering \(bindings.count) bindings")
+        logger.info("Processing hotkey registration: count=\(bindings.count)")
 
         guard bindings.count <= Self.registrationLimit else {
             throw HotkeyError.systemLimitReached
@@ -53,11 +56,9 @@ final class HotkeyService {
         for binding in bindings {
             do {
                 try registerSingleHotkey(binding)
-                logger.debug("Registered: '\(binding.windowTitle)'")
+                logger.debug("Registered hotkey: '\(binding.windowTitle)'")
             } catch {
-                logger.logError(
-                    error,
-                    context: "Registration failed: '\(binding.windowTitle)'")
+                logger.logError(error, context: "Registration failed: '\(binding.windowTitle)'")
                 throw error
             }
         }
@@ -102,6 +103,8 @@ final class HotkeyService {
         self.eventHandlerIdentifier = handlerRef
     }
 
+    // MARK: - Event Processing
+
     private func processHotkeyEvent(_ event: EventRef?) -> OSStatus {
         guard let event: EventRef = event else { return OSStatus(eventNotHandledErr) }
 
@@ -124,14 +127,14 @@ final class HotkeyService {
                 guard let self = self else { return }
 
                 guard currentEvent.shouldProcess(after: self.previousEvent) else {
-                    logger.debug("Debounced: \(hotkeyID.id)")
+                    logger.debug("Debounced event: \(hotkeyID.id)")
                     return
                 }
 
                 self.previousEvent = currentEvent
 
                 if let (_, binding) = self.activeHotkeys[hotkeyID.id] {
-                    logger.debug("Processing: '\(binding.windowTitle)'")
+                    logger.debug("Processing event: '\(binding.windowTitle)'")
 
                     DispatchQueue.main.async { [weak self] in
                         self?.windowFocusCallbacks.values.forEach { $0(binding.windowTitle) }
@@ -145,6 +148,8 @@ final class HotkeyService {
         logger.warning("Event processing failed: \(result)")
         return OSStatus(eventNotHandledErr)
     }
+
+    // MARK: - Registration Management
 
     private func registerSingleHotkey(_ binding: HotkeyBinding) throws {
         let modifiers: NSEvent.ModifierFlags = binding.modifiers.intersection([
@@ -170,7 +175,7 @@ final class HotkeyService {
         if status == noErr, let hotkeyRef = hotkeyRef {
             activeHotkeys[nextIdentifier] = (hotkeyRef, binding)
             nextIdentifier += 1
-            logger.debug("Registration successful: \(binding.hotkeyDisplayString)")
+            logger.debug("Registration completed: \(binding.hotkeyDisplayString)")
         } else {
             throw HotkeyError.registrationFailed(status)
         }
@@ -185,13 +190,15 @@ final class HotkeyService {
     }
 
     private func cleanupResources() {
-        logger.debug("Cleaning up resources")
+        logger.debug("Cleaning up service resources")
         unregisterExistingHotkeys()
         if let handler: EventHandlerRef = eventHandlerIdentifier {
             RemoveEventHandler(handler)
         }
     }
 }
+
+// MARK: - Support Types
 
 struct HotkeyEventProcessor {
     let id: UInt32

@@ -7,18 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C828A3FE2D0A94450023E7F1 /* LOGGING.md in Resources */ = {isa = PBXBuildFile; fileRef = C828A3FD2D0A94450023E7F1 /* LOGGING.md */; };
+		C87161602D2A18D20098E42C /* STYLE.md in Resources */ = {isa = PBXBuildFile; fileRef = C871615F2D2A18D20098E42C /* STYLE.md */; };
 		C876958A2CBA082F00FBCA6C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C87695892CBA082F00FBCA6C /* Assets.xcassets */; };
 		C876958D2CBA082F00FBCA6C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */; };
 		C876959F2CBA087400FBCA6C /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695982CBA087400FBCA6C /* LICENSE.md */; };
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
 		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
 		C8A838372D0410CF002EC00B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838332D0410CF002EC00B /* ContentView.swift */; };
-		C8FF23E32D12A2FE00DEE36A /* DOCUMENTATION.md in Resources */ = {isa = PBXBuildFile; fileRef = C8FF23E22D12A2FE00DEE36A /* DOCUMENTATION.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C828A3FD2D0A94450023E7F1 /* LOGGING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LOGGING.md; sourceTree = "<group>"; };
+		C871615F2D2A18D20098E42C /* STYLE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = STYLE.md; sourceTree = "<group>"; };
 		C87695822CBA082D00FBCA6C /* Overview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Overview.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C87695892CBA082F00FBCA6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -27,7 +26,6 @@
 		C87695A42CBA1B5800FBCA6C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C8A838332D0410CF002EC00B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
-		C8FF23E22D12A2FE00DEE36A /* DOCUMENTATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DOCUMENTATION.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -123,8 +121,7 @@
 				C87695832CBA082D00FBCA6C /* Products */,
 				C87695982CBA087400FBCA6C /* LICENSE.md */,
 				C87695A42CBA1B5800FBCA6C /* README.md */,
-				C828A3FD2D0A94450023E7F1 /* LOGGING.md */,
-				C8FF23E22D12A2FE00DEE36A /* DOCUMENTATION.md */,
+				C871615F2D2A18D20098E42C /* STYLE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -222,8 +219,7 @@
 			files = (
 				C876958D2CBA082F00FBCA6C /* Preview Assets.xcassets in Resources */,
 				C876959F2CBA087400FBCA6C /* LICENSE.md in Resources */,
-				C828A3FE2D0A94450023E7F1 /* LOGGING.md in Resources */,
-				C8FF23E32D12A2FE00DEE36A /* DOCUMENTATION.md in Resources */,
+				C87161602D2A18D20098E42C /* STYLE.md in Resources */,
 				C87695A52CBA1B5800FBCA6C /* README.md in Resources */,
 				C876958A2CBA082F00FBCA6C /* Assets.xcassets in Resources */,
 			);
@@ -383,7 +379,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.5.0-alpha";
+				MARKETING_VERSION = "0.5.1-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -412,7 +408,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "0.5.0-alpha";
+				MARKETING_VERSION = "0.5.1-alpha";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

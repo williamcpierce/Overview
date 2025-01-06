@@ -8,10 +8,18 @@
 import ScreenCaptureKit
 import SwiftUI
 
+/// Manages the interface for creating new hotkey bindings, including window selection
+/// and hotkey recording with validation
 struct HotkeyBindingSheet: View {
+    // MARK: - Environment
     @Environment(\.dismiss) private var dismiss
+
+    // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
+    private let logger = AppLogger.hotkeys
+
+    // MARK: - View State
     @State private var filteredWindows: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
     @State private var selectedWindow: SCWindow?
@@ -35,6 +43,8 @@ struct HotkeyBindingSheet: View {
             loadFilteredWindows()
         }
     }
+
+    // MARK: - View Components
 
     private var headerView: some View {
         Text("Add Hotkey")
@@ -92,10 +102,16 @@ struct HotkeyBindingSheet: View {
         .padding(.top)
     }
 
+    // MARK: - Private Methods
+
     private func loadFilteredWindows() {
         Task {
-            filteredWindows = try await windowManager.getFilteredWindows()
-            AppLogger.windows.info("Retrieved \(filteredWindows.count) windows for binding")
+            do {
+                filteredWindows = try await windowManager.getFilteredWindows()
+                logger.info("Retrieved \(filteredWindows.count) windows for binding selection")
+            } catch {
+                logger.logError(error, context: "Failed to load windows for binding")
+            }
         }
     }
 
@@ -109,6 +125,10 @@ struct HotkeyBindingSheet: View {
 
         let hasDuplicateTitles: Bool = filteredWindows.filter { $0.title == title }.count > 1
         validationError = hasDuplicateTitles ? "Warning: Multiple windows have this title" : ""
+
+        if hasDuplicateTitles {
+            logger.warning("Duplicate window titles detected for '\(title)'")
+        }
     }
 
     private func validateShortcutConfiguration() {
@@ -119,11 +139,13 @@ struct HotkeyBindingSheet: View {
 
         if hasConflictingShortcut(shortcut) {
             validationError = "This shortcut is already in use"
+            logger.warning("Conflicting shortcut detected: \(shortcut.hotkeyDisplayString)")
             return
         }
 
         if shortcut.modifiers.isEmpty {
             validationError = "Shortcut must include at least one modifier key"
+            logger.warning("Invalid shortcut: no modifier keys specified")
             return
         }
 
@@ -148,6 +170,9 @@ struct HotkeyBindingSheet: View {
     private func saveHotkeyBinding() {
         if let shortcut: HotkeyBinding = currentShortcut {
             appSettings.hotkeyBindings.append(shortcut)
+            logger.info(
+                "Added new hotkey binding: '\(shortcut.windowTitle)' - \(shortcut.hotkeyDisplayString)"
+            )
             dismiss()
         }
     }

@@ -3,17 +3,27 @@
  Overview
 
  Created by William Pierce on 10/13/24.
+
+ Provides the main settings interface for the application, organizing configuration
+ options into logical tab groups for general settings, window behavior, performance,
+ hotkeys, and filtering options.
 */
 
 import SwiftUI
 
+/// Primary settings view containing all application configuration options organized into tabs
 struct SettingsView: View {
+    // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var windowManager: WindowManager
+    private let logger = AppLogger.settings
+
+    // MARK: - View State
     @State private var isAddingHotkey: Bool = false
     @State private var showingResetAlert: Bool = false
     @State private var newAppFilterName: String = ""
-    private let logger = AppLogger.settings
+
+    // MARK: - View Structure
 
     var body: some View {
         TabView {
@@ -26,6 +36,8 @@ struct SettingsView: View {
         .frame(width: 360)
         .background(.ultraThickMaterial)
     }
+
+    // MARK: - Tab Views
 
     private var generalTab: some View {
         Form {
@@ -81,14 +93,14 @@ struct SettingsView: View {
         .frame(height: 430)
     }
 
-    // MARK: - General Tab Components
+    // MARK: - General Settings Components
 
     private var focusBorderConfiguration: some View {
         Section {
             sectionHeader("Border Overlay")
             Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
                 .onChange(of: appSettings.showFocusedBorder) { _, newValue in
-                    logger.info("Window border visibility changed: \(newValue)")
+                    logger.info("Window border visibility set to \(newValue)")
                 }
 
             if appSettings.showFocusedBorder {
@@ -114,56 +126,47 @@ struct SettingsView: View {
             sectionHeader("Title Overlay")
             Toggle("Show window title", isOn: $appSettings.showWindowTitle)
                 .onChange(of: appSettings.showWindowTitle) { _, newValue in
-                    logger.info("Window title visibility changed: \(newValue)")
+                    logger.info("Title overlay visibility set to \(newValue)")
                 }
 
             if appSettings.showWindowTitle {
-                HStack {
-                    Text("Font size")
-                    Spacer()
-                    TextField(
-                        "", value: $appSettings.titleFontSize,
-                        formatter: NumberFormatter()
-                    )
-                    .frame(width: 60)
-                    .textFieldStyle(.roundedBorder)
-                    Text("pt")
-                        .foregroundColor(.secondary)
-                }
-
-                VStack {
-                    HStack {
-                        Text("Background opacity")
-                        Spacer()
-                    }
-                    HStack(spacing: 8) {
-                        OpacitySlider(value: $appSettings.titleBackgroundOpacity)
-                        Text("\(Int(appSettings.titleBackgroundOpacity * 100))%")
-                            .foregroundColor(.secondary)
-                            .frame(width: 40)
-                    }
-                }
+                titleFontConfiguration
+                titleOpacityConfiguration
             }
         }
     }
 
-    private var resetSettingsButton: some View {
-        Button("Reset All Settings") {
-            showingResetAlert = true
+    private var titleFontConfiguration: some View {
+        HStack {
+            Text("Font size")
+            Spacer()
+            TextField(
+                "", value: $appSettings.titleFontSize,
+                formatter: NumberFormatter()
+            )
+            .frame(width: 60)
+            .textFieldStyle(.roundedBorder)
+            Text("pt")
+                .foregroundColor(.secondary)
         }
-        .padding(.bottom, 10)
     }
 
-    private var resetSettingsAlert: some View {
-        Group {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                appSettings.resetToDefaults()
+    private var titleOpacityConfiguration: some View {
+        VStack {
+            HStack {
+                Text("Background opacity")
+                Spacer()
+            }
+            HStack(spacing: 8) {
+                OpacitySlider(value: $appSettings.titleBackgroundOpacity)
+                Text("\(Int(appSettings.titleBackgroundOpacity * 100))%")
+                    .foregroundColor(.secondary)
+                    .frame(width: 40)
             }
         }
     }
 
-    // MARK: - Window Tab Components
+    // MARK: - Window Settings Components
 
     private var windowOpacityConfiguration: some View {
         Section {
@@ -197,7 +200,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Performance Tab Components
+    // MARK: - Performance Settings Components
 
     private var frameRateConfiguration: some View {
         Section {
@@ -209,7 +212,7 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .onChange(of: appSettings.frameRate) { _, newValue in
-                logger.info("Frame rate changed: \(Int(newValue)) FPS")
+                logger.info("Frame rate updated to \(Int(newValue)) FPS")
             }
             Text("Higher frame rates provide smoother previews but use more system resources.")
                 .font(.caption)
@@ -217,7 +220,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Hotkey Tab Components
+    // MARK: - Hotkey Settings Components
 
     private var hotkeyConfiguration: some View {
         Section {
@@ -256,7 +259,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Filter Tab Components
+    // MARK: - Filter Settings Components
 
     private var filterConfiguration: some View {
         Section {
@@ -288,7 +291,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Helper Views
+    // MARK: - Common Components
 
     private func sectionHeader(_ text: String) -> some View {
         Text(text)
@@ -305,24 +308,44 @@ struct SettingsView: View {
                 .textFieldStyle(.roundedBorder)
                 .onChange(of: binding.wrappedValue) { _, newValue in
                     logger.info(
-                        "Default window \(label.lowercased()) changed: \(newValue)px")
+                        "Default window \(label.lowercased()) updated to \(Int(newValue))px")
                 }
             Text("px")
                 .foregroundColor(.secondary)
         }
     }
 
+    // MARK: - Settings Controls
+
+    private var resetSettingsButton: some View {
+        Button("Reset All Settings") {
+            logger.debug("Settings reset requested")
+            showingResetAlert = true
+        }
+        .padding(.bottom, 10)
+    }
+
+    private var resetSettingsAlert: some View {
+        Group {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                logger.info("Performing settings reset")
+                appSettings.resetToDefaults()
+            }
+        }
+    }
+
     private var missionControlToggle: some View {
         Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
             .onChange(of: appSettings.managedByMissionControl) { _, newValue in
-                logger.info("Mission Control integration changed: \(newValue)")
+                logger.info("Mission Control integration set to \(newValue)")
             }
     }
 
     private var closeOnCaptureStop: some View {
         Toggle("Close preview with source window", isOn: $appSettings.closeOnCaptureStop)
             .onChange(of: appSettings.closeOnCaptureStop) { _, newValue in
-                logger.info("Close on capture stop changed: \(newValue)")
+                logger.info("Close on capture stop set to \(newValue)")
             }
     }
 
@@ -331,20 +354,21 @@ struct SettingsView: View {
             "Hide previews for inactive applications", isOn: $appSettings.hideInactiveApplications
         )
         .onChange(of: appSettings.hideInactiveApplications) { _, newValue in
-            logger.info("Hide inactive applications changed: \(newValue)")
+            logger.info("Hide inactive applications set to \(newValue)")
         }
     }
 
     private var hideActiveWindowToggle: some View {
         Toggle("Hide preview for active window", isOn: $appSettings.hideActiveWindow)
             .onChange(of: appSettings.hideActiveWindow) { _, newValue in
-                logger.info("Hide active windows changed: \(newValue)")
+                logger.info("Hide active window set to \(newValue)")
             }
     }
+
     private var editModeAlignmentToggle: some View {
         Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
             .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in
-                logger.info("Edit mode alignment changed: \(newValue)")
+                logger.info("Edit mode alignment set to \(newValue)")
             }
     }
 
@@ -361,16 +385,6 @@ struct SettingsView: View {
             logger.debug("Opening hotkey binding sheet")
             isAddingHotkey = true
         }
-    }
-
-    private func removeHotkeyButton(_ binding: HotkeyBinding) -> some View {
-        Button(action: {
-            removeHotkeyBinding(binding)
-        }) {
-            Image(systemName: "xmark.circle.fill")
-                .foregroundColor(.secondary)
-        }
-        .buttonStyle(.plain)
     }
 
     private var appFilterMode: some View {
@@ -391,6 +405,18 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Helper Buttons
+
+    private func removeHotkeyButton(_ binding: HotkeyBinding) -> some View {
+        Button(action: {
+            removeHotkeyBinding(binding)
+        }) {
+            Image(systemName: "xmark.circle.fill")
+                .foregroundColor(.secondary)
+        }
+        .buttonStyle(.plain)
+    }
+
     private func removeAppButton(_ appName: String) -> some View {
         Button(action: {
             removeAppFilterName(appName)
@@ -406,12 +432,13 @@ struct SettingsView: View {
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index: Int = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
-            logger.info("Hotkey binding removed: '\(binding.windowTitle)'")
+            logger.info("Removed hotkey binding for '\(binding.windowTitle)'")
         }
     }
 
     private func addAppFilterName() {
         guard !newAppFilterName.isEmpty else { return }
+        logger.info("Adding app filter: '\(newAppFilterName)'")
         appSettings.appFilterNames.append(newAppFilterName)
         newAppFilterName = ""
     }
@@ -419,11 +446,12 @@ struct SettingsView: View {
     private func removeAppFilterName(_ appName: String) {
         if let index: Int = appSettings.appFilterNames.firstIndex(of: appName) {
             appSettings.appFilterNames.remove(at: index)
-            logger.info("App filter removed: '\(appName)'")
+            logger.info("Removed app filter: '\(appName)'")
         }
     }
 }
 
+/// Custom slider control for opacity settings
 struct OpacitySlider: NSViewRepresentable {
     @Binding var value: Double
 

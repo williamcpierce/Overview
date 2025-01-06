@@ -3,11 +3,17 @@
  Overview
 
  Created by William Pierce on 9/15/24.
+ 
+ Provides the window selection interface allowing users to choose
+ which window to capture and preview.
 */
 
 import ScreenCaptureKit
 import SwiftUI
 
+/// Presents a dropdown interface for selecting windows to capture,
+/// organizing available windows by application and providing refresh
+/// capabilities.
 struct PreviewSelectionView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
@@ -120,17 +126,17 @@ struct PreviewSelectionView: View {
 
     private func refreshWindowList() {
         Task {
-            logger.debug("Refreshing available windows")
+            logger.debug("Initiating window list refresh")
             await previewManager.updateAvailableWindows()
             await MainActor.run {
-                logger.info("Window list updated: \(previewManager.availableWindows.count) windows")
+                logger.info("Window list updated with \(previewManager.availableWindows.count) windows")
             }
         }
     }
 
     private func handleWindowSelection(_ old: SCWindow?, _ new: SCWindow?) {
         if let window: SCWindow = new {
-            logger.info("Selected window: '\(window.title ?? "Untitled")'")
+            logger.info("Window selected: '\(window.title ?? "Untitled")'")
         }
     }
 }

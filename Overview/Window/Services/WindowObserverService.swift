@@ -3,12 +3,19 @@
  Overview
 
  Created by William Pierce on 12/15/24.
+
+ Provides window state observation and notification management.
 */
 
 import ScreenCaptureKit
 
+/// Manages window state observation and notification distribution for
+/// window focus and title changes.
 final class WindowObserverService {
     private let logger = AppLogger.windows
+
+    // MARK: - Private State
+    
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]
@@ -18,6 +25,8 @@ final class WindowObserverService {
     deinit {
         stopObserving()
     }
+
+    // MARK: - Public Methods
 
     func addObserver(
         id: UUID,
@@ -43,6 +52,8 @@ final class WindowObserverService {
             stopObserving()
         }
     }
+
+    // MARK: - Private Methods
 
     private func startObserving() {
         logger.info("Starting window state observation")

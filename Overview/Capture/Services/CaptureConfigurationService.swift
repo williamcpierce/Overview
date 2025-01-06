@@ -3,6 +3,9 @@
  Overview
 
  Created by William Pierce on 12/6/24.
+
+ Handles stream configuration for window capture, including frame rate
+ and filter settings.
 */
 
 import ScreenCaptureKit
@@ -47,7 +50,7 @@ final class CaptureConfigurationService {
             try await stream.updateContentFilter(filter)
             logger.info("Stream configuration updated successfully")
         } catch {
-            logger.error("Failed to update stream: \(error.localizedDescription)")
+            logger.logError(error, context: "Failed to update stream")
             throw error
         }
     }

@@ -3,10 +3,15 @@
  Overview
 
  Created by William Pierce on 10/13/24.
+
+ Renders the captured window content with configurable overlays for
+ focus borders and window titles.
 */
 
 import SwiftUI
 
+/// Displays captured window content with configurable visual overlays
+/// including focus borders and window titles.
 struct PreviewCaptureView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
@@ -18,6 +23,7 @@ struct PreviewCaptureView: View {
     ) {
         self.appSettings = appSettings
         self.captureManager = captureManager
+        logger.debug("Initializing preview capture view")
     }
 
     var body: some View {
@@ -52,8 +58,12 @@ struct PreviewCaptureView: View {
     }
 
     private var shouldShowFocusBorder: Bool {
-        appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
+        let shouldShow: Bool =
+            appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
             && !appSettings.hideActiveWindow
+
+        logger.debug("Focus border visibility: \(shouldShow)")
+        return shouldShow
     }
 
     private var focusBorder: some View {

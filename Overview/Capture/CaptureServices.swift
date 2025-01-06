@@ -3,20 +3,28 @@
  Overview
 
  Created by William Pierce on 12/27/24.
+
+ A centralized service that coordinates capture-related operations,
+ including permission management and stream configuration.
 */
 
 import ScreenCaptureKit
 
 @MainActor
 final class CaptureServices {
-    private let logger = AppLogger.capture
+    // MARK: - Dependencies
     private let configService = CaptureConfigurationService()
     private let availabilityService = CaptureAvailabilityService()
+    private let logger = AppLogger.capture
+
+    // MARK: - Constants
     static let shared = CaptureServices()
 
     private init() {
         logger.debug("Initializing capture services")
     }
+
+    // MARK: - Public Interface
 
     func requestScreenRecordingPermission() async throws {
         try await availabilityService.requestPermission()
@@ -45,6 +53,7 @@ final class CaptureServices {
     }
 }
 
+// CaptureError.swift extension
 enum CaptureError: LocalizedError {
     case noWindowSelected
     case permissionDenied
