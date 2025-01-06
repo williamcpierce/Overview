@@ -15,7 +15,7 @@ import SwiftUI
 struct SettingsView: View {
     // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
-    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     // MARK: - View State
@@ -231,7 +231,7 @@ struct SettingsView: View {
         .sheet(isPresented: $isAddingHotkey) {
             HotkeyBindingSheet(
                 appSettings: appSettings,
-                windowManager: windowManager
+                sourceManager: sourceManager
             )
         }
     }
@@ -242,7 +242,7 @@ struct SettingsView: View {
                 Text("No hotkeys configured")
                     .foregroundColor(.secondary)
             } else {
-                ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
+                ForEach(appSettings.hotkeyBindings, id: \.sourceTitle) { binding in
                     hotkeyRow(binding)
                 }
             }
@@ -251,7 +251,7 @@ struct SettingsView: View {
 
     private func hotkeyRow(_ binding: HotkeyBinding) -> some View {
         HStack {
-            Text(binding.windowTitle)
+            Text(binding.sourceTitle)
             Spacer()
             Text(binding.hotkeyDisplayString)
                 .foregroundColor(.secondary)
@@ -432,7 +432,7 @@ struct SettingsView: View {
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index: Int = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
-            logger.info("Removed hotkey binding for '\(binding.windowTitle)'")
+            logger.info("Removed hotkey binding for '\(binding.sourceTitle)'")
         }
     }
 

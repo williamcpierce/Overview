@@ -4,14 +4,14 @@
 
  Created by William Pierce on 10/13/24.
 
- Renders the captured window content with configurable overlays for
+ Renders the captured source window content with configurable overlays for
  focus borders and window titles.
 */
 
 import SwiftUI
 
-/// Displays captured window content with configurable visual overlays
-/// including focus borders and window titles.
+/// Displays captured source window content with configurable visual overlays
+/// including focus borders and source window titles.
 struct PreviewCaptureView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
@@ -77,7 +77,7 @@ struct PreviewCaptureView: View {
                 PreviewTitleView(
                     backgroundOpacity: appSettings.titleBackgroundOpacity,
                     fontSize: appSettings.titleFontSize,
-                    title: captureManager.windowTitle
+                    title: captureManager.sourceTitle
                 )
             }
         }

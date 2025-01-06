@@ -15,7 +15,7 @@ struct OverviewApp: App {
     // MARK: - Core Services
     
     @StateObject private var appSettings: AppSettings
-    @StateObject private var windowManager: WindowManager
+    @StateObject private var sourceManager: SourceManager
     @StateObject private var previewManager: PreviewManager
     @StateObject private var hotkeyManager: HotkeyManager
     
@@ -28,14 +28,14 @@ struct OverviewApp: App {
         
         // Initialize core services
         let settings = AppSettings()
-        let window = WindowManager(appSettings: settings)
-        let preview = PreviewManager(windowManager: window)
-        let hotkey = HotkeyManager(appSettings: settings, windowManager: window)
-        let windowService = WindowService(settings: settings, preview: preview, window: window)
+        let source = SourceManager(appSettings: settings)
+        let preview = PreviewManager(sourceManager: source)
+        let hotkey = HotkeyManager(appSettings: settings, sourceManager: source)
+        let windowService = WindowService(settings: settings, preview: preview, source: source)
         
         // Create StateObjects
         self._appSettings = StateObject(wrappedValue: settings)
-        self._windowManager = StateObject(wrappedValue: window)
+        self._sourceManager = StateObject(wrappedValue: source)
         self._previewManager = StateObject(wrappedValue: preview)
         self._hotkeyManager = StateObject(wrappedValue: hotkey)
         self.windowService = windowService
@@ -80,7 +80,7 @@ struct OverviewApp: App {
         Settings {
             SettingsView(
                 appSettings: appSettings,
-                windowManager: windowManager
+                sourceManager: sourceManager
             )
         }
     }

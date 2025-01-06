@@ -16,7 +16,7 @@ struct PreviewAccessor: NSViewRepresentable {
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
-    private let logger = AppLogger.windows
+    private let logger = AppLogger.interface
 
     // MARK: - Constants
     private let resizeThrottleInterval: TimeInterval = 0.1

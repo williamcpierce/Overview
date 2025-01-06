@@ -18,24 +18,24 @@ struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
     // MARK: - State
     @State private var isSelectionViewVisible: Bool = true
-    @State private var isWindowVisible: Bool = true
+    @State private var isPreviewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
 
     init(
         appSettings: AppSettings,
         captureManager: CaptureManager,
         previewManager: PreviewManager,
-        windowManager: WindowManager
+        sourceManager: SourceManager
     ) {
         self.appSettings = appSettings
         self.captureManager = captureManager
         self.previewManager = previewManager
-        self.windowManager = windowManager
+        self.sourceManager = sourceManager
 
         self._previewAspectRatio = State(initialValue: 0)
     }
@@ -48,18 +48,18 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
-                .opacity(isWindowVisible ? 1 : 0)
+                .opacity(isPreviewVisible ? 1 : 0)
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
-        .onChange(of: previewManager.editModeEnabled, updateWindowVisibility)
-        .onChange(of: captureManager.isSourceAppFocused, updateWindowVisibility)
-        .onChange(of: captureManager.isSourceWindowFocused, updateWindowVisibility)
-        .onChange(of: windowManager.isOverviewActive, updateWindowVisibility)
-        .onChange(of: appSettings.hideInactiveApplications, updateWindowVisibility)
-        .onChange(of: appSettings.hideActiveWindow, updateWindowVisibility)
+        .onChange(of: previewManager.editModeEnabled, updatePreviewVisibility)
+        .onChange(of: captureManager.isSourceAppFocused, updatePreviewVisibility)
+        .onChange(of: captureManager.isSourceWindowFocused, updatePreviewVisibility)
+        .onChange(of: sourceManager.isOverviewActive, updatePreviewVisibility)
+        .onChange(of: appSettings.hideInactiveApplications, updatePreviewVisibility)
+        .onChange(of: appSettings.hideActiveWindow, updatePreviewVisibility)
     }
 
     // MARK: - View Components
@@ -86,7 +86,7 @@ struct PreviewView: View {
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
-            onSourceWindowFocus: { captureManager.focusWindow() }
+            onSourceWindowFocus: { captureManager.focusSource() }
         )
     }
 
@@ -135,17 +135,17 @@ struct PreviewView: View {
         }
 
         isSelectionViewVisible = !captureManager.isCapturing
-        updateWindowVisibility()
+        updatePreviewVisibility()
         logger.debug("View state updated: selection=\(isSelectionViewVisible)")
     }
 
-    private func updateWindowVisibility() {
+    private func updatePreviewVisibility() {
         let alwaysShown =
             isSelectionViewVisible || previewManager.editModeEnabled
-            || windowManager.isOverviewActive
+            || sourceManager.isOverviewActive
 
         if alwaysShown {
-            isWindowVisible = true
+            isPreviewVisible = true
             return
         }
 
@@ -155,12 +155,12 @@ struct PreviewView: View {
         let shouldHideForActiveWindow =
             appSettings.hideActiveWindow && captureManager.isSourceWindowFocused
 
-        isWindowVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
+        isPreviewVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
 
         logger.debug(
             """
-            Window visibility updated: \
-            visible=\(isWindowVisible), \
+            Preview visibility updated: \
+            visible=\(isPreviewVisible), \
             hideInactive=\(shouldHideForInactiveApp), \
             hideActive=\(shouldHideForActiveWindow)
             """)

@@ -4,8 +4,8 @@
 
  Created by William Pierce on 12/9/24.
 
- Coordinates hotkey registration and window management, handling
- keyboard shortcut events and window focus operations.
+ Coordinates hotkey registration and source window management, handling
+ keyboard shortcut events and source window focus operations.
 */
 
 import SwiftUI
@@ -15,14 +15,14 @@ final class HotkeyManager: ObservableObject {
     // MARK: - Dependencies
 
     @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var sourceManager: SourceManager
     let hotkeyService: HotkeyService = HotkeyService.shared
     private let logger = AppLogger.hotkeys
 
-    init(appSettings: AppSettings, windowManager: WindowManager) {
+    init(appSettings: AppSettings, sourceManager: SourceManager) {
         logger.debug("Initializing HotkeyManager")
         self.appSettings = appSettings
-        self.windowManager = windowManager
+        self.sourceManager = sourceManager
 
         do {
             try hotkeyService.initializeEventHandler()
@@ -42,24 +42,24 @@ final class HotkeyManager: ObservableObject {
     // MARK: - Event Configuration
 
     private func configureHotkeyEventHandling() {
-        hotkeyService.registerCallback(owner: self) { [weak self] windowTitle in
+        hotkeyService.registerCallback(owner: self) { [weak self] sourceTitle in
             Task { @MainActor in
-                self?.activateWindowWithTitle(windowTitle)
+                self?.activateSourceWithTitle(sourceTitle)
             }
         }
     }
 
-    // MARK: - Window Activation
+    // MARK: - Source Window Activation
 
-    private func activateWindowWithTitle(_ windowTitle: String) {
-        logger.debug("Processing window activation: '\(windowTitle)'")
+    private func activateSourceWithTitle(_ sourceTitle: String) {
+        logger.debug("Processing source window activation: '\(sourceTitle)'")
 
-        let activationSucceeded: Bool = windowManager.focusWindow(withTitle: windowTitle)
+        let activationSucceeded: Bool = sourceManager.focusSource(withTitle: sourceTitle)
 
         if activationSucceeded {
-            logger.info("Window focus successful: '\(windowTitle)'")
+            logger.info("Source window focus successful: '\(sourceTitle)'")
         } else {
-            logger.warning("Window focus failed: '\(windowTitle)'")
+            logger.warning("Source window focus failed: '\(sourceTitle)'")
         }
     }
 }

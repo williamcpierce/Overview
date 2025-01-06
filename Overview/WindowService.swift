@@ -14,14 +14,14 @@ final class WindowService {
     
     private let settings: AppSettings
     private let previewManager: PreviewManager
-    private let windowManager: WindowManager
+    private let sourceManager: SourceManager
     private let stateManager: WindowStateManager
     private let logger = AppLogger.interface
     
-    init(settings: AppSettings, preview: PreviewManager, window: WindowManager) {
+    init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
         self.settings = settings
         self.previewManager = preview
-        self.windowManager = window
+        self.sourceManager = source
         self.stateManager = WindowStateManager()
     }
     
@@ -84,7 +84,7 @@ final class WindowService {
         let contentView = ContentView(
             appSettings: settings,
             previewManager: previewManager,
-            windowManager: windowManager
+            sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
     }

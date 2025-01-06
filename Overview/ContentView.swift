@@ -13,18 +13,18 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var previewManager: PreviewManager
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var sourceManager: SourceManager
     @StateObject private var captureManager: CaptureManager
 
-    init(appSettings: AppSettings, previewManager: PreviewManager, windowManager: WindowManager) {
+    init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
         self.appSettings = appSettings
         self.previewManager = previewManager
-        self.windowManager = windowManager
+        self.sourceManager = sourceManager
 
         self._captureManager = StateObject(
             wrappedValue: CaptureManager(
                 appSettings: appSettings,
-                windowManager: windowManager
+                sourceManager: sourceManager
             )
         )
     }
@@ -33,7 +33,7 @@ struct ContentView: View {
             appSettings: appSettings,
             captureManager: captureManager,
             previewManager: previewManager,
-            windowManager: windowManager
+            sourceManager: sourceManager
         )
     }
 }

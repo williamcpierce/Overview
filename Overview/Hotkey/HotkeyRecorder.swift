@@ -11,7 +11,7 @@ import SwiftUI
 /// and keyboard event monitoring with proper security constraints
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
-    let windowTitle: String
+    let sourceTitle: String
 
     func makeNSView(context: Context) -> NSButton {
         let recordingButton = NSButton(frame: .zero)
@@ -44,12 +44,12 @@ struct HotkeyRecorder: NSViewRepresentable {
         init(_ parent: HotkeyRecorder) {
             self.parent = parent
             super.init()
-            logger.debug("Initializing recorder for window: '\(parent.windowTitle)'")
+            logger.debug("Initializing recorder for source window: '\(parent.sourceTitle)'")
         }
 
         deinit {
             endRecordingSession()
-            logger.debug("Cleaning up recorder for window: '\(parent.windowTitle)'")
+            logger.debug("Cleaning up recorder for source window: '\(parent.sourceTitle)'")
         }
 
         // MARK: - Event Handling
@@ -80,7 +80,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             if keyboardMonitor == nil {
                 logger.error("Failed to create keyboard event monitor")
             } else {
-                logger.debug("Started recording session for '\(parent.windowTitle)'")
+                logger.debug("Started recording session for '\(parent.sourceTitle)'")
             }
         }
 
@@ -124,7 +124,7 @@ struct HotkeyRecorder: NSViewRepresentable {
 
         private func createHotkeyBinding(from event: NSEvent) {
             parent.shortcut = HotkeyBinding(
-                windowTitle: parent.windowTitle,
+                sourceTitle: parent.sourceTitle,
                 keyCode: Int(event.keyCode),
                 modifiers: activeModifierKeys
             )

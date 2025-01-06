@@ -21,7 +21,7 @@ struct AppLogger {
     static let interface: CategoryLogger = CategoryLogger(category: .interface)
     static let performance: CategoryLogger = CategoryLogger(category: .performance)
     static let settings: CategoryLogger = CategoryLogger(category: .settings)
-    static let windows: CategoryLogger = CategoryLogger(category: .windows)
+    static let sources: CategoryLogger = CategoryLogger(category: .sources)
 }
 
 extension AppLogger {
@@ -31,7 +31,7 @@ extension AppLogger {
         case interface = "Interface"
         case performance = "Performance"
         case settings = "Settings"
-        case windows = "Windows"
+        case sources = "Sources"
     }
 
     enum Level {

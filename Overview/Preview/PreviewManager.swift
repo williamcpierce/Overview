@@ -5,7 +5,7 @@
  Created by William Pierce on 10/13/24.
 
  Manages the initialization and coordination of preview windows,
- handling capture system setup and window list management.
+ handling capture system setup and source window list management.
 */
 
 import Combine
@@ -15,17 +15,17 @@ import SwiftUI
 @MainActor
 final class PreviewManager: ObservableObject {
     // MARK: - Published State
-    @Published private(set) var availableWindows: [SCWindow] = []
+    @Published private(set) var availableSources: [SCWindow] = []
     @Published private(set) var isInitializing: Bool = true
-    @Published private(set) var windowListVersion: UUID = UUID()
+    @Published private(set) var sourceListVersion: UUID = UUID()
     @Published var editModeEnabled: Bool = false
 
     // MARK: - Dependencies
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
-    init(windowManager: WindowManager) {
-        self.windowManager = windowManager
+    init(sourceManager: SourceManager) {
+        self.sourceManager = sourceManager
         logger.debug("Initializing preview manager")
     }
 
@@ -35,7 +35,7 @@ final class PreviewManager: ObservableObject {
         do {
             logger.info("Starting capture system initialization")
             try await captureManager.requestPermission()
-            await updateAvailableWindows()
+            await updateAvailableSources()
             completeInitialization()
         } catch {
             handleInitializationError(error)
@@ -52,16 +52,16 @@ final class PreviewManager: ObservableObject {
         isInitializing = false
     }
 
-    // MARK: - Window Preview Management
+    // MARK: - Source Preview Management
 
-    func startWindowPreview(captureManager: CaptureManager, window: SCWindow?) {
-        guard let selectedWindow: SCWindow = window else {
-            logger.warning("Cannot start preview: no window selected")
+    func startSourcePreview(captureManager: CaptureManager, source: SCWindow?) {
+        guard let selectedSource: SCWindow = source else {
+            logger.warning("Cannot start preview: no source window selected")
             return
         }
 
-        logger.debug("Starting preview for window: '\(selectedWindow.title ?? "Untitled")'")
-        captureManager.selectedWindow = selectedWindow
+        logger.debug("Starting preview for source window: '\(selectedSource.title ?? "Untitled")'")
+        captureManager.selectedSource = selectedSource
 
         Task {
             do {
@@ -73,17 +73,17 @@ final class PreviewManager: ObservableObject {
         }
     }
 
-    // MARK: - Window List Management
+    // MARK: - Source List Management
 
-    func updateAvailableWindows() async {
+    func updateAvailableSources() async {
         do {
-            let windows = try await windowManager.getFilteredWindows()
-            availableWindows = windows
-            windowListVersion = UUID()
+            let sources = try await sourceManager.getFilteredSources()
+            availableSources = sources
+            sourceListVersion = UUID()
 
-            logger.debug("Window list updated: \(windows.count) available windows")
+            logger.debug("Source window list updated: \(sources.count) available sources")
         } catch {
-            logger.logError(error, context: "Failed to retrieve available windows")
+            logger.logError(error, context: "Failed to retrieve available source windows")
         }
     }
 }
