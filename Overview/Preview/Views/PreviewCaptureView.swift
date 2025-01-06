@@ -27,7 +27,13 @@ struct PreviewCaptureView: View {
     }
 
     var body: some View {
-        previewContent(for: frame)
+        Group {
+            if let frame: CapturedFrame = captureManager.capturedFrame {
+                previewContent(for: frame)
+            } else {
+                EmptyView()
+            }
+        }
     }
 
     // MARK: - View Components
