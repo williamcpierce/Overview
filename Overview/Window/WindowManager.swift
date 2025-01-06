@@ -12,7 +12,7 @@ import SwiftUI
 
 final class WindowManager {
     // MARK: - Dependencies
-    private let settings: AppSettings
+    private let appSettings: AppSettings
     private let previewManager: PreviewManager
     private let sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
@@ -26,8 +26,8 @@ final class WindowManager {
     // MARK: - Constants
     private let cascadeOffsetMultiplier: CGFloat = 25
 
-    init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
-        self.settings = settings
+    init(appSettings: AppSettings, preview: PreviewManager, source: SourceManager) {
+        self.appSettings = settings
         self.previewManager = preview
         self.sourceManager = source
         self.sessionWindowCounter = 0
@@ -75,8 +75,8 @@ final class WindowManager {
             return .zero
         }
 
-        let centerX = (screenFrame.width - settings.previewDefaultWidth) / 2
-        let centerY = (screenFrame.height - settings.previewDefaultHeight) / 2
+        let centerX = (screenFrame.width - appSettings.previewDefaultWidth) / 2
+        let centerY = (screenFrame.height - appSettings.previewDefaultHeight) / 2
 
         let xOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
         let yOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
@@ -84,8 +84,8 @@ final class WindowManager {
         return NSRect(
             x: centerX + xOffset,
             y: centerY - yOffset,
-            width: settings.previewDefaultWidth,
-            height: settings.previewDefaultHeight
+            width: appSettings.previewDefaultWidth,
+            height: appSettings.previewDefaultHeight
         )
     }
 

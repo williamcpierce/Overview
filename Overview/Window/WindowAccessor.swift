@@ -37,12 +37,12 @@ struct WindowAccessor: NSViewRepresentable {
             DispatchQueue.main.asyncAfter(deadline: .now() + throttleInterval) {
                 guard nsView.window != nil, nsView.superview != nil else { return }
                 synchronizeAspectRatio(window)
-                synchronizeWindowConfiguration(window)
+                synchronizeBehavior(window)
             }
         }
     }
 
-    // MARK: - Editable Management
+    // MARK: - Editable State Management
 
     private func synchronizeEditableState(_ window: NSWindow) {
         updateResizability(window)
@@ -71,12 +71,12 @@ struct WindowAccessor: NSViewRepresentable {
 
     // MARK: - Behavior Management
 
-    private func synchronizeWindowConfiguration(_ window: NSWindow) {
-        updateWindowLevel(window)
-        updateMissionControlBehavior(window)
+    private func synchronizeBehavior(_ window: NSWindow) {
+        updateLevel(window)
+        updateMissionControl(window)
     }
 
-    private func updateWindowLevel(_ window: NSWindow) {
+    private func updateLevel(_ window: NSWindow) {
         let shouldFloat = previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
@@ -86,7 +86,7 @@ struct WindowAccessor: NSViewRepresentable {
         }
     }
 
-    private func updateMissionControlBehavior(_ window: NSWindow) {
+    private func updateMissionControl(_ window: NSWindow) {
         let shouldManage = appSettings.previewManagedByMissionControl
 
         if shouldManage {
@@ -95,7 +95,7 @@ struct WindowAccessor: NSViewRepresentable {
             window.collectionBehavior.remove(.managed)
         }
 
-        logger.debug("Mission Control behavior updated: managed=\(shouldManage)")
+        logger.debug("Mission Control management updated: managed=\(shouldManage)")
     }
 
     // MARK: - Layout Management
