@@ -32,20 +32,16 @@ struct OverviewApp: App {
     private var windowCommands: some Commands {
         CommandGroup(before: .newItem) {
             Button("New Preview Window") {
-                appDelegate.windowService.createPreviewWindow()
+                appDelegate.windowManager.createPreviewWindow()
             }
             .keyboardShortcut("n", modifiers: .command)
-
-            Button("Close All Windows") {
-                appDelegate.windowService.closeAllPreviewWindows()
-            }
-            .keyboardShortcut("w", modifiers: [.command, .option])
         }
     }
 
     private var editCommands: some Commands {
         CommandMenu("Edit") {
             Toggle("Edit Mode", isOn: editModeBinding)
+            .keyboardShortcut("e", modifiers: .command)
         }
     }
 
@@ -66,7 +62,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
-    var windowService: WindowService!
+    var windowManager: WindowManager!
 
     // MARK: - Private Properties
     private let logger = AppLogger.interface
@@ -80,7 +76,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
         super.init()
 
-        windowService = WindowService(
+        windowManager = WindowManager(
             settings: appSettings,
             preview: previewManager,
             source: sourceManager
@@ -98,11 +94,11 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Task {
-            windowService.restoreWindowStates()
+            windowManager.restoreWindowStates()
         }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        windowService.saveWindowStates()
+        windowManager.saveWindowStates()
     }
 }

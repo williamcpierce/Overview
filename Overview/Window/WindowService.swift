@@ -1,135 +1,74 @@
 /*
- Window/WindowService.swift
+ Window/WindowStorage.swift
  Overview
 
  Created by William Pierce on 1/5/25.
 
- Manages the creation, configuration, and lifecycle of preview windows,
- coordinating window state persistence and restoration.
+ Manages persistence and restoration of window state information.
 */
 
 import SwiftUI
+import AppKit
 
-final class WindowService {
-    // MARK: - Dependencies
-    private let settings: AppSettings
-    private let previewManager: PreviewManager
-    private let sourceManager: SourceManager
-    private let stateManager: WindowStateManager
-    private let logger = AppLogger.interface
-
-    // MARK: - Private State
-    private var activeWindows: Set<NSWindow> = []
-    private var windowDelegates: [NSWindow: WindowDelegate] = [:]
-
-    init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
-        self.settings = settings
-        self.previewManager = preview
-        self.sourceManager = source
-        self.stateManager = WindowStateManager()
-        logger.debug("Window service initialized")
-    }
-
-    deinit {
-        cleanupResources()
-    }
-
-    // MARK: - Window Management
-
-    func createPreviewWindow(at frame: NSRect? = nil) {
-        let windowFrame = frame ?? createDefaultFrame()
-        let window = createConfiguredWindow(with: windowFrame)
-        setupWindowDelegate(for: window)
-        setupWindowContent(window)
-        
-        activeWindows.insert(window)
-        window.orderFront(nil)
-        logger.info("Created new preview window")
-    }
-
-    func closeAllPreviewWindows() {
-        let windowsToClose = activeWindows
-        windowsToClose.forEach(closeWindow)
-        logger.info("Closed \(windowsToClose.count) preview windows")
-    }
-
-    func closeWindow(_ window: NSWindow) {
-        cleanupWindow(window)
-        window.close()
-    }
-
-    // MARK: - State Management
-
-    func saveWindowStates() {
-        stateManager.saveWindowStates()
-    }
-
-    func restoreWindowStates() {
-        stateManager.restoreWindows { [weak self] frame in
-            self?.createPreviewWindow(at: frame)
+extension NSView {
+    func ancestorOrSelf<T>(ofType type: T.Type) -> T? {
+        if let self = self as? T {
+            return self
         }
-    }
-
-    // MARK: - Private Methods
-
-    private func createDefaultFrame() -> NSRect {
-        NSRect(
-            x: 100, y: 100,
-            width: settings.previewDefaultWidth,
-            height: settings.previewDefaultHeight
-        )
-    }
-
-    private func createConfiguredWindow(with frame: NSRect) -> NSWindow {
-        let window = NSWindow(
-            contentRect: frame,
-            styleMask: [.fullSizeContentView, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.isMovableByWindowBackground = true
-        window.level = .statusBar + 1
-        window.collectionBehavior = [.fullScreenAuxiliary]
-        
-        return window
-    }
-
-    private func setupWindowDelegate(for window: NSWindow) {
-        let delegate = WindowDelegate(windowService: self)
-        windowDelegates[window] = delegate
-        window.delegate = delegate
-    }
-
-    private func setupWindowContent(_ window: NSWindow) {
-        let contentView = ContentView(
-            appSettings: settings,
-            previewManager: previewManager,
-            sourceManager: sourceManager
-        )
-        window.contentView = NSHostingView(rootView: contentView)
-    }
-
-    private func cleanupWindow(_ window: NSWindow) {
-        activeWindows.remove(window)
-        windowDelegates.removeValue(forKey: window)
-    }
-
-    private func cleanupResources() {
-        windowDelegates.removeAll()
-        activeWindows.removeAll()
-        logger.debug("Window service resources cleaned up")
+        return superview?.ancestorOrSelf(ofType: type)
     }
 }
-
-// MARK: - Window Delegate
-
-private final class WindowDelegate: NSObject, NSWindowDelegate {
-    private weak var windowService: WindowService?
-
-    init(windowService: WindowService) {
-        self.windowService = windowService
+final class WindowStorage {
+    private let logger = AppLogger.interface
+    private let windowPositionsKey = "StoredWindowPositions"
+    static let shared: WindowStorage = WindowStorage()
+    
+    struct WindowState: Codable {
+        let x: Double
+        let y: Double
+        let width: Double
+        let height: Double
+    }
+    
+    func saveWindowStates() {
+        var positions: [WindowState] = []
+        
+        NSApplication.shared.windows.forEach { window in
+            if let _ = window.contentView?.ancestorOrSelf(ofType: NSHostingView<ContentView>.self) {
+                positions.append(WindowState(
+                    x: window.frame.origin.x,
+                    y: window.frame.origin.y,
+                    width: window.frame.width,
+                    height: window.frame.height
+                ))
+            }
+        }
+        
+        do {
+            let data = try JSONEncoder().encode(positions)
+            UserDefaults.standard.set(data, forKey: windowPositionsKey)
+            logger.info("Saved \(positions.count) window positions")
+        } catch {
+            logger.logError(error, context: "Failed to save window positions")
+        }
+    }
+    
+    func restoreWindows(using createWindow: (NSRect) -> Void) {
+        guard let data = UserDefaults.standard.data(forKey: windowPositionsKey) else { return }
+        
+        do {
+            let positions = try JSONDecoder().decode([WindowState].self, from: data)
+            positions.forEach { position in
+                createWindow(NSRect(
+                    x: position.x,
+                    y: position.y,
+                    width: position.width,
+                    height: position.height
+                ))
+            }
+            logger.info("Restored \(positions.count) windows")
+        } catch {
+            logger.logError(error, context: "Failed to restore window positions")
+        }
     }
 }

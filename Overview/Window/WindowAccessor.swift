@@ -19,82 +19,57 @@ struct WindowAccessor: NSViewRepresentable {
     private let logger = AppLogger.interface
 
     // MARK: - Constants
-    private let resizeThrottleInterval: TimeInterval = 0.1
+    private let throttleInterval: TimeInterval = 0.1
 
     func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.wantsLayer = true // Ensure layer-backing
-
-        DispatchQueue.main.async {
-            guard let window = view.window else {
-                logger.warning("Window reference unavailable during initialization")
-                return
-            }
-
-            configureWindowDefaults(window)
-            logger.info("Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
-        }
-        return view
+        return NSView()
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        // Only proceed if view is still in window hierarchy
         guard nsView.window != nil, nsView.superview != nil else {
             return
         }
 
-        // Ensure window updates happen on main thread
         DispatchQueue.main.async {
             guard let window = nsView.window else { return }
-            synchronizeEditModeState(window)
-            synchronizeWindowConfiguration(window)
-            
-            // Throttle aspect ratio updates
-            DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
+            synchronizeEditableState(window)
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + throttleInterval) {
                 guard nsView.window != nil, nsView.superview != nil else { return }
                 synchronizeAspectRatio(window)
+                synchronizeWindowConfiguration(window)
             }
         }
     }
 
-    // MARK: - Window Configuration
+    // MARK: - Editable Management
 
-    private func configureWindowDefaults(_ window: NSWindow) {
-        window.backgroundColor = .clear
-        window.collectionBehavior.insert(.fullScreenAuxiliary)
-        window.hasShadow = false
-        window.isMovableByWindowBackground = true
-        window.styleMask = NSWindow.StyleMask.fullSizeContentView
-        
-        // Add close button support
-        window.styleMask.insert(.closable)
-        window.standardWindowButton(.closeButton)?.isHidden = false
-
-        logger.debug("Applied default window configuration")
+    private func synchronizeEditableState(_ window: NSWindow) {
+        updateResizability(window)
+        updateMovability(window)
     }
 
-    private func synchronizeEditModeState(_ window: NSWindow) {
+    private func updateResizability(_ window: NSWindow) {
         var newStyleMask: NSWindow.StyleMask = .fullSizeContentView
-        
-        // Always keep closable enabled
-        newStyleMask.insert(.closable)
-        
+
         if previewManager.editModeEnabled {
             newStyleMask.insert(.resizable)
         }
-        
-        let newMovability: Bool = previewManager.editModeEnabled
-
         if window.styleMask != newStyleMask {
             window.styleMask = newStyleMask
-            logger.debug("Window stylemask updated")
+            logger.debug("Window resizability updated")
         }
-        
+    }
+
+    private func updateMovability(_ window: NSWindow) {
+        let newMovability: Bool = previewManager.editModeEnabled
         if window.isMovable != newMovability {
             window.isMovable = newMovability
             logger.debug("Window movability updated")
         }
     }
+
+    // MARK: - Behavior Management
 
     private func synchronizeWindowConfiguration(_ window: NSWindow) {
         updateWindowLevel(window)
