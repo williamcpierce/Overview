@@ -16,7 +16,6 @@ import SwiftUI
 final class PreviewManager: ObservableObject {
     // MARK: - Published State
     @Published private(set) var availableSources: [SCWindow] = []
-    @Published private(set) var isInitializing: Bool = true
     @Published private(set) var sourceListVersion: UUID = UUID()
     @Published var editModeEnabled: Bool = false
 
@@ -36,20 +35,10 @@ final class PreviewManager: ObservableObject {
             logger.info("Starting capture system initialization")
             try await captureManager.requestPermission()
             await updateAvailableSources()
-            completeInitialization()
+            logger.info("Capture system initialization completed")
         } catch {
-            handleInitializationError(error)
+            logger.logError(error, context: "Capture system initialization failed")
         }
-    }
-
-    private func completeInitialization() {
-        logger.info("Capture system initialization completed")
-        isInitializing = false
-    }
-
-    private func handleInitializationError(_ error: Error) {
-        logger.logError(error, context: "Capture system initialization failed")
-        isInitializing = false
     }
 
     // MARK: - Source Preview Management

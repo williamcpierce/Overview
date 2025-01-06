@@ -56,27 +56,11 @@ struct PreviewSelectionView: View {
 
     private var sourceList: some View {
         Picker("", selection: $selectedSource) {
-            Group {
-                if previewManager.isInitializing {
-                    loadingPlaceholder
-                } else {
-                    sourceOptions
-                }
-            }
-        }
-        .id(previewManager.sourceListVersion)
-        .onChange(of: selectedSource, handleSourceSelection)
-    }
-
-    private var loadingPlaceholder: some View {
-        Text("Loading...").tag(nil as SCWindow?)
-    }
-
-    private var sourceOptions: some View {
-        Group {
             Text("Select a source window").tag(nil as SCWindow?)
             availableSourcesList
         }
+        .id(previewManager.sourceListVersion)
+        .onChange(of: selectedSource, handleSourceSelection)
     }
 
     private var availableSourcesList: some View {
@@ -100,10 +84,6 @@ struct PreviewSelectionView: View {
                 }
             }
         }
-    }
-
-    private func truncateTitle(_ title: String) -> String {
-        title.count > 50 ? title.prefix(50) + "..." : title
     }
 
     private var refreshButton: some View {
@@ -138,5 +118,11 @@ struct PreviewSelectionView: View {
         if let source: SCWindow = new {
             logger.info("Source selected: '\(source.title ?? "Untitled")'")
         }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }
