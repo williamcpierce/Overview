@@ -3,7 +3,7 @@
  Overview
 
  Created by William Pierce on 9/15/24.
- 
+
  Provides the source window selection interface allowing users to choose
  which source window to capture and preview.
 */
@@ -43,7 +43,6 @@ struct PreviewSelectionView: View {
         VStack {
             selectionControls
                 .padding()
-            previewStartButton
         }
     }
 
@@ -56,27 +55,11 @@ struct PreviewSelectionView: View {
 
     private var sourceList: some View {
         Picker("", selection: $selectedSource) {
-            Group {
-                if previewManager.isInitializing {
-                    loadingPlaceholder
-                } else {
-                    sourceOptions
-                }
-            }
-        }
-        .id(previewManager.sourceListVersion)
-        .onChange(of: selectedSource, handleSourceSelection)
-    }
-
-    private var loadingPlaceholder: some View {
-        Text("Loading...").tag(nil as SCWindow?)
-    }
-
-    private var sourceOptions: some View {
-        Group {
             Text("Select a source window").tag(nil as SCWindow?)
             availableSourcesList
         }
+        .id(previewManager.sourceListVersion)
+        .onChange(of: selectedSource, handleSourceSelection)
     }
 
     private var availableSourcesList: some View {
@@ -102,24 +85,10 @@ struct PreviewSelectionView: View {
         }
     }
 
-    private func truncateTitle(_ title: String) -> String {
-        title.count > 50 ? title.prefix(50) + "..." : title
-    }
-
     private var refreshButton: some View {
         Button(action: refreshSourceList) {
             Image(systemName: "arrow.clockwise")
         }
-    }
-
-    private var previewStartButton: some View {
-        Button("Start Preview") {
-            previewManager.startSourcePreview(
-                captureManager: captureManager,
-                source: selectedSource
-            )
-        }
-        .disabled(selectedSource == nil)
     }
 
     // MARK: - Actions
@@ -129,7 +98,9 @@ struct PreviewSelectionView: View {
             logger.debug("Initiating source window list refresh")
             await previewManager.updateAvailableSources()
             await MainActor.run {
-                logger.info("Source window list updated with \(previewManager.availableSources.count) sources")
+                logger.info(
+                    "Source window list updated with \(previewManager.availableSources.count) sources"
+                )
             }
         }
     }
@@ -137,6 +108,16 @@ struct PreviewSelectionView: View {
     private func handleSourceSelection(_ old: SCWindow?, _ new: SCWindow?) {
         if let source: SCWindow = new {
             logger.info("Source selected: '\(source.title ?? "Untitled")'")
+            previewManager.startSourcePreview(
+                captureManager: captureManager,
+                source: selectedSource
+            )
         }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }
