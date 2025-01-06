@@ -48,6 +48,7 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
+                .overlay(editModeOverlay)
                 .opacity(isPreviewVisible ? 1 : 0)
         }
         .onAppear(perform: setupCapture)
@@ -101,6 +102,26 @@ struct PreviewView: View {
             captureManager: captureManager,
             previewManager: previewManager
         )
+    }
+    
+    private var editModeOverlay: some View {
+        Group {
+            if previewManager.editModeEnabled {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        editModeIndicator
+                    }
+                }
+            }
+        }
+    }
+    
+    private var editModeIndicator: some View {
+        Image(systemName: "righttriangle.fill")
+            .font(.caption)
+            .foregroundColor(.gray)
     }
 
     // MARK: - Lifecycle Methods
