@@ -132,7 +132,7 @@ private final class PreviewInteractionHandler: NSView {
         logger.info("Edit mode toggled via context menu")
         onEditModeToggle?()
     }
-    
+
     @objc func closeWindow() {
         logger.info("Window close requested via context menu")
         onCloseWindow?()

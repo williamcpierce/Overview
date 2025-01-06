@@ -22,7 +22,7 @@ final class WindowManager {
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
     private var sessionWindowCounter: Int
-    
+
     // MARK: - Constants
     private let cascadeOffsetMultiplier: CGFloat = 25
 
@@ -43,11 +43,11 @@ final class WindowManager {
     // MARK: - Window Management
 
     func createPreviewWindow(at frame: NSRect? = nil) {
-        let windowFrame = frame ?? createDefaultFrame()
-        let window = createConfiguredWindow(with: windowFrame)
+        let windowFrame: NSRect = frame ?? createDefaultFrame()
+        let window: NSWindow = createConfiguredWindow(with: windowFrame)
         setupWindowDelegate(for: window)
         setupWindowContent(window)
-        
+
         activeWindows.insert(window)
         sessionWindowCounter += 1
 
@@ -70,17 +70,17 @@ final class WindowManager {
     // MARK: - Private Methods
 
     private func createDefaultFrame() -> NSRect {
-        guard let screenFrame = NSScreen.main?.frame else {
+        guard let screenFrame: NSRect = NSScreen.main?.frame else {
             logger.warning("Unable to retrieve main screen frame, defaulting to zero")
             return .zero
         }
-        
+
         let centerX = (screenFrame.width - settings.previewDefaultWidth) / 2
         let centerY = (screenFrame.height - settings.previewDefaultHeight) / 2
-        
-        let xOffset = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
-        let yOffset = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
-        
+
+        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+
         return NSRect(
             x: centerX + xOffset,
             y: centerY - yOffset,
@@ -96,12 +96,12 @@ final class WindowManager {
             backing: .buffered,
             defer: false
         )
-        
+
         window.backgroundColor = .clear
         window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.level = .statusBar + 1
-        
+
         return window
     }
 

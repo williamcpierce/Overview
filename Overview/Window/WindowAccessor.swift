@@ -104,11 +104,11 @@ struct WindowAccessor: NSViewRepresentable {
         guard captureManager.isCapturing else { return }
         guard aspectRatio != 0 else { return }
 
-        let windowWidth = window.frame.width
-        let windowHeight = window.frame.height
-        let desiredHeight = windowWidth / aspectRatio
+        let windowWidth: CGFloat = window.frame.width
+        let windowHeight: CGFloat = window.frame.height
+        let desiredHeight: CGFloat = windowWidth / aspectRatio
 
-        let heightDifference = abs(windowHeight - desiredHeight)
+        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
         guard heightDifference > 1.0 else { return }
 
         let updatedSize = NSSize(width: windowWidth, height: desiredHeight)

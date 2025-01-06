@@ -2,7 +2,7 @@
  OverviewApp.swift
  Overview
 
- Created by William Pierce on 1/5/25.
+ Created by William Pierce on 9/15/24.
  
  The main application entry point, managing global state and window coordination
  through the app delegate and window service.
