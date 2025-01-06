@@ -19,70 +19,36 @@ class AppSettings: ObservableObject {
     // MARK: - Dependancies
     private let logger = AppLogger.settings
     private let hotkeyService = HotkeyService.shared
-    
+
     // MARK: - Constants
-    let availableFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
+    let availableCaptureFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
     private struct Defaults {
-        static let windowOpacity: Double = 0.95
-        static let frameRate: Double = 10.0
-        static let defaultWindowWidth: Double = 288
-        static let defaultWindowHeight: Double = 162
-        static let showFocusedBorder: Bool = true
+        static let focusBorderEnabled: Bool = true
         static let focusBorderWidth: Double = 5.0
         static let focusBorderColor: Color = .gray
-        static let showWindowTitle: Bool = true
-        static let titleFontSize: Double = 12.0
-        static let titleBackgroundOpacity: Double = 0.4
-        static let managedByMissionControl: Bool = true
-        static let closeOnCaptureStop: Bool = false
-        static let hideInactiveApplications: Bool = false
-        static let hideActiveWindow: Bool = false
-        static let enableEditModeAlignment: Bool = false
+        static let sourceTitleEnabled: Bool = true
+        static let sourceTitleFontSize: Double = 12.0
+        static let sourceTitleBackgroundOpacity: Double = 0.4
+        static let previewOpacity: Double = 0.95
+        static let previewDefaultWidth: Double = 288
+        static let previewDefaultHeight: Double = 162
+        static let previewManagedByMissionControl: Bool = true
+        static let previewCloseOnCaptureStop: Bool = false
+        static let previewHideInactiveApplications: Bool = false
+        static let previewHideActiveWindow: Bool = false
+        static let previewAlignmentEnabled: Bool = false
+        static let captureFrameRate: Double = 10.0
         static let hotkeyBindings: [HotkeyBinding] = []
-        static let appFilterNames: [String] = []
-        static let isFilterBlocklist: Bool = true
-    }
-
-    // MARK: - Window Appearance Settings
-
-    @Published var windowOpacity: Double {
-        didSet {
-            UserDefaults.standard.set(windowOpacity, forKey: StorageKeys.windowOpacity)
-            logger.info("Window opacity updated to \(Int(windowOpacity * 100))%")
-        }
-    }
-
-    // MARK: - Performance Settings
-
-    @Published var frameRate: Double {
-        didSet {
-            UserDefaults.standard.set(frameRate, forKey: StorageKeys.frameRate)
-            logger.info("Frame rate updated to \(Int(frameRate)) FPS")
-        }
-    }
-
-    // MARK: - Window Dimension Settings
-
-    @Published var defaultWindowWidth: Double {
-        didSet {
-            UserDefaults.standard.set(defaultWindowWidth, forKey: StorageKeys.defaultWindowWidth)
-            logger.info("Default window width set to \(Int(defaultWindowWidth))px")
-        }
-    }
-
-    @Published var defaultWindowHeight: Double {
-        didSet {
-            UserDefaults.standard.set(defaultWindowHeight, forKey: StorageKeys.defaultWindowHeight)
-            logger.info("Default window height set to \(Int(defaultWindowHeight))px")
-        }
+        static let filterAppNames: [String] = []
+        static let filterBlocklist: Bool = true
     }
 
     // MARK: - Focus Border Settings
 
-    @Published var showFocusedBorder: Bool {
+    @Published var focusBorderEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(showFocusedBorder, forKey: StorageKeys.showFocusedBorder)
-            logger.info("Focus border visibility set to \(showFocusedBorder)")
+            UserDefaults.standard.set(focusBorderEnabled, forKey: StorageKeys.focusBorderEnabled)
+            logger.info("Focus border visibility set to \(focusBorderEnabled)")
         }
     }
 
@@ -102,76 +68,112 @@ class AppSettings: ObservableObject {
 
     // MARK: - Title Overlay Settings
 
-    @Published var showWindowTitle: Bool {
+    @Published var sourceTitleEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(showWindowTitle, forKey: StorageKeys.showWindowTitle)
-            logger.info("Window title visibility set to \(showWindowTitle)")
+            UserDefaults.standard.set(sourceTitleEnabled, forKey: StorageKeys.sourceTitleEnabled)
+            logger.info("Source title visibility set to \(sourceTitleEnabled)")
         }
     }
 
-    @Published var titleFontSize: Double {
+    @Published var sourceTitleFontSize: Double {
         didSet {
-            UserDefaults.standard.set(titleFontSize, forKey: StorageKeys.titleFontSize)
-            logger.info("Title font size set to \(titleFontSize)pt")
+            UserDefaults.standard.set(sourceTitleFontSize, forKey: StorageKeys.sourceTitleFontSize)
+            logger.info("Source itle font size set to \(sourceTitleFontSize)pt")
         }
     }
 
-    @Published var titleBackgroundOpacity: Double {
-        didSet {
-            UserDefaults.standard.set(
-                titleBackgroundOpacity,
-                forKey: StorageKeys.titleBackgroundOpacity
-            )
-            logger.info("Title background opacity set to \(Int(titleBackgroundOpacity * 100))%")
-        }
-    }
-
-    // MARK: - Window Behavior Settings
-
-    @Published var managedByMissionControl: Bool {
+    @Published var sourceTitleBackgroundOpacity: Double {
         didSet {
             UserDefaults.standard.set(
-                managedByMissionControl,
-                forKey: StorageKeys.managedByMissionControl
+                sourceTitleBackgroundOpacity,
+                forKey: StorageKeys.sourceTitleBackgroundOpacity
             )
-            logger.info("Mission Control integration set to \(managedByMissionControl)")
+            logger.info(
+                "Source title background opacity set to \(Int(sourceTitleBackgroundOpacity * 100))%"
+            )
         }
     }
 
-    @Published var closeOnCaptureStop: Bool {
+    // MARK: - Preview Window Appearance Settings
+
+    @Published var previewOpacity: Double {
         didSet {
-            UserDefaults.standard.set(closeOnCaptureStop, forKey: StorageKeys.closeOnCaptureStop)
-            logger.info("Close on capture stop set to \(closeOnCaptureStop)")
+            UserDefaults.standard.set(previewOpacity, forKey: StorageKeys.previewOpacity)
+            logger.info("Preview window opacity updated to \(Int(previewOpacity * 100))%")
         }
     }
 
-    @Published var hideInactiveApplications: Bool {
+    @Published var previewDefaultWidth: Double {
+        didSet {
+            UserDefaults.standard.set(previewDefaultWidth, forKey: StorageKeys.previewDefaultWidth)
+            logger.info("Default preview window width set to \(Int(previewDefaultWidth))px")
+        }
+    }
+
+    @Published var previewDefaultHeight: Double {
         didSet {
             UserDefaults.standard.set(
-                hideInactiveApplications,
-                forKey: StorageKeys.hideInactiveApplications
-            )
-            logger.info("Hide inactive applications set to \(hideInactiveApplications)")
+                previewDefaultHeight, forKey: StorageKeys.previewDefaultHeight)
+            logger.info("Default preview window height set to \(Int(previewDefaultHeight))px")
         }
     }
 
-    @Published var hideActiveWindow: Bool {
-        didSet {
-            UserDefaults.standard.set(hideActiveWindow, forKey: StorageKeys.hideActiveWindow)
-            logger.info("Hide active window set to \(hideActiveWindow)")
-        }
-    }
+    // MARK: - Preview Window Behavior Settings
 
-    @Published var enableEditModeAlignment: Bool {
+    @Published var previewManagedByMissionControl: Bool {
         didSet {
             UserDefaults.standard.set(
-                enableEditModeAlignment,
-                forKey: StorageKeys.enableEditModeAlignment
+                previewManagedByMissionControl,
+                forKey: StorageKeys.previewManagedByMissionControl
             )
-            logger.info("Edit mode alignment set to \(enableEditModeAlignment)")
+            logger.info("Mission Control integration set to \(previewManagedByMissionControl)")
         }
     }
 
+    @Published var previewCloseOnCaptureStop: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                previewCloseOnCaptureStop, forKey: StorageKeys.previewCloseOnCaptureStop)
+            logger.info("Close on capture stop set to \(previewCloseOnCaptureStop)")
+        }
+    }
+
+    @Published var previewHideInactiveApplications: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                previewHideInactiveApplications,
+                forKey: StorageKeys.previewHideInactiveApplications
+            )
+            logger.info("Hide inactive applications set to \(previewHideInactiveApplications)")
+        }
+    }
+
+    @Published var previewHideActiveWindow: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                previewHideActiveWindow, forKey: StorageKeys.previewHideActiveWindow)
+            logger.info("Hide active window set to \(previewHideActiveWindow)")
+        }
+    }
+
+    @Published var previewAlignmentEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                previewAlignmentEnabled,
+                forKey: StorageKeys.previewAlignmentEnabled
+            )
+            logger.info("Edit mode alignment set to \(previewAlignmentEnabled)")
+        }
+    }
+
+    // MARK: - Capture Settings
+
+    @Published var captureFrameRate: Double {
+        didSet {
+            UserDefaults.standard.set(captureFrameRate, forKey: StorageKeys.captureFrameRate)
+            logger.info("Frame rate updated to \(Int(captureFrameRate)) FPS")
+        }
+    }
     // MARK: - Hotkey Settings
 
     @Published var hotkeyBindings: [HotkeyBinding] {
@@ -192,17 +194,17 @@ class AppSettings: ObservableObject {
 
     // MARK: - Filter Settings
 
-    @Published var appFilterNames: [String] {
+    @Published var filterAppNames: [String] {
         didSet {
-            UserDefaults.standard.set(appFilterNames, forKey: StorageKeys.appFilterNames)
-            logger.info("App filter names updated: count=\(appFilterNames.count)")
+            UserDefaults.standard.set(filterAppNames, forKey: StorageKeys.filterAppNames)
+            logger.info("App filter names updated: count=\(filterAppNames.count)")
         }
     }
 
-    @Published var isFilterBlocklist: Bool {
+    @Published var filterBlocklist: Bool {
         didSet {
-            UserDefaults.standard.set(isFilterBlocklist, forKey: StorageKeys.isFilterBlocklist)
-            logger.info("Filter mode updated: isBlocklist=\(isFilterBlocklist)")
+            UserDefaults.standard.set(filterBlocklist, forKey: StorageKeys.filterBlocklist)
+            logger.info("Filter is blocklist=\(filterBlocklist)")
         }
     }
 
@@ -212,24 +214,24 @@ class AppSettings: ObservableObject {
         logger.debug("Initializing settings manager")
 
         // Initialize with default values
-        self.windowOpacity = Defaults.windowOpacity
-        self.frameRate = Defaults.frameRate
-        self.defaultWindowWidth = Defaults.defaultWindowWidth
-        self.defaultWindowHeight = Defaults.defaultWindowHeight
-        self.showFocusedBorder = Defaults.showFocusedBorder
+        self.focusBorderEnabled = Defaults.focusBorderEnabled
         self.focusBorderWidth = Defaults.focusBorderWidth
         self.focusBorderColor = Defaults.focusBorderColor
-        self.showWindowTitle = Defaults.showWindowTitle
-        self.titleFontSize = Defaults.titleFontSize
-        self.titleBackgroundOpacity = Defaults.titleBackgroundOpacity
-        self.managedByMissionControl = Defaults.managedByMissionControl
-        self.closeOnCaptureStop = Defaults.closeOnCaptureStop
-        self.hideInactiveApplications = Defaults.hideInactiveApplications
-        self.hideActiveWindow = Defaults.hideActiveWindow
-        self.enableEditModeAlignment = Defaults.enableEditModeAlignment
+        self.sourceTitleEnabled = Defaults.sourceTitleEnabled
+        self.sourceTitleFontSize = Defaults.sourceTitleFontSize
+        self.sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
+        self.previewOpacity = Defaults.previewOpacity
+        self.previewDefaultWidth = Defaults.previewDefaultWidth
+        self.previewDefaultHeight = Defaults.previewDefaultHeight
+        self.previewManagedByMissionControl = Defaults.previewManagedByMissionControl
+        self.previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
+        self.previewHideInactiveApplications = Defaults.previewHideInactiveApplications
+        self.previewHideActiveWindow = Defaults.previewHideActiveWindow
+        self.previewAlignmentEnabled = Defaults.previewAlignmentEnabled
         self.hotkeyBindings = Defaults.hotkeyBindings
-        self.appFilterNames = Defaults.appFilterNames
-        self.isFilterBlocklist = Defaults.isFilterBlocklist
+        self.captureFrameRate = Defaults.captureFrameRate
+        self.filterAppNames = Defaults.filterAppNames
+        self.filterBlocklist = Defaults.filterBlocklist
 
         initializeFromStorage()
         loadHotkeyBindings()
@@ -250,23 +252,24 @@ class AppSettings: ObservableObject {
         UserDefaults.standard.synchronize()
 
         // Reset all properties to defaults
-        windowOpacity = Defaults.windowOpacity
-        frameRate = Defaults.frameRate
-        defaultWindowWidth = Defaults.defaultWindowWidth
-        defaultWindowHeight = Defaults.defaultWindowHeight
-        showFocusedBorder = Defaults.showFocusedBorder
+        focusBorderEnabled = Defaults.focusBorderEnabled
         focusBorderWidth = Defaults.focusBorderWidth
         focusBorderColor = Defaults.focusBorderColor
-        showWindowTitle = Defaults.showWindowTitle
-        titleFontSize = Defaults.titleFontSize
-        titleBackgroundOpacity = Defaults.titleBackgroundOpacity
-        managedByMissionControl = Defaults.managedByMissionControl
-        closeOnCaptureStop = Defaults.closeOnCaptureStop
-        hideInactiveApplications = Defaults.hideInactiveApplications
-        hideActiveWindow = Defaults.hideActiveWindow
-        enableEditModeAlignment = Defaults.enableEditModeAlignment
-        appFilterNames = Defaults.appFilterNames
-        isFilterBlocklist = Defaults.isFilterBlocklist
+        sourceTitleEnabled = Defaults.sourceTitleEnabled
+        sourceTitleFontSize = Defaults.sourceTitleFontSize
+        sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
+        previewOpacity = Defaults.previewOpacity
+        previewDefaultWidth = Defaults.previewDefaultWidth
+        previewDefaultHeight = Defaults.previewDefaultHeight
+        previewManagedByMissionControl = Defaults.previewManagedByMissionControl
+        previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
+        previewHideInactiveApplications = Defaults.previewHideInactiveApplications
+        previewHideActiveWindow = Defaults.previewHideActiveWindow
+        previewAlignmentEnabled = Defaults.previewAlignmentEnabled
+        hotkeyBindings = Defaults.hotkeyBindings
+        captureFrameRate = Defaults.captureFrameRate
+        filterAppNames = Defaults.filterAppNames
+        filterBlocklist = Defaults.filterBlocklist
 
         clearHotkeyBindings()
         logger.info("Settings reset completed successfully")
@@ -277,32 +280,33 @@ class AppSettings: ObservableObject {
     private func initializeFromStorage() {
         logger.debug("Loading settings from storage")
 
-        windowOpacity = UserDefaults.standard.double(forKey: StorageKeys.windowOpacity)
-        frameRate = UserDefaults.standard.double(forKey: StorageKeys.frameRate)
-        defaultWindowWidth = UserDefaults.standard.double(forKey: StorageKeys.defaultWindowWidth)
-        defaultWindowHeight = UserDefaults.standard.double(forKey: StorageKeys.defaultWindowHeight)
-        showFocusedBorder = UserDefaults.standard.bool(forKey: StorageKeys.showFocusedBorder)
+        focusBorderEnabled = UserDefaults.standard.bool(forKey: StorageKeys.focusBorderEnabled)
         focusBorderWidth = UserDefaults.standard.double(forKey: StorageKeys.focusBorderWidth)
         focusBorderColor = UserDefaults.standard.color(forKey: StorageKeys.focusBorderColor)
-        showWindowTitle = UserDefaults.standard.bool(forKey: StorageKeys.showWindowTitle)
-        titleFontSize = UserDefaults.standard.double(forKey: StorageKeys.titleFontSize)
-        titleBackgroundOpacity = UserDefaults.standard.double(
-            forKey: StorageKeys.titleBackgroundOpacity)
-        managedByMissionControl = UserDefaults.standard.bool(
-            forKey: StorageKeys.managedByMissionControl)
-        closeOnCaptureStop = UserDefaults.standard.bool(
-            forKey: StorageKeys.closeOnCaptureStop)
-        hideInactiveApplications = UserDefaults.standard.bool(
-            forKey: StorageKeys.hideInactiveApplications)
-        hideActiveWindow = UserDefaults.standard.bool(
-            forKey: StorageKeys.hideActiveWindow)
-        enableEditModeAlignment = UserDefaults.standard.bool(
-            forKey: StorageKeys.enableEditModeAlignment)
-        appFilterNames =
+        sourceTitleEnabled = UserDefaults.standard.bool(forKey: StorageKeys.sourceTitleEnabled)
+        sourceTitleFontSize = UserDefaults.standard.double(forKey: StorageKeys.sourceTitleFontSize)
+        sourceTitleBackgroundOpacity = UserDefaults.standard.double(
+            forKey: StorageKeys.sourceTitleBackgroundOpacity)
+        previewOpacity = UserDefaults.standard.double(forKey: StorageKeys.previewOpacity)
+        previewDefaultWidth = UserDefaults.standard.double(forKey: StorageKeys.previewDefaultWidth)
+        previewDefaultHeight = UserDefaults.standard.double(
+            forKey: StorageKeys.previewDefaultHeight)
+        previewManagedByMissionControl = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewManagedByMissionControl)
+        previewCloseOnCaptureStop = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewCloseOnCaptureStop)
+        previewHideInactiveApplications = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewHideInactiveApplications)
+        previewHideActiveWindow = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewHideActiveWindow)
+        previewAlignmentEnabled = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewAlignmentEnabled)
+        captureFrameRate = UserDefaults.standard.double(forKey: StorageKeys.captureFrameRate)
+        filterAppNames =
             UserDefaults.standard.array(
-                forKey: StorageKeys.appFilterNames) as? [String] ?? []
-        isFilterBlocklist = UserDefaults.standard.bool(
-            forKey: StorageKeys.isFilterBlocklist)
+                forKey: StorageKeys.filterAppNames) as? [String] ?? []
+        filterBlocklist = UserDefaults.standard.bool(
+            forKey: StorageKeys.filterBlocklist)
     }
 
     private func loadHotkeyBindings() {
@@ -337,54 +341,57 @@ class AppSettings: ObservableObject {
     private func validateSettings() {
         logger.debug("Starting settings validation")
 
-        validateOpacity()
-        validateFrameRate()
-        validateWindowDimensions()
-        validateBorderWidth()
-        validateTitleSettings()
+        validateFocusBorderWidth()
+        validateSourceTitleSettings()
+        validatePreviewOpacity()
+        validateCaptureFrameRate()
+        validatePreviewWindowDimensions()
 
         logger.debug("Settings validation complete")
     }
 
-    private func validateOpacity() {
-        guard windowOpacity < 0.05 || windowOpacity > 1.0 else { return }
-        logger.warning("Invalid opacity value (\(windowOpacity)), resetting to default")
-        windowOpacity = Defaults.windowOpacity
+    private func validatePreviewOpacity() {
+        guard previewOpacity < 0.05 || previewOpacity > 1.0 else { return }
+        logger.warning("Invalid preview opacity value (\(previewOpacity)), resetting to default")
+        previewOpacity = Defaults.previewOpacity
     }
 
-    private func validateFrameRate() {
-        guard !availableFrameRates.contains(frameRate) else { return }
-        logger.warning("Invalid frame rate (\(frameRate)), resetting to default")
-        frameRate = Defaults.frameRate
+    private func validateCaptureFrameRate() {
+        guard !availableCaptureFrameRates.contains(captureFrameRate) else { return }
+        logger.warning("Invalid capture frame rate (\(captureFrameRate)), resetting to default")
+        captureFrameRate = Defaults.captureFrameRate
     }
 
-    private func validateWindowDimensions() {
-        if defaultWindowWidth < 100 {
-            logger.warning("Invalid window width (\(defaultWindowWidth)), resetting to default")
-            defaultWindowWidth = Defaults.defaultWindowWidth
+    private func validatePreviewWindowDimensions() {
+        if previewDefaultWidth < 100 {
+            logger.warning(
+                "Invalid preview window width (\(previewDefaultWidth)), resetting to default")
+            previewDefaultWidth = Defaults.previewDefaultWidth
         }
-        if defaultWindowHeight < 100 {
-            logger.warning("Invalid window height (\(defaultWindowHeight)), resetting to default")
-            defaultWindowHeight = Defaults.defaultWindowHeight
+        if previewDefaultHeight < 100 {
+            logger.warning(
+                "Invalid preview window height (\(previewDefaultHeight)), resetting to default")
+            previewDefaultHeight = Defaults.previewDefaultHeight
         }
     }
 
-    private func validateBorderWidth() {
+    private func validateFocusBorderWidth() {
         guard focusBorderWidth <= 0 else { return }
-        logger.warning("Invalid border width (\(focusBorderWidth)), resetting to default")
+        logger.warning("Invalid focus border width (\(focusBorderWidth)), resetting to default")
         focusBorderWidth = Defaults.focusBorderWidth
     }
 
-    private func validateTitleSettings() {
-        if titleFontSize <= 0 {
-            logger.warning("Invalid title font size (\(titleFontSize)), resetting to default")
-            titleFontSize = Defaults.titleFontSize
-        }
-        if titleBackgroundOpacity < 0.0 || titleBackgroundOpacity > 1.0 {
+    private func validateSourceTitleSettings() {
+        if sourceTitleFontSize <= 0 {
             logger.warning(
-                "Invalid title background opacity (\(titleBackgroundOpacity)), resetting to default"
+                "Invalid source title font size (\(sourceTitleFontSize)), resetting to default")
+            sourceTitleFontSize = Defaults.sourceTitleFontSize
+        }
+        if sourceTitleBackgroundOpacity < 0.0 || sourceTitleBackgroundOpacity > 1.0 {
+            logger.warning(
+                "Invalid source title background opacity (\(sourceTitleBackgroundOpacity)), resetting to default"
             )
-            titleBackgroundOpacity = Defaults.titleBackgroundOpacity
+            sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
         }
     }
 }
@@ -393,22 +400,22 @@ class AppSettings: ObservableObject {
 
 /// Defines keys for persisting settings in UserDefaults
 private enum StorageKeys {
-    static let windowOpacity: String = "windowOpacity"
-    static let frameRate: String = "frameRate"
-    static let defaultWindowWidth: String = "defaultWindowWidth"
-    static let defaultWindowHeight: String = "defaultWindowHeight"
-    static let showFocusedBorder: String = "showFocusedBorder"
+    static let focusBorderEnabled: String = "showFocusedBorder"
     static let focusBorderWidth: String = "focusBorderWidth"
     static let focusBorderColor: String = "focusBorderColor"
-    static let showWindowTitle: String = "showWindowTitle"
-    static let titleFontSize: String = "titleFontSize"
-    static let titleBackgroundOpacity: String = "titleBackgroundOpacity"
-    static let managedByMissionControl: String = "managedByMissionControl"
-    static let closeOnCaptureStop: String = "closeOnCaptureStop"
-    static let hideInactiveApplications: String = "hideInactiveApplications"
-    static let hideActiveWindow: String = "hideActiveWindow"
-    static let enableEditModeAlignment: String = "enableEditModeAlignment"
+    static let sourceTitleEnabled: String = "showWindowTitle"
+    static let sourceTitleFontSize: String = "titleFontSize"
+    static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
+    static let previewOpacity: String = "windowOpacity"
+    static let previewDefaultWidth: String = "defaultWindowWidth"
+    static let previewDefaultHeight: String = "defaultWindowHeight"
+    static let previewManagedByMissionControl: String = "managedByMissionControl"
+    static let previewCloseOnCaptureStop: String = "closeOnCaptureStop"
+    static let previewHideInactiveApplications: String = "hideInactiveApplications"
+    static let previewHideActiveWindow: String = "hideActiveWindow"
+    static let previewAlignmentEnabled: String = "enableEditModeAlignment"
+    static let captureFrameRate: String = "frameRate"
     static let hotkeyBindings: String = "hotkeyBindings"
-    static let appFilterNames: String = "appFilterNames"
-    static let isFilterBlocklist: String = "isFilterBlocklist"
+    static let filterAppNames: String = "appFilterNames"
+    static let filterBlocklist: String = "isFilterBlocklist"
 }

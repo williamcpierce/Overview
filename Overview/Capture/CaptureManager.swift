@@ -4,7 +4,7 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages the lifecycle of screen capture operations, coordinating window selection,
+ Manages the lifecycle of screen capture operations, coordinating source window selection,
  frame processing, and state synchronization across the application.
 */
 
@@ -19,17 +19,17 @@ final class CaptureManager: ObservableObject {
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
     @Published private(set) var isSourceWindowFocused: Bool = false
-    @Published private(set) var windowTitle: String?
-    @Published var selectedWindow: SCWindow? {
+    @Published private(set) var sourceTitle: String?
+    @Published var selectedSource: SCWindow? {
         didSet {
-            windowTitle = selectedWindow?.title
+            sourceTitle = selectedSource?.title
             Task { await synchronizeFocusState() }
         }
     }
 
     // MARK: - Dependencies
     private let appSettings: AppSettings
-    private let windowManager: WindowManager
+    private let sourceManager: SourceManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
@@ -41,11 +41,11 @@ final class CaptureManager: ObservableObject {
 
     init(
         appSettings: AppSettings,
-        windowManager: WindowManager,
+        sourceManager: SourceManager,
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.appSettings = appSettings
-        self.windowManager = windowManager
+        self.sourceManager = sourceManager
         self.captureEngine = captureEngine
         setupSubscriptions()
     }
@@ -62,21 +62,21 @@ final class CaptureManager: ObservableObject {
 
     func startCapture() async throws {
         guard !isCapturing else { return }
-        guard let window: SCWindow = selectedWindow else {
-            logger.error("Capture failed: No window selected")
-            throw CaptureError.noWindowSelected
+        guard let source: SCWindow = selectedSource else {
+            logger.error("Capture failed: No source window selected")
+            throw CaptureError.noSourceSelected
         }
 
-        logger.debug("Starting capture for window: '\(window.title ?? "Untitled")'")
+        logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
         let stream = try await captureServices.startCapture(
-            window: window,
+            source: source,
             engine: captureEngine,
-            frameRate: appSettings.frameRate
+            frameRate: appSettings.captureFrameRate
         )
 
         await startFrameProcessing(stream: stream)
         isCapturing = true
-        logger.info("Capture started: '\(window.title ?? "Untitled")'")
+        logger.info("Capture started: '\(source.title ?? "Untitled")'")
     }
 
     func stopCapture() async {
@@ -91,10 +91,10 @@ final class CaptureManager: ObservableObject {
         logger.info("Capture stopped")
     }
 
-    func focusWindow() {
-        guard let window: SCWindow = selectedWindow else { return }
-        logger.debug("Focusing window: '\(window.title ?? "Untitled")'")
-        windowManager.focusWindow(window)
+    func focusSource() {
+        guard let source: SCWindow = selectedSource else { return }
+        logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
+        sourceManager.focusSource(source)
     }
 
     // MARK: - Private Methods
@@ -119,55 +119,55 @@ final class CaptureManager: ObservableObject {
     }
 
     private func setupSubscriptions() {
-        windowManager.$focusedProcessId
+        sourceManager.$focusedProcessId
             .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
             .store(in: &subscriptions)
 
-        windowManager.$windowTitles
-            .sink { [weak self] titles in self?.synchronizeWindowTitle(from: titles) }
+        sourceManager.$sourceTitles
+            .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
             .store(in: &subscriptions)
 
-        appSettings.$frameRate
+        appSettings.$captureFrameRate
             .dropFirst()
             .sink { [weak self] _ in Task { await self?.synchronizeStreamConfiguration() } }
             .store(in: &subscriptions)
     }
 
     private func synchronizeFocusState() async {
-        guard let selectedWindow: SCWindow = selectedWindow else {
+        guard let selectedSource: SCWindow = selectedSource else {
             isSourceWindowFocused = false
             return
         }
 
-        let selectedProcessId: pid_t? = selectedWindow.owningApplication?.processID
-        let selectedBundleId: String? = selectedWindow.owningApplication?.bundleIdentifier
+        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
+        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
 
-        isSourceWindowFocused = selectedProcessId == windowManager.focusedProcessId
-        isSourceAppFocused = selectedBundleId == windowManager.focusedBundleId
+        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
+        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
 
         logger.debug(
             "Focus state updated: window=\(isSourceWindowFocused), app=\(isSourceAppFocused)"
         )
     }
 
-    private func synchronizeWindowTitle(from titles: [WindowManager.WindowID: String]) {
-        guard let window: SCWindow = selectedWindow,
-            let processID: pid_t = window.owningApplication?.processID
+    private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
+        guard let source: SCWindow = selectedSource,
+            let processID: pid_t = source.owningApplication?.processID
         else { return }
 
-        let windowID = WindowManager.WindowID(processID: processID, windowID: window.windowID)
-        windowTitle = titles[windowID]
+        let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
+        sourceTitle = titles[sourceID]
     }
 
     private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let window: SCWindow = selectedWindow else { return }
-        logger.debug("Updating stream configuration: frameRate=\(appSettings.frameRate)")
+        guard isCapturing, let source: SCWindow = selectedSource else { return }
+        logger.debug("Updating stream configuration: frameRate=\(appSettings.captureFrameRate)")
 
         do {
             try await captureServices.updateStreamConfiguration(
-                window: window,
+                source: source,
                 stream: captureEngine.stream,
-                frameRate: appSettings.frameRate
+                frameRate: appSettings.captureFrameRate
             )
             logger.info("Stream configuration updated successfully")
         } catch {

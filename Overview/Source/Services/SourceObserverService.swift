@@ -1,25 +1,25 @@
 /*
- Window/Services/WindowObserverService.swift
+ Source/Services/SourceObserverService.swift
  Overview
 
  Created by William Pierce on 12/15/24.
 
- Provides window state observation and notification management.
+ Provides source window state observation and notification management.
 */
 
 import ScreenCaptureKit
 
-/// Manages window state observation and notification distribution for
-/// window focus and title changes.
-final class WindowObserverService {
-    private let logger = AppLogger.windows
+/// Manages state observation and notification distribution for
+/// source window focus and title changes.
+final class SourceObserverService {
+    private let logger = AppLogger.sources
 
     // MARK: - Private State
     
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]
-    private var windowObserver: NSObjectProtocol?
+    private var sourceObserver: NSObjectProtocol?
     private var workspaceObserver: NSObjectProtocol?
 
     deinit {
@@ -56,19 +56,19 @@ final class WindowObserverService {
     // MARK: - Private Methods
 
     private func startObserving() {
-        logger.info("Starting window state observation")
+        logger.info("Starting source window state observation")
         setupWorkspaceObserver()
-        setupWindowObserver()
+        setupSourceObserver()
         startTitleChecks()
     }
 
     private func stopObserving() {
-        logger.info("Stopping window state observation")
+        logger.info("Stopping source window state observation")
 
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
-        if let observer = windowObserver {
+        if let observer = sourceObserver {
             NotificationCenter.default.removeObserver(observer)
         }
         titleCheckTimer?.invalidate()
@@ -91,10 +91,10 @@ final class WindowObserverService {
         }
     }
 
-    private func setupWindowObserver() {
-        logger.debug("Configuring window observer")
+    private func setupSourceObserver() {
+        logger.debug("Configuring source window observer")
 
-        windowObserver = NotificationCenter.default.addObserver(
+        sourceObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didBecomeKeyNotification,
             object: nil,
             queue: .main

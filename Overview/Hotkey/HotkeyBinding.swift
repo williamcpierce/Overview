@@ -13,15 +13,15 @@ import Cocoa
 
 struct HotkeyBinding: Codable, Equatable, Hashable {
     let keyCode: Int
-    let windowTitle: String
+    let sourceTitle: String
     private let modifierFlags: UInt
 
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
 
-    init(windowTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
-        self.windowTitle = windowTitle
+    init(sourceTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
+        self.sourceTitle = sourceTitle
         self.keyCode = keyCode
         self.modifierFlags = modifiers.intersection([.command, .option, .control, .shift]).rawValue
     }

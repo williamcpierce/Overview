@@ -2,72 +2,103 @@
  OverviewApp.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- The main application entry point that configures and coordinates core services,
- manages the application lifecycle, and sets up the primary user interface.
+ Created by William Pierce on 1/5/25.
+ 
+ The main application entry point, managing global state and window coordination
+ through the app delegate and window service.
 */
 
 import SwiftUI
+import Cocoa
 
 @main
 struct OverviewApp: App {
-    // MARK: - Core Services
+    @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
 
-    @StateObject private var appSettings: AppSettings
-    @StateObject private var windowManager: WindowManager
-    @StateObject private var previewManager: PreviewManager
-    @StateObject private var hotkeyManager: HotkeyManager
+    var body: some Scene {
+        Settings {
+            SettingsView(
+                appSettings: appDelegate.appSettings,
+                sourceManager: appDelegate.sourceManager
+            )
+        }.commands {
+            windowCommands
+            editCommands
+        }
+    }
 
+    // MARK: - Command Configuration
+
+    private var windowCommands: some Commands {
+        CommandGroup(before: .newItem) {
+            Button("New Preview Window") {
+                appDelegate.windowManager.createPreviewWindow()
+            }
+            .keyboardShortcut("n", modifiers: .command)
+        }
+    }
+
+    private var editCommands: some Commands {
+        CommandMenu("Edit") {
+            Toggle("Edit Mode", isOn: editModeBinding)
+            .keyboardShortcut("e", modifiers: .command)
+        }
+    }
+
+    private var editModeBinding: Binding<Bool> {
+        Binding(
+            get: { appDelegate.previewManager.editModeEnabled },
+            set: { appDelegate.previewManager.editModeEnabled = $0 }
+        )
+    }
+}
+
+// MARK: - App Delegate
+
+@MainActor
+final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
+    // MARK: - Public Properties
+    let appSettings = AppSettings()
+    let sourceManager: SourceManager
+    let previewManager: PreviewManager
+    let hotkeyManager: HotkeyManager
+    var windowManager: WindowManager!
+
+    // MARK: - Private Properties
     private let logger = AppLogger.interface
 
     // MARK: - Initialization
 
-    init() {
-        logger.debug("Initializing core application services")
+    override init() {
+        sourceManager = SourceManager(appSettings: appSettings)
+        previewManager = PreviewManager(sourceManager: sourceManager)
+        hotkeyManager = HotkeyManager(appSettings: appSettings, sourceManager: sourceManager)
 
-        let settings = AppSettings()
-        let window = WindowManager(appSettings: settings)
-        let preview = PreviewManager(windowManager: window)
-        let hotkey = HotkeyManager(
-            appSettings: settings,
-            windowManager: window
+        super.init()
+
+        windowManager = WindowManager(
+            settings: appSettings,
+            preview: previewManager,
+            source: sourceManager
         )
 
-        self._appSettings = StateObject(wrappedValue: settings)
-        self._windowManager = StateObject(wrappedValue: window)
-        self._previewManager = StateObject(wrappedValue: preview)
-        self._hotkeyManager = StateObject(wrappedValue: hotkey)
-
-        logger.info("Application services initialized successfully")
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate),
+            name: NSApplication.willTerminateNotification,
+            object: nil
+        )
     }
 
-    // MARK: - Scene Configuration
+    // MARK: - NSApplicationDelegate
 
-    var body: some Scene {
-        WindowGroup {
-            ContentView(
-                appSettings: appSettings,
-                previewManager: previewManager,
-                windowManager: windowManager
-            )
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        Task {
+            windowManager.restoreWindowStates()
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(
-            width: appSettings.defaultWindowWidth,
-            height: appSettings.defaultWindowHeight
-        )
-        .commands {
-            CommandMenu("Edit") {
-                Toggle("Edit Mode", isOn: $previewManager.editModeEnabled)
-            }
-        }
+    }
 
-        Settings {
-            SettingsView(
-                appSettings: appSettings,
-                windowManager: windowManager
-            )
-        }
+    func applicationWillTerminate(_ notification: Notification) {
+        windowManager.saveWindowStates()
     }
 }

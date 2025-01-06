@@ -2,119 +2,133 @@
  Window/WindowManager.swift
  Overview
 
- Created by William Pierce on 12/10/24.
+ Created by William Pierce on 1/5/25.
 
- Coordinates window management operations including focus handling,
- window filtering, and state observation across the application.
+ Manages the creation, configuration, and lifecycle of preview windows,
+ coordinating window state persistence and restoration.
 */
 
-import ScreenCaptureKit
 import SwiftUI
 
-@MainActor
-final class WindowManager: ObservableObject {
-    // MARK: - Published State
-    @Published private(set) var focusedBundleId: String?
-    @Published private(set) var focusedProcessId: pid_t?
-    @Published private(set) var isOverviewActive: Bool = true
-    @Published private(set) var windowTitles: [WindowID: String] = [:]
-
+final class WindowManager {
     // MARK: - Dependencies
-    private let appSettings: AppSettings
-    private let windowServices: WindowServices = WindowServices.shared
-    private let captureServices: CaptureServices = CaptureServices.shared
-    private let logger = AppLogger.windows
-    private let observerId = UUID()
+    private let settings: AppSettings
+    private let previewManager: PreviewManager
+    private let sourceManager: SourceManager
+    private let windowStorage: WindowStorage = WindowStorage.shared
+    private let logger = AppLogger.interface
 
-    // MARK: - Types
+    // MARK: - Private State
+    private var activeWindows: Set<NSWindow> = []
+    private var windowDelegates: [NSWindow: WindowDelegate] = [:]
 
-    struct WindowID: Hashable {
-        let processID: pid_t
-        let windowID: CGWindowID
+    init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
+        self.settings = settings
+        self.previewManager = preview
+        self.sourceManager = source
+        logger.debug("Window service initialized")
     }
 
-    // MARK: - Initialization
-
-    init(appSettings: AppSettings) {
-        self.appSettings = appSettings
-        logger.debug("Initializing window manager")
-        setupObservers()
-        logger.info("Window manager initialization complete")
+    deinit {
+        cleanupResources()
     }
 
-    // MARK: - Public Interface
+    // MARK: - Window Management
 
-    func focusWindow(_ window: SCWindow) {
-        logger.debug("Processing window focus request: '\(window.title ?? "untitled")'")
-        windowServices.windowFocus.focusWindow(window: window)
+    func createPreviewWindow(at frame: NSRect? = nil) {
+        let windowFrame = frame ?? createDefaultFrame()
+        let window = createConfiguredWindow(with: windowFrame)
+        setupWindowDelegate(for: window)
+        setupWindowContent(window)
+        
+        activeWindows.insert(window)
+        window.orderFront(nil)
+        logger.info("Created new preview window")
     }
 
-    func focusWindow(withTitle title: String) -> Bool {
-        logger.debug("Processing title-based focus request: '\(title)'")
-        let success = windowServices.windowFocus.focusWindow(withTitle: title)
+    func closeAllPreviewWindows() {
+        let windowsToClose = activeWindows
+        windowsToClose.forEach(closeWindow)
+        logger.info("Closed \(windowsToClose.count) preview windows")
+    }
 
-        if !success {
-            logger.error("Failed to focus window: '\(title)'")
+    func closeWindow(_ window: NSWindow) {
+        cleanupWindow(window)
+        window.close()
+    }
+
+    // MARK: - State Management
+
+    func saveWindowStates() {
+        windowStorage.saveWindowStates()
+    }
+
+    func restoreWindowStates() {
+        windowStorage.restoreWindows { [weak self] frame in
+            self?.createPreviewWindow(at: frame)
         }
-
-        return success
-    }
-
-    func getFilteredWindows() async throws -> [SCWindow] {
-        logger.debug("Retrieving filtered window list")
-
-        let availableWindows = try await captureServices.getAvailableWindows()
-        let filteredWindows = windowServices.windowFilter.filterWindows(
-            availableWindows,
-            appFilterNames: appSettings.appFilterNames,
-            isFilterBlocklist: appSettings.isFilterBlocklist
-        )
-
-        logger.info("Retrieved \(filteredWindows.count) filtered windows")
-        return filteredWindows
     }
 
     // MARK: - Private Methods
 
-    private func setupObservers() {
-        logger.debug("Configuring window state observers")
-
-        windowServices.windowObserver.addObserver(
-            id: observerId,
-            onFocusChanged: { [weak self] in await self?.updateFocusedWindow() },
-            onTitleChanged: { [weak self] in await self?.updateWindowTitles() }
+    private func createDefaultFrame() -> NSRect {
+        NSRect(
+            x: 100, y: 100,
+            width: settings.previewDefaultWidth,
+            height: settings.previewDefaultHeight
         )
-
-        logger.info("Window observers configured successfully")
     }
 
-    private func updateFocusedWindow() async {
-        guard let activeApp: NSRunningApplication = NSWorkspace.shared.frontmostApplication else {
-            logger.debug("No active application found")
-            return
-        }
-
-        focusedProcessId = activeApp.processIdentifier
-        focusedBundleId = activeApp.bundleIdentifier
-        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
-
-        logger.debug("Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown")")
+    private func createConfiguredWindow(with frame: NSRect) -> NSWindow {
+        let window = NSWindow(
+            contentRect: frame,
+            styleMask: [.fullSizeContentView, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.isMovableByWindowBackground = true
+        window.level = .statusBar + 1
+        window.collectionBehavior = [.fullScreenAuxiliary]
+        
+        return window
     }
 
-    private func updateWindowTitles() async {
-        do {
-            let windows = try await captureServices.getAvailableWindows()
-            windowTitles = Dictionary(
-                uniqueKeysWithValues: windows.compactMap { window in
-                    guard let processID = window.owningApplication?.processID,
-                        let title = window.title
-                    else { return nil }
-                    return (WindowID(processID: processID, windowID: window.windowID), title)
-                }
-            )
-            logger.debug("Window titles updated: count=\(windowTitles.count)")
-        } catch {
-            logger.logError(error, context: "Failed to update window titles")
-        }
+    private func setupWindowDelegate(for window: NSWindow) {
+        let delegate = WindowDelegate(windowManager: self)
+        windowDelegates[window] = delegate
+        window.delegate = delegate
+    }
+
+    private func setupWindowContent(_ window: NSWindow) {
+        let contentView = ContentView(
+            appSettings: settings,
+            previewManager: previewManager,
+            sourceManager: sourceManager
+        )
+        window.contentView = NSHostingView(rootView: contentView)
+    }
+
+    private func cleanupWindow(_ window: NSWindow) {
+        activeWindows.remove(window)
+        windowDelegates.removeValue(forKey: window)
+    }
+
+    private func cleanupResources() {
+        windowDelegates.removeAll()
+        activeWindows.removeAll()
+        logger.debug("Window service resources cleaned up")
+    }
+}
+
+// MARK: - Window Delegate
+
+private final class WindowDelegate: NSObject, NSWindowDelegate {
+    private weak var windowManager: WindowManager?
+
+    init(windowManager: WindowManager) {
+        self.windowManager = windowManager
     }
 }

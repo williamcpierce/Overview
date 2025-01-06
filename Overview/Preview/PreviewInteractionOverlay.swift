@@ -13,6 +13,7 @@ import SwiftUI
 struct PreviewInteractionOverlay: NSViewRepresentable {
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
+    @Environment(\.dismiss) private var dismiss
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
     private let logger = AppLogger.interface
@@ -40,13 +41,16 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.onEditModeToggle = onEditModeToggle
         handler.onSourceWindowFocus = onSourceWindowFocus
+        handler.onCloseWindow = {
+            dismiss()
+        }
         handler.menu = createContextMenu(for: handler)
 
         logger.debug("Handler configured with initial state")
     }
 
     private func updateHandlerState(_ handler: PreviewInteractionHandler) {
-        let previousEditMode: Bool = handler.editModeEnabled
+        let previousEditMode = handler.editModeEnabled
         handler.editModeEnabled = editModeEnabled
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
@@ -58,11 +62,11 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
 
     private func createContextMenu(for handler: PreviewInteractionHandler) -> NSMenu {
         let menu = NSMenu()
-        let editModeItem: NSMenuItem = createEditModeMenuItem(for: handler)
+        let editModeItem = createEditModeMenuItem(for: handler)
 
         menu.addItem(editModeItem)
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(createCloseWindowMenuItem())
+        menu.addItem(createCloseWindowMenuItem(for: handler))
 
         handler.editModeMenuItem = editModeItem
         return menu
@@ -78,12 +82,14 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         return item
     }
 
-    private func createCloseWindowMenuItem() -> NSMenuItem {
-        NSMenuItem(
+    private func createCloseWindowMenuItem(for handler: PreviewInteractionHandler) -> NSMenuItem {
+        let item = NSMenuItem(
             title: "Close Window",
-            action: #selector(NSWindow.close),
+            action: #selector(PreviewInteractionHandler.closeWindow),
             keyEquivalent: ""
         )
+        item.target = handler
+        return item
     }
 }
 
@@ -93,6 +99,7 @@ private final class PreviewInteractionHandler: NSView {
     var isSelectionViewVisible: Bool = false
     var onEditModeToggle: (() -> Void)?
     var onSourceWindowFocus: (() -> Void)?
+    var onCloseWindow: (() -> Void)?
     weak var editModeMenuItem: NSMenuItem?
 
     // MARK: - Mouse Event Handling
@@ -124,5 +131,10 @@ private final class PreviewInteractionHandler: NSView {
     @objc func toggleEditMode() {
         logger.info("Edit mode toggled via context menu")
         onEditModeToggle?()
+    }
+    
+    @objc func closeWindow() {
+        logger.info("Window close requested via context menu")
+        onCloseWindow?()
     }
 }

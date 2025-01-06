@@ -23,7 +23,7 @@ final class HotkeyService {
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
     private var previousEvent: HotkeyEventProcessor?
-    private var windowFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
+    private var sourceFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
     private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
 
     deinit {
@@ -34,13 +34,13 @@ final class HotkeyService {
 
     func registerCallback(owner: AnyObject, callback: @escaping (String) -> Void) {
         let identifier = ObjectIdentifier(owner)
-        windowFocusCallbacks[identifier] = callback
+        sourceFocusCallbacks[identifier] = callback
         logger.debug("Registered callback handler: \(identifier)")
     }
 
     func removeCallback(for owner: AnyObject) {
         let identifier = ObjectIdentifier(owner)
-        windowFocusCallbacks.removeValue(forKey: identifier)
+        sourceFocusCallbacks.removeValue(forKey: identifier)
         logger.debug("Removed callback handler: \(identifier)")
     }
 
@@ -56,9 +56,9 @@ final class HotkeyService {
         for binding in bindings {
             do {
                 try registerSingleHotkey(binding)
-                logger.debug("Registered hotkey: '\(binding.windowTitle)'")
+                logger.debug("Registered hotkey: '\(binding.sourceTitle)'")
             } catch {
-                logger.logError(error, context: "Registration failed: '\(binding.windowTitle)'")
+                logger.logError(error, context: "Registration failed: '\(binding.sourceTitle)'")
                 throw error
             }
         }
@@ -134,10 +134,10 @@ final class HotkeyService {
                 self.previousEvent = currentEvent
 
                 if let (_, binding) = self.activeHotkeys[hotkeyID.id] {
-                    logger.debug("Processing event: '\(binding.windowTitle)'")
+                    logger.debug("Processing event: '\(binding.sourceTitle)'")
 
                     DispatchQueue.main.async { [weak self] in
-                        self?.windowFocusCallbacks.values.forEach { $0(binding.windowTitle) }
+                        self?.sourceFocusCallbacks.values.forEach { $0(binding.sourceTitle) }
                     }
                 }
             }

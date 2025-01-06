@@ -4,7 +4,7 @@
 
  Created by William Pierce on 12/15/24.
 
- Manages screen recording permissions and window availability checks.
+ Manages screen recording permissions and source window availability checks.
 */
 
 import ScreenCaptureKit
@@ -24,17 +24,17 @@ final class CaptureAvailabilityService {
         }
     }
 
-    func getAvailableWindows() async throws -> [SCWindow] {
-        logger.debug("Fetching available windows")
+    func getAvailableSources() async throws -> [SCWindow] {
+        logger.debug("Fetching available source windows")
 
         do {
             let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)
 
-            logger.debug("Retrieved \(content.windows.count) available windows")
+            logger.debug("Retrieved \(content.windows.count) available source windows")
             return content.windows
         } catch {
-            logger.logError(error, context: "Failed to get windows")
+            logger.logError(error, context: "Failed to get source windows")
             throw error
         }
     }
