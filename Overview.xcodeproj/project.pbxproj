@@ -14,6 +14,9 @@
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
 		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
 		C8A838372D0410CF002EC00B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838332D0410CF002EC00B /* ContentView.swift */; };
+		C8C2E48F2D2B9FC4004F8C1F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C2E48E2D2B9FC4004F8C1F /* AppDelegate.swift */; };
+		C8C2E4912D2B9FED004F8C1F /* WindowService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C2E4902D2B9FED004F8C1F /* WindowService.swift */; };
+		C8C2E4932D2BA00F004F8C1F /* WindowStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8C2E4922D2BA00F004F8C1F /* WindowStateManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +30,9 @@
 		C8A838332D0410CF002EC00B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
 		C8C2E48D2D2B916B004F8C1F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C8C2E48E2D2B9FC4004F8C1F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8C2E4902D2B9FED004F8C1F /* WindowService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowService.swift; sourceTree = "<group>"; };
+		C8C2E4922D2BA00F004F8C1F /* WindowStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowStateManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -139,7 +145,10 @@
 			children = (
 				C8C2E48D2D2B916B004F8C1F /* Info.plist */,
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
+				C8C2E4902D2B9FED004F8C1F /* WindowService.swift */,
 				C8A838332D0410CF002EC00B /* ContentView.swift */,
+				C8C2E4922D2BA00F004F8C1F /* WindowStateManager.swift */,
+				C8C2E48E2D2B9FC4004F8C1F /* AppDelegate.swift */,
 				C8A8387E2D0421ED002EC00B /* Preview */,
 				C8A838892D0421EF002EC00B /* Capture */,
 				C8323A2B2D081388001B91A6 /* Hotkey */,
@@ -234,8 +243,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8C2E4912D2B9FED004F8C1F /* WindowService.swift in Sources */,
+				C8C2E4932D2BA00F004F8C1F /* WindowStateManager.swift in Sources */,
 				C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */,
 				C8A838372D0410CF002EC00B /* ContentView.swift in Sources */,
+				C8C2E48F2D2B9FC4004F8C1F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
