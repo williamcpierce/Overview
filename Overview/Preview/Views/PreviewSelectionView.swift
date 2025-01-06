@@ -43,7 +43,6 @@ struct PreviewSelectionView: View {
         VStack {
             selectionControls
                 .padding()
-            previewStartButton
         }
     }
 
@@ -92,16 +91,6 @@ struct PreviewSelectionView: View {
         }
     }
 
-    private var previewStartButton: some View {
-        Button("Start Preview") {
-            previewManager.startSourcePreview(
-                captureManager: captureManager,
-                source: selectedSource
-            )
-        }
-        .disabled(selectedSource == nil)
-    }
-
     // MARK: - Actions
 
     private func refreshSourceList() {
@@ -117,6 +106,10 @@ struct PreviewSelectionView: View {
     private func handleSourceSelection(_ old: SCWindow?, _ new: SCWindow?) {
         if let source: SCWindow = new {
             logger.info("Source selected: '\(source.title ?? "Untitled")'")
+            previewManager.startSourcePreview(
+                captureManager: captureManager,
+                source: selectedSource
+            )
         }
     }
     
