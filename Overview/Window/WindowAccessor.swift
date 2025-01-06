@@ -11,7 +11,7 @@
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // MARK: - Dependancies
+    // MARK: - Dependencies
     @Binding var aspectRatio: CGFloat
     @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
@@ -23,31 +23,37 @@ struct WindowAccessor: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
+        view.wantsLayer = true // Ensure layer-backing
 
         DispatchQueue.main.async {
-            guard let window: NSWindow = view.window else {
+            guard let window = view.window else {
                 logger.warning("Window reference unavailable during initialization")
                 return
             }
 
             configureWindowDefaults(window)
-            logger.info(
-                "Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
+            logger.info("Window initialized: \(Int(window.frame.width))x\(Int(window.frame.height))")
         }
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let window: NSWindow = nsView.window else {
-            logger.debug("Window reference unavailable during update")
+        // Only proceed if view is still in window hierarchy
+        guard nsView.window != nil, nsView.superview != nil else {
             return
         }
 
-        synchronizeEditModeState(window)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
+        // Ensure window updates happen on main thread
+        DispatchQueue.main.async {
+            guard let window = nsView.window else { return }
+            synchronizeEditModeState(window)
             synchronizeWindowConfiguration(window)
-            synchronizeAspectRatio(window)
+            
+            // Throttle aspect ratio updates
+            DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
+                guard nsView.window != nil, nsView.superview != nil else { return }
+                synchronizeAspectRatio(window)
+            }
         }
     }
 
@@ -59,21 +65,31 @@ struct WindowAccessor: NSViewRepresentable {
         window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.styleMask = NSWindow.StyleMask.fullSizeContentView
+        
+        // Add close button support
+        window.styleMask.insert(.closable)
+        window.standardWindowButton(.closeButton)?.isHidden = false
 
         logger.debug("Applied default window configuration")
     }
 
     private func synchronizeEditModeState(_ window: NSWindow) {
-        let newStyleMask: NSWindow.StyleMask =
-            previewManager.editModeEnabled
-            ? [.fullSizeContentView, .resizable]
-            : .fullSizeContentView
+        var newStyleMask: NSWindow.StyleMask = .fullSizeContentView
+        
+        // Always keep closable enabled
+        newStyleMask.insert(.closable)
+        
+        if previewManager.editModeEnabled {
+            newStyleMask.insert(.resizable)
+        }
+        
         let newMovability: Bool = previewManager.editModeEnabled
 
         if window.styleMask != newStyleMask {
             window.styleMask = newStyleMask
             logger.debug("Window stylemask updated")
         }
+        
         if window.isMovable != newMovability {
             window.isMovable = newMovability
             logger.debug("Window movability updated")
@@ -86,8 +102,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateWindowLevel(_ window: NSWindow) {
-        let shouldFloat: Bool =
-            previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
+        let shouldFloat = previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         if window.level != newLevel {
@@ -97,7 +112,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateMissionControlBehavior(_ window: NSWindow) {
-        let shouldManage: Bool = appSettings.previewManagedByMissionControl
+        let shouldManage = appSettings.previewManagedByMissionControl
 
         if shouldManage {
             window.collectionBehavior.insert(.managed)
@@ -114,11 +129,11 @@ struct WindowAccessor: NSViewRepresentable {
         guard captureManager.isCapturing else { return }
         guard aspectRatio != 0 else { return }
 
-        let windowWidth: CGFloat = window.frame.width
-        let windowHeight: CGFloat = window.frame.height
-        let desiredHeight: CGFloat = windowWidth / aspectRatio
+        let windowWidth = window.frame.width
+        let windowHeight = window.frame.height
+        let desiredHeight = windowWidth / aspectRatio
 
-        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
+        let heightDifference = abs(windowHeight - desiredHeight)
         guard heightDifference > 1.0 else { return }
 
         let updatedSize = NSSize(width: windowWidth, height: desiredHeight)

@@ -1,28 +1,22 @@
-/*
- Window/WindowService.swift
- Overview
-
- Created by William Pierce on 1/5/25.
-
- Manages window creation, state persistence, and restoration for preview windows.
-*/
-
 import SwiftUI
 
 final class WindowService {
     // MARK: - Dependencies
-    
     private let settings: AppSettings
     private let previewManager: PreviewManager
     private let sourceManager: SourceManager
     private let stateManager: WindowStateManager
     private let logger = AppLogger.interface
     
+    // Track active windows
+    private var activeWindows: Set<NSWindow> = []
+    
     init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
         self.settings = settings
         self.previewManager = preview
         self.sourceManager = source
         self.stateManager = WindowStateManager()
+        logger.debug("Window service initialized")
     }
     
     // MARK: - Window Management
@@ -36,31 +30,46 @@ final class WindowService {
         
         let window = NSWindow(
             contentRect: frame ?? defaultFrame,
-            styleMask: [.fullSizeContentView],
+            styleMask: [.fullSizeContentView, .closable],
             backing: .buffered,
             defer: false
         )
         
+        window.delegate = WindowDelegate(windowService: self)
         configureWindow(window)
         setupWindowContent(window)
-        window.makeKeyAndOrderFront(nil)
         
+        // Track the window
+        activeWindows.insert(window)
+        
+        window.makeKeyAndOrderFront(nil)
         logger.info("Created new preview window")
     }
     
     func closeAllPreviewWindows() {
-        saveWindowStates()
-        NSApplication.shared.windows.forEach { window in
-            if window.contentView?.ancestorOrSelf(ofType: NSHostingView<ContentView>.self) != nil {
-                window.close()
-            }
+        // Create a copy of the set to avoid modification during iteration
+        let windowsToClose = activeWindows
+        
+        for window in windowsToClose {
+            closeWindow(window)
         }
+        
         logger.info("Closed all preview windows")
+    }
+    
+    func closeWindow(_ window: NSWindow) {
+        saveWindowState(for: window)
+        activeWindows.remove(window)
+        window.close()
     }
     
     // MARK: - State Management
     
     func saveWindowStates() {
+        stateManager.saveWindowStates()
+    }
+    
+    func saveWindowState(for window: NSWindow) {
         stateManager.saveWindowStates()
     }
     
@@ -87,5 +96,19 @@ final class WindowService {
             sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
+    }
+}
+
+// Window delegate to handle window closing
+private class WindowDelegate: NSObject, NSWindowDelegate {
+    private weak var windowService: WindowService?
+    
+    init(windowService: WindowService) {
+        self.windowService = windowService
+    }
+    
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        windowService?.saveWindowState(for: window)
     }
 }
