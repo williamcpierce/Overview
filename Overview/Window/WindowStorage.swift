@@ -18,6 +18,7 @@ extension NSView {
         return superview?.ancestorOrSelf(ofType: type)
     }
 }
+
 final class WindowStorage {
     private let logger = AppLogger.interface
     private let windowPositionsKey = "StoredWindowPositions"

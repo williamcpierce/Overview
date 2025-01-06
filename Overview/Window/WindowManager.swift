@@ -21,16 +21,23 @@ final class WindowManager {
     // MARK: - Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var sessionWindowCounter: Int
+    
+    // MARK: - Constants
+    private let cascadeOffsetMultiplier: CGFloat = 25
 
     init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
         self.settings = settings
         self.previewManager = preview
         self.sourceManager = source
+        self.sessionWindowCounter = 0
         logger.debug("Window service initialized")
     }
 
     deinit {
-        cleanupResources()
+        windowDelegates.removeAll()
+        activeWindows.removeAll()
+        logger.debug("Window service resources cleaned up")
     }
 
     // MARK: - Window Management
@@ -42,19 +49,10 @@ final class WindowManager {
         setupWindowContent(window)
         
         activeWindows.insert(window)
+        sessionWindowCounter += 1
+
         window.orderFront(nil)
         logger.info("Created new preview window")
-    }
-
-    func closeAllPreviewWindows() {
-        let windowsToClose = activeWindows
-        windowsToClose.forEach(closeWindow)
-        logger.info("Closed \(windowsToClose.count) preview windows")
-    }
-
-    func closeWindow(_ window: NSWindow) {
-        cleanupWindow(window)
-        window.close()
     }
 
     // MARK: - State Management
@@ -72,8 +70,20 @@ final class WindowManager {
     // MARK: - Private Methods
 
     private func createDefaultFrame() -> NSRect {
-        NSRect(
-            x: 100, y: 100,
+        guard let screenFrame = NSScreen.main?.frame else {
+            logger.warning("Unable to retrieve main screen frame, defaulting to zero")
+            return .zero
+        }
+        
+        let centerX = (screenFrame.width - settings.previewDefaultWidth) / 2
+        let centerY = (screenFrame.height - settings.previewDefaultHeight) / 2
+        
+        let xOffset = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+        let yOffset = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+        
+        return NSRect(
+            x: centerX + xOffset,
+            y: centerY - yOffset,
             width: settings.previewDefaultWidth,
             height: settings.previewDefaultHeight
         )
@@ -82,7 +92,7 @@ final class WindowManager {
     private func createConfiguredWindow(with frame: NSRect) -> NSWindow {
         let window = NSWindow(
             contentRect: frame,
-            styleMask: [.fullSizeContentView, .closable],
+            styleMask: [.fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -91,7 +101,6 @@ final class WindowManager {
         window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.level = .statusBar + 1
-        window.collectionBehavior = [.fullScreenAuxiliary]
         
         return window
     }
@@ -109,17 +118,6 @@ final class WindowManager {
             sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
-    }
-
-    private func cleanupWindow(_ window: NSWindow) {
-        activeWindows.remove(window)
-        windowDelegates.removeValue(forKey: window)
-    }
-
-    private func cleanupResources() {
-        windowDelegates.removeAll()
-        activeWindows.removeAll()
-        logger.debug("Window service resources cleaned up")
     }
 }
 

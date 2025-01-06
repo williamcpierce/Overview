@@ -97,7 +97,7 @@
 			membershipExceptions = (
 				WindowAccessor.swift,
 				WindowManager.swift,
-				WindowService.swift,
+				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
