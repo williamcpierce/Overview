@@ -14,20 +14,16 @@ For development updates, please join our Discord:
 
 ## Features
 
-- Live window previews
-- Support for multiple preview windows
-- Hotkey support for application switching
-- Click preview windows to switch to source application
-- Previews float on top of other applications
-- Adjustable preview transparency and refresh rate
-- Preview overlays:
-  - Border highlighting for focused windows
-  - Window titles
+-   Live window previews
+-   Support for multiple preview windows
+-   Quick switching to source applications via preview clicks or customizable hotkeys
+-   Adjustable preview opacity and refresh rate
+-   Overlays for window title and focus status
 
 ## System Requirements
 
-- macOS Sonoma (macOS 14) or later
-- Apple Silicon
+-   macOS Sonoma (14.0) or later
+-   Apple Silicon
 
 ## Installation
 
@@ -35,44 +31,59 @@ For development updates, please join our Discord:
 2. Mount the disk image and drag Overview into your Applications folder.
 
 ### On First Launch
-- The app package is *unsigned* at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.
-  - If you aren't comfortable running unsigned apps, you can also clone this project and build it yourself in Xcode 16. 
-- There will be an error and a notification to allow screen recording. This is necessary to show the preview windows. Allow screen recording permission in settings and then re-launch Overview. 
+
+-   The app package is _unsigned_ at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.
+    -   If you aren't comfortable running unsigned apps, you can also clone this project and build it yourself in Xcode 16.
+-   Grant screen recording permission when prompted
+    -   Click "Open System Settings" in the permission dialog
+    -   Enable Overview under Privacy & Security > Screen Recording
+    -   Relaunch Overview
 
 ## Usage
 
-1. Launch Overview
+### Quick Start
+
+1. Launch Overview and open a new preview window
 2. Select a window to capture from the available windows list
-3. To reposition or resize preview windows, right click and toggle Edit Mode
-4. To close preview windows, right click and select Close Window
-5. Left click on preview windows (with Edit Mode disabled) to switch to the previewed application
-6. Create new preview windows with ⌘N while in Edit Mode, or via the File menu
-7. Adjust preview frame rate, style, and behavior in the Settings menu
-8. If you want preview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
+3. Click "Start Preview"
+
+### Controls
+
+-   Left-click preview: Switch to source application
+-   Right-click preview: Access context menu
+    -   Toggle Edit Mode for repositioning/resizing
+    -   Close preview window
+-   ⌘N: Create new preview window
+-   Settings (⌘,): Configure preview appearance, behavior, hotkeys, and more
 
 ### Settings
 
-- General:
-  - Focused window border overlay
-  - Window title overlay
-- Previews: 
-  - Preview opacity
-  - Default preview window size
-  - Mission Control visibility
-  - Preview alignment help
-- Performance:
-  - Preview frame rate
-- Hotkeys:
-  - Hotkey bindings by window title
-- Filters:
-  - Blocklist or allowlist
-  - Window picker filtering by application title
+-   General
+    -   Focused window border overlay
+    -   Window title overlay
+-   Previews
+    -   Opacity
+    -   Default dimensions
+    -   Behavior
+        -   Mission Control visibility
+        -   Active window preview hiding
+        -   Inactive application preview hiding
+        -   Preview alignment help
+-   Performance
+    -   Preview frame rate
+-   Hotkeys
+    -   Hotkey bindings by window title
+-   Filters
+    -   Blocklist or allowlist
+    -   Window picker filtering by application title
+
+If you want preview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
 
 ## Known Issues/Limitations
 
-- Performance is suboptimal
-- Previews will be distorted when using Stage Manager
-- Previews cannot float over full-screen applications
+-   Performance optimizations in progress
+-   Stage Manager compatibility issues (preview distortion)
+-   Cannot overlay full-screen applications
 
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
@@ -82,12 +93,13 @@ Contributions to Overview are welcome, but as the project is in its early stages
 
 ## License
 
-This project is MIT licensed, see the LICENSE file for full details. 
+This project is MIT licensed, see the LICENSE file for full details.
 
 ## Acknowledgements
 
-The design, features, and general purpose of Overview is heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview). 
-Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen. 
+The design, features, and general purpose of Overview are heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview).
+
+Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen.
 
 ## Disclaimer
 
