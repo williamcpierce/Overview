@@ -66,6 +66,7 @@ For development updates, please join our Discord:
     -   Default dimensions
     -   Behavior
         -   Mission Control visibility
+        -   Close preview on source window close
         -   Active window preview hiding
         -   Inactive application preview hiding
         -   Preview alignment help
