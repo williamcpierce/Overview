@@ -12,7 +12,7 @@ import SwiftUI
 
 final class WindowManager {
     // MARK: - Dependencies
-    private let settings: AppSettings
+    private let appSettings: AppSettings
     private let previewManager: PreviewManager
     private let sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
@@ -21,40 +21,38 @@ final class WindowManager {
     // MARK: - Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var sessionWindowCounter: Int
 
-    init(settings: AppSettings, preview: PreviewManager, source: SourceManager) {
-        self.settings = settings
-        self.previewManager = preview
-        self.sourceManager = source
+    // MARK: - Constants
+    private let cascadeOffsetMultiplier: CGFloat = 25
+
+    init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
+        self.appSettings = appSettings
+        self.previewManager = previewManager
+        self.sourceManager = sourceManager
+        self.sessionWindowCounter = 0
         logger.debug("Window service initialized")
     }
 
     deinit {
-        cleanupResources()
+        windowDelegates.removeAll()
+        activeWindows.removeAll()
+        logger.debug("Window service resources cleaned up")
     }
 
     // MARK: - Window Management
 
     func createPreviewWindow(at frame: NSRect? = nil) {
-        let windowFrame = frame ?? createDefaultFrame()
-        let window = createConfiguredWindow(with: windowFrame)
+        let windowFrame: NSRect = frame ?? createDefaultFrame()
+        let window: NSWindow = createConfiguredWindow(with: windowFrame)
         setupWindowDelegate(for: window)
         setupWindowContent(window)
-        
+
         activeWindows.insert(window)
+        sessionWindowCounter += 1
+
         window.orderFront(nil)
         logger.info("Created new preview window")
-    }
-
-    func closeAllPreviewWindows() {
-        let windowsToClose = activeWindows
-        windowsToClose.forEach(closeWindow)
-        logger.info("Closed \(windowsToClose.count) preview windows")
-    }
-
-    func closeWindow(_ window: NSWindow) {
-        cleanupWindow(window)
-        window.close()
     }
 
     // MARK: - State Management
@@ -72,27 +70,38 @@ final class WindowManager {
     // MARK: - Private Methods
 
     private func createDefaultFrame() -> NSRect {
-        NSRect(
-            x: 100, y: 100,
-            width: settings.previewDefaultWidth,
-            height: settings.previewDefaultHeight
+        guard let screenFrame: NSRect = NSScreen.main?.frame else {
+            logger.warning("Unable to retrieve main screen frame, defaulting to zero")
+            return .zero
+        }
+
+        let centerX = (screenFrame.width - appSettings.windowDefaultWidth) / 2
+        let centerY = (screenFrame.height - appSettings.windowDefaultHeight) / 2
+
+        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
+
+        return NSRect(
+            x: centerX + xOffset,
+            y: centerY - yOffset,
+            width: appSettings.windowDefaultWidth,
+            height: appSettings.windowDefaultHeight
         )
     }
 
     private func createConfiguredWindow(with frame: NSRect) -> NSWindow {
         let window = NSWindow(
             contentRect: frame,
-            styleMask: [.fullSizeContentView, .closable],
+            styleMask: [.fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        
+
         window.backgroundColor = .clear
         window.hasShadow = false
         window.isMovableByWindowBackground = true
         window.level = .statusBar + 1
-        window.collectionBehavior = [.fullScreenAuxiliary]
-        
+
         return window
     }
 
@@ -104,22 +113,11 @@ final class WindowManager {
 
     private func setupWindowContent(_ window: NSWindow) {
         let contentView = ContentView(
-            appSettings: settings,
+            appSettings: appSettings,
             previewManager: previewManager,
             sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
-    }
-
-    private func cleanupWindow(_ window: NSWindow) {
-        activeWindows.remove(window)
-        windowDelegates.removeValue(forKey: window)
-    }
-
-    private func cleanupResources() {
-        windowDelegates.removeAll()
-        activeWindows.removeAll()
-        logger.debug("Window service resources cleaned up")
     }
 }
 

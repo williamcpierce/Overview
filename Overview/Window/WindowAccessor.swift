@@ -31,18 +31,18 @@ struct WindowAccessor: NSViewRepresentable {
         }
 
         DispatchQueue.main.async {
-            guard let window = nsView.window else { return }
+            guard let window: NSWindow = nsView.window else { return }
             synchronizeEditableState(window)
 
             DispatchQueue.main.asyncAfter(deadline: .now() + throttleInterval) {
                 guard nsView.window != nil, nsView.superview != nil else { return }
                 synchronizeAspectRatio(window)
-                synchronizeWindowConfiguration(window)
+                synchronizeBehavior(window)
             }
         }
     }
 
-    // MARK: - Editable Management
+    // MARK: - Editable State Management
 
     private func synchronizeEditableState(_ window: NSWindow) {
         updateResizability(window)
@@ -71,13 +71,13 @@ struct WindowAccessor: NSViewRepresentable {
 
     // MARK: - Behavior Management
 
-    private func synchronizeWindowConfiguration(_ window: NSWindow) {
-        updateWindowLevel(window)
-        updateMissionControlBehavior(window)
+    private func synchronizeBehavior(_ window: NSWindow) {
+        updateLevel(window)
+        updateMissionControl(window)
     }
 
-    private func updateWindowLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
+    private func updateLevel(_ window: NSWindow) {
+        let shouldFloat = previewManager.editModeEnabled && appSettings.windowAlignmentEnabled
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         if window.level != newLevel {
@@ -86,8 +86,8 @@ struct WindowAccessor: NSViewRepresentable {
         }
     }
 
-    private func updateMissionControlBehavior(_ window: NSWindow) {
-        let shouldManage = appSettings.previewManagedByMissionControl
+    private func updateMissionControl(_ window: NSWindow) {
+        let shouldManage = appSettings.windowManagedByMissionControl
 
         if shouldManage {
             window.collectionBehavior.insert(.managed)
@@ -95,7 +95,7 @@ struct WindowAccessor: NSViewRepresentable {
             window.collectionBehavior.remove(.managed)
         }
 
-        logger.debug("Mission Control behavior updated: managed=\(shouldManage)")
+        logger.debug("Mission Control management updated: managed=\(shouldManage)")
     }
 
     // MARK: - Layout Management
@@ -104,11 +104,11 @@ struct WindowAccessor: NSViewRepresentable {
         guard captureManager.isCapturing else { return }
         guard aspectRatio != 0 else { return }
 
-        let windowWidth = window.frame.width
-        let windowHeight = window.frame.height
-        let desiredHeight = windowWidth / aspectRatio
+        let windowWidth: CGFloat = window.frame.width
+        let windowHeight: CGFloat = window.frame.height
+        let desiredHeight: CGFloat = windowWidth / aspectRatio
 
-        let heightDifference = abs(windowHeight - desiredHeight)
+        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
         guard heightDifference > 1.0 else { return }
 
         let updatedSize = NSSize(width: windowWidth, height: desiredHeight)

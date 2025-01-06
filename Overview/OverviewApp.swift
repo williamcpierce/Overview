@@ -2,7 +2,7 @@
  OverviewApp.swift
  Overview
 
- Created by William Pierce on 1/5/25.
+ Created by William Pierce on 9/15/24.
  
  The main application entry point, managing global state and window coordination
  through the app delegate and window service.
@@ -77,9 +77,9 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         super.init()
 
         windowManager = WindowManager(
-            settings: appSettings,
-            preview: previewManager,
-            source: sourceManager
+            appSettings: appSettings,
+            previewManager: previewManager,
+            sourceManager: sourceManager
         )
 
         NotificationCenter.default.addObserver(

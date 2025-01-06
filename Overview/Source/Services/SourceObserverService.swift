@@ -15,7 +15,7 @@ final class SourceObserverService {
     private let logger = AppLogger.sources
 
     // MARK: - Private State
-    
+
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]

@@ -26,7 +26,7 @@
 		C87695A42CBA1B5800FBCA6C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C8A838332D0410CF002EC00B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
-		C8C2E48D2D2B916B004F8C1F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C8CE2DC12D2BEFC5002D11AC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -97,7 +97,7 @@
 			membershipExceptions = (
 				WindowAccessor.swift,
 				WindowManager.swift,
-				WindowService.swift,
+				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -146,8 +146,8 @@
 		C87695842CBA082D00FBCA6C /* Overview */ = {
 			isa = PBXGroup;
 			children = (
-				C8C2E48D2D2B916B004F8C1F /* Info.plist */,
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
+				C8CE2DC12D2BEFC5002D11AC /* Info.plist */,
 				C8A838332D0410CF002EC00B /* ContentView.swift */,
 				C8C2E4942D2BAEA8004F8C1F /* Window */,
 				C8A8387E2D0421ED002EC00B /* Preview */,

@@ -183,8 +183,8 @@ struct SettingsView: View {
     private var defaultWindowSizeConfiguration: some View {
         Section {
             sectionHeader("Default Size")
-            dimensionField("Width", binding: $appSettings.previewDefaultWidth)
-            dimensionField("Height", binding: $appSettings.previewDefaultHeight)
+            dimensionField("Width", binding: $appSettings.windowDefaultWidth)
+            dimensionField("Height", binding: $appSettings.windowDefaultHeight)
         }
     }
 
@@ -336,8 +336,8 @@ struct SettingsView: View {
     }
 
     private var missionControlToggle: some View {
-        Toggle("Show in Mission Control", isOn: $appSettings.previewManagedByMissionControl)
-            .onChange(of: appSettings.previewManagedByMissionControl) { _, newValue in
+        Toggle("Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
+            .onChange(of: appSettings.windowManagedByMissionControl) { _, newValue in
                 logger.info("Mission Control integration set to \(newValue)")
             }
     }
@@ -367,8 +367,8 @@ struct SettingsView: View {
     }
 
     private var editModeAlignmentToggle: some View {
-        Toggle("Enable alignment help in edit mode", isOn: $appSettings.previewAlignmentEnabled)
-            .onChange(of: appSettings.previewAlignmentEnabled) { _, newValue in
+        Toggle("Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
+            .onChange(of: appSettings.windowAlignmentEnabled) { _, newValue in
                 logger.info("Edit mode alignment set to \(newValue)")
             }
     }

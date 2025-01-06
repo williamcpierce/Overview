@@ -30,13 +30,13 @@ class AppSettings: ObservableObject {
         static let sourceTitleFontSize: Double = 12.0
         static let sourceTitleBackgroundOpacity: Double = 0.4
         static let previewOpacity: Double = 0.95
-        static let previewDefaultWidth: Double = 288
-        static let previewDefaultHeight: Double = 162
-        static let previewManagedByMissionControl: Bool = true
         static let previewCloseOnCaptureStop: Bool = false
         static let previewHideInactiveApplications: Bool = false
         static let previewHideActiveWindow: Bool = false
-        static let previewAlignmentEnabled: Bool = false
+        static let windowDefaultWidth: Double = 288
+        static let windowDefaultHeight: Double = 162
+        static let windowManagedByMissionControl: Bool = true
+        static let windowAlignmentEnabled: Bool = false
         static let captureFrameRate: Double = 10.0
         static let hotkeyBindings: [HotkeyBinding] = []
         static let filterAppNames: [String] = []
@@ -94,39 +94,12 @@ class AppSettings: ObservableObject {
         }
     }
 
-    // MARK: - Preview Window Appearance Settings
+    // MARK: - Preview Settings
 
     @Published var previewOpacity: Double {
         didSet {
             UserDefaults.standard.set(previewOpacity, forKey: StorageKeys.previewOpacity)
             logger.info("Preview window opacity updated to \(Int(previewOpacity * 100))%")
-        }
-    }
-
-    @Published var previewDefaultWidth: Double {
-        didSet {
-            UserDefaults.standard.set(previewDefaultWidth, forKey: StorageKeys.previewDefaultWidth)
-            logger.info("Default preview window width set to \(Int(previewDefaultWidth))px")
-        }
-    }
-
-    @Published var previewDefaultHeight: Double {
-        didSet {
-            UserDefaults.standard.set(
-                previewDefaultHeight, forKey: StorageKeys.previewDefaultHeight)
-            logger.info("Default preview window height set to \(Int(previewDefaultHeight))px")
-        }
-    }
-
-    // MARK: - Preview Window Behavior Settings
-
-    @Published var previewManagedByMissionControl: Bool {
-        didSet {
-            UserDefaults.standard.set(
-                previewManagedByMissionControl,
-                forKey: StorageKeys.previewManagedByMissionControl
-            )
-            logger.info("Mission Control integration set to \(previewManagedByMissionControl)")
         }
     }
 
@@ -156,13 +129,40 @@ class AppSettings: ObservableObject {
         }
     }
 
-    @Published var previewAlignmentEnabled: Bool {
+    // MARK: - Window Settings
+
+    @Published var windowDefaultWidth: Double {
+        didSet {
+            UserDefaults.standard.set(windowDefaultWidth, forKey: StorageKeys.windowDefaultWidth)
+            logger.info("Default preview window width set to \(Int(windowDefaultWidth))px")
+        }
+    }
+
+    @Published var windowDefaultHeight: Double {
         didSet {
             UserDefaults.standard.set(
-                previewAlignmentEnabled,
-                forKey: StorageKeys.previewAlignmentEnabled
+                windowDefaultHeight, forKey: StorageKeys.windowDefaultHeight)
+            logger.info("Default preview window height set to \(Int(windowDefaultHeight))px")
+        }
+    }
+
+    @Published var windowManagedByMissionControl: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                windowManagedByMissionControl,
+                forKey: StorageKeys.windowManagedByMissionControl
             )
-            logger.info("Edit mode alignment set to \(previewAlignmentEnabled)")
+            logger.info("Mission Control integration set to \(windowManagedByMissionControl)")
+        }
+    }
+
+    @Published var windowAlignmentEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                windowAlignmentEnabled,
+                forKey: StorageKeys.windowAlignmentEnabled
+            )
+            logger.info("Edit mode alignment set to \(windowAlignmentEnabled)")
         }
     }
 
@@ -221,13 +221,13 @@ class AppSettings: ObservableObject {
         self.sourceTitleFontSize = Defaults.sourceTitleFontSize
         self.sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
         self.previewOpacity = Defaults.previewOpacity
-        self.previewDefaultWidth = Defaults.previewDefaultWidth
-        self.previewDefaultHeight = Defaults.previewDefaultHeight
-        self.previewManagedByMissionControl = Defaults.previewManagedByMissionControl
+        self.windowDefaultWidth = Defaults.windowDefaultWidth
+        self.windowDefaultHeight = Defaults.windowDefaultHeight
+        self.windowManagedByMissionControl = Defaults.windowManagedByMissionControl
         self.previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
         self.previewHideInactiveApplications = Defaults.previewHideInactiveApplications
         self.previewHideActiveWindow = Defaults.previewHideActiveWindow
-        self.previewAlignmentEnabled = Defaults.previewAlignmentEnabled
+        self.windowAlignmentEnabled = Defaults.windowAlignmentEnabled
         self.hotkeyBindings = Defaults.hotkeyBindings
         self.captureFrameRate = Defaults.captureFrameRate
         self.filterAppNames = Defaults.filterAppNames
@@ -259,13 +259,13 @@ class AppSettings: ObservableObject {
         sourceTitleFontSize = Defaults.sourceTitleFontSize
         sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
         previewOpacity = Defaults.previewOpacity
-        previewDefaultWidth = Defaults.previewDefaultWidth
-        previewDefaultHeight = Defaults.previewDefaultHeight
-        previewManagedByMissionControl = Defaults.previewManagedByMissionControl
+        windowDefaultWidth = Defaults.windowDefaultWidth
+        windowDefaultHeight = Defaults.windowDefaultHeight
+        windowManagedByMissionControl = Defaults.windowManagedByMissionControl
         previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
         previewHideInactiveApplications = Defaults.previewHideInactiveApplications
         previewHideActiveWindow = Defaults.previewHideActiveWindow
-        previewAlignmentEnabled = Defaults.previewAlignmentEnabled
+        windowAlignmentEnabled = Defaults.windowAlignmentEnabled
         hotkeyBindings = Defaults.hotkeyBindings
         captureFrameRate = Defaults.captureFrameRate
         filterAppNames = Defaults.filterAppNames
@@ -288,19 +288,19 @@ class AppSettings: ObservableObject {
         sourceTitleBackgroundOpacity = UserDefaults.standard.double(
             forKey: StorageKeys.sourceTitleBackgroundOpacity)
         previewOpacity = UserDefaults.standard.double(forKey: StorageKeys.previewOpacity)
-        previewDefaultWidth = UserDefaults.standard.double(forKey: StorageKeys.previewDefaultWidth)
-        previewDefaultHeight = UserDefaults.standard.double(
-            forKey: StorageKeys.previewDefaultHeight)
-        previewManagedByMissionControl = UserDefaults.standard.bool(
-            forKey: StorageKeys.previewManagedByMissionControl)
+        windowDefaultWidth = UserDefaults.standard.double(forKey: StorageKeys.windowDefaultWidth)
+        windowDefaultHeight = UserDefaults.standard.double(
+            forKey: StorageKeys.windowDefaultHeight)
+        windowManagedByMissionControl = UserDefaults.standard.bool(
+            forKey: StorageKeys.windowManagedByMissionControl)
         previewCloseOnCaptureStop = UserDefaults.standard.bool(
             forKey: StorageKeys.previewCloseOnCaptureStop)
         previewHideInactiveApplications = UserDefaults.standard.bool(
             forKey: StorageKeys.previewHideInactiveApplications)
         previewHideActiveWindow = UserDefaults.standard.bool(
             forKey: StorageKeys.previewHideActiveWindow)
-        previewAlignmentEnabled = UserDefaults.standard.bool(
-            forKey: StorageKeys.previewAlignmentEnabled)
+        windowAlignmentEnabled = UserDefaults.standard.bool(
+            forKey: StorageKeys.windowAlignmentEnabled)
         captureFrameRate = UserDefaults.standard.double(forKey: StorageKeys.captureFrameRate)
         filterAppNames =
             UserDefaults.standard.array(
@@ -363,15 +363,15 @@ class AppSettings: ObservableObject {
     }
 
     private func validatePreviewWindowDimensions() {
-        if previewDefaultWidth < 100 {
+        if windowDefaultWidth < 100 {
             logger.warning(
-                "Invalid preview window width (\(previewDefaultWidth)), resetting to default")
-            previewDefaultWidth = Defaults.previewDefaultWidth
+                "Invalid preview window width (\(windowDefaultWidth)), resetting to default")
+            windowDefaultWidth = Defaults.windowDefaultWidth
         }
-        if previewDefaultHeight < 100 {
+        if windowDefaultHeight < 100 {
             logger.warning(
-                "Invalid preview window height (\(previewDefaultHeight)), resetting to default")
-            previewDefaultHeight = Defaults.previewDefaultHeight
+                "Invalid preview window height (\(windowDefaultHeight)), resetting to default")
+            windowDefaultHeight = Defaults.windowDefaultHeight
         }
     }
 
@@ -407,13 +407,13 @@ private enum StorageKeys {
     static let sourceTitleFontSize: String = "titleFontSize"
     static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
     static let previewOpacity: String = "windowOpacity"
-    static let previewDefaultWidth: String = "defaultWindowWidth"
-    static let previewDefaultHeight: String = "defaultWindowHeight"
-    static let previewManagedByMissionControl: String = "managedByMissionControl"
+    static let windowDefaultWidth: String = "defaultWindowWidth"
+    static let windowDefaultHeight: String = "defaultWindowHeight"
+    static let windowManagedByMissionControl: String = "managedByMissionControl"
     static let previewCloseOnCaptureStop: String = "closeOnCaptureStop"
     static let previewHideInactiveApplications: String = "hideInactiveApplications"
     static let previewHideActiveWindow: String = "hideActiveWindow"
-    static let previewAlignmentEnabled: String = "enableEditModeAlignment"
+    static let windowAlignmentEnabled: String = "enableEditModeAlignment"
     static let captureFrameRate: String = "frameRate"
     static let hotkeyBindings: String = "hotkeyBindings"
     static let filterAppNames: String = "appFilterNames"
