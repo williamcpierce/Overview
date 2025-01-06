@@ -42,10 +42,11 @@ struct PreviewAccessor: NSViewRepresentable {
             logger.debug("Window reference unavailable during update")
             return
         }
-
-        synchronizeWindowConfiguration(window)
+        
+        synchronizeEditModeState(window)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + resizeThrottleInterval) {
+            synchronizeWindowConfiguration(window)
             synchronizeAspectRatio(window)
         }
     }
@@ -61,30 +62,27 @@ struct PreviewAccessor: NSViewRepresentable {
 
         logger.debug("Applied default window configuration")
     }
-
-    private func synchronizeWindowConfiguration(_ window: NSWindow) {
-        let previousLevel: NSWindow.Level = window.level
-
-        updateEditModeState(window)
-        updateWindowLevel(window)
-        updateMissionControlBehavior(window)
-
-        if window.level != previousLevel {
-            logger.info("Window level changed: \(window.level.rawValue)")
-        }
-    }
-
-    private func updateEditModeState(_ window: NSWindow) {
+    
+    private func synchronizeEditModeState(_ window: NSWindow) {
         let newStyleMask: NSWindow.StyleMask =
             previewManager.editModeEnabled
             ? [.fullSizeContentView, .resizable]
             : .fullSizeContentView
+        let newMovability: Bool = previewManager.editModeEnabled
 
         if window.styleMask != newStyleMask {
             window.styleMask = newStyleMask
-            window.isMovable = previewManager.editModeEnabled
-            logger.debug("Edit mode state updated: \(previewManager.editModeEnabled)")
+            logger.debug("Window stylemask updated")
         }
+        if window.isMovable != newMovability {
+            window.isMovable = newMovability
+            logger.debug("Window movability updated")
+        }
+    }
+
+    private func synchronizeWindowConfiguration(_ window: NSWindow) {
+        updateWindowLevel(window)
+        updateMissionControlBehavior(window)
     }
 
     private func updateWindowLevel(_ window: NSWindow) {
