@@ -31,7 +31,7 @@ struct WindowAccessor: NSViewRepresentable {
         }
 
         DispatchQueue.main.async {
-            guard let window = nsView.window else { return }
+            guard let window: NSWindow = nsView.window else { return }
             synchronizeEditableState(window)
 
             DispatchQueue.main.asyncAfter(deadline: .now() + throttleInterval) {
