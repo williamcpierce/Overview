@@ -3,7 +3,7 @@
  Overview
 
  Created by William Pierce on 9/15/24.
- 
+
  Provides the source window selection interface allowing users to choose
  which source window to capture and preview.
 */
@@ -98,7 +98,9 @@ struct PreviewSelectionView: View {
             logger.debug("Initiating source window list refresh")
             await previewManager.updateAvailableSources()
             await MainActor.run {
-                logger.info("Source window list updated with \(previewManager.availableSources.count) sources")
+                logger.info(
+                    "Source window list updated with \(previewManager.availableSources.count) sources"
+                )
             }
         }
     }

@@ -103,25 +103,25 @@ struct PreviewView: View {
             previewManager: previewManager
         )
     }
-    
+
     private var editModeOverlay: some View {
         Group {
             if previewManager.editModeEnabled {
                 VStack {
                     Spacer()
-                    HStack {
-                        Spacer()
-                        editModeIndicator
-                    }
+                    editModeIndicator
                 }
             }
         }
     }
-    
+
     private var editModeIndicator: some View {
-        Image(systemName: "righttriangle.fill")
-            .font(.caption)
-            .foregroundColor(.gray)
+        HStack {
+            Spacer()
+            Image(systemName: "righttriangle.fill")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
     }
 
     // MARK: - Lifecycle Methods
