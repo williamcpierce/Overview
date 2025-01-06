@@ -77,9 +77,9 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         super.init()
 
         windowManager = WindowManager(
-            settings: appSettings,
-            preview: previewManager,
-            source: sourceManager
+            appSettings: appSettings,
+            previewManager: previewManager,
+            sourceManager: sourceManager
         )
 
         NotificationCenter.default.addObserver(

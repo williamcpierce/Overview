@@ -27,26 +27,15 @@ struct PreviewCaptureView: View {
     }
 
     var body: some View {
-        Group {
-            if let frame: CapturedFrame = captureManager.capturedFrame {
-                previewContent(for: frame)
-            } else {
-                loadingPlaceholder
-            }
-        }
+        previewContent(for: frame)
     }
 
     // MARK: - View Components
-
-    private var loadingPlaceholder: some View {
-        Color.black.opacity(appSettings.previewOpacity)
-    }
 
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(focusBorderOverlay)
             .overlay(titleOverlay)
-            .opacity(appSettings.previewOpacity)
     }
 
     private var focusBorderOverlay: some View {

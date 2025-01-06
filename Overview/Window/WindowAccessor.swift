@@ -77,7 +77,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && appSettings.previewAlignmentEnabled
+        let shouldFloat = previewManager.editModeEnabled && appSettings.windowAlignmentEnabled
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         if window.level != newLevel {
@@ -87,7 +87,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateMissionControl(_ window: NSWindow) {
-        let shouldManage = appSettings.previewManagedByMissionControl
+        let shouldManage = appSettings.windowManagedByMissionControl
 
         if shouldManage {
             window.collectionBehavior.insert(.managed)

@@ -26,10 +26,10 @@ final class WindowManager {
     // MARK: - Constants
     private let cascadeOffsetMultiplier: CGFloat = 25
 
-    init(appSettings: AppSettings, preview: PreviewManager, source: SourceManager) {
-        self.appSettings = settings
-        self.previewManager = preview
-        self.sourceManager = source
+    init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
+        self.appSettings = appSettings
+        self.previewManager = previewManager
+        self.sourceManager = sourceManager
         self.sessionWindowCounter = 0
         logger.debug("Window service initialized")
     }
@@ -75,8 +75,8 @@ final class WindowManager {
             return .zero
         }
 
-        let centerX = (screenFrame.width - appSettings.previewDefaultWidth) / 2
-        let centerY = (screenFrame.height - appSettings.previewDefaultHeight) / 2
+        let centerX = (screenFrame.width - appSettings.windowDefaultWidth) / 2
+        let centerY = (screenFrame.height - appSettings.windowDefaultHeight) / 2
 
         let xOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
         let yOffset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffsetMultiplier
@@ -84,8 +84,8 @@ final class WindowManager {
         return NSRect(
             x: centerX + xOffset,
             y: centerY - yOffset,
-            width: appSettings.previewDefaultWidth,
-            height: appSettings.previewDefaultHeight
+            width: appSettings.windowDefaultWidth,
+            height: appSettings.windowDefaultHeight
         )
     }
 
@@ -113,7 +113,7 @@ final class WindowManager {
 
     private func setupWindowContent(_ window: NSWindow) {
         let contentView = ContentView(
-            appSettings: settings,
+            appSettings: appSettings,
             previewManager: previewManager,
             sourceManager: sourceManager
         )
