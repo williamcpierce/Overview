@@ -56,7 +56,7 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
 
         if previousEditMode != editModeEnabled {
-            logger.info("Edit mode state updated: \(editModeEnabled)")
+            logger.debug("Edit mode state updated: \(editModeEnabled)")
         }
     }
 

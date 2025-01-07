@@ -32,10 +32,10 @@ final class PreviewManager: ObservableObject {
 
     func initializeCaptureSystem(_ captureManager: CaptureManager) async {
         do {
-            logger.info("Starting capture system initialization")
+            logger.debug("Starting capture system initialization")
             try await captureManager.requestPermission()
             await updateAvailableSources()
-            logger.info("Capture system initialization completed")
+            logger.debug("Capture system initialization completed")
         } catch {
             logger.logError(error, context: "Capture system initialization failed")
         }

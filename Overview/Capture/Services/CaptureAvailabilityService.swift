@@ -25,8 +25,6 @@ final class CaptureAvailabilityService {
     }
 
     func getAvailableSources() async throws -> [SCWindow] {
-        logger.debug("Fetching available source windows")
-
         do {
             let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)

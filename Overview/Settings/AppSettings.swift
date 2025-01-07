@@ -48,21 +48,21 @@ class AppSettings: ObservableObject {
     @Published var focusBorderEnabled: Bool {
         didSet {
             UserDefaults.standard.set(focusBorderEnabled, forKey: StorageKeys.focusBorderEnabled)
-            logger.info("Focus border visibility set to \(focusBorderEnabled)")
+            logger.debug("Focus border visibility set to \(focusBorderEnabled)")
         }
     }
 
     @Published var focusBorderWidth: Double {
         didSet {
             UserDefaults.standard.set(focusBorderWidth, forKey: StorageKeys.focusBorderWidth)
-            logger.info("Focus border width set to \(focusBorderWidth)pt")
+            logger.debug("Focus border width set to \(focusBorderWidth)pt")
         }
     }
 
     @Published var focusBorderColor: Color {
         didSet {
             UserDefaults.standard.setColor(focusBorderColor, forKey: StorageKeys.focusBorderColor)
-            logger.info("Focus border color updated")
+            logger.debug("Focus border color updated")
         }
     }
 
@@ -71,14 +71,14 @@ class AppSettings: ObservableObject {
     @Published var sourceTitleEnabled: Bool {
         didSet {
             UserDefaults.standard.set(sourceTitleEnabled, forKey: StorageKeys.sourceTitleEnabled)
-            logger.info("Source title visibility set to \(sourceTitleEnabled)")
+            logger.debug("Source title visibility set to \(sourceTitleEnabled)")
         }
     }
 
     @Published var sourceTitleFontSize: Double {
         didSet {
             UserDefaults.standard.set(sourceTitleFontSize, forKey: StorageKeys.sourceTitleFontSize)
-            logger.info("Source itle font size set to \(sourceTitleFontSize)pt")
+            logger.debug("Source itle font size set to \(sourceTitleFontSize)pt")
         }
     }
 
@@ -88,7 +88,7 @@ class AppSettings: ObservableObject {
                 sourceTitleBackgroundOpacity,
                 forKey: StorageKeys.sourceTitleBackgroundOpacity
             )
-            logger.info(
+            logger.debug(
                 "Source title background opacity set to \(Int(sourceTitleBackgroundOpacity * 100))%"
             )
         }
@@ -99,7 +99,7 @@ class AppSettings: ObservableObject {
     @Published var previewOpacity: Double {
         didSet {
             UserDefaults.standard.set(previewOpacity, forKey: StorageKeys.previewOpacity)
-            logger.info("Preview window opacity updated to \(Int(previewOpacity * 100))%")
+            logger.debug("Preview window opacity updated to \(Int(previewOpacity * 100))%")
         }
     }
 
@@ -107,7 +107,7 @@ class AppSettings: ObservableObject {
         didSet {
             UserDefaults.standard.set(
                 previewCloseOnCaptureStop, forKey: StorageKeys.previewCloseOnCaptureStop)
-            logger.info("Close on capture stop set to \(previewCloseOnCaptureStop)")
+            logger.debug("Close on capture stop set to \(previewCloseOnCaptureStop)")
         }
     }
 
@@ -117,7 +117,7 @@ class AppSettings: ObservableObject {
                 previewHideInactiveApplications,
                 forKey: StorageKeys.previewHideInactiveApplications
             )
-            logger.info("Hide inactive applications set to \(previewHideInactiveApplications)")
+            logger.debug("Hide inactive applications set to \(previewHideInactiveApplications)")
         }
     }
 
@@ -125,7 +125,7 @@ class AppSettings: ObservableObject {
         didSet {
             UserDefaults.standard.set(
                 previewHideActiveWindow, forKey: StorageKeys.previewHideActiveWindow)
-            logger.info("Hide active window set to \(previewHideActiveWindow)")
+            logger.debug("Hide active window set to \(previewHideActiveWindow)")
         }
     }
 
@@ -134,7 +134,7 @@ class AppSettings: ObservableObject {
     @Published var windowDefaultWidth: Double {
         didSet {
             UserDefaults.standard.set(windowDefaultWidth, forKey: StorageKeys.windowDefaultWidth)
-            logger.info("Default preview window width set to \(Int(windowDefaultWidth))px")
+            logger.debug("Default preview window width set to \(Int(windowDefaultWidth))px")
         }
     }
 
@@ -142,7 +142,7 @@ class AppSettings: ObservableObject {
         didSet {
             UserDefaults.standard.set(
                 windowDefaultHeight, forKey: StorageKeys.windowDefaultHeight)
-            logger.info("Default preview window height set to \(Int(windowDefaultHeight))px")
+            logger.debug("Default preview window height set to \(Int(windowDefaultHeight))px")
         }
     }
 
@@ -152,7 +152,7 @@ class AppSettings: ObservableObject {
                 windowManagedByMissionControl,
                 forKey: StorageKeys.windowManagedByMissionControl
             )
-            logger.info("Mission Control integration set to \(windowManagedByMissionControl)")
+            logger.debug("Mission Control integration set to \(windowManagedByMissionControl)")
         }
     }
 
@@ -162,7 +162,7 @@ class AppSettings: ObservableObject {
                 windowAlignmentEnabled,
                 forKey: StorageKeys.windowAlignmentEnabled
             )
-            logger.info("Edit mode alignment set to \(windowAlignmentEnabled)")
+            logger.debug("Edit mode alignment set to \(windowAlignmentEnabled)")
         }
     }
 
@@ -171,7 +171,7 @@ class AppSettings: ObservableObject {
     @Published var captureFrameRate: Double {
         didSet {
             UserDefaults.standard.set(captureFrameRate, forKey: StorageKeys.captureFrameRate)
-            logger.info("Frame rate updated to \(Int(captureFrameRate)) FPS")
+            logger.debug("Frame rate updated to \(Int(captureFrameRate)) FPS")
         }
     }
     // MARK: - Hotkey Settings
@@ -197,14 +197,14 @@ class AppSettings: ObservableObject {
     @Published var filterAppNames: [String] {
         didSet {
             UserDefaults.standard.set(filterAppNames, forKey: StorageKeys.filterAppNames)
-            logger.info("App filter names updated: count=\(filterAppNames.count)")
+            logger.debug("App filter names updated: count=\(filterAppNames.count)")
         }
     }
 
     @Published var filterBlocklist: Bool {
         didSet {
             UserDefaults.standard.set(filterBlocklist, forKey: StorageKeys.filterBlocklist)
-            logger.info("Filter is blocklist=\(filterBlocklist)")
+            logger.debug("Filter is blocklist=\(filterBlocklist)")
         }
     }
 
@@ -238,14 +238,14 @@ class AppSettings: ObservableObject {
         validateSettings()
 
         isInitializing = false
-        logger.info("Settings manager initialization complete")
+        logger.debug("Settings manager initialization complete")
     }
 
     // MARK: - Public Methods
 
     /// Resets all settings to their default values and clears persisted data
     func resetToDefaults() {
-        logger.info("Initiating settings reset")
+        logger.debg("Initiating settings reset")
 
         let domain = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -317,7 +317,7 @@ class AppSettings: ObservableObject {
         else { return }
 
         hotkeyBindings = decoded
-        logger.info("Loaded \(decoded.count) saved hotkey bindings")
+        logger.debug("Loaded \(decoded.count) saved hotkey bindings")
 
         do {
             try hotkeyService.registerHotkeys(hotkeyBindings)

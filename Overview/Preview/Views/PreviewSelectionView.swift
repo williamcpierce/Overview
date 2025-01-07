@@ -95,13 +95,7 @@ struct PreviewSelectionView: View {
 
     private func refreshSourceList() {
         Task {
-            logger.debug("Initiating source window list refresh")
             await previewManager.updateAvailableSources()
-            await MainActor.run {
-                logger.info(
-                    "Source window list updated with \(previewManager.availableSources.count) sources"
-                )
-            }
         }
     }
 

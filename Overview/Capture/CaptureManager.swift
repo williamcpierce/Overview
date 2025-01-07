@@ -57,7 +57,7 @@ final class CaptureManager: ObservableObject {
         logger.debug("Requesting screen recording permission")
         try await captureServices.requestScreenRecordingPermission()
         hasPermission = true
-        logger.info("Screen recording permission granted")
+        logger.debug("Screen recording permission granted")
     }
 
     func startCapture() async throws {
@@ -81,14 +81,13 @@ final class CaptureManager: ObservableObject {
 
     func stopCapture() async {
         guard isCapturing else { return }
-        logger.debug("Stopping capture")
-
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
+
         await captureEngine.stopCapture()
         isCapturing = false
         capturedFrame = nil
-        logger.info("Capture stopped")
+        logger.debug("Capture stopped")
     }
 
     func focusSource() {
@@ -144,10 +143,6 @@ final class CaptureManager: ObservableObject {
 
         isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
         isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
-
-        logger.debug(
-            "Focus state updated: window=\(isSourceWindowFocused), app=\(isSourceAppFocused)"
-        )
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {

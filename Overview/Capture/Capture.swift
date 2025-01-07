@@ -35,7 +35,5 @@ struct Capture: NSViewRepresentable {
 
         // Critical section: Layer assignment must be atomic to prevent screen tearing
         nsView.layer = renderLayer
-        logger.debug(
-            "Updated render layer: scale=\(frame.contentScale), bounds=\(frame.contentRect)")
     }
 }

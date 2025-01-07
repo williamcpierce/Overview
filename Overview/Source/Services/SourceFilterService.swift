@@ -51,11 +51,6 @@ final class SourceFilterService {
             && source.title != nil
             && !source.title!.isEmpty
 
-        if !isValid {
-            logger.debug(
-                "Source failed validation: '\(source.title ?? "untitled")', height=\(source.frame.height), layer=\(source.windowLayer)"
-            )
-        }
         return isValid
     }
 
@@ -71,12 +66,6 @@ final class SourceFilterService {
             source.owningApplication?.bundleIdentifier ?? "")
 
         let isNotSystem: Bool = isNotDesktopView && isNotSystemUI && isNotSystemApp
-
-        if !isNotSystem {
-            logger.debug(
-                "Excluding system window: '\(source.title ?? "untitled")', bundleID=\(source.owningApplication?.bundleIdentifier ?? "unknown")"
-            )
-        }
 
         return isNotSystem
     }

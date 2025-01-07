@@ -37,9 +37,8 @@ final class SourceManager: ObservableObject {
 
     init(appSettings: AppSettings) {
         self.appSettings = appSettings
-        logger.debug("Initializing source window manager")
         setupObservers()
-        logger.info("Source window manager initialization complete")
+        logger.debug("Source window manager initialization complete")
     }
 
     // MARK: - Public Interface
@@ -77,8 +76,6 @@ final class SourceManager: ObservableObject {
     // MARK: - Private Methods
 
     private func setupObservers() {
-        logger.debug("Configuring window state observers")
-
         sourceServices.sourceObserver.addObserver(
             id: observerId,
             onFocusChanged: { [weak self] in await self?.updateFocusedSource() },

@@ -177,13 +177,5 @@ struct PreviewView: View {
             appSettings.previewHideActiveWindow && captureManager.isSourceWindowFocused
 
         isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
-
-        logger.debug(
-            """
-            Preview visibility updated: \
-            visible=\(isPreviewVisible), \
-            hideInactive=\(shouldHideForInactiveApps), \
-            hideActive=\(shouldHideForActiveWindow)
-            """)
     }
 }
