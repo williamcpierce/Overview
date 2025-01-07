@@ -90,8 +90,10 @@ struct WindowAccessor: NSViewRepresentable {
         let shouldManage = appSettings.windowManagedByMissionControl
 
         if shouldManage {
+            guard !window.collectionBehavior.contains(.managed) else { return }
             window.collectionBehavior.insert(.managed)
         } else {
+            guard window.collectionBehavior.contains(.managed) else { return }
             window.collectionBehavior.remove(.managed)
         }
 
