@@ -243,7 +243,7 @@ class AppSettings: ObservableObject {
 
     /// Resets all settings to their default values and clears persisted data
     func resetToDefaults() {
-        logger.debg("Initiating settings reset")
+        logger.debug("Initiating settings reset")
 
         let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
