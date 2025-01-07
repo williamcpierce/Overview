@@ -3,13 +3,14 @@
  Overview
 
  Created by William Pierce on 12/8/24.
+
+ Manages the interface for creating new hotkey bindings, including window selection
+ and hotkey recording with validation
 */
 
 import ScreenCaptureKit
 import SwiftUI
 
-/// Manages the interface for creating new hotkey bindings, including window selection
-/// and hotkey recording with validation
 struct HotkeyBindingSheet: View {
     // MARK: - Environment
     @Environment(\.dismiss) private var dismiss
@@ -108,7 +109,8 @@ struct HotkeyBindingSheet: View {
         Task {
             do {
                 filteredSources = try await sourceManager.getFilteredSources()
-                logger.info("Retrieved \(filteredSources.count) source windows for binding selection")
+                logger.info(
+                    "Retrieved \(filteredSources.count) source windows for binding selection")
             } catch {
                 logger.logError(error, context: "Failed to load source windows for binding")
             }
@@ -124,7 +126,8 @@ struct HotkeyBindingSheet: View {
         }
 
         let hasDuplicateTitles: Bool = filteredSources.filter { $0.title == title }.count > 1
-        validationError = hasDuplicateTitles ? "Warning: Multiple source windows have this title" : ""
+        validationError =
+            hasDuplicateTitles ? "Warning: Multiple source windows have this title" : ""
 
         if hasDuplicateTitles {
             logger.warning("Duplicate source window titles detected for '\(title)'")
@@ -160,7 +163,7 @@ struct HotkeyBindingSheet: View {
 
     private func isValidConfiguration() -> Bool {
         guard let source: SCWindow = selectedSource,
-              source.title != nil,
+            source.title != nil,
             currentShortcut != nil,
             validationError.isEmpty
         else { return false }

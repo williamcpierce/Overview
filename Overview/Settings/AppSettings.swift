@@ -241,7 +241,6 @@ class AppSettings: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Resets all settings to their default values and clears persisted data
     func resetToDefaults() {
         logger.debug("Initiating settings reset")
 
@@ -249,7 +248,6 @@ class AppSettings: ObservableObject {
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
 
-        // Reset all properties to defaults
         focusBorderEnabled = Defaults.focusBorderEnabled
         focusBorderWidth = Defaults.focusBorderWidth
         focusBorderColor = Defaults.focusBorderColor
