@@ -45,40 +45,14 @@ struct PreviewSelectionView: View {
 
     private var selectionControls: some View {
         HStack {
-            sourceList
+            SourceListView(
+                selectedSource: $selectedSource,
+                sources: previewManager.availableSources,
+                onSourceSelected: handleSourceSelection
+            )
+            .id(previewManager.sourceListVersion)
+
             refreshButton
-        }
-    }
-
-    private var sourceList: some View {
-        Picker("", selection: $selectedSource) {
-            Text("Select a source window").tag(nil as SCWindow?)
-            availableSourcesList
-        }
-        .id(previewManager.sourceListVersion)
-        .onChange(of: selectedSource, handleSourceSelection)
-    }
-
-    private var availableSourcesList: some View {
-        let groupedSources = Dictionary(
-            grouping: previewManager.availableSources,
-            by: { $0.owningApplication?.applicationName ?? "Unknown" }
-        )
-
-        let sortedAppNames = groupedSources.keys.sorted()
-
-        return ForEach(sortedAppNames, id: \.self) { appName in
-            if let sources = groupedSources[appName] {
-                Section(header: Text(appName)) {
-                    ForEach(
-                        sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
-                        id: \.windowID
-                    ) { source in
-                        Text(truncateTitle(source.title ?? "Untitled"))
-                            .tag(Optional(source))
-                    }
-                }
-            }
         }
     }
 
@@ -96,19 +70,12 @@ struct PreviewSelectionView: View {
         }
     }
 
-    private func handleSourceSelection(_ old: SCWindow?, _ new: SCWindow?) {
-        if let source: SCWindow = new {
-            logger.info("Source selected: '\(source.title ?? "Untitled")'")
+    private func handleSourceSelection(_ source: SCWindow?) {
+        if let source = source {
             previewManager.startSourcePreview(
                 captureManager: captureManager,
-                source: selectedSource
+                source: source
             )
         }
-    }
-
-    // MARK: - Helper Functions
-
-    private func truncateTitle(_ title: String) -> String {
-        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }

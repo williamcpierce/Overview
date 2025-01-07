@@ -56,6 +56,7 @@
 				Services/SourceObserverService.swift,
 				SourceManager.swift,
 				SourceServices.swift,
+				Views/SourceListView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -64,7 +65,13 @@
 			membershipExceptions = (
 				AppSettings.swift,
 				ColorExtension.swift,
+				OpacitySlider.swift,
 				SettingsView.swift,
+				Views/FilterSettingsTab.swift,
+				Views/GeneralSettingsTab.swift,
+				Views/HotkeySettingsTab.swift,
+				Views/PerformanceSettingsTab.swift,
+				Views/PreviewSettingsTab.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

@@ -55,16 +55,15 @@ struct HotkeyBindingSheet: View {
     private var sourceSelectionSection: some View {
         VStack(alignment: .leading) {
             Text("Window:")
-            Picker("", selection: $selectedSource) {
-                Text("Select a window").tag(Optional<SCWindow>.none)
-                ForEach(filteredSources, id: \.windowID) { source in
-                    Text(source.title ?? "Untitled").tag(Optional(source))
+            SourceListView(
+                selectedSource: $selectedSource,
+                sources: filteredSources,
+                onSourceSelected: { source in
+                    selectedSource = source
+                    validateSourceSelection()
                 }
-            }
+            )
             .accessibilityLabel("Window Selection")
-            .onChange(of: selectedSource) { _, _ in
-                validateSourceSelection()
-            }
         }
     }
 
