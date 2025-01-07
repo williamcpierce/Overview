@@ -51,7 +51,7 @@ struct PreviewSelectionView: View {
                 onSourceSelected: handleSourceSelection
             )
             .id(previewManager.sourceListVersion)
-            
+
             refreshButton
         }
     }

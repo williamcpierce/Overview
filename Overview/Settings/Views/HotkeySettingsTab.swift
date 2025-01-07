@@ -12,14 +12,14 @@ struct HotkeySettingsTab: View {
     @ObservedObject var sourceManager: SourceManager
     @State private var isAddingHotkey = false
     private let logger = AppLogger.settings
-    
+
     var body: some View {
         Form {
             Section {
                 Text("Hotkeys")
                     .font(.headline)
                     .padding(.bottom, 4)
-                
+
                 if appSettings.hotkeyBindings.isEmpty {
                     Text("No hotkeys configured")
                         .foregroundColor(.secondary)
@@ -40,7 +40,7 @@ struct HotkeySettingsTab: View {
                         }
                     }
                 }
-                
+
                 Button("Add Hotkey") {
                     logger.debug("Opening hotkey binding sheet")
                     isAddingHotkey = true
@@ -52,7 +52,7 @@ struct HotkeySettingsTab: View {
             HotkeyBindingSheet(appSettings: appSettings, sourceManager: sourceManager)
         }
     }
-    
+
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)

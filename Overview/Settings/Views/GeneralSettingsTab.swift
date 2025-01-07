@@ -11,7 +11,7 @@ struct GeneralSettingsTab: View {
     @ObservedObject var appSettings: AppSettings
     @State private var showingResetAlert = false
     private let logger = AppLogger.settings
-    
+
     var body: some View {
         Form {
             // Focus Border Section
@@ -19,42 +19,47 @@ struct GeneralSettingsTab: View {
                 Text("Border Overlay")
                     .font(.headline)
                     .padding(.bottom, 4)
-                
+
                 Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
-                
+
                 if appSettings.focusBorderEnabled {
                     HStack {
                         Text("Border width")
                         Spacer()
-                        TextField("", value: $appSettings.focusBorderWidth, formatter: NumberFormatter())
-                            .frame(width: 60)
-                            .textFieldStyle(.roundedBorder)
+                        TextField(
+                            "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
+                        )
+                        .frame(width: 60)
+                        .textFieldStyle(.roundedBorder)
                         Text("pt")
                             .foregroundColor(.secondary)
                     }
                     ColorPicker("Border color", selection: $appSettings.focusBorderColor)
                 }
             }
-            
+
             // Title Overlay Section
             Section {
                 Text("Title Overlay")
                     .font(.headline)
                     .padding(.bottom, 4)
-                
+
                 Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
-                
+
                 if appSettings.sourceTitleEnabled {
                     HStack {
                         Text("Font size")
                         Spacer()
-                        TextField("", value: $appSettings.sourceTitleFontSize, formatter: NumberFormatter())
-                            .frame(width: 60)
-                            .textFieldStyle(.roundedBorder)
+                        TextField(
+                            "", value: $appSettings.sourceTitleFontSize,
+                            formatter: NumberFormatter()
+                        )
+                        .frame(width: 60)
+                        .textFieldStyle(.roundedBorder)
                         Text("pt")
                             .foregroundColor(.secondary)
                     }
-                    
+
                     VStack {
                         HStack {
                             Text("Background opacity")
