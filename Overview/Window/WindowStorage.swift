@@ -65,6 +65,54 @@ final class WindowStorage {
             logger.logError(error, context: "Failed to restore window positions")
         }
     }
+
+    func getStoredWindowCount() -> Int {
+        guard let data: Data = UserDefaults.standard.data(forKey: windowPositionsKey) else {
+            return 0
+        }
+
+        do {
+            let positions: [WindowStorage.WindowState] = try JSONDecoder().decode(
+                [WindowState].self, from: data)
+            return positions.count
+        } catch {
+            logger.error("Failed to decode stored window count: \(error.localizedDescription)")
+            return 0
+        }
+    }
+
+    func validateStoredState() -> Bool {
+        guard let data: Data = UserDefaults.standard.data(forKey: windowPositionsKey) else {
+            return true
+        }
+
+        do {
+            let positions: [WindowStorage.WindowState] = try JSONDecoder().decode(
+                [WindowState].self, from: data)
+
+            // Validate each stored window position
+            for position: WindowStorage.WindowState in positions {
+                // Check for invalid dimensions
+                if position.width <= 0 || position.height <= 0 {
+                    logger.error(
+                        "Invalid stored window dimensions: \(position.width)x\(position.height)")
+                    return false
+                }
+
+                // Check for extreme positions that might indicate corruption
+                if abs(position.x) > 10000 || abs(position.y) > 10000 {
+                    logger.error(
+                        "Suspicious window position detected: (\(position.x), \(position.y))")
+                    return false
+                }
+            }
+
+            return true
+        } catch {
+            logger.error("Failed to validate stored window state: \(error.localizedDescription)")
+            return false
+        }
+    }
 }
 
 extension NSView {
