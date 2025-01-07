@@ -18,24 +18,24 @@ struct PreviewView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-    @ObservedObject private var windowManager: WindowManager
+    @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
     // MARK: - State
     @State private var isSelectionViewVisible: Bool = true
-    @State private var isWindowVisible: Bool = true
+    @State private var isPreviewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
 
     init(
         appSettings: AppSettings,
         captureManager: CaptureManager,
         previewManager: PreviewManager,
-        windowManager: WindowManager
+        sourceManager: SourceManager
     ) {
         self.appSettings = appSettings
         self.captureManager = captureManager
         self.previewManager = previewManager
-        self.windowManager = windowManager
+        self.sourceManager = sourceManager
 
         self._previewAspectRatio = State(initialValue: 0)
     }
@@ -48,18 +48,19 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
-                .opacity(isWindowVisible ? 1 : 0)
+                .overlay(editModeOverlay)
+                .opacity(isPreviewVisible ? 1 : 0)
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
         .onChange(of: captureManager.isCapturing, updateViewState)
-        .onChange(of: previewManager.editModeEnabled, updateWindowVisibility)
-        .onChange(of: captureManager.isSourceAppFocused, updateWindowVisibility)
-        .onChange(of: captureManager.isSourceWindowFocused, updateWindowVisibility)
-        .onChange(of: windowManager.isOverviewActive, updateWindowVisibility)
-        .onChange(of: appSettings.hideInactiveApplications, updateWindowVisibility)
-        .onChange(of: appSettings.hideActiveWindow, updateWindowVisibility)
+        .onChange(of: previewManager.editModeEnabled, updatePreviewVisibility)
+        .onChange(of: captureManager.isSourceAppFocused, updatePreviewVisibility)
+        .onChange(of: captureManager.isSourceWindowFocused, updatePreviewVisibility)
+        .onChange(of: sourceManager.isOverviewActive, updatePreviewVisibility)
+        .onChange(of: appSettings.previewHideInactiveApplications, updatePreviewVisibility)
+        .onChange(of: appSettings.previewHideActiveWindow, updatePreviewVisibility)
     }
 
     // MARK: - View Components
@@ -86,21 +87,41 @@ struct PreviewView: View {
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
-            onSourceWindowFocus: { captureManager.focusWindow() }
+            onSourceWindowFocus: { captureManager.focusSource() }
         )
     }
 
     private var previewBackgroundLayer: some View {
-        Color.black.opacity(isSelectionViewVisible ? appSettings.windowOpacity : 0)
+        Color.black.opacity(isSelectionViewVisible ? appSettings.previewOpacity : 0)
     }
 
     private var windowConfigurationLayer: some View {
-        PreviewAccessor(
+        WindowAccessor(
             aspectRatio: $previewAspectRatio,
             appSettings: appSettings,
             captureManager: captureManager,
             previewManager: previewManager
         )
+    }
+
+    private var editModeOverlay: some View {
+        Group {
+            if previewManager.editModeEnabled {
+                VStack {
+                    Spacer()
+                    editModeIndicator
+                }
+            }
+        }
+    }
+
+    private var editModeIndicator: some View {
+        HStack {
+            Spacer()
+            Image(systemName: "righttriangle.fill")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
     }
 
     // MARK: - Lifecycle Methods
@@ -129,40 +150,32 @@ struct PreviewView: View {
     }
 
     private func updateViewState() {
-        if !captureManager.isCapturing && appSettings.closeOnCaptureStop {
+        if !captureManager.isCapturing && appSettings.previewCloseOnCaptureStop {
             logger.info("Closing preview window on capture stop")
             dismiss()
         }
 
         isSelectionViewVisible = !captureManager.isCapturing
-        updateWindowVisibility()
+        updatePreviewVisibility()
         logger.debug("View state updated: selection=\(isSelectionViewVisible)")
     }
 
-    private func updateWindowVisibility() {
+    private func updatePreviewVisibility() {
         let alwaysShown =
             isSelectionViewVisible || previewManager.editModeEnabled
-            || windowManager.isOverviewActive
+            || sourceManager.isOverviewActive
 
         if alwaysShown {
-            isWindowVisible = true
+            isPreviewVisible = true
             return
         }
 
-        let shouldHideForInactiveApp =
-            appSettings.hideInactiveApplications && !captureManager.isSourceAppFocused
+        let shouldHideForInactiveApps =
+            appSettings.previewHideInactiveApplications && !captureManager.isSourceAppFocused
 
         let shouldHideForActiveWindow =
-            appSettings.hideActiveWindow && captureManager.isSourceWindowFocused
+            appSettings.previewHideActiveWindow && captureManager.isSourceWindowFocused
 
-        isWindowVisible = !shouldHideForInactiveApp && !shouldHideForActiveWindow
-
-        logger.debug(
-            """
-            Window visibility updated: \
-            visible=\(isWindowVisible), \
-            hideInactive=\(shouldHideForInactiveApp), \
-            hideActive=\(shouldHideForActiveWindow)
-            """)
+        isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
     }
 }

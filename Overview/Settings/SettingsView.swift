@@ -11,11 +11,10 @@
 
 import SwiftUI
 
-/// Primary settings view containing all application configuration options organized into tabs
 struct SettingsView: View {
     // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
-    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     // MARK: - View State
@@ -98,12 +97,12 @@ struct SettingsView: View {
     private var focusBorderConfiguration: some View {
         Section {
             sectionHeader("Border Overlay")
-            Toggle("Show focused window border", isOn: $appSettings.showFocusedBorder)
-                .onChange(of: appSettings.showFocusedBorder) { _, newValue in
+            Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
+                .onChange(of: appSettings.focusBorderEnabled) { _, newValue in
                     logger.info("Window border visibility set to \(newValue)")
                 }
 
-            if appSettings.showFocusedBorder {
+            if appSettings.focusBorderEnabled {
                 HStack {
                     Text("Border width")
                     Spacer()
@@ -124,12 +123,12 @@ struct SettingsView: View {
     private var titleOverlayConfiguration: some View {
         Section {
             sectionHeader("Title Overlay")
-            Toggle("Show window title", isOn: $appSettings.showWindowTitle)
-                .onChange(of: appSettings.showWindowTitle) { _, newValue in
+            Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
+                .onChange(of: appSettings.sourceTitleEnabled) { _, newValue in
                     logger.info("Title overlay visibility set to \(newValue)")
                 }
 
-            if appSettings.showWindowTitle {
+            if appSettings.sourceTitleEnabled {
                 titleFontConfiguration
                 titleOpacityConfiguration
             }
@@ -141,7 +140,7 @@ struct SettingsView: View {
             Text("Font size")
             Spacer()
             TextField(
-                "", value: $appSettings.titleFontSize,
+                "", value: $appSettings.sourceTitleFontSize,
                 formatter: NumberFormatter()
             )
             .frame(width: 60)
@@ -158,8 +157,8 @@ struct SettingsView: View {
                 Spacer()
             }
             HStack(spacing: 8) {
-                OpacitySlider(value: $appSettings.titleBackgroundOpacity)
-                Text("\(Int(appSettings.titleBackgroundOpacity * 100))%")
+                OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
+                Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
                     .foregroundColor(.secondary)
                     .frame(width: 40)
             }
@@ -172,8 +171,8 @@ struct SettingsView: View {
         Section {
             sectionHeader("Opacity")
             HStack(spacing: 8) {
-                OpacitySlider(value: $appSettings.windowOpacity)
-                Text("\(Int(appSettings.windowOpacity * 100))%")
+                OpacitySlider(value: $appSettings.previewOpacity)
+                Text("\(Int(appSettings.previewOpacity * 100))%")
                     .foregroundColor(.secondary)
                     .frame(width: 40)
             }
@@ -183,8 +182,8 @@ struct SettingsView: View {
     private var defaultWindowSizeConfiguration: some View {
         Section {
             sectionHeader("Default Size")
-            dimensionField("Width", binding: $appSettings.defaultWindowWidth)
-            dimensionField("Height", binding: $appSettings.defaultWindowHeight)
+            dimensionField("Width", binding: $appSettings.windowDefaultWidth)
+            dimensionField("Height", binding: $appSettings.windowDefaultHeight)
         }
     }
 
@@ -205,13 +204,13 @@ struct SettingsView: View {
     private var frameRateConfiguration: some View {
         Section {
             sectionHeader("Frame Rate")
-            Picker("FPS", selection: $appSettings.frameRate) {
-                ForEach(appSettings.availableFrameRates, id: \.self) { rate in
+            Picker("FPS", selection: $appSettings.captureFrameRate) {
+                ForEach(appSettings.availableCaptureFrameRates, id: \.self) { rate in
                     Text("\(Int(rate))").tag(rate)
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: appSettings.frameRate) { _, newValue in
+            .onChange(of: appSettings.captureFrameRate) { _, newValue in
                 logger.info("Frame rate updated to \(Int(newValue)) FPS")
             }
             Text("Higher frame rates provide smoother previews but use more system resources.")
@@ -231,7 +230,7 @@ struct SettingsView: View {
         .sheet(isPresented: $isAddingHotkey) {
             HotkeyBindingSheet(
                 appSettings: appSettings,
-                windowManager: windowManager
+                sourceManager: sourceManager
             )
         }
     }
@@ -242,7 +241,7 @@ struct SettingsView: View {
                 Text("No hotkeys configured")
                     .foregroundColor(.secondary)
             } else {
-                ForEach(appSettings.hotkeyBindings, id: \.windowTitle) { binding in
+                ForEach(appSettings.hotkeyBindings, id: \.sourceTitle) { binding in
                     hotkeyRow(binding)
                 }
             }
@@ -251,7 +250,7 @@ struct SettingsView: View {
 
     private func hotkeyRow(_ binding: HotkeyBinding) -> some View {
         HStack {
-            Text(binding.windowTitle)
+            Text(binding.sourceTitle)
             Spacer()
             Text(binding.hotkeyDisplayString)
                 .foregroundColor(.secondary)
@@ -272,11 +271,11 @@ struct SettingsView: View {
 
     private var appFilterList: some View {
         Group {
-            if appSettings.appFilterNames.isEmpty {
+            if appSettings.filterAppNames.isEmpty {
                 Text("No applications configured")
                     .foregroundColor(.secondary)
             } else {
-                ForEach(appSettings.appFilterNames, id: \.self) { appName in
+                ForEach(appSettings.filterAppNames, id: \.self) { appName in
                     appFilterRow(appName)
                 }
             }
@@ -336,38 +335,39 @@ struct SettingsView: View {
     }
 
     private var missionControlToggle: some View {
-        Toggle("Show in Mission Control", isOn: $appSettings.managedByMissionControl)
-            .onChange(of: appSettings.managedByMissionControl) { _, newValue in
+        Toggle("Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
+            .onChange(of: appSettings.windowManagedByMissionControl) { _, newValue in
                 logger.info("Mission Control integration set to \(newValue)")
             }
     }
 
     private var closeOnCaptureStop: some View {
-        Toggle("Close preview with source window", isOn: $appSettings.closeOnCaptureStop)
-            .onChange(of: appSettings.closeOnCaptureStop) { _, newValue in
+        Toggle("Close preview with source window", isOn: $appSettings.previewCloseOnCaptureStop)
+            .onChange(of: appSettings.previewCloseOnCaptureStop) { _, newValue in
                 logger.info("Close on capture stop set to \(newValue)")
             }
     }
 
     private var hideInactiveApplicationsToggle: some View {
         Toggle(
-            "Hide previews for inactive applications", isOn: $appSettings.hideInactiveApplications
+            "Hide previews for inactive applications",
+            isOn: $appSettings.previewHideInactiveApplications
         )
-        .onChange(of: appSettings.hideInactiveApplications) { _, newValue in
+        .onChange(of: appSettings.previewHideInactiveApplications) { _, newValue in
             logger.info("Hide inactive applications set to \(newValue)")
         }
     }
 
     private var hideActiveWindowToggle: some View {
-        Toggle("Hide preview for active window", isOn: $appSettings.hideActiveWindow)
-            .onChange(of: appSettings.hideActiveWindow) { _, newValue in
+        Toggle("Hide preview for active window", isOn: $appSettings.previewHideActiveWindow)
+            .onChange(of: appSettings.previewHideActiveWindow) { _, newValue in
                 logger.info("Hide active window set to \(newValue)")
             }
     }
 
     private var editModeAlignmentToggle: some View {
-        Toggle("Enable alignment help in edit mode", isOn: $appSettings.enableEditModeAlignment)
-            .onChange(of: appSettings.enableEditModeAlignment) { _, newValue in
+        Toggle("Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
+            .onChange(of: appSettings.windowAlignmentEnabled) { _, newValue in
                 logger.info("Edit mode alignment set to \(newValue)")
             }
     }
@@ -388,7 +388,7 @@ struct SettingsView: View {
     }
 
     private var appFilterMode: some View {
-        Picker("Filter Mode", selection: $appSettings.isFilterBlocklist) {
+        Picker("Filter Mode", selection: $appSettings.filterBlocklist) {
             Text("Blocklist").tag(true)
             Text("Allowlist").tag(false)
         }
@@ -432,26 +432,25 @@ struct SettingsView: View {
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index: Int = appSettings.hotkeyBindings.firstIndex(of: binding) {
             appSettings.hotkeyBindings.remove(at: index)
-            logger.info("Removed hotkey binding for '\(binding.windowTitle)'")
+            logger.info("Removed hotkey binding for '\(binding.sourceTitle)'")
         }
     }
 
     private func addAppFilterName() {
         guard !newAppFilterName.isEmpty else { return }
         logger.info("Adding app filter: '\(newAppFilterName)'")
-        appSettings.appFilterNames.append(newAppFilterName)
+        appSettings.filterAppNames.append(newAppFilterName)
         newAppFilterName = ""
     }
 
     private func removeAppFilterName(_ appName: String) {
-        if let index: Int = appSettings.appFilterNames.firstIndex(of: appName) {
-            appSettings.appFilterNames.remove(at: index)
+        if let index: Int = appSettings.filterAppNames.firstIndex(of: appName) {
+            appSettings.filterAppNames.remove(at: index)
             logger.info("Removed app filter: '\(appName)'")
         }
     }
 }
 
-/// Custom slider control for opacity settings
 struct OpacitySlider: NSViewRepresentable {
     @Binding var value: Double
 

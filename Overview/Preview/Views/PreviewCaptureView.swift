@@ -4,14 +4,12 @@
 
  Created by William Pierce on 10/13/24.
 
- Renders the captured window content with configurable overlays for
+ Renders the captured source window content with configurable overlays for
  focus borders and window titles.
 */
 
 import SwiftUI
 
-/// Displays captured window content with configurable visual overlays
-/// including focus borders and window titles.
 struct PreviewCaptureView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
@@ -39,14 +37,15 @@ struct PreviewCaptureView: View {
     // MARK: - View Components
 
     private var loadingPlaceholder: some View {
-        Color.black.opacity(appSettings.windowOpacity)
+        Color.black.opacity(appSettings.previewOpacity)
     }
 
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(focusBorderOverlay)
             .overlay(titleOverlay)
-            .opacity(appSettings.windowOpacity)
+            .opacity(appSettings.previewOpacity)
+
     }
 
     private var focusBorderOverlay: some View {
@@ -59,8 +58,8 @@ struct PreviewCaptureView: View {
 
     private var shouldShowFocusBorder: Bool {
         let shouldShow: Bool =
-            appSettings.showFocusedBorder && captureManager.isSourceWindowFocused
-            && !appSettings.hideActiveWindow
+            appSettings.focusBorderEnabled && captureManager.isSourceWindowFocused
+            && !appSettings.previewHideActiveWindow
 
         logger.debug("Focus border visibility: \(shouldShow)")
         return shouldShow
@@ -73,11 +72,11 @@ struct PreviewCaptureView: View {
 
     private var titleOverlay: some View {
         Group {
-            if appSettings.showWindowTitle {
+            if appSettings.sourceTitleEnabled {
                 PreviewTitleView(
-                    backgroundOpacity: appSettings.titleBackgroundOpacity,
-                    fontSize: appSettings.titleFontSize,
-                    title: captureManager.windowTitle
+                    backgroundOpacity: appSettings.sourceTitleBackgroundOpacity,
+                    fontSize: appSettings.sourceTitleFontSize,
+                    title: captureManager.sourceTitle
                 )
             }
         }

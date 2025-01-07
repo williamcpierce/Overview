@@ -10,8 +10,6 @@
 
 import SwiftUI
 
-/// Displays a customizable title overlay at the top of preview windows
-/// with configurable background opacity and font size.
 struct PreviewTitleView: View {
     private let backgroundOpacity: Double
     private let fontSize: Double
@@ -42,7 +40,6 @@ struct PreviewTitleView: View {
     }
 }
 
-/// Internal container view handling the layout and styling of the title overlay
 private struct TitleContainerView: View {
     let backgroundOpacity: Double
     let fontSize: Double

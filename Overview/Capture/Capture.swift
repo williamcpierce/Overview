@@ -27,7 +27,6 @@ struct Capture: NSViewRepresentable {
             return
         }
 
-        // Configure render layer with captured content
         let renderLayer = CALayer()
         renderLayer.contents = surfaceContent
         renderLayer.contentsScale = frame.contentScale
@@ -35,7 +34,5 @@ struct Capture: NSViewRepresentable {
 
         // Critical section: Layer assignment must be atomic to prevent screen tearing
         nsView.layer = renderLayer
-        logger.debug(
-            "Updated render layer: scale=\(frame.contentScale), bounds=\(frame.contentRect)")
     }
 }

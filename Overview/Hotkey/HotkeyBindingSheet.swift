@@ -3,32 +3,33 @@
  Overview
 
  Created by William Pierce on 12/8/24.
+
+ Manages the interface for creating new hotkey bindings, including window selection
+ and hotkey recording with validation
 */
 
 import ScreenCaptureKit
 import SwiftUI
 
-/// Manages the interface for creating new hotkey bindings, including window selection
-/// and hotkey recording with validation
 struct HotkeyBindingSheet: View {
     // MARK: - Environment
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
-    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
 
     // MARK: - View State
-    @State private var filteredWindows: [SCWindow] = []
+    @State private var filteredSources: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
-    @State private var selectedWindow: SCWindow?
+    @State private var selectedSource: SCWindow?
     @State private var validationError: String = ""
 
     var body: some View {
         VStack(spacing: 16) {
             headerView
-            windowSelectionSection
+            sourceSelectionSection
             shortcutConfigurationSection
             if !validationError.isEmpty {
                 Text(validationError)
@@ -40,7 +41,7 @@ struct HotkeyBindingSheet: View {
         .padding()
         .frame(width: 400)
         .task {
-            loadFilteredWindows()
+            loadFilteredSources()
         }
     }
 
@@ -51,28 +52,28 @@ struct HotkeyBindingSheet: View {
             .font(.headline)
     }
 
-    private var windowSelectionSection: some View {
+    private var sourceSelectionSection: some View {
         VStack(alignment: .leading) {
             Text("Window:")
-            Picker("", selection: $selectedWindow) {
+            Picker("", selection: $selectedSource) {
                 Text("Select a window").tag(Optional<SCWindow>.none)
-                ForEach(filteredWindows, id: \.windowID) { window in
-                    Text(window.title ?? "Untitled").tag(Optional(window))
+                ForEach(filteredSources, id: \.windowID) { source in
+                    Text(source.title ?? "Untitled").tag(Optional(source))
                 }
             }
             .accessibilityLabel("Window Selection")
-            .onChange(of: selectedWindow) { _, _ in
-                validateWindowSelection()
+            .onChange(of: selectedSource) { _, _ in
+                validateSourceSelection()
             }
         }
     }
 
     private var shortcutConfigurationSection: some View {
         Group {
-            if let window: SCWindow = selectedWindow, let title = window.title {
+            if let source: SCWindow = selectedSource, let title = source.title {
                 VStack(alignment: .leading) {
                     Text("Hotkey:")
-                    HotkeyRecorder(shortcut: $currentShortcut, windowTitle: title)
+                    HotkeyRecorder(shortcut: $currentShortcut, sourceTitle: title)
                         .frame(height: 24)
                         .accessibilityLabel("Hotkey Recorder")
                         .onChange(of: currentShortcut) { _, _ in
@@ -104,30 +105,32 @@ struct HotkeyBindingSheet: View {
 
     // MARK: - Private Methods
 
-    private func loadFilteredWindows() {
+    private func loadFilteredSources() {
         Task {
             do {
-                filteredWindows = try await windowManager.getFilteredWindows()
-                logger.info("Retrieved \(filteredWindows.count) windows for binding selection")
+                filteredSources = try await sourceManager.getFilteredSources()
+                logger.info(
+                    "Retrieved \(filteredSources.count) source windows for binding selection")
             } catch {
-                logger.logError(error, context: "Failed to load windows for binding")
+                logger.logError(error, context: "Failed to load source windows for binding")
             }
         }
     }
 
-    private func validateWindowSelection() {
-        guard let window: SCWindow = selectedWindow,
-            let title: String = window.title
+    private func validateSourceSelection() {
+        guard let source: SCWindow = selectedSource,
+            let title: String = source.title
         else {
             validationError = ""
             return
         }
 
-        let hasDuplicateTitles: Bool = filteredWindows.filter { $0.title == title }.count > 1
-        validationError = hasDuplicateTitles ? "Warning: Multiple windows have this title" : ""
+        let hasDuplicateTitles: Bool = filteredSources.filter { $0.title == title }.count > 1
+        validationError =
+            hasDuplicateTitles ? "Warning: Multiple source windows have this title" : ""
 
         if hasDuplicateTitles {
-            logger.warning("Duplicate window titles detected for '\(title)'")
+            logger.warning("Duplicate source window titles detected for '\(title)'")
         }
     }
 
@@ -159,8 +162,8 @@ struct HotkeyBindingSheet: View {
     }
 
     private func isValidConfiguration() -> Bool {
-        guard let window: SCWindow = selectedWindow,
-            window.title != nil,
+        guard let source: SCWindow = selectedSource,
+            source.title != nil,
             currentShortcut != nil,
             validationError.isEmpty
         else { return false }
@@ -171,7 +174,7 @@ struct HotkeyBindingSheet: View {
         if let shortcut: HotkeyBinding = currentShortcut {
             appSettings.hotkeyBindings.append(shortcut)
             logger.info(
-                "Added new hotkey binding: '\(shortcut.windowTitle)' - \(shortcut.hotkeyDisplayString)"
+                "Added new hotkey binding: '\(shortcut.sourceTitle)' - \(shortcut.hotkeyDisplayString)"
             )
             dismiss()
         }

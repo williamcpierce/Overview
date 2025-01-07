@@ -4,7 +4,7 @@
 
  Created by William Pierce on 12/6/24.
 
- Handles stream configuration for window capture, including frame rate
+ Handles stream configuration for source window capture, including frame rate
  and filter settings.
 */
 
@@ -13,27 +13,27 @@ import ScreenCaptureKit
 final class CaptureConfigurationService {
     private let logger = AppLogger.capture
 
-    func createConfiguration(_ window: SCWindow, frameRate: Double) -> (
+    func createConfiguration(_ source: SCWindow, frameRate: Double) -> (
         SCStreamConfiguration, SCContentFilter
     ) {
         logger.debug(
-            "Creating configuration for window: '\(window.title ?? "unknown")', frameRate: \(frameRate)"
+            "Creating configuration for window: '\(source.title ?? "unknown")', frameRate: \(frameRate)"
         )
 
         let config = SCStreamConfiguration()
-        config.width = Int(window.frame.width)
-        config.height = Int(window.frame.height)
+        config.width = Int(source.frame.width)
+        config.height = Int(source.frame.height)
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(frameRate))
         config.queueDepth = 3
         config.showsCursor = false
 
-        let filter = SCContentFilter(desktopIndependentWindow: window)
+        let filter = SCContentFilter(desktopIndependentWindow: source)
 
         logger.info("Configuration created successfully")
         return (config, filter)
     }
 
-    func updateConfiguration(_ stream: SCStream?, _ window: SCWindow, frameRate: Double)
+    func updateConfiguration(_ stream: SCStream?, _ source: SCWindow, frameRate: Double)
         async throws
     {
         logger.debug("Updating stream configuration: frameRate=\(frameRate)")
@@ -43,7 +43,7 @@ final class CaptureConfigurationService {
             return
         }
 
-        let (config, filter) = createConfiguration(window, frameRate: frameRate)
+        let (config, filter) = createConfiguration(source, frameRate: frameRate)
 
         do {
             try await stream.updateConfiguration(config)

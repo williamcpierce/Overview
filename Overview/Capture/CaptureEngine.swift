@@ -126,7 +126,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         switch outputType {
         case .screen:
-            if let frame = extractCapturedFrame(from: sampleBuffer) {
+            if let frame: CapturedFrame = extractCapturedFrame(from: sampleBuffer) {
                 capturedFrameHandler?(frame)
             }
         case .audio:
@@ -157,7 +157,6 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             let status = SCFrameStatus(rawValue: statusRawValue),
             status == .complete
         else {
-            logger.debug("Received incomplete frame status")
             return nil
         }
 
@@ -196,7 +195,6 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return nil
         }
 
-        logger.debug("Frame extracted: size=\(contentRect.size), scale=\(contentScale)")
         return CapturedFrame(
             contentRect: contentRect,
             contentScale: contentScale,

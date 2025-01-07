@@ -3,22 +3,19 @@
  Overview
 
  Created by William Pierce on 9/15/24.
- 
- Provides the window selection interface allowing users to choose
- which window to capture and preview.
+
+ Provides the source window selection interface allowing users to choose
+ which source window to capture and preview.
 */
 
 import ScreenCaptureKit
 import SwiftUI
 
-/// Presents a dropdown interface for selecting windows to capture,
-/// organizing available windows by application and providing refresh
-/// capabilities.
 struct PreviewSelectionView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-    @State private var selectedWindow: SCWindow?
+    @State private var selectedSource: SCWindow?
     private let logger = AppLogger.interface
 
     init(
@@ -33,110 +30,85 @@ struct PreviewSelectionView: View {
 
     var body: some View {
         VStack {
-            windowSelectionContent
+            sourceSelectionContent
         }
     }
 
     // MARK: - View Components
 
-    private var windowSelectionContent: some View {
+    private var sourceSelectionContent: some View {
         VStack {
             selectionControls
                 .padding()
-            previewStartButton
         }
     }
 
     private var selectionControls: some View {
         HStack {
-            windowList
+            sourceList
             refreshButton
         }
     }
 
-    private var windowList: some View {
-        Picker("", selection: $selectedWindow) {
-            Group {
-                if previewManager.isInitializing {
-                    loadingPlaceholder
-                } else {
-                    windowOptions
-                }
-            }
+    private var sourceList: some View {
+        Picker("", selection: $selectedSource) {
+            Text("Select a source window").tag(nil as SCWindow?)
+            availableSourcesList
         }
-        .id(previewManager.windowListVersion)
-        .onChange(of: selectedWindow, handleWindowSelection)
+        .id(previewManager.sourceListVersion)
+        .onChange(of: selectedSource, handleSourceSelection)
     }
 
-    private var loadingPlaceholder: some View {
-        Text("Loading...").tag(nil as SCWindow?)
-    }
-
-    private var windowOptions: some View {
-        Group {
-            Text("Select a window").tag(nil as SCWindow?)
-            availableWindowsList
-        }
-    }
-
-    private var availableWindowsList: some View {
-        let groupedWindows = Dictionary(
-            grouping: previewManager.availableWindows,
+    private var availableSourcesList: some View {
+        let groupedSources = Dictionary(
+            grouping: previewManager.availableSources,
             by: { $0.owningApplication?.applicationName ?? "Unknown" }
         )
 
-        let sortedAppNames = groupedWindows.keys.sorted()
+        let sortedAppNames = groupedSources.keys.sorted()
 
         return ForEach(sortedAppNames, id: \.self) { appName in
-            if let windows = groupedWindows[appName] {
+            if let sources = groupedSources[appName] {
                 Section(header: Text(appName)) {
                     ForEach(
-                        windows.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
+                        sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
                         id: \.windowID
-                    ) { window in
-                        Text(truncateTitle(window.title ?? "Untitled"))
-                            .tag(Optional(window))
+                    ) { source in
+                        Text(truncateTitle(source.title ?? "Untitled"))
+                            .tag(Optional(source))
                     }
                 }
             }
         }
     }
 
-    private func truncateTitle(_ title: String) -> String {
-        title.count > 50 ? title.prefix(50) + "..." : title
-    }
-
     private var refreshButton: some View {
-        Button(action: refreshWindowList) {
+        Button(action: refreshSourceList) {
             Image(systemName: "arrow.clockwise")
         }
     }
 
-    private var previewStartButton: some View {
-        Button("Start Preview") {
-            previewManager.startWindowPreview(
-                captureManager: captureManager,
-                window: selectedWindow
-            )
-        }
-        .disabled(selectedWindow == nil)
-    }
-
     // MARK: - Actions
 
-    private func refreshWindowList() {
+    private func refreshSourceList() {
         Task {
-            logger.debug("Initiating window list refresh")
-            await previewManager.updateAvailableWindows()
-            await MainActor.run {
-                logger.info("Window list updated with \(previewManager.availableWindows.count) windows")
-            }
+            await previewManager.updateAvailableSources()
         }
     }
 
-    private func handleWindowSelection(_ old: SCWindow?, _ new: SCWindow?) {
-        if let window: SCWindow = new {
-            logger.info("Window selected: '\(window.title ?? "Untitled")'")
+    private func handleSourceSelection(_ old: SCWindow?, _ new: SCWindow?) {
+        if let source: SCWindow = new {
+            logger.info("Source selected: '\(source.title ?? "Untitled")'")
+            previewManager.startSourcePreview(
+                captureManager: captureManager,
+                source: selectedSource
+            )
         }
+    }
+
+    // MARK: - Helper Functions
+
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }
