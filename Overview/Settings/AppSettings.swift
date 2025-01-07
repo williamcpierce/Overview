@@ -10,15 +10,13 @@
 
 import SwiftUI
 
-/// Centralizes application settings management with SwiftUI property wrapper support
-/// and automatic persistence to UserDefaults.
 class AppSettings: ObservableObject {
-    // MARK: - Private State
-    private var isInitializing: Bool = true
-
     // MARK: - Dependancies
     private let logger = AppLogger.settings
     private let hotkeyService = HotkeyService.shared
+
+    // MARK: - Private State
+    private var isInitializing: Bool = true
 
     // MARK: - Constants
     let availableCaptureFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
@@ -247,7 +245,7 @@ class AppSettings: ObservableObject {
     func resetToDefaults() {
         logger.debg("Initiating settings reset")
 
-        let domain = Bundle.main.bundleIdentifier ?? "Overview"
+        let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
         UserDefaults.standard.synchronize()
 
@@ -398,7 +396,6 @@ class AppSettings: ObservableObject {
 
 // MARK: - Storage Keys
 
-/// Defines keys for persisting settings in UserDefaults
 private enum StorageKeys {
     static let focusBorderEnabled: String = "showFocusedBorder"
     static let focusBorderWidth: String = "focusBorderWidth"

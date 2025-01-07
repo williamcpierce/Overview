@@ -9,8 +9,6 @@
 
 import ScreenCaptureKit
 
-/// Handles source window focusing operations including process activation
-/// and window-specific focus management.
 final class SourceFocusService {
     private let logger = AppLogger.sources
 

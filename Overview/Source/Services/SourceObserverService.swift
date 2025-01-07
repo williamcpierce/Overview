@@ -9,8 +9,6 @@
 
 import ScreenCaptureKit
 
-/// Manages state observation and notification distribution for
-/// source window focus and title changes.
 final class SourceObserverService {
     private let logger = AppLogger.sources
 

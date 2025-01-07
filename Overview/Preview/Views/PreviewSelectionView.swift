@@ -11,9 +11,6 @@
 import ScreenCaptureKit
 import SwiftUI
 
-/// Presents a dropdown interface for selecting source windows to capture,
-/// organizing available source windows by application and providing refresh
-/// capabilities.
 struct PreviewSelectionView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
@@ -108,9 +105,9 @@ struct PreviewSelectionView: View {
             )
         }
     }
-    
+
     // MARK: - Helper Functions
-    
+
     private func truncateTitle(_ title: String) -> String {
         title.count > 50 ? title.prefix(50) + "..." : title
     }

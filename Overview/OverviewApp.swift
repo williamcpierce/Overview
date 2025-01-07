@@ -3,13 +3,13 @@
  Overview
 
  Created by William Pierce on 9/15/24.
- 
+
  The main application entry point, managing global state and window coordination
  through the app delegate and window service.
 */
 
-import SwiftUI
 import Cocoa
+import SwiftUI
 
 @main
 struct OverviewApp: App {
@@ -41,7 +41,7 @@ struct OverviewApp: App {
     private var editCommands: some Commands {
         CommandMenu("Edit") {
             Toggle("Edit Mode", isOn: editModeBinding)
-            .keyboardShortcut("e", modifiers: .command)
+                .keyboardShortcut("e", modifiers: .command)
         }
     }
 

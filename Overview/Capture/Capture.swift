@@ -27,7 +27,6 @@ struct Capture: NSViewRepresentable {
             return
         }
 
-        // Configure render layer with captured content
         let renderLayer = CALayer()
         renderLayer.contents = surfaceContent
         renderLayer.contentsScale = frame.contentScale

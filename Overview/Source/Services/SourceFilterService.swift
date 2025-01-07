@@ -4,13 +4,11 @@
 
  Created by William Pierce on 12/15/24.
 
- Handles source window filtering operations based on system requirements and user preferences.
+ Handles source window filtering operations based on basic requirements and user preferences.
 */
 
 import ScreenCaptureKit
 
-/// Provides source filtering capabilities based on system requirements,
-/// user-defined filters, and application-specific rules.
 final class SourceFilterService {
     private let logger = AppLogger.sources
     private let systemAppBundleIDs: Set<String> = Set([

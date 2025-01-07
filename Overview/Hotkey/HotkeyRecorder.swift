@@ -3,12 +3,13 @@
  Overview
 
  Created by William Pierce on 12/8/24.
+
+ Records keyboard input to create hotkey bindings, managing the recording state
+ and keyboard event monitoring
 */
 
 import SwiftUI
 
-/// Records keyboard input to create hotkey bindings, managing the recording state
-/// and keyboard event monitoring with proper security constraints
 struct HotkeyRecorder: NSViewRepresentable {
     @Binding var shortcut: HotkeyBinding?
     let sourceTitle: String

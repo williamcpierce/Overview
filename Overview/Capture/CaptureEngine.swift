@@ -126,7 +126,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         switch outputType {
         case .screen:
-            if let frame = extractCapturedFrame(from: sampleBuffer) {
+            if let frame: CapturedFrame = extractCapturedFrame(from: sampleBuffer) {
                 capturedFrameHandler?(frame)
             }
         case .audio:

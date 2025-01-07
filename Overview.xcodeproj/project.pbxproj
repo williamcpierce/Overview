@@ -147,7 +147,6 @@
 			isa = PBXGroup;
 			children = (
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
-				C8CE2DC12D2BEFC5002D11AC /* Info.plist */,
 				C8A838332D0410CF002EC00B /* ContentView.swift */,
 				C8C2E4942D2BAEA8004F8C1F /* Window */,
 				C8A8387E2D0421ED002EC00B /* Preview */,
@@ -158,6 +157,7 @@
 				C828A4032D0A948D0023E7F1 /* Logging */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
+				C8CE2DC12D2BEFC5002D11AC /* Info.plist */,
 				C876958B2CBA082F00FBCA6C /* Preview Content */,
 			);
 			path = Overview;

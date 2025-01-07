@@ -10,8 +10,6 @@
 
 import SwiftUI
 
-/// Displays captured source window content with configurable visual overlays
-/// including focus borders and source window titles.
 struct PreviewCaptureView: View {
     @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager

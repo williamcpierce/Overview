@@ -11,7 +11,6 @@
 
 import SwiftUI
 
-/// Primary settings view containing all application configuration options organized into tabs
 struct SettingsView: View {
     // MARK: - Dependencies
     @ObservedObject var appSettings: AppSettings
@@ -452,7 +451,6 @@ struct SettingsView: View {
     }
 }
 
-/// Custom slider control for opacity settings
 struct OpacitySlider: NSViewRepresentable {
     @Binding var value: Double
 

@@ -10,8 +10,6 @@
 
 import ScreenCaptureKit
 
-/// Coordinates source window-related services and provides centralized access to
-/// window management functionality across the application.
 @MainActor
 final class SourceServices {
     let sourceFilter: SourceFilterService
