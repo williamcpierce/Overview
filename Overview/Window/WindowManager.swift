@@ -110,26 +110,22 @@ final class WindowManager {
                 height: appSettings.windowDefaultHeight)
         }
 
-        // Account for screen scale factor
-        let scaleFactor: CGFloat = screen.backingScaleFactor
-        let scaledWidth = appSettings.windowDefaultWidth / scaleFactor
-        let scaledHeight = appSettings.windowDefaultHeight / scaleFactor
+        let defaultWidth = appSettings.windowDefaultWidth
+        let defaultHeight = appSettings.windowDefaultHeight
 
-        // Center on screen, accounting for menu bar
-        let menuBarHeight: CGFloat = 25
         let visibleFrame: NSRect = screen.visibleFrame
 
-        let centerX = visibleFrame.minX + (visibleFrame.width - scaledWidth) / 2
-        let centerY = visibleFrame.minY + (visibleFrame.height - scaledHeight) / 2
+        let centerX = visibleFrame.minX + (visibleFrame.width - defaultWidth) / 2
+        let centerY = visibleFrame.minY + (visibleFrame.height - defaultHeight) / 2
 
-        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * (25 / scaleFactor)
-        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * (25 / scaleFactor)
+        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
+        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
 
         let frame = NSRect(
             x: centerX + xOffset,
             y: centerY - yOffset,
-            width: scaledWidth,
-            height: scaledHeight
+            width: defaultWidth,
+            height: defaultHeight
         )
 
         return frame.ensureOnScreen()
