@@ -2,7 +2,7 @@
  Window/Extensions/NSRectExtension.swift
  Overview
 
- Created by William Pierce on 1/07/25.
+ Created by William Pierce on 1/7/25.
 
  Provides screen boundary management functionality for NSRect frames,
  ensuring windows remain visible within screen bounds.
@@ -11,65 +11,104 @@
 import AppKit
 
 extension NSRect {
+    // MARK: - Constants
+
+    private struct Constraints {
+        static let minWidth: CGFloat = 200
+        static let minHeight: CGFloat = 150
+        static let maxWidth: CGFloat = 2000
+        static let maxHeight: CGFloat = 1500
+        static let minVisiblePortion: CGFloat = 50
+        static let defaultScreenWidth: CGFloat = 1440
+        static let defaultScreenHeight: CGFloat = 900
+    }
+
+    // MARK: - Public Methods
+
     func ensureOnScreen() -> NSRect {
-        // Get the visible frame of all screens
-        let screens: [NSScreen] = NSScreen.screens
-        let visibleFrames: [NSRect] = screens.map { $0.visibleFrame }
+        let visibleFrames: [NSRect] = NSScreen.screens.map { $0.visibleFrame }
 
-        // If no screens are available, return centered frame on main screen bounds
         guard !visibleFrames.isEmpty else {
-            let screenBounds: NSRect =
-                NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-            return NSRect(
-                x: (screenBounds.width - width) / 2,
-                y: (screenBounds.height - height) / 2,
-                width: width,
-                height: height
+            return centerOnDefaultScreen()
+        }
+
+        let targetScreen: NSScreen = findTargetScreen()
+        let adjustedSize: NSSize = calculateAdjustedSize(for: targetScreen)
+        let adjustedPosition: NSPoint = calculateAdjustedPosition(
+            size: adjustedSize,
+            targetFrame: targetScreen.visibleFrame
+        )
+
+        return NSRect(origin: adjustedPosition, size: adjustedSize)
+    }
+
+    // MARK: - Private Methods
+
+    private func centerOnDefaultScreen() -> NSRect {
+        let screenBounds: NSRect =
+            NSScreen.main?.frame
+            ?? NSRect(
+                x: 0,
+                y: 0,
+                width: Constraints.defaultScreenWidth,
+                height: Constraints.defaultScreenHeight
             )
+
+        return NSRect(
+            x: (screenBounds.width - width) / 2,
+            y: (screenBounds.height - height) / 2,
+            width: width,
+            height: height
+        )
+    }
+
+    private func findTargetScreen() -> NSScreen {
+        let containingScreen: NSScreen? = NSScreen.screens.first {
+            $0.visibleFrame.intersects(self)
+        }
+        return containingScreen ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    private func calculateAdjustedSize(for screen: NSScreen) -> NSSize {
+        let targetFrame: NSRect = screen.visibleFrame
+        let scaleFactor: CGFloat = screen.backingScaleFactor
+
+        // Apply scale factor
+        var adjustedWidth: CGFloat = width * scaleFactor
+        var adjustedHeight: CGFloat = height * scaleFactor
+
+        // Constrain dimensions
+        let maxWidth: CGFloat = min(targetFrame.width, Constraints.maxWidth)
+        let maxHeight: CGFloat = min(targetFrame.height, Constraints.maxHeight)
+
+        adjustedWidth = min(max(Constraints.minWidth, adjustedWidth), maxWidth)
+        adjustedHeight = min(max(Constraints.minHeight, adjustedHeight), maxHeight)
+
+        // Reverse scale factor
+        return NSSize(
+            width: adjustedWidth / scaleFactor,
+            height: adjustedHeight / scaleFactor
+        )
+    }
+
+    private func calculateAdjustedPosition(size: NSSize, targetFrame: NSRect) -> NSPoint {
+        var adjustedX: CGFloat = origin.x
+        var adjustedY: CGFloat = origin.y
+
+        // Ensure minimum visibility on x-axis
+        if origin.x + size.width < targetFrame.minX + Constraints.minVisiblePortion {
+            adjustedX = targetFrame.minX
+        } else if origin.x > targetFrame.maxX - Constraints.minVisiblePortion {
+            adjustedX = targetFrame.maxX - size.width
         }
 
-        // First try to find the screen this window belongs to
-        let containingScreen: NSScreen? = screens.first { $0.visibleFrame.intersects(self) }
-        let targetScreen: NSScreen = containingScreen ?? NSScreen.main ?? screens[0]
-        let targetFrame: NSRect = targetScreen.visibleFrame
-
-        var adjustedFrame: CGRect = self
-
-        // Account for screen scale factor
-        let scaleFactor: CGFloat = targetScreen.backingScaleFactor
-        adjustedFrame.size.width *= scaleFactor
-        adjustedFrame.size.height *= scaleFactor
-
-        // Ensure minimum and maximum dimensions
-        let minWidth: CGFloat = 200
-        let minHeight: CGFloat = 150
-        let maxWidth: CGFloat = min(targetFrame.width, 2000)  // Prevent excessive sizes
-        let maxHeight: CGFloat = min(targetFrame.height, 1500)
-
-        adjustedFrame.size.width = min(max(minWidth, adjustedFrame.size.width), maxWidth)
-        adjustedFrame.size.height = min(max(minHeight, adjustedFrame.size.height), maxHeight)
-
-        // Adjust for screen scale factor
-        adjustedFrame.size.width /= scaleFactor
-        adjustedFrame.size.height /= scaleFactor
-
-        // Ensure the window is at least partially visible
-        let minVisiblePortion: CGFloat = 50
-
-        // Adjust x-position, accounting for screen bounds
-        if adjustedFrame.maxX < targetFrame.minX + minVisiblePortion {
-            adjustedFrame.origin.x = targetFrame.minX
-        } else if adjustedFrame.minX > targetFrame.maxX - minVisiblePortion {
-            adjustedFrame.origin.x = targetFrame.maxX - adjustedFrame.width
+        // Ensure minimum visibility on y-axis
+        if origin.y + size.height < targetFrame.minY + Constraints.minVisiblePortion {
+            adjustedY = targetFrame.minY
+        } else if origin.y > targetFrame.maxY - Constraints.minVisiblePortion {
+            adjustedY = targetFrame.maxY - size.height
         }
 
-        // Adjust y-position, accounting for menu bar and dock
-        if adjustedFrame.maxY < targetFrame.minY + minVisiblePortion {
-            adjustedFrame.origin.y = targetFrame.minY
-        } else if adjustedFrame.minY > targetFrame.maxY - minVisiblePortion {
-            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height
-        }
-
-        return adjustedFrame
+        return NSPoint(x: adjustedX, y: adjustedY)
     }
 }
