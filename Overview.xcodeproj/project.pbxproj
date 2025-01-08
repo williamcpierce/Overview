@@ -103,6 +103,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Extensions/NSRectExtension.swift,
+				Extensions/NSViewExtension.swift,
 				WindowAccessor.swift,
 				WindowManager.swift,
 				WindowStorage.swift,
