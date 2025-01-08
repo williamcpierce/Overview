@@ -24,7 +24,7 @@ final class WindowManager {
     private var sessionWindowCounter: Int
 
     // MARK: - Constants
-    private let cascadeOffsetMultiplier: CGFloat = 25
+    private let cascadeOffset: CGFloat = 25
 
     init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
         self.appSettings = appSettings
@@ -118,12 +118,11 @@ final class WindowManager {
         let centerX = visibleFrame.minX + (visibleFrame.width - defaultWidth) / 2
         let centerY = visibleFrame.minY + (visibleFrame.height - defaultHeight) / 2
 
-        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
-        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
+        let offset: CGFloat = CGFloat(sessionWindowCounter) * cascadeOffset
 
         let frame = NSRect(
-            x: centerX + xOffset,
-            y: centerY - yOffset,
+            x: centerX + offset,
+            y: centerY - offset,
             width: defaultWidth,
             height: defaultHeight
         )
