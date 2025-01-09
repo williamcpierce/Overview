@@ -220,7 +220,6 @@ extension NSRect {
 
         // Ensure the window is at least partially visible
         let minVisiblePortion: CGFloat = 50
-        let menuBarHeight: CGFloat = 25
 
         // Adjust x-position, accounting for screen bounds
         if adjustedFrame.maxX < targetFrame.minX + minVisiblePortion {
@@ -232,13 +231,8 @@ extension NSRect {
         // Adjust y-position, accounting for menu bar and dock
         if adjustedFrame.maxY < targetFrame.minY + minVisiblePortion {
             adjustedFrame.origin.y = targetFrame.minY
-        } else if adjustedFrame.minY > targetFrame.maxY - minVisiblePortion - menuBarHeight {
-            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height - menuBarHeight
-        }
-
-        // Ensure window isn't positioned under the menu bar
-        if adjustedFrame.maxY > targetFrame.maxY - menuBarHeight {
-            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height - menuBarHeight
+        } else if adjustedFrame.minY > targetFrame.maxY - minVisiblePortion {
+            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height
         }
 
         return adjustedFrame
