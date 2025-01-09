@@ -161,6 +161,11 @@ final class WindowManager {
         )
         window.contentView = NSHostingView(rootView: contentView)
     }
+
+    func toggleWindowShadow(for window: NSWindow, enableShadow: Bool) {
+        window.hasShadow = enableShadow
+        logger.info("Window shadow toggled: \(enableShadow ? "Enabled" : "Disabled")")
+    }
 }
 
 // MARK: - Window Delegate

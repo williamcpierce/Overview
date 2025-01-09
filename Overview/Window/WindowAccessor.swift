@@ -74,6 +74,7 @@ struct WindowAccessor: NSViewRepresentable {
     private func synchronizeBehavior(_ window: NSWindow) {
         updateLevel(window)
         updateMissionControl(window)
+        updateShadow(window)
     }
 
     private func updateLevel(_ window: NSWindow) {
@@ -84,6 +85,13 @@ struct WindowAccessor: NSViewRepresentable {
             window.level = newLevel
             logger.debug("Window level updated: floating=\(shouldFloat)")
         }
+    }
+
+    private func updateShadow(_ window: NSWindow) {
+        let enableShadow = appSettings.windowShadowEnabled  // Assuming this is a setting in AppSettings
+
+        window.hasShadow = enableShadow
+        logger.debug("Window shadow updated: \(enableShadow ? "Enabled" : "Disabled")")
     }
 
     private func updateMissionControl(_ window: NSWindow) {
