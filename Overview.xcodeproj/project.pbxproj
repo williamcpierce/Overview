@@ -102,6 +102,8 @@
 		C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Extensions/NSRectExtension.swift,
+				Extensions/NSViewExtension.swift,
 				WindowAccessor.swift,
 				WindowManager.swift,
 				WindowStorage.swift,
