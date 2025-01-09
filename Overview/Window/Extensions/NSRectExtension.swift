@@ -14,10 +14,10 @@ extension NSRect {
     // MARK: - Constants
 
     private struct Constraints {
-        static let minWidth: CGFloat = 200
-        static let minHeight: CGFloat = 150
-        static let maxWidth: CGFloat = 2000
-        static let maxHeight: CGFloat = 1500
+        static let minWidth: CGFloat = 100
+        static let minHeight: CGFloat = 100
+        static let maxWidth: CGFloat = 5120
+        static let maxHeight: CGFloat = 2880
         static let minVisiblePortion: CGFloat = 50
         static let defaultScreenWidth: CGFloat = 1440
         static let defaultScreenHeight: CGFloat = 900
@@ -71,11 +71,10 @@ extension NSRect {
 
     private func calculateAdjustedSize(for screen: NSScreen) -> NSSize {
         let targetFrame: NSRect = screen.visibleFrame
-        let scaleFactor: CGFloat = screen.backingScaleFactor
 
         // Apply scale factor
-        var adjustedWidth: CGFloat = width * scaleFactor
-        var adjustedHeight: CGFloat = height * scaleFactor
+        var adjustedWidth: CGFloat = width
+        var adjustedHeight: CGFloat = height
 
         // Constrain dimensions
         let maxWidth: CGFloat = min(targetFrame.width, Constraints.maxWidth)
@@ -86,8 +85,8 @@ extension NSRect {
 
         // Reverse scale factor
         return NSSize(
-            width: adjustedWidth / scaleFactor,
-            height: adjustedHeight / scaleFactor
+            width: adjustedWidth,
+            height: adjustedHeight
         )
     }
 
