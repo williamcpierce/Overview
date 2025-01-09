@@ -120,7 +120,7 @@ struct PreviewView: View {
             Spacer()
             Image(systemName: "righttriangle.fill")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(appSettings.focusBorderColor)
         }
     }
 

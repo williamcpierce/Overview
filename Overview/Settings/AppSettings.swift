@@ -35,6 +35,7 @@ class AppSettings: ObservableObject {
         static let windowDefaultHeight: Double = 162
         static let windowManagedByMissionControl: Bool = true
         static let windowAlignmentEnabled: Bool = false
+        static let windowShadowEnabled: Bool = false
         static let captureFrameRate: Double = 10.0
         static let hotkeyBindings: [HotkeyBinding] = []
         static let filterAppNames: [String] = []
@@ -126,6 +127,16 @@ class AppSettings: ObservableObject {
             logger.debug("Hide active window set to \(previewHideActiveWindow)")
         }
     }
+
+
+    @Published var windowShadowEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                windowShadowEnabled, forKey: StorageKeys.windowShadowEnabled)
+            logger.debug("Window shadow enabled set to \(windowShadowEnabled)")
+        }
+    }
+
 
     // MARK: - Window Settings
 
@@ -222,6 +233,7 @@ class AppSettings: ObservableObject {
         self.windowDefaultWidth = Defaults.windowDefaultWidth
         self.windowDefaultHeight = Defaults.windowDefaultHeight
         self.windowManagedByMissionControl = Defaults.windowManagedByMissionControl
+        self.windowShadowEnabled = Defaults.windowShadowEnabled
         self.previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
         self.previewHideInactiveApplications = Defaults.previewHideInactiveApplications
         self.previewHideActiveWindow = Defaults.previewHideActiveWindow
@@ -258,6 +270,7 @@ class AppSettings: ObservableObject {
         windowDefaultWidth = Defaults.windowDefaultWidth
         windowDefaultHeight = Defaults.windowDefaultHeight
         windowManagedByMissionControl = Defaults.windowManagedByMissionControl
+        windowShadowEnabled = Defaults.windowShadowEnabled
         previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
         previewHideInactiveApplications = Defaults.previewHideInactiveApplications
         previewHideActiveWindow = Defaults.previewHideActiveWindow
@@ -289,6 +302,8 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.windowDefaultHeight)
         windowManagedByMissionControl = UserDefaults.standard.bool(
             forKey: StorageKeys.windowManagedByMissionControl)
+        windowShadowEnabled = UserDefaults.standard.bool(
+            forKey: StorageKeys.windowShadowEnabled)            
         previewCloseOnCaptureStop = UserDefaults.standard.bool(
             forKey: StorageKeys.previewCloseOnCaptureStop)
         previewHideInactiveApplications = UserDefaults.standard.bool(
@@ -405,6 +420,7 @@ private enum StorageKeys {
     static let windowDefaultWidth: String = "defaultWindowWidth"
     static let windowDefaultHeight: String = "defaultWindowHeight"
     static let windowManagedByMissionControl: String = "managedByMissionControl"
+    static let windowShadowEnabled: String = "windowShadowEnabled"
     static let previewCloseOnCaptureStop: String = "closeOnCaptureStop"
     static let previewHideInactiveApplications: String = "hideInactiveApplications"
     static let previewHideActiveWindow: String = "hideActiveWindow"
