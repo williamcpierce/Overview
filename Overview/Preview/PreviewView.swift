@@ -87,7 +87,8 @@ struct PreviewView: View {
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
-            onSourceWindowFocus: { captureManager.focusSource() }
+            onSourceWindowFocus: { captureManager.focusSource() },
+            teardownCapture: teardownCapture
         )
     }
 
