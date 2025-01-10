@@ -73,8 +73,9 @@ struct PreviewSettingsTab: View {
                 Toggle("Hide preview for active window", isOn: $appSettings.previewHideActiveWindow)
                 Toggle("Enable window shadows", isOn: $appSettings.windowShadowEnabled)
                 Toggle(
+                    "Create preview on app launch", isOn: $appSettings.windowCreateOnLaunch)
+                Toggle(
                     "Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
-
 
                 Text(
                     "Alignment help will cause preview windows to show behind some other windows until edit mode is turned off."
