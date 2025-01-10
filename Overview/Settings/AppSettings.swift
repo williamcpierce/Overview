@@ -230,7 +230,6 @@ class AppSettings: ObservableObject {
     init() {
         logger.debug("Initializing settings manager")
 
-        // Initialize with default values
         self.focusBorderEnabled = Defaults.focusBorderEnabled
         self.focusBorderWidth = Defaults.focusBorderWidth
         self.focusBorderColor = Defaults.focusBorderColor
