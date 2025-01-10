@@ -142,12 +142,11 @@ final class WindowManager {
                     logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
                 }
             }
-
-            handleRestoreCompletion(restoredCount)
         } catch {
             logger.logError(error, context: "Window state restoration failed")
-            createDefaultWindow()
         }
+
+        handleRestoreCompletion(restoredCount)
     }
 
     // MARK: - Private Methods
@@ -172,7 +171,7 @@ final class WindowManager {
     }
 
     private func handleRestoreCompletion(_ restoredCount: Int) {
-        if restoredCount == 0 {
+        if restoredCount == 0 && appSettings.windowCreateOnLaunch {
             logger.info("No windows restored, creating default window")
             createDefaultWindow()
         } else {
@@ -238,7 +237,6 @@ final class WindowManager {
             defer: config.deferCreation
         )
 
-        // Check basic window state instead of non-existent isValid
         guard window.contentView != nil,
             window.frame.size.width > 0,
             window.frame.size.height > 0

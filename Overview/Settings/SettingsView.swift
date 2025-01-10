@@ -37,8 +37,8 @@ struct SettingsView: View {
         .fixedSize()
         .background(.ultraThickMaterial)
         .onAppear {
-            let settingsStyleMask: NSWindow.StyleMask = [.titled, .closable, .miniaturizable]
-            if let settingsWindow = NSApp.windows.first(where: { $0.styleMask == settingsStyleMask }) {
+            let settingsStyleMask: NSWindow.StyleMask.RawValue = 32771
+            if let settingsWindow = NSApp.windows.first(where: { $0.styleMask.rawValue == settingsStyleMask }) {
                 settingsWindow.level = .statusBar + 2
             }
         }

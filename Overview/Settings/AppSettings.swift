@@ -36,6 +36,7 @@ class AppSettings: ObservableObject {
         static let windowManagedByMissionControl: Bool = true
         static let windowAlignmentEnabled: Bool = false
         static let windowShadowEnabled: Bool = false
+        static let windowCreateOnLaunch: Bool = true
         static let captureFrameRate: Double = 10.0
         static let hotkeyBindings: [HotkeyBinding] = []
         static let filterAppNames: [String] = []
@@ -129,15 +130,6 @@ class AppSettings: ObservableObject {
     }
 
 
-    @Published var windowShadowEnabled: Bool {
-        didSet {
-            UserDefaults.standard.set(
-                windowShadowEnabled, forKey: StorageKeys.windowShadowEnabled)
-            logger.debug("Window shadow enabled set to \(windowShadowEnabled)")
-        }
-    }
-
-
     // MARK: - Window Settings
 
     @Published var windowDefaultWidth: Double {
@@ -172,6 +164,22 @@ class AppSettings: ObservableObject {
                 forKey: StorageKeys.windowAlignmentEnabled
             )
             logger.debug("Edit mode alignment set to \(windowAlignmentEnabled)")
+        }
+    }
+
+    @Published var windowCreateOnLaunch: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                windowCreateOnLaunch, forKey: StorageKeys.windowCreateOnLaunch)
+            logger.debug("Window creation on launch set to \(windowCreateOnLaunch)")
+        }
+    }
+
+    @Published var windowShadowEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(
+                windowShadowEnabled, forKey: StorageKeys.windowShadowEnabled)
+            logger.debug("Window shadow enabled set to \(windowShadowEnabled)")
         }
     }
 
@@ -230,13 +238,14 @@ class AppSettings: ObservableObject {
         self.sourceTitleFontSize = Defaults.sourceTitleFontSize
         self.sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
         self.previewOpacity = Defaults.previewOpacity
+        self.previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
+        self.previewHideInactiveApplications = Defaults.previewHideInactiveApplications
+        self.previewHideActiveWindow = Defaults.previewHideActiveWindow
         self.windowDefaultWidth = Defaults.windowDefaultWidth
         self.windowDefaultHeight = Defaults.windowDefaultHeight
         self.windowManagedByMissionControl = Defaults.windowManagedByMissionControl
         self.windowShadowEnabled = Defaults.windowShadowEnabled
-        self.previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
-        self.previewHideInactiveApplications = Defaults.previewHideInactiveApplications
-        self.previewHideActiveWindow = Defaults.previewHideActiveWindow
+        self.windowCreateOnLaunch = Defaults.windowCreateOnLaunch
         self.windowAlignmentEnabled = Defaults.windowAlignmentEnabled
         self.hotkeyBindings = Defaults.hotkeyBindings
         self.captureFrameRate = Defaults.captureFrameRate
@@ -267,13 +276,14 @@ class AppSettings: ObservableObject {
         sourceTitleFontSize = Defaults.sourceTitleFontSize
         sourceTitleBackgroundOpacity = Defaults.sourceTitleBackgroundOpacity
         previewOpacity = Defaults.previewOpacity
+        previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
+        previewHideInactiveApplications = Defaults.previewHideInactiveApplications
+        previewHideActiveWindow = Defaults.previewHideActiveWindow
         windowDefaultWidth = Defaults.windowDefaultWidth
         windowDefaultHeight = Defaults.windowDefaultHeight
         windowManagedByMissionControl = Defaults.windowManagedByMissionControl
         windowShadowEnabled = Defaults.windowShadowEnabled
-        previewCloseOnCaptureStop = Defaults.previewCloseOnCaptureStop
-        previewHideInactiveApplications = Defaults.previewHideInactiveApplications
-        previewHideActiveWindow = Defaults.previewHideActiveWindow
+        windowCreateOnLaunch = Defaults.windowCreateOnLaunch
         windowAlignmentEnabled = Defaults.windowAlignmentEnabled
         hotkeyBindings = Defaults.hotkeyBindings
         captureFrameRate = Defaults.captureFrameRate
@@ -297,6 +307,12 @@ class AppSettings: ObservableObject {
         sourceTitleBackgroundOpacity = UserDefaults.standard.double(
             forKey: StorageKeys.sourceTitleBackgroundOpacity)
         previewOpacity = UserDefaults.standard.double(forKey: StorageKeys.previewOpacity)
+        previewCloseOnCaptureStop = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewCloseOnCaptureStop)
+        previewHideInactiveApplications = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewHideInactiveApplications)
+        previewHideActiveWindow = UserDefaults.standard.bool(
+            forKey: StorageKeys.previewHideActiveWindow)
         windowDefaultWidth = UserDefaults.standard.double(forKey: StorageKeys.windowDefaultWidth)
         windowDefaultHeight = UserDefaults.standard.double(
             forKey: StorageKeys.windowDefaultHeight)
@@ -304,12 +320,8 @@ class AppSettings: ObservableObject {
             forKey: StorageKeys.windowManagedByMissionControl)
         windowShadowEnabled = UserDefaults.standard.bool(
             forKey: StorageKeys.windowShadowEnabled)            
-        previewCloseOnCaptureStop = UserDefaults.standard.bool(
-            forKey: StorageKeys.previewCloseOnCaptureStop)
-        previewHideInactiveApplications = UserDefaults.standard.bool(
-            forKey: StorageKeys.previewHideInactiveApplications)
-        previewHideActiveWindow = UserDefaults.standard.bool(
-            forKey: StorageKeys.previewHideActiveWindow)
+        windowCreateOnLaunch = UserDefaults.standard.bool(
+            forKey: StorageKeys.windowCreateOnLaunch)
         windowAlignmentEnabled = UserDefaults.standard.bool(
             forKey: StorageKeys.windowAlignmentEnabled)
         captureFrameRate = UserDefaults.standard.double(forKey: StorageKeys.captureFrameRate)
@@ -417,13 +429,14 @@ private enum StorageKeys {
     static let sourceTitleFontSize: String = "titleFontSize"
     static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
     static let previewOpacity: String = "windowOpacity"
+    static let previewCloseOnCaptureStop: String = "closeOnCaptureStop"
+    static let previewHideInactiveApplications: String = "hideInactiveApplications"
+    static let previewHideActiveWindow: String = "hideActiveWindow"
     static let windowDefaultWidth: String = "defaultWindowWidth"
     static let windowDefaultHeight: String = "defaultWindowHeight"
     static let windowManagedByMissionControl: String = "managedByMissionControl"
     static let windowShadowEnabled: String = "windowShadowEnabled"
-    static let previewCloseOnCaptureStop: String = "closeOnCaptureStop"
-    static let previewHideInactiveApplications: String = "hideInactiveApplications"
-    static let previewHideActiveWindow: String = "hideActiveWindow"
+    static let windowCreateOnLaunch: String = "windowCreateOnLaunch"
     static let windowAlignmentEnabled: String = "enableEditModeAlignment"
     static let captureFrameRate: String = "frameRate"
     static let hotkeyBindings: String = "hotkeyBindings"
