@@ -117,7 +117,9 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateShadow(_ window: NSWindow) {
-        let enableShadow = appSettings.windowShadowEnabled  // Assuming this is a setting in AppSettings
+        let enableShadow = appSettings.windowShadowEnabled
+
+        guard window.hasShadow != enableShadow else { return }
 
         window.hasShadow = enableShadow
         logger.debug("Window shadow updated: \(enableShadow ? "Enabled" : "Disabled")")
