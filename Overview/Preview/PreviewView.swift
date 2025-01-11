@@ -53,14 +53,30 @@ struct PreviewView: View {
         }
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
-        .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
-        .onChange(of: captureManager.isCapturing, updateViewState)
-        .onChange(of: previewManager.editModeEnabled, updatePreviewVisibility)
-        .onChange(of: captureManager.isSourceAppFocused, updatePreviewVisibility)
-        .onChange(of: captureManager.isSourceWindowFocused, updatePreviewVisibility)
-        .onChange(of: sourceManager.isOverviewActive, updatePreviewVisibility)
-        .onChange(of: appSettings.previewHideInactiveApplications, updatePreviewVisibility)
-        .onChange(of: appSettings.previewHideActiveWindow, updatePreviewVisibility)
+        .onChange(of: captureManager.capturedFrame?.size) { newSize in
+            updatePreviewDimensions(from: captureManager.capturedFrame?.size, to: newSize)
+        }
+        .onChange(of: captureManager.isCapturing) { _ in
+            updateViewState()
+        }
+        .onChange(of: previewManager.editModeEnabled) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: captureManager.isSourceAppFocused) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: captureManager.isSourceWindowFocused) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: sourceManager.isOverviewActive) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: appSettings.previewHideInactiveApplications) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: appSettings.previewHideActiveWindow) { _ in
+            updatePreviewVisibility()
+        }
     }
 
     // MARK: - View Components
