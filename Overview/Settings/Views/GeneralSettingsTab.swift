@@ -13,69 +13,85 @@ struct GeneralSettingsTab: View {
     private let logger = AppLogger.settings
 
     var body: some View {
-        Form {
-            // Focus Border Section
-            Section {
-                Text("Border Overlay")
-                    .font(.headline)
-                    .padding(.bottom, 4)
-
-                Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
-
-                if appSettings.focusBorderEnabled {
-                    HStack {
-                        Text("Border width")
-                        Spacer()
-                        TextField(
-                            "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("pt")
-                            .foregroundColor(.secondary)
-                    }
-                    ColorPicker("Border color", selection: $appSettings.focusBorderColor)
-                }
+        if #available(macOS 13.0, *) {
+            Form {
+                // Focus Border Section
+                formContent
             }
+            .formStyle(.grouped)
+        } else {
+            ScrollView {
+                VStack(spacing: 20) {
+                    formContent
+                }
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor))
+            }
+        }
+    }
 
-            // Title Overlay Section
-            Section {
-                Text("Title Overlay")
-                    .font(.headline)
-                    .padding(.bottom, 4)
+    @ViewBuilder
+    private var formContent: some View {
+        // Focus Border Section
+        Section {
+            Text("Border Overlay")
+                .font(.headline)
+                .padding(.bottom, 4)
 
-                Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
+            Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
 
-                if appSettings.sourceTitleEnabled {
+            if appSettings.focusBorderEnabled {
+                HStack {
+                    Text("Border width")
+                    Spacer()
+                    TextField(
+                        "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
+                    )
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                    Text("pt")
+                        .foregroundColor(.secondary)
+                }
+                ColorPicker("Border color", selection: $appSettings.focusBorderColor)
+            }
+        }
+
+        // Title Overlay Section
+        Section {
+            Text("Title Overlay")
+                .font(.headline)
+                .padding(.bottom, 4)
+
+            Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
+
+            if appSettings.sourceTitleEnabled {
+                HStack {
+                    Text("Font size")
+                    Spacer()
+                    TextField(
+                        "", value: $appSettings.sourceTitleFontSize,
+                        formatter: NumberFormatter()
+                    )
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                    Text("pt")
+                        .foregroundColor(.secondary)
+                }
+
+                VStack {
                     HStack {
-                        Text("Font size")
+                        Text("Background opacity")
                         Spacer()
-                        TextField(
-                            "", value: $appSettings.sourceTitleFontSize,
-                            formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("pt")
-                            .foregroundColor(.secondary)
                     }
-
-                    VStack {
-                        HStack {
-                            Text("Background opacity")
-                            Spacer()
-                        }
-                        HStack(spacing: 8) {
-                            OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
-                            Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
-                                .foregroundColor(.secondary)
-                                .frame(width: 40)
-                        }
+                    HStack(spacing: 8) {
+                        OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
+                        Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
+                            .foregroundColor(.secondary)
+                            .frame(width: 40)
                     }
                 }
             }
         }
-        .formStyle(.grouped)
         .safeAreaInset(edge: .bottom) {
             Button("Reset All Settings") {
                 logger.debug("Settings reset requested")
