@@ -14,8 +14,8 @@ extension NSRect {
     // MARK: - Constants
 
     private struct Constraints {
-        static let minWidth: CGFloat = 100
-        static let minHeight: CGFloat = 100
+        static let minWidth: CGFloat = 60
+        static let minHeight: CGFloat = 180
         static let maxWidth: CGFloat = 5120
         static let maxHeight: CGFloat = 2880
         static let minVisiblePortion: CGFloat = 50

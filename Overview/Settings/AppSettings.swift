@@ -386,12 +386,12 @@ class AppSettings: ObservableObject {
     }
 
     private func validatePreviewWindowDimensions() {
-        if windowDefaultWidth < 100 {
+        if windowDefaultWidth < 120 {
             logger.warning(
                 "Invalid preview window width (\(windowDefaultWidth)), resetting to default")
             windowDefaultWidth = Defaults.windowDefaultWidth
         }
-        if windowDefaultHeight < 100 {
+        if windowDefaultHeight < 60 {
             logger.warning(
                 "Invalid preview window height (\(windowDefaultHeight)), resetting to default")
             windowDefaultHeight = Defaults.windowDefaultHeight
