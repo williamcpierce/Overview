@@ -79,20 +79,40 @@ struct PreviewSettingsTab: View {
                 .font(.headline)
                 .padding(.bottom, 4)
 
-            Toggle("Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
-            Toggle(
-                "Close preview with source window", isOn: $appSettings.previewCloseOnCaptureStop
-            )
-            Toggle(
-                "Hide previews for inactive applications",
-                isOn: $appSettings.previewHideInactiveApplications)
-            Toggle("Hide preview for active window", isOn: $appSettings.previewHideActiveWindow)
-            Toggle("Enable window shadows", isOn: $appSettings.windowShadowEnabled)
-            Toggle(
+            HStack {
+                Toggle("Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
+                Spacer()
+            }
+            HStack {
+                Toggle(
+                    "Close preview with source window", isOn: $appSettings.previewCloseOnCaptureStop
+                )
+                Spacer()
+            }
+            HStack {
+                Toggle(
+                    "Hide previews for inactive applications",
+                    isOn: $appSettings.previewHideInactiveApplications)
+                Spacer()
+            }
+            HStack {
+                Toggle("Hide preview for active window", isOn: $appSettings.previewHideActiveWindow)
+                Spacer()
+            }
+            HStack {
+                Toggle("Enable window shadows", isOn: $appSettings.windowShadowEnabled)
+                Spacer()
+            }
+            HStack {
+                Toggle(
                 "Create preview on app launch", isOn: $appSettings.windowCreateOnLaunch)
-            Toggle(
-                "Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
-
+                Spacer()
+            }
+            HStack {
+                Toggle(
+                    "Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
+                Spacer()
+            }
             Text(
                 "Alignment help will cause preview windows to show behind some other windows until edit mode is turned off."
             )

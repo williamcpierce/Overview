@@ -15,17 +15,29 @@ struct GeneralSettingsTab: View {
     var body: some View {
         if #available(macOS 13.0, *) {
             Form {
-                // Focus Border Section
                 formContent
             }
             .formStyle(.grouped)
+            .safeAreaInset(edge: .bottom) {
+                Button("Reset All Settings") {
+                    logger.debug("Settings reset requested")
+                    showingResetAlert = true
+                }
+                .padding(.bottom, 10)
+            }
         } else {
             ScrollView {
                 VStack(spacing: 20) {
                     formContent
                 }
                 .padding()
-                .background(Color(NSColor.controlBackgroundColor))
+                .safeAreaInset(edge: .bottom) {
+                    Button("Reset All Settings") {
+                        logger.debug("Settings reset requested")
+                        showingResetAlert = true
+                    }
+                    .padding(.bottom, 10)
+                }
             }
         }
     }
@@ -37,9 +49,11 @@ struct GeneralSettingsTab: View {
             Text("Border Overlay")
                 .font(.headline)
                 .padding(.bottom, 4)
-
-            Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
-
+            HStack {
+                Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
+                Spacer()
+            }
+        
             if appSettings.focusBorderEnabled {
                 HStack {
                     Text("Border width")
@@ -52,7 +66,11 @@ struct GeneralSettingsTab: View {
                     Text("pt")
                         .foregroundColor(.secondary)
                 }
-                ColorPicker("Border color", selection: $appSettings.focusBorderColor)
+                HStack {
+                    Text("Border color")
+                    Spacer()
+                    ColorPicker("", selection: $appSettings.focusBorderColor)
+                }
             }
         }
 
@@ -61,9 +79,11 @@ struct GeneralSettingsTab: View {
             Text("Title Overlay")
                 .font(.headline)
                 .padding(.bottom, 4)
-
-            Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
-
+            HStack {
+                Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
+                Spacer()
+            }
+            
             if appSettings.sourceTitleEnabled {
                 HStack {
                     Text("Font size")
@@ -91,13 +111,6 @@ struct GeneralSettingsTab: View {
                     }
                 }
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            Button("Reset All Settings") {
-                logger.debug("Settings reset requested")
-                showingResetAlert = true
-            }
-            .padding(.bottom, 10)
         }
         .alert("Reset Settings", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) {}
