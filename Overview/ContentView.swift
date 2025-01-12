@@ -34,6 +34,6 @@ struct ContentView: View {
             captureManager: captureManager,
             previewManager: previewManager,
             sourceManager: sourceManager
-        )
+        ).frame(minWidth: 160, minHeight: 80)
     }
 }

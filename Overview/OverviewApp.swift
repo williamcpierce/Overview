@@ -14,6 +14,8 @@ import SwiftUI
 @main
 struct OverviewApp: App {
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var body: some Scene {
         Settings {
@@ -32,7 +34,13 @@ struct OverviewApp: App {
     private var windowCommands: some Commands {
         CommandGroup(before: .newItem) {
             Button("New Preview Window") {
-                appDelegate.windowManager.createPreviewWindow()
+                do {
+                    try appDelegate.windowManager.createPreviewWindow()
+                } catch {
+                    appDelegate.logger.logError(error, context: "Failed to create window from menu command")
+                    errorMessage = error.localizedDescription
+                    showError = true
+                }
             }
             .keyboardShortcut("n", modifiers: .command)
         }
@@ -63,9 +71,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
     var windowManager: WindowManager!
-
-    // MARK: - Private Properties
-    private let logger = AppLogger.interface
+    let logger = AppLogger.interface
 
     // MARK: - Initialization
 

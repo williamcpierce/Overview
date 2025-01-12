@@ -87,7 +87,8 @@ struct PreviewView: View {
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
-            onSourceWindowFocus: { captureManager.focusSource() }
+            onSourceWindowFocus: { captureManager.focusSource() },
+            teardownCapture: teardownCapture
         )
     }
 
@@ -120,7 +121,7 @@ struct PreviewView: View {
             Spacer()
             Image(systemName: "righttriangle.fill")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(appSettings.focusBorderColor)
         }
     }
 

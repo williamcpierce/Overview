@@ -36,5 +36,11 @@ struct SettingsView: View {
         .frame(width: 360, height: 450)
         .fixedSize()
         .background(.ultraThickMaterial)
+        .onAppear {
+            let settingsStyleMask: NSWindow.StyleMask.RawValue = 32771
+            if let settingsWindow = NSApp.windows.first(where: { $0.styleMask.rawValue == settingsStyleMask }) {
+                settingsWindow.level = .statusBar + 2
+            }
+        }
     }
 }

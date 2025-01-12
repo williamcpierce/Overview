@@ -16,6 +16,7 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
     @Environment(\.dismiss) private var dismiss
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
+    let teardownCapture: () async -> Void
     private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {
@@ -42,7 +43,10 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         handler.onEditModeToggle = onEditModeToggle
         handler.onSourceWindowFocus = onSourceWindowFocus
         handler.onCloseWindow = {
-            dismiss()
+            Task { @MainActor in
+                await teardownCapture()
+                dismiss()
+            }
         }
         handler.menu = createContextMenu(for: handler)
 
