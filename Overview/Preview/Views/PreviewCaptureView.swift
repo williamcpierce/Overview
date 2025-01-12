@@ -21,6 +21,7 @@ struct PreviewCaptureView: View {
     ) {
         self.appSettings = appSettings
         self.captureManager = captureManager
+        logger.debug("Initializing preview capture view")
     }
 
     var body: some View {
@@ -60,6 +61,7 @@ struct PreviewCaptureView: View {
             appSettings.focusBorderEnabled && captureManager.isSourceWindowFocused
             && !appSettings.previewHideActiveWindow
 
+        logger.debug("Focus border visibility: \(shouldShow)")
         return shouldShow
     }
 
