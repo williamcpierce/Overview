@@ -32,31 +32,6 @@ struct PerformanceSettingsTab: View {
             Text("Frame Rate")
                 .font(.headline)
                 .padding(.bottom, 4)
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
-        } else {
-            List {
-                formContent
-            }
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
-                }
-                .padding()
-                .background(Color(NSColor.controlBackgroundColor))
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            Text("Frame Rate")
-                .font(.headline)
-                .padding(.bottom, 4)
 
             Picker("FPS", selection: $appSettings.captureFrameRate) {
                 ForEach(appSettings.availableCaptureFrameRates, id: \.self) { rate in
