@@ -24,7 +24,6 @@ struct FilterSettingsTab: View {
                     formContent
                 }
                 .padding()
-                .background(Color(NSColor.controlBackgroundColor))
             }
         }
     }

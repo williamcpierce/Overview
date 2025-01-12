@@ -17,15 +17,11 @@ struct PerformanceSettingsTab: View {
             }
             .formStyle(.grouped)
         } else {
-            List {
-                formContent
-            }
             ScrollView {
                 VStack(spacing: 20) {
                     formContent
                 }
                 .padding()
-                .background(Color(NSColor.controlBackgroundColor))
             }
         }
     }

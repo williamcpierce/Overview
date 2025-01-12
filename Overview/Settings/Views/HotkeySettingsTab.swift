@@ -25,7 +25,6 @@ struct HotkeySettingsTab: View {
                     formContent
                 }
                 .padding()
-                .background(Color(NSColor.controlBackgroundColor))
             }
         }
     }
