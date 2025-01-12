@@ -53,7 +53,8 @@ final class WindowManager {
         static let cascadeOffset: CGFloat = 25
         static let fallbackPosition: CGFloat = 100
         static let statusBarOffset: Int = 1
-        static let minimumWindowDimension: CGFloat = 100
+        static let minWidth: CGFloat = 180
+        static let minHeight: CGFloat = 60
 
         struct Window {
             static let defaultBackgroundColor: NSColor = .clear
@@ -200,8 +201,8 @@ final class WindowManager {
         let frame = NSRect(
             x: Constants.fallbackPosition,
             y: Constants.fallbackPosition,
-            width: max(appSettings.windowDefaultWidth, Constants.minimumWindowDimension),
-            height: max(appSettings.windowDefaultHeight, Constants.minimumWindowDimension)
+            width: max(appSettings.windowDefaultWidth, Constants.minWidth),
+            height: max(appSettings.windowDefaultHeight, Constants.minHeight)
         )
 
         logger.debug("Created fallback frame: \(frame.size.width)x\(frame.size.height)")
@@ -209,8 +210,8 @@ final class WindowManager {
     }
 
     private func calculateCenteredFrame(in visibleFrame: NSRect) -> NSRect {
-        let defaultWidth = max(appSettings.windowDefaultWidth, Constants.minimumWindowDimension)
-        let defaultHeight = max(appSettings.windowDefaultHeight, Constants.minimumWindowDimension)
+        let defaultWidth = max(appSettings.windowDefaultWidth, Constants.minWidth)
+        let defaultHeight = max(appSettings.windowDefaultHeight, Constants.minHeight)
 
         let centerX = visibleFrame.minX + (visibleFrame.width - defaultWidth) / 2
         let centerY = visibleFrame.minY + (visibleFrame.height - defaultHeight) / 2
