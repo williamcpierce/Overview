@@ -72,6 +72,10 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let hotkeyManager: HotkeyManager
     var windowManager: WindowManager!
     let logger = AppLogger.interface
+    
+    // MARK: - Private Properties
+    private var statusItem: NSStatusItem?
+    private var statusMenu: NSMenu?
 
     // MARK: - Initialization
 
@@ -99,12 +103,98 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - NSApplicationDelegate
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Hide dock icon
+        NSApp.setActivationPolicy(.accessory)
+        
+        // Create status bar item
+        setupStatusBarItem()
+        
         Task {
             windowManager.restoreWindowStates()
         }
     }
-
+    
     func applicationWillTerminate(_ notification: Notification) {
         windowManager.saveWindowStates()
+    }
+    
+    // MARK: - Status Bar Setup
+    
+    private func setupStatusBarItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        
+        if let button = statusItem?.button {
+            button.image = NSImage(systemSymbolName: "square.2.layers.3d.top.filled", accessibilityDescription: "Overview")
+        }
+        
+        setupStatusMenu()
+    }
+    
+    private func setupStatusMenu() {
+        statusMenu = NSMenu()
+        
+        // New Window
+        let newWindowItem = NSMenuItem(
+            title: "New Window",
+            action: #selector(createNewWindow),
+            keyEquivalent: "n"
+        )
+        newWindowItem.keyEquivalentModifierMask = .command
+        newWindowItem.target = self
+        statusMenu?.addItem(newWindowItem)
+
+        statusMenu?.addItem(NSMenuItem.separator())
+
+        // Edit Mode
+        let editModeItem = NSMenuItem(
+            title: "Toggle Edit Mode",
+            action: #selector(toggleEditMode),
+            keyEquivalent: "e"
+        )
+        editModeItem.keyEquivalentModifierMask = .command
+        editModeItem.target = self
+        statusMenu?.addItem(editModeItem)
+        
+        
+        // Settings
+        let settingsItem = NSMenuItem(
+            title: "Settings...",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.keyEquivalentModifierMask = .command
+        settingsItem.target = self
+        statusMenu?.addItem(settingsItem)
+        
+        statusMenu?.addItem(NSMenuItem.separator())
+        
+        // Quit
+        let quitItem = NSMenuItem(
+            title: "Quit Overview",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q"
+        )
+        quitItem.keyEquivalentModifierMask = .command
+        statusMenu?.addItem(quitItem)
+        
+        statusItem?.menu = statusMenu
+    }
+    
+    // MARK: - Menu Actions
+    
+    @objc private func createNewWindow() {
+        do {
+            try windowManager.createPreviewWindow()
+        } catch {
+            logger.logError(error, context: "Failed to create window from menu")
+        }
+    }
+    
+    @objc private func toggleEditMode() {
+        previewManager.editModeEnabled.toggle()
+    }
+    
+    @objc private func openSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
