@@ -13,75 +13,104 @@ struct GeneralSettingsTab: View {
     private let logger = AppLogger.settings
 
     var body: some View {
-        Form {
-            // Focus Border Section
-            Section {
-                Text("Border Overlay")
-                    .font(.headline)
-                    .padding(.bottom, 4)
-
-                Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
-
-                if appSettings.focusBorderEnabled {
-                    HStack {
-                        Text("Border width")
-                        Spacer()
-                        TextField(
-                            "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("pt")
-                            .foregroundColor(.secondary)
-                    }
-                    ColorPicker("Border color", selection: $appSettings.focusBorderColor)
-                }
+        if #available(macOS 13.0, *) {
+            Form {
+                formContent
             }
-
-            // Title Overlay Section
-            Section {
-                Text("Title Overlay")
-                    .font(.headline)
-                    .padding(.bottom, 4)
-
-                Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
-
-                if appSettings.sourceTitleEnabled {
-                    HStack {
-                        Text("Font size")
-                        Spacer()
-                        TextField(
-                            "", value: $appSettings.sourceTitleFontSize,
-                            formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("pt")
-                            .foregroundColor(.secondary)
+            .formStyle(.grouped)
+            .safeAreaInset(edge: .bottom) {
+                Button("Reset All Settings") {
+                    logger.debug("Settings reset requested")
+                    showingResetAlert = true
+                }
+                .padding(.bottom, 10)
+            }
+        } else {
+            ScrollView {
+                VStack(spacing: 20) {
+                    formContent
+                }
+                .padding()
+                .safeAreaInset(edge: .bottom) {
+                    Button("Reset All Settings") {
+                        logger.debug("Settings reset requested")
+                        showingResetAlert = true
                     }
-
-                    VStack {
-                        HStack {
-                            Text("Background opacity")
-                            Spacer()
-                        }
-                        HStack(spacing: 8) {
-                            OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
-                            Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
-                                .foregroundColor(.secondary)
-                                .frame(width: 40)
-                        }
-                    }
+                    .padding(.bottom, 10)
                 }
             }
         }
-        .formStyle(.grouped)
-        .safeAreaInset(edge: .bottom) {
-            Button("Reset All Settings") {
-                logger.debug("Settings reset requested")
-                showingResetAlert = true
+    }
+
+    @ViewBuilder
+    private var formContent: some View {
+        // Focus Border Section
+        Section {
+            Text("Border Overlay")
+                .font(.headline)
+                .padding(.bottom, 4)
+            HStack {
+                Toggle("Show focused window border", isOn: $appSettings.focusBorderEnabled)
+                Spacer()
             }
-            .padding(.bottom, 10)
+        
+            if appSettings.focusBorderEnabled {
+                HStack {
+                    Text("Border width")
+                    Spacer()
+                    TextField(
+                        "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
+                    )
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                    Text("pt")
+                        .foregroundColor(.secondary)
+                }
+                HStack {
+                    Text("Border color")
+                    Spacer()
+                    ColorPicker("", selection: $appSettings.focusBorderColor)
+                }
+            }
+        }
+
+        // Title Overlay Section
+        Section {
+            Text("Title Overlay")
+                .font(.headline)
+                .padding(.bottom, 4)
+            HStack {
+                Toggle("Show window title", isOn: $appSettings.sourceTitleEnabled)
+                Spacer()
+            }
+            
+            if appSettings.sourceTitleEnabled {
+                HStack {
+                    Text("Font size")
+                    Spacer()
+                    TextField(
+                        "", value: $appSettings.sourceTitleFontSize,
+                        formatter: NumberFormatter()
+                    )
+                    .frame(width: 60)
+                    .textFieldStyle(.roundedBorder)
+                    Text("pt")
+                        .foregroundColor(.secondary)
+                }
+
+                VStack {
+                    HStack {
+                        Text("Background opacity")
+                        Spacer()
+                    }
+                    HStack(spacing: 8) {
+                        OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
+                        Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
+                            .foregroundColor(.secondary)
+                            .frame(width: 40)
+                    }
+                }
+            }
         }
         .alert("Reset Settings", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) {}

@@ -22,7 +22,7 @@ struct SourceListView: View {
             Text("Select source").tag(nil as SCWindow?)
             sourcesListContent
         }
-        .onChange(of: selectedSource) { _, newValue in
+        .onChange(of: selectedSource) { newValue in
             handleSourceSelection(newValue)
         }
     }

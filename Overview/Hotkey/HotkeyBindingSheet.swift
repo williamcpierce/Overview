@@ -75,7 +75,7 @@ struct HotkeyBindingSheet: View {
                     HotkeyRecorder(shortcut: $currentShortcut, sourceTitle: title)
                         .frame(height: 24)
                         .accessibilityLabel("Hotkey Recorder")
-                        .onChange(of: currentShortcut) { _, _ in
+                        .onChange(of: currentShortcut) { _ in
                             validateShortcutConfiguration()
                         }
                     Text("Hotkeys must consist of ⌘/⌥/⌃/⇧ plus another standard character.")

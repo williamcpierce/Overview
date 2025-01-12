@@ -287,8 +287,7 @@ final class WindowManager {
         let invalidWindows = activeWindows.filter { window in
             guard window.contentView != nil,
                 window.frame.size.width > 0,
-                window.frame.size.height > 0,
-                NSWindow.windowNumbers()?.contains(NSNumber(value: window.windowNumber)) == true
+                window.frame.size.height > 0
             else {
                 return true
             }

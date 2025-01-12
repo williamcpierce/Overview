@@ -53,7 +53,6 @@ final class CaptureServices {
     }
 }
 
-// CaptureError.swift extension
 enum CaptureError: LocalizedError {
     case noSourceSelected
     case permissionDenied

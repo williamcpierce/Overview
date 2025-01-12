@@ -22,8 +22,7 @@ For development updates, please join our Discord:
 
 ## System Requirements
 
--   macOS Sonoma (14.0) or later
--   Apple Silicon
+-   macOS Monterey (12.3) or later
 
 ## Installation
 
