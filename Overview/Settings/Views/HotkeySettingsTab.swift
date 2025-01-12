@@ -37,10 +37,13 @@ struct HotkeySettingsTab: View {
                 .padding(.bottom, 4)
 
             if appSettings.hotkeyBindings.isEmpty {
-                Text("No hotkeys configured")
-                    .foregroundColor(.secondary)
+                List {
+                    Text("No hotkeys configured")
+                        .foregroundColor(.secondary)
+                }
+                .padding(6)
             } else {
-                ForEach(appSettings.hotkeyBindings, id: \.sourceTitle) { binding in
+                List(appSettings.hotkeyBindings, id: \.sourceTitle) { binding in
                     HStack {
                         Text(binding.sourceTitle)
                         Spacer()
@@ -54,7 +57,7 @@ struct HotkeySettingsTab: View {
                         }
                         .buttonStyle(.plain)
                     }
-                }
+                }.padding(6)
             }
 
             Button("Add Hotkey") {

@@ -42,10 +42,13 @@ struct FilterSettingsTab: View {
             .pickerStyle(.segmented)
 
             if appSettings.filterAppNames.isEmpty {
-                Text("No applications configured")
-                    .foregroundColor(.secondary)
+                List {
+                    Text("No applications filtered")
+                        .foregroundColor(.secondary)
+                }
+                .padding(6)
             } else {
-                ForEach(appSettings.filterAppNames, id: \.self) { appName in
+                List(appSettings.filterAppNames, id: \.self) { appName in
                     HStack {
                         Text(appName)
                         Spacer()
@@ -57,7 +60,7 @@ struct FilterSettingsTab: View {
                         }
                         .buttonStyle(.plain)
                     }
-                }
+                }.padding(6)
             }
 
             HStack {
