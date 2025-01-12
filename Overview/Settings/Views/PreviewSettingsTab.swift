@@ -9,6 +9,8 @@ import SwiftUI
 
 struct PreviewSettingsTab: View {
     @ObservedObject var appSettings: AppSettings
+    @State private var showingResetAlert = false
+    private let logger = AppLogger.settings
 
     var body: some View {
         if #available(macOS 13.0, *) {
@@ -16,108 +18,82 @@ struct PreviewSettingsTab: View {
                 formContent
             }
             .formStyle(.grouped)
+            .safeAreaInset(edge: .bottom) {
+                Button("Reset All Settings") {
+                    logger.debug("Settings reset requested")
+                    showingResetAlert = true
+                }
+                .padding(.bottom, 10)
+            }
         } else {
             ScrollView {
                 VStack(spacing: 20) {
                     formContent
                 }
                 .padding()
+                .safeAreaInset(edge: .bottom) {
+                    Button("Reset All Settings") {
+                        logger.debug("Settings reset requested")
+                        showingResetAlert = true
+                    }
+                    .padding(.bottom, 10)
+                }
             }
         }
     }
 
     @ViewBuilder
     private var formContent: some View {
-        // Opacity Section
         Section {
-            Text("Opacity")
-                .font(.headline)
-                .padding(.bottom, 4)
-
-            HStack(spacing: 8) {
-                OpacitySlider(value: $appSettings.previewOpacity)
-                Text("\(Int(appSettings.previewOpacity * 100))%")
-                    .foregroundColor(.secondary)
-                    .frame(width: 40)
+            HStack {
+                Text("Frame Rate")
+                    .font(.headline)
+                Spacer()
+                Button(action: {}) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.orange)
+                }
+                .buttonStyle(.plain)
             }
+
+            Picker("FPS", selection: $appSettings.captureFrameRate) {
+                ForEach(appSettings.availableCaptureFrameRates, id: \.self) { rate in
+                    Text("\(Int(rate))").tag(rate)
+                }
+            }
+            .pickerStyle(.segmented)
         }
 
-        // Default Size Section
         Section {
-            Text("Default Size")
-                .font(.headline)
-                .padding(.bottom, 4)
-
             HStack {
-                Text("Width")
+                Text("Automatic Hiding")
+                    .font(.headline)
                 Spacer()
-                TextField(
-                    "", value: $appSettings.windowDefaultWidth, formatter: NumberFormatter()
-                )
-                .frame(width: 120)
-                .textFieldStyle(.roundedBorder)
-                Text("px")
-                    .foregroundColor(.secondary)
+                Button(action: {}) {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
-
-            HStack {
-                Text("Height")
-                Spacer()
-                TextField(
-                    "", value: $appSettings.windowDefaultHeight, formatter: NumberFormatter()
-                )
-                .frame(width: 120)
-                .textFieldStyle(.roundedBorder)
-                Text("px")
-                    .foregroundColor(.secondary)
+            VStack {
+                HStack {
+                    Toggle(
+                        "Hide inactive app previews",
+                        isOn: $appSettings.previewHideInactiveApplications)
+                    Spacer()
+                }
+                HStack {
+                    Toggle("Hide active window preview", isOn: $appSettings.previewHideActiveWindow)
+                    Spacer()
+                }
             }
         }
-
-        // Behavior Section
-        Section {
-            Text("Behavior")
-                .font(.headline)
-                .padding(.bottom, 4)
-
-            HStack {
-                Toggle("Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
-                Spacer()
+        .alert("Reset Settings", isPresented: $showingResetAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                logger.info("Performing settings reset")
+                appSettings.resetToDefaults()
             }
-            HStack {
-                Toggle(
-                    "Close preview with source window", isOn: $appSettings.previewCloseOnCaptureStop
-                )
-                Spacer()
-            }
-            HStack {
-                Toggle(
-                    "Hide previews for inactive applications",
-                    isOn: $appSettings.previewHideInactiveApplications)
-                Spacer()
-            }
-            HStack {
-                Toggle("Hide preview for active window", isOn: $appSettings.previewHideActiveWindow)
-                Spacer()
-            }
-            HStack {
-                Toggle("Enable window shadows", isOn: $appSettings.windowShadowEnabled)
-                Spacer()
-            }
-            HStack {
-                Toggle(
-                "Create preview on app launch", isOn: $appSettings.windowCreateOnLaunch)
-                Spacer()
-            }
-            HStack {
-                Toggle(
-                    "Enable alignment help in edit mode", isOn: $appSettings.windowAlignmentEnabled)
-                Spacer()
-            }
-            Text(
-                "Alignment help will cause preview windows to show behind some other windows until edit mode is turned off."
-            )
-            .font(.caption)
-            .foregroundColor(.secondary)
         }
     }
 }
