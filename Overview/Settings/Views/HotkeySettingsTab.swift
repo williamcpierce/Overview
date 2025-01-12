@@ -35,6 +35,28 @@ struct HotkeySettingsTab: View {
             Text("Hotkeys")
                 .font(.headline)
                 .padding(.bottom, 4)
+        if #available(macOS 13.0, *) {
+            Form {
+                formContent
+            }
+            .formStyle(.grouped)
+        } else {
+            ScrollView {
+                VStack(spacing: 20) {
+                    formContent
+                }
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var formContent: some View {
+        Section {
+            Text("Hotkeys")
+                .font(.headline)
+                .padding(.bottom, 4)
 
             if appSettings.hotkeyBindings.isEmpty {
                 Text("No hotkeys configured")

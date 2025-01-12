@@ -33,6 +33,32 @@ struct PreviewSettingsTab: View {
             Text("Opacity")
                 .font(.headline)
                 .padding(.bottom, 4)
+        if #available(macOS 13.0, *) {
+            Form {
+                formContent
+            }
+            .formStyle(.grouped)
+        } else {
+            List {
+                formContent
+            }
+            ScrollView {
+                VStack(spacing: 20) {
+                    formContent
+                }
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var formContent: some View {
+        // Opacity Section
+        Section {
+            Text("Opacity")
+                .font(.headline)
+                .padding(.bottom, 4)
 
             HStack(spacing: 8) {
                 OpacitySlider(value: $appSettings.previewOpacity)
