@@ -96,5 +96,7 @@ struct OverlaySettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .animation(.easeInOut(duration: 0.3), value: focusBorderEnabled)
+        .animation(.easeInOut(duration: 0.3), value: sourceTitleEnabled)
     }
 }
