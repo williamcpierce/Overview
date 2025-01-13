@@ -22,7 +22,7 @@ struct SourceListView: View {
 
     var body: some View {
         Picker("", selection: $selectedSource) {
-            Text("Select source").tag(nil as SCWindow?)
+            Text("Select source window...").tag(nil as SCWindow?)
             sourcesListContent
         }
         .onChange(of: selectedSource) { newValue in

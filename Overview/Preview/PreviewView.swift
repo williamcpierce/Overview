@@ -114,7 +114,9 @@ struct PreviewView: View {
     }
 
     private var previewBackgroundLayer: some View {
-        Color.black.opacity(isSelectionViewVisible ? previewOpacity : 0)
+        Rectangle()
+            .fill(.regularMaterial)
+            .opacity(isSelectionViewVisible ? 1 : 0)
     }
 
     private var windowConfigurationLayer: some View {
