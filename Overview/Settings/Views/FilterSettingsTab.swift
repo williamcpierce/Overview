@@ -8,23 +8,14 @@
 import SwiftUI
 
 struct FilterSettingsTab: View {
+    // MARK: - Dependencies
+    @ObservedObject var settingsManager: SettingsManager
+    private let logger = AppLogger.settings
+
     // MARK: - State
-    @State private var filterAppNames: [String] = []
     @State private var newAppName = ""
     @AppStorage(FilterSettingsKeys.isBlocklist)
     private var isBlocklist = FilterSettingsKeys.defaults.isBlocklist
-    private let logger = AppLogger.settings
-
-    // MARK: - Init
-    init() {
-        if let storedNames = UserDefaults.standard.array(forKey: FilterSettingsKeys.appNames)
-            as? [String]
-        {
-            _filterAppNames = State(initialValue: storedNames)
-        } else {
-            _filterAppNames = State(initialValue: FilterSettingsKeys.defaults.appNames)
-        }
-    }
 
     var body: some View {
         Form {
@@ -42,13 +33,13 @@ struct FilterSettingsTab: View {
                 .padding(.bottom, 4)
 
                 VStack {
-                    if filterAppNames.isEmpty {
+                    if settingsManager.filterAppNames.isEmpty {
                         List {
                             Text("No applications filtered")
                                 .foregroundColor(.secondary)
                         }
                     } else {
-                        List(filterAppNames, id: \.self) { appName in
+                        List(settingsManager.filterAppNames, id: \.self) { appName in
                             HStack {
                                 Text(appName)
                                 Spacer()
@@ -85,15 +76,13 @@ struct FilterSettingsTab: View {
     private func addAppFilter() {
         guard !newAppName.isEmpty else { return }
         logger.info("Adding app filter: '\(newAppName)'")
-        filterAppNames.append(newAppName)
-        UserDefaults.standard.set(filterAppNames, forKey: FilterSettingsKeys.appNames)
+        settingsManager.filterAppNames.append(newAppName)
         newAppName = ""
     }
 
     private func removeAppFilter(_ appName: String) {
-        if let index = filterAppNames.firstIndex(of: appName) {
-            filterAppNames.remove(at: index)
-            UserDefaults.standard.set(filterAppNames, forKey: FilterSettingsKeys.appNames)
+        if let index = settingsManager.filterAppNames.firstIndex(of: appName) {
+            settingsManager.filterAppNames.remove(at: index)
             logger.info("Removed app filter: '\(appName)'")
         }
     }

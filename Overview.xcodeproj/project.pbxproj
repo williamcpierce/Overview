@@ -64,14 +64,16 @@
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Components/OpacitySlider.swift,
 				Extensions/ColorExtension.swift,
 				Keys/FilterSettingsKeys.swift,
 				Keys/HotkeySettingsKeys.swift,
 				Keys/OverlaySettingsKeys.swift,
 				Keys/PreviewSettingsKeys.swift,
 				Keys/WindowSettingsKeys.swift,
+				SettingsManager.swift,
 				SettingsView.swift,
+				Views/Components/OpacitySlider.swift,
+				Views/Components/ResetSettingsButton.swift,
 				Views/FilterSettingsTab.swift,
 				Views/HotkeySettingsTab.swift,
 				Views/OverlaySettingsTab.swift,

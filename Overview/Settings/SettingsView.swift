@@ -14,7 +14,15 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
+    @StateObject private var settingsManager: SettingsManager
     private let logger = AppLogger.settings
+
+    init(hotkeyStorage: HotkeyStorage, sourceManager: SourceManager) {
+        self.hotkeyStorage = hotkeyStorage
+        self.sourceManager = sourceManager
+        self._settingsManager = StateObject(
+            wrappedValue: SettingsManager(hotkeyStorage: hotkeyStorage))
+    }
 
     var body: some View {
         TabView {
@@ -30,8 +38,16 @@ struct SettingsView: View {
             HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
                 .tabItem { Label("Hotkey", systemImage: "command.square.fill") }
 
-            FilterSettingsTab()
+            FilterSettingsTab(settingsManager: settingsManager)
                 .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
+        }
+        .safeAreaInset(edge: .bottom) {
+            VStack {
+                Divider()
+                ResetSettingsButton(settingsManager: settingsManager)
+            }
+            .padding(.bottom, 8)
+            .background(.background)
         }
         .frame(width: 324, height: 420)
         .fixedSize()

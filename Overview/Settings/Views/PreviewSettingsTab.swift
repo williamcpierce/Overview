@@ -74,25 +74,5 @@ struct PreviewSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .safeAreaInset(edge: .bottom) {
-            Button("Reset All Settings") {
-                logger.debug("Settings reset requested")
-                showingResetAlert = true
-            }
-            .padding(.bottom, 10)
-        }
-        .alert("Reset Settings", isPresented: $showingResetAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                logger.info("Performing settings reset")
-                resetToDefaults()
-            }
-        }
-    }
-
-    private func resetToDefaults() {
-        captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-        hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-        hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
     }
 }
