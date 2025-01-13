@@ -13,25 +13,26 @@ import SwiftUI
 
 @MainActor
 final class SourceManager: ObservableObject {
-    // MARK: - Published State
+    // Published State
     @Published private(set) var focusedBundleId: String?
     @Published private(set) var focusedProcessId: pid_t?
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
-    // MARK: - Dependencies
+    // Dependencies
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
+    
+    // Private State
     private let observerId = UUID()
 
-    // MARK: - Types
+    // Types
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
     }
 
-    // MARK: - Initialization
     init() {
         setupObservers()
         logger.debug("Source window manager initialization complete")
@@ -59,11 +60,11 @@ final class SourceManager: ObservableObject {
         logger.debug("Retrieving filtered window list")
 
         let availableSources = try await captureServices.getAvailableSources()
-        
-        // Get current filter settings from UserDefaults
-        let filterAppNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames) as? [String] ?? []
+
+        let filterAppNames =
+            UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames) as? [String] ?? []
         let isBlocklist = UserDefaults.standard.bool(forKey: SourceSettingsKeys.isBlocklist)
-        
+
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
             appFilterNames: filterAppNames,

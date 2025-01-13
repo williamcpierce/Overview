@@ -11,11 +11,11 @@ import SwiftUI
 
 @MainActor
 final class SettingsManager: ObservableObject {
-    // MARK: - Dependencies
+    // Dependencies
     private let hotkeyStorage: HotkeyStorage
     private let logger = AppLogger.settings
 
-    // MARK: - Published State
+    // Published State
     @Published var filterAppNames: [String] {
         didSet {
             UserDefaults.standard.set(filterAppNames, forKey: SourceSettingsKeys.appNames)
@@ -25,7 +25,7 @@ final class SettingsManager: ObservableObject {
     init(hotkeyStorage: HotkeyStorage) {
         self.hotkeyStorage = hotkeyStorage
 
-        // Initialize filter app names from UserDefaults
+        /// Initialize filter app names from UserDefaults
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
             as? [String]
         {
@@ -43,7 +43,7 @@ final class SettingsManager: ObservableObject {
         let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
 
-        // Reset Window settings
+        /// Reset Window settings
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.previewOpacity,
             forKey: WindowSettingsKeys.previewOpacity)
@@ -69,7 +69,7 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.closeOnCaptureStop,
             forKey: WindowSettingsKeys.closeOnCaptureStop)
 
-        // Reset Overlay settings
+        /// Reset Overlay settings
         UserDefaults.standard.set(
             OverlaySettingsKeys.defaults.focusBorderEnabled,
             forKey: OverlaySettingsKeys.focusBorderEnabled)
@@ -89,7 +89,7 @@ final class SettingsManager: ObservableObject {
             OverlaySettingsKeys.defaults.sourceTitleBackgroundOpacity,
             forKey: OverlaySettingsKeys.sourceTitleBackgroundOpacity)
 
-        // Reset Preview settings
+        /// Reset Preview settings
         UserDefaults.standard.set(
             PreviewSettingsKeys.defaults.hideInactiveApplications,
             forKey: PreviewSettingsKeys.hideInactiveApplications)
@@ -100,13 +100,13 @@ final class SettingsManager: ObservableObject {
             PreviewSettingsKeys.defaults.captureFrameRate,
             forKey: PreviewSettingsKeys.captureFrameRate)
 
-        // Reset Filter settings
+        /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
             SourceSettingsKeys.defaults.isBlocklist,
             forKey: SourceSettingsKeys.isBlocklist)
 
-        // Reset Hotkey settings through HotkeyStorage
+        /// Reset Hotkey settings
         hotkeyStorage.resetToDefaults()
 
         logger.info("Settings reset completed successfully")

@@ -8,9 +8,9 @@
 */
 
 enum PreviewSettingsKeys {
-    static let hideInactiveApplications = "hideInactiveApplications"
-    static let hideActiveWindow = "hideActiveWindow"
-    static let captureFrameRate = "frameRate"
+    static let hideInactiveApplications: String = "hideInactiveApplications"
+    static let hideActiveWindow: String = "hideActiveWindow"
+    static let captureFrameRate: String = "frameRate"
 
     static let defaults = Defaults()
 

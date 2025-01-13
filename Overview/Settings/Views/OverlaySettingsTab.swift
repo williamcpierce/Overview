@@ -8,30 +8,28 @@
 import SwiftUI
 
 struct OverlaySettingsTab: View {
-    // MARK: - Focus Border Settings
+    // Focus Border Settings
     @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
     private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
-
     @AppStorage(OverlaySettingsKeys.focusBorderWidth)
     private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
-
     @AppStorage(OverlaySettingsKeys.focusBorderColor)
     private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
 
-    // MARK: - Source Title Settings
+    // Source Title Settings
     @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
     private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
-
     @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
     private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
-
     @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
     private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
         .sourceTitleBackgroundOpacity
 
     var body: some View {
         Form {
-            // Focus Border Section
+
+            // MARK: - Focus Border Section
+
             Section {
                 HStack {
                     Text("Window Focus")
@@ -62,7 +60,8 @@ struct OverlaySettingsTab: View {
                 }
             }
 
-            // Source Title Section
+            // MARK: - Source Title Section
+
             Section {
                 HStack {
                     Text("Source Title")

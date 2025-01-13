@@ -8,7 +8,7 @@
 */
 
 enum HotkeySettingsKeys {
-    static let bindings = "hotkeyBindings"
+    static let bindings: String = "hotkeyBindings"
 
     static let defaults = Defaults()
 

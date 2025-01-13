@@ -11,8 +11,7 @@
 import AppKit
 
 extension NSRect {
-    // MARK: - Constants
-
+    // Constants
     private struct Constraints {
         static let minWidth: CGFloat = 60
         static let minHeight: CGFloat = 180
@@ -72,18 +71,12 @@ extension NSRect {
     private func calculateAdjustedSize(for screen: NSScreen) -> NSSize {
         let targetFrame: NSRect = screen.visibleFrame
 
-        // Apply scale factor
-        var adjustedWidth: CGFloat = width
-        var adjustedHeight: CGFloat = height
-
-        // Constrain dimensions
         let maxWidth: CGFloat = min(targetFrame.width, Constraints.maxWidth)
         let maxHeight: CGFloat = min(targetFrame.height, Constraints.maxHeight)
 
-        adjustedWidth = min(max(Constraints.minWidth, adjustedWidth), maxWidth)
-        adjustedHeight = min(max(Constraints.minHeight, adjustedHeight), maxHeight)
+        let adjustedWidth: CGFloat = min(max(Constraints.minWidth, width), maxWidth)
+        let adjustedHeight: CGFloat = min(max(Constraints.minHeight, height), maxHeight)
 
-        // Reverse scale factor
         return NSSize(
             width: adjustedWidth,
             height: adjustedHeight
@@ -94,14 +87,14 @@ extension NSRect {
         var adjustedX: CGFloat = origin.x
         var adjustedY: CGFloat = origin.y
 
-        // Ensure minimum visibility on x-axis
+        /// Ensure minimum visibility on x-axis
         if origin.x + size.width < targetFrame.minX + Constraints.minVisiblePortion {
             adjustedX = targetFrame.minX
         } else if origin.x > targetFrame.maxX - Constraints.minVisiblePortion {
             adjustedX = targetFrame.maxX - size.width
         }
 
-        // Ensure minimum visibility on y-axis
+        /// Ensure minimum visibility on y-axis
         if origin.y + size.height < targetFrame.minY + Constraints.minVisiblePortion {
             adjustedY = targetFrame.minY
         } else if origin.y > targetFrame.maxY - Constraints.minVisiblePortion {

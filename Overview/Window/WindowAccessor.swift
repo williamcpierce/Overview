@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // MARK: - Constants
+    // Constants
     private struct Constants {
         static let throttleInterval: TimeInterval = 0.1
         static let minHeightDifference: CGFloat = 1.0
@@ -21,19 +21,17 @@ struct WindowAccessor: NSViewRepresentable {
         }
     }
 
-    // MARK: - Dependencies
+    // Dependencies
     @Binding var aspectRatio: CGFloat
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
     private let logger = AppLogger.interface
 
-    // MARK: - Window Settings
+    // Window Settings
     @AppStorage(WindowSettingsKeys.managedByMissionControl)
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
-    
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    
     @AppStorage(WindowSettingsKeys.alignmentEnabled)
     private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 

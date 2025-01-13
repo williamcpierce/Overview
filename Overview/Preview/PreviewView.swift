@@ -8,37 +8,33 @@
 import SwiftUI
 
 struct PreviewView: View {
-    // MARK: - Environment
+    // Dependencies
     @Environment(\.dismiss) private var dismiss: DismissAction
-
-    // MARK: - Window Settings
-    @AppStorage(WindowSettingsKeys.previewOpacity)
-    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
-
-    // MARK: - Preview Settings
-    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
-    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
-
-    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
-    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-
-    // MARK: - Overlay Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
-
-    // MARK: - Dependencies
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
-    // MARK: - State
+    // Private State
     @State private var isSelectionViewVisible: Bool = true
     @State private var isPreviewVisible: Bool = true
     @State private var previewAspectRatio: CGFloat
+
+    // Window Settings
+    @AppStorage(WindowSettingsKeys.previewOpacity)
+    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+
+    // Preview Settings
+    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
+    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
+    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
+    // Overlay Settings
+    @AppStorage(OverlaySettingsKeys.focusBorderColor)
+    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
 
     init(
         captureManager: CaptureManager,

@@ -8,16 +8,19 @@
 import SwiftUI
 
 struct HotkeySettingsTab: View {
-    // MARK: - Dependencies
+    // Dependencies
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
-    // MARK: - State
-    @State private var isAddingHotkey = false
+    // Private State
+    @State private var isAddingHotkey: Bool = false
 
     var body: some View {
         Form {
+
+            // MARK: - Source Window Activation Section
+
             Section {
                 HStack {
                     Text("Source Window Activation")
@@ -62,10 +65,15 @@ struct HotkeySettingsTab: View {
             }
         }
         .formStyle(.grouped)
+
+        // MARK: - Hotkey Sheet
+
         .sheet(isPresented: $isAddingHotkey) {
             HotkeyBindingSheet(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
         }
     }
+
+    // MARK: - Actions
 
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
         if let index = hotkeyStorage.hotkeyBindings.firstIndex(of: binding) {

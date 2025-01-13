@@ -13,37 +13,18 @@
 
 import ScreenCaptureKit
 
-/// Represents a single captured frame with associated metadata
-struct CapturedFrame {
-    let contentRect: CGRect
-    let contentScale: CGFloat
-    let scaleFactor: CGFloat
-    let surface: IOSurface?
-
-    static let invalid: CapturedFrame = CapturedFrame(
-        contentRect: .zero,
-        contentScale: 0,
-        scaleFactor: 0,
-        surface: nil
-    )
-
-    var size: CGSize { contentRect.size }
-}
-
 /// Manages the lifecycle and processing of screen capture streams
 class CaptureEngine: NSObject, @unchecked Sendable {
-    // MARK: - Dependencies
+    // Dependencies
     private let logger = AppLogger.capture
+
+    // Private State
     private let frameProcessingQueue: DispatchQueue = DispatchQueue(
         label: "com.example.apple-samplecode.VideoSampleBufferQueue"
     )
-
-    // MARK: - State Management
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private var streamOutput: CaptureEngineStreamOutput?
     private(set) var stream: SCStream?
-
-    // MARK: - Capture Control
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
@@ -102,10 +83,15 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     }
 }
 
+// MARK: - Stream Output
+
 /// Handles stream output processing and delegate callbacks
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
-    private let logger = AppLogger.capture
+    // Dependencies
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private let logger = AppLogger.capture
+
+    // Public Properties
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
 
     init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
@@ -207,4 +193,23 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         logger.logError(error, context: "Stream stopped unexpectedly")
         frameStreamContinuation?.finish(throwing: error)
     }
+}
+
+// MARK: - Captured Frame
+
+/// Represents a single captured frame with associated metadata
+struct CapturedFrame {
+    let contentRect: CGRect
+    let contentScale: CGFloat
+    let scaleFactor: CGFloat
+    let surface: IOSurface?
+
+    static let invalid: CapturedFrame = CapturedFrame(
+        contentRect: .zero,
+        contentScale: 0,
+        scaleFactor: 0,
+        surface: nil
+    )
+
+    var size: CGSize { contentRect.size }
 }

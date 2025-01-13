@@ -8,28 +8,21 @@
 import SwiftUI
 
 struct WindowSettingsTab: View {
-    // MARK: - Window Settings
+    // Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
     private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
-
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-
     @AppStorage(WindowSettingsKeys.defaultWidth)
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-
     @AppStorage(WindowSettingsKeys.defaultHeight)
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-
     @AppStorage(WindowSettingsKeys.managedByMissionControl)
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
-
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-
     @AppStorage(WindowSettingsKeys.alignmentEnabled)
     private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 
@@ -84,6 +77,7 @@ struct WindowSettingsTab: View {
             }
 
             // MARK: - Behavior Section
+
             Section {
                 HStack {
                     Text("Behavior")

@@ -10,95 +10,73 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Types
-
-enum WindowStorageError: LocalizedError {
-    case encodingFailed
-    case decodingFailed
-    case validationFailed(String)
-    case noDataFound
-    
-    var errorDescription: String? {
-        switch self {
-        case .encodingFailed:
-            return "Failed to encode window states"
-        case .decodingFailed:
-            return "Failed to decode stored window states"
-        case .validationFailed(let reason):
-            return "Window state validation failed: \(reason)"
-        case .noDataFound:
-            return "No stored window data found"
-        }
-    }
-}
-
 final class WindowStorage {
-    // MARK: - Constants
-    
+    // Constants
     private struct Constants {
         static let storageKey = "StoredWindowPositions"
-        
+
         struct Validation {
             static let maxPosition: Double = 10000
             static let minDimension: Double = 0
             static let maxWindowCount: Int = 20
         }
     }
-    
-    // MARK: - Dependencies
-    
+
+    // Dependencies
     private let logger = AppLogger.interface
     private let defaults: UserDefaults
-    
-    // MARK: - Singleton
-    
+
+    // Singleton
     static let shared = WindowStorage()
-    
+
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         logger.debug("Window storage initialized")
     }
     
-    // MARK: - Types
-    
+    // MARK: - Window State
+
     struct WindowState: Codable, Equatable {
         let x: Double
         let y: Double
         let width: Double
         let height: Double
-        
+
         var frame: NSRect {
             NSRect(x: x, y: y, width: width, height: height)
         }
-        
+
         init(frame: NSRect) {
             self.x = frame.origin.x
             self.y = frame.origin.y
             self.width = frame.width
             self.height = frame.height
         }
-        
+
         func validate() throws {
-            // Validate dimensions
+            /// Validate dimensions
             guard width > Constants.Validation.minDimension,
-                  height > Constants.Validation.minDimension else {
+                height > Constants.Validation.minDimension
+            else {
                 throw WindowStorageError.validationFailed(
                     "Invalid dimensions: \(width)x\(height)"
                 )
             }
-            
-            // Validate position
+
+            /// Validate position
             guard abs(x) <= Constants.Validation.maxPosition,
-                  abs(y) <= Constants.Validation.maxPosition else {
+                abs(y) <= Constants.Validation.maxPosition
+            else {
                 throw WindowStorageError.validationFailed(
                     "Invalid position: (\(x), \(y))"
                 )
             }
         }
     }
-    
+
+
     // MARK: - Public Methods
-    
+
     func saveWindowStates() {
         do {
             let states = collectWindowStates()
@@ -109,22 +87,22 @@ final class WindowStorage {
             logger.logError(error, context: "Failed to save window states")
         }
     }
-    
+
     func restoreWindows(using createWindow: (NSRect) -> Void) {
         do {
             let states = try loadValidatedStates()
-            
+
             logger.debug("Beginning window restoration: count=\(states.count)")
             states.forEach { state in
                 createWindow(state.frame)
             }
-            
+
             logger.info("Successfully restored \(states.count) windows")
         } catch {
             logger.logError(error, context: "Window restoration failed")
         }
     }
-    
+
     func getStoredWindowCount() -> Int {
         do {
             return try loadValidatedStates().count
@@ -133,7 +111,7 @@ final class WindowStorage {
             return 0
         }
     }
-    
+
     func validateStoredState() -> Bool {
         do {
             _ = try loadValidatedStates()
@@ -143,32 +121,33 @@ final class WindowStorage {
             return false
         }
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func collectWindowStates() -> [WindowState] {
         NSApplication.shared.windows.compactMap { window in
-            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<ContentView>.self) != nil else {
+            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<ContentView>.self) != nil
+            else {
                 return nil
             }
             return WindowState(frame: window.frame)
         }
     }
-    
+
     private func validateWindowStates(_ states: [WindowState]) throws {
         guard states.count <= Constants.Validation.maxWindowCount else {
             throw WindowStorageError.validationFailed(
                 "Too many windows: \(states.count)"
             )
         }
-        
+
         try states.forEach { state in
             try state.validate()
         }
-        
+
         logger.debug("Window states validated: count=\(states.count)")
     }
-    
+
     private func persistWindowStates(_ states: [WindowState]) throws {
         do {
             let data = try JSONEncoder().encode(states)
@@ -179,13 +158,13 @@ final class WindowStorage {
             throw WindowStorageError.encodingFailed
         }
     }
-    
+
     private func loadValidatedStates() throws -> [WindowState] {
         guard let data = defaults.data(forKey: Constants.storageKey) else {
             logger.debug("No stored window states found")
             throw WindowStorageError.noDataFound
         }
-        
+
         do {
             let states = try JSONDecoder().decode([WindowState].self, from: data)
             try validateWindowStates(states)
@@ -195,6 +174,28 @@ final class WindowStorage {
         } catch {
             logger.error("State decoding failed: \(error.localizedDescription)")
             throw WindowStorageError.decodingFailed
+        }
+    }
+}
+
+// MARK: - Window Storage Error
+
+enum WindowStorageError: LocalizedError {
+    case encodingFailed
+    case decodingFailed
+    case validationFailed(String)
+    case noDataFound
+
+    var errorDescription: String? {
+        switch self {
+        case .encodingFailed:
+            return "Failed to encode window states"
+        case .decodingFailed:
+            return "Failed to decode stored window states"
+        case .validationFailed(let reason):
+            return "Window state validation failed: \(reason)"
+        case .noDataFound:
+            return "No stored window data found"
         }
     }
 }

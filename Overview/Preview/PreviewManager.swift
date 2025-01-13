@@ -14,21 +14,19 @@ import SwiftUI
 
 @MainActor
 final class PreviewManager: ObservableObject {
-    // MARK: - Published State
+    // Published State
     @Published private(set) var availableSources: [SCWindow] = []
     @Published private(set) var sourceListVersion: UUID = UUID()
     @Published var editModeEnabled: Bool = false
 
-    // MARK: - Dependencies
-    @ObservedObject private var sourceManager: SourceManager
+    // Dependencies
+    private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
     init(sourceManager: SourceManager) {
         self.sourceManager = sourceManager
         logger.debug("Initializing preview manager")
     }
-
-    // MARK: - Capture System Management
 
     func initializeCaptureSystem(_ captureManager: CaptureManager) async {
         do {
@@ -40,8 +38,6 @@ final class PreviewManager: ObservableObject {
             logger.logError(error, context: "Capture system initialization failed")
         }
     }
-
-    // MARK: - Source Preview Management
 
     func startSourcePreview(captureManager: CaptureManager, source: SCWindow?) {
         guard let selectedSource: SCWindow = source else {
@@ -61,8 +57,6 @@ final class PreviewManager: ObservableObject {
             }
         }
     }
-
-    // MARK: - Source List Management
 
     func updateAvailableSources() async {
         do {

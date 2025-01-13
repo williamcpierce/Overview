@@ -8,19 +8,20 @@
 import SwiftUI
 
 struct PreviewSettingsTab: View {
-    // MARK: - Preview Settings
+    // Dependencies
+    private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
+    private let logger = AppLogger.settings
+
+    // Private State
+    @State private var showingResetAlert: Bool = false
+
+    // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
     private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-
     @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
     private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-
     @AppStorage(PreviewSettingsKeys.hideActiveWindow)
     private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
-
-    @State private var showingResetAlert = false
-    private let logger = AppLogger.settings
-    private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
 
     var body: some View {
         Form {

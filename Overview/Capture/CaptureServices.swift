@@ -12,19 +12,19 @@ import ScreenCaptureKit
 
 @MainActor
 final class CaptureServices {
-    // MARK: - Dependencies
-    private let configService = CaptureConfigurationService()
-    private let availabilityService = CaptureAvailabilityService()
+    // Dependencies
     private let logger = AppLogger.capture
 
-    // MARK: - Constants
+    // Private State
+    private let configService = CaptureConfigurationService()
+    private let availabilityService = CaptureAvailabilityService()
+    
+    // Singleton
     static let shared = CaptureServices()
 
     private init() {
         logger.debug("Initializing capture services")
     }
-
-    // MARK: - Public Interface
 
     func requestScreenRecordingPermission() async throws {
         try await availabilityService.requestPermission()
@@ -52,6 +52,8 @@ final class CaptureServices {
         try await configService.updateConfiguration(stream, source, frameRate: frameRate)
     }
 }
+
+// MARK: - Capture Error
 
 enum CaptureError: LocalizedError {
     case noSourceSelected
