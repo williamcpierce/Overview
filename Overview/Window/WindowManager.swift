@@ -19,7 +19,7 @@ final class WindowManager {
 
         struct Window {
             static let defaultBackgroundColor: NSColor = .clear
-            static let defaultHasShadow: Bool = false
+            static let defaultHasShadow: Bool = true
             static let defaultIsMovable: Bool = true
         }
     }

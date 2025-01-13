@@ -14,7 +14,6 @@ enum WindowSettingsKeys {
     static let managedByMissionControl: String = "managedByMissionControl"
     static let shadowEnabled: String = "windowShadowEnabled"
     static let createOnLaunch: String = "windowCreateOnLaunch"
-    static let alignmentEnabled: String = "enableEditModeAlignment"
     static let closeOnCaptureStop: String = "closeOnCaptureStop"
 
     static let defaults = Defaults()
@@ -26,7 +25,6 @@ enum WindowSettingsKeys {
         let managedByMissionControl: Bool = true
         let shadowEnabled: Bool = true
         let createOnLaunch: Bool = true
-        let alignmentEnabled: Bool = false
         let closeOnCaptureStop: Bool = false
     }
 }

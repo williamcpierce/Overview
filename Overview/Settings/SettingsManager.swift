@@ -63,9 +63,6 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.createOnLaunch,
             forKey: WindowSettingsKeys.createOnLaunch)
         UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.alignmentEnabled,
-            forKey: WindowSettingsKeys.alignmentEnabled)
-        UserDefaults.standard.set(
             WindowSettingsKeys.defaults.closeOnCaptureStop,
             forKey: WindowSettingsKeys.closeOnCaptureStop)
 

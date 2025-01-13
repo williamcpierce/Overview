@@ -23,8 +23,6 @@ struct WindowSettingsTab: View {
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-    @AppStorage(WindowSettingsKeys.alignmentEnabled)
-    private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 
     var body: some View {
         Form {
@@ -94,7 +92,6 @@ struct WindowSettingsTab: View {
                     Toggle("Show in Mission Control", isOn: $managedByMissionControl)
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Enable alignment help", isOn: $alignmentEnabled)
                 }
             }
         }

@@ -25,6 +25,7 @@ struct WindowAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
+    @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
     // Window Settings
@@ -32,8 +33,6 @@ struct WindowAccessor: NSViewRepresentable {
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.alignmentEnabled)
-    private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 
     // MARK: - NSViewRepresentable
 
@@ -62,21 +61,15 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func synchronizeWindowState(_ window: NSWindow) {
-        synchronizeEditableState(window)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.throttleInterval) {
-            synchronizeLayoutAndBehavior(window)
-        }
-    }
-
-    private func synchronizeLayoutAndBehavior(_ window: NSWindow) {
-        synchronizeAspectRatio(window)
-        synchronizeBehavior(window)
-    }
-
-    private func synchronizeEditableState(_ window: NSWindow) {
         updateResizability(window)
         updateMovability(window)
+        updateLevel(window)
+        updateShadow(window)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.throttleInterval) {
+            updateAspectRatio(window)
+            updateMissionControl(window)
+        }
     }
 
     private func updateResizability(_ window: NSWindow) {
@@ -101,14 +94,8 @@ struct WindowAccessor: NSViewRepresentable {
         logger.debug("Window movability updated: movable=\(newMovability)")
     }
 
-    private func synchronizeBehavior(_ window: NSWindow) {
-        updateLevel(window)
-        updateMissionControl(window)
-        updateShadow(window)
-    }
-
     private func updateLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && alignmentEnabled
+        let shouldFloat = previewManager.editModeEnabled && sourceManager.isOverviewActive
         let newLevel: NSWindow.Level =
             shouldFloat ? Constants.Window.floatingLevel : Constants.Window.defaultLevel
 
@@ -139,7 +126,7 @@ struct WindowAccessor: NSViewRepresentable {
         logger.debug("Mission Control management updated: managed=\(managedByMissionControl)")
     }
 
-    private func synchronizeAspectRatio(_ window: NSWindow) {
+    private func updateAspectRatio(_ window: NSWindow) {
         guard captureManager.isCapturing,
             aspectRatio != 0,
             let adjustedSize: NSSize = calculateAdjustedSize(for: window)
