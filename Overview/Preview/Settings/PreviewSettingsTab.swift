@@ -34,10 +34,19 @@ struct PreviewSettingsTab: View {
                         .font(.headline)
                     Spacer()
                     Button(action: {}) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
+                        if captureFrameRate > 10.0 {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.orange)
+                                .modifier(WiggleModifier())
+                                .transition(.scale)
+                        } else {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.secondary)
+                                .transition(.scale)
+                        }
                     }
                     .buttonStyle(.plain)
+                    .animation(.snappy(duration: 0.1), value: captureFrameRate > 10.0)
                 }
                 .padding(.bottom, 4)
 
@@ -78,5 +87,49 @@ struct PreviewSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+struct WiggleModifier: ViewModifier {
+    @State private var angle: Double = 0
+
+    func body(content: Content) -> some View {
+        content
+            .rotationEffect(.degrees(angle))
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    angle = 10
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        angle = -10
+                    }
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        angle = 10
+                    }
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        angle = -10
+                    }
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        angle = 10
+                    }
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        angle = 0
+                    }
+                }
+            }
     }
 }
