@@ -55,7 +55,8 @@ struct PreviewCaptureView: View {
     // MARK: - View Components
 
     private var loadingPlaceholder: some View {
-        Color.black.opacity(previewOpacity)
+        Rectangle()
+            .fill(.regularMaterial)
     }
 
     private func previewContent(for frame: CapturedFrame) -> some View {
