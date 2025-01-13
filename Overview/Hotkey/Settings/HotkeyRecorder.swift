@@ -1,5 +1,5 @@
 /*
- Hotkey/HotkeyRecorder.swift
+ Hotkey/Settings/HotkeyRecorder.swift
  Overview
 
  Created by William Pierce on 12/8/24.

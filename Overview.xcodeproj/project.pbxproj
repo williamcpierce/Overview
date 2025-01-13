@@ -41,11 +41,13 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				HotkeyBinding.swift,
-				HotkeyBindingSheet.swift,
 				HotkeyManager.swift,
-				HotkeyRecorder.swift,
 				HotkeyService.swift,
-				HotkeyStorage.swift,
+				Settings/HotkeyBindingSheet.swift,
+				Settings/HotkeyRecorder.swift,
+				Settings/HotkeySettingsKeys.swift,
+				Settings/HotkeySettingsTab.swift,
+				Settings/HotkeyStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -55,6 +57,8 @@
 				Services/SourceFilterService.swift,
 				Services/SourceFocusService.swift,
 				Services/SourceObserverService.swift,
+				Settings/SourceSettingsKeys.swift,
+				Settings/SourceSettingsTab.swift,
 				SourceManager.swift,
 				SourceServices.swift,
 				Views/SourceListView.swift,
@@ -64,21 +68,11 @@
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Components/OpacitySlider.swift,
+				Components/ResetSettingsButton.swift,
 				Extensions/ColorExtension.swift,
-				Keys/HotkeySettingsKeys.swift,
-				Keys/OverlaySettingsKeys.swift,
-				Keys/PreviewSettingsKeys.swift,
-				Keys/SourceSettingsKeys.swift,
-				Keys/WindowSettingsKeys.swift,
 				SettingsManager.swift,
 				SettingsView.swift,
-				Views/Components/OpacitySlider.swift,
-				Views/Components/ResetSettingsButton.swift,
-				Views/HotkeySettingsTab.swift,
-				Views/OverlaySettingsTab.swift,
-				Views/PreviewSettingsTab.swift,
-				Views/SourceSettingsTab.swift,
-				Views/WindowSettingsTab.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -88,6 +82,10 @@
 				PreviewInteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
+				Settings/OverlaySettingsKeys.swift,
+				Settings/OverlaySettingsTab.swift,
+				Settings/PreviewSettingsKeys.swift,
+				Settings/PreviewSettingsTab.swift,
 				Views/PreviewCaptureView.swift,
 				Views/PreviewSelectionView.swift,
 				Views/PreviewTitleView.swift,
@@ -111,9 +109,11 @@
 			membershipExceptions = (
 				Extensions/NSRectExtension.swift,
 				Extensions/NSViewExtension.swift,
+				Settings/WindowSettingsKeys.swift,
+				Settings/WindowSettingsTab.swift,
+				Settings/WindowStorage.swift,
 				WindowAccessor.swift,
 				WindowManager.swift,
-				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

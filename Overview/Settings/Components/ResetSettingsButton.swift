@@ -1,5 +1,5 @@
 /*
- Settings/Views/Components/ResetSettingsButton.swift
+ Settings/Components/ResetSettingsButton.swift
  Overview
 
  Created by William Pierce on 1/12/25.

@@ -1,5 +1,5 @@
 /*
- Settings/Views/HotkeySettingsTab.swift
+ Hotkey/Settings/HotkeySettingsTab.swift
  Overview
 
  Created by William Pierce on 1/6/25.

@@ -1,5 +1,5 @@
 /*
- Settings/Views/WindowSettingsTab.swift
+ Window/Settings/WindowSettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.
