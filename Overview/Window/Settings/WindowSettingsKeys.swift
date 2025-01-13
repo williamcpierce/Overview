@@ -24,7 +24,7 @@ enum WindowSettingsKeys {
         let defaultWidth: Double = 288
         let defaultHeight: Double = 162
         let managedByMissionControl: Bool = true
-        let shadowEnabled: Bool = false
+        let shadowEnabled: Bool = true
         let createOnLaunch: Bool = true
         let alignmentEnabled: Bool = false
         let closeOnCaptureStop: Bool = false
