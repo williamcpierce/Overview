@@ -1,5 +1,5 @@
 /*
- Settings/Views/SourceSettingsTab.swift
+ Source/Settings/SourceSettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.

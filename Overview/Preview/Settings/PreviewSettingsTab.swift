@@ -1,5 +1,5 @@
 /*
- Settings/Views/PreviewSettingsTab.swift
+ Preview/Settings/PreviewSettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.

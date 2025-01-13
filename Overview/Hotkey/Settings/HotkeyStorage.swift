@@ -1,5 +1,5 @@
 /*
- Hotkey/HotkeyStorage.swift
+ Hotkey/Settings/HotkeyStorage.swift
  Overview
 
  Created by William Pierce on 1/12/24.
