@@ -68,10 +68,10 @@
 				OpacitySlider.swift,
 				SettingsView.swift,
 				Views/FilterSettingsTab.swift,
-				Views/GeneralSettingsTab.swift,
 				Views/HotkeySettingsTab.swift,
-				Views/PerformanceSettingsTab.swift,
+				Views/OverlaySettingsTab.swift,
 				Views/PreviewSettingsTab.swift,
+				Views/WindowSettingsTab.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

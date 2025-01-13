@@ -18,22 +18,22 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            GeneralSettingsTab(appSettings: appSettings)
-                .tabItem { Label("General", systemImage: "gear") }
-
             PreviewSettingsTab(appSettings: appSettings)
-                .tabItem { Label("Previews", systemImage: "macwindow") }
+                .tabItem { Label("Preview", systemImage: "rectangle.dashed.badge.record") }
 
-            PerformanceSettingsTab(appSettings: appSettings)
-                .tabItem { Label("Performance", systemImage: "gauge.medium") }
+            WindowSettingsTab(appSettings: appSettings)
+                .tabItem { Label("Window", systemImage: "macwindow") }
+
+            OverlaySettingsTab(appSettings: appSettings)
+                .tabItem { Label("Overlay", systemImage: "square.2.layers.3d.bottom.filled") }
 
             HotkeySettingsTab(appSettings: appSettings, sourceManager: sourceManager)
-                .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
+                .tabItem { Label("Hotkey", systemImage: "command.square.fill") }
 
             FilterSettingsTab(appSettings: appSettings)
                 .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
         }
-        .frame(width: 360, height: 450)
+        .frame(width: 320, height: 380)
         .fixedSize()
         .background(.ultraThickMaterial)
         .onAppear {

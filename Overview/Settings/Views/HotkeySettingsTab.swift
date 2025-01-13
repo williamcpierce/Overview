@@ -32,7 +32,7 @@ struct HotkeySettingsTab: View {
     @ViewBuilder
     private var formContent: some View {
         Section {
-            Text("Hotkeys")
+            Text("Window Activation")
                 .font(.headline)
                 .padding(.bottom, 4)
 

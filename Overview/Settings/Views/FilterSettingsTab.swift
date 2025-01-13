@@ -31,7 +31,7 @@ struct FilterSettingsTab: View {
     @ViewBuilder
     private var formContent: some View {
         Section {
-            Text("Selection Dropdown Filter")
+            Text("Source Selection Dropdown")
                 .font(.headline)
                 .padding(.bottom, 4)
 
