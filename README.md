@@ -15,14 +15,13 @@ For development updates, please join our Discord:
 ## Features
 
 -   Live window previews
--   Support for multiple preview windows
 -   Quick switching to source applications via preview clicks or customizable hotkeys
--   Adjustable preview opacity and refresh rate
+-   Adjustable preview window appearance and behavior
 -   Overlays for window title and focus status
 
 ## System Requirements
 
--   macOS Monterey (12.3) or later
+-   macOS Big Sur (13.0) or later
 
 ## Installation
 
@@ -42,9 +41,10 @@ For development updates, please join our Discord:
 
 ### Quick Start
 
-1. Launch Overview and open a new preview window
-2. Select a window to capture from the available windows list
-3. Click "Start Preview"
+1. Create a new preview window from the menu bar icon
+2. Select a window to capture from the source windows list
+3. Enable edit mode via context menu or menu bar icon to move/resize preview windows
+4. Close preview windows via context menu
 
 ### Controls
 
@@ -57,25 +57,31 @@ For development updates, please join our Discord:
 
 ### Settings
 
--   General
-    -   Focused window border overlay
-    -   Window title overlay
 -   Previews
-    -   Opacity
-    -   Default dimensions
+    -   Frame rate
+    -   Automatic hiding
+        -   Hide inactive app previews
+        -   Hide active window preview
+-   Windows
+    -   Appearance
+        -   Opacity
+        -   Shadows
+        -   Default dimensions
     -   Behavior
-        -   Mission Control visibility
-        -   Close preview on source window close
-        -   Active window preview hiding
-        -   Inactive application preview hiding
-        -   Preview alignment help
--   Performance
-    -   Preview frame rate
+        -   Show in Mission Control
+        -   Create window on launch
+        -   Close with preview source
+-   Overlays
+    -   Window focus
+        -   Border width
+        -   Border color
+    -   Source title
+        -   Font size
+        -   Opacity
 -   Hotkeys
-    -   Hotkey bindings by window title
--   Filters
-    -   Blocklist or allowlist
-    -   Window picker filtering by application title
+    -   Source window activation
+-   Sources
+    -   Source app filter
 
 If you want preview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
 
