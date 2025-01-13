@@ -12,33 +12,35 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var appSettings: AppSettings
+    @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     var body: some View {
         TabView {
-            PreviewSettingsTab(appSettings: appSettings)
+            PreviewSettingsTab()
                 .tabItem { Label("Preview", systemImage: "rectangle.dashed.badge.record") }
 
-            WindowSettingsTab(appSettings: appSettings)
+            WindowSettingsTab()
                 .tabItem { Label("Window", systemImage: "macwindow") }
 
-            OverlaySettingsTab(appSettings: appSettings)
+            OverlaySettingsTab()
                 .tabItem { Label("Overlay", systemImage: "square.2.layers.3d.bottom.filled") }
 
-            HotkeySettingsTab(appSettings: appSettings, sourceManager: sourceManager)
+            HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
                 .tabItem { Label("Hotkey", systemImage: "command.square.fill") }
 
-            FilterSettingsTab(appSettings: appSettings)
+            FilterSettingsTab()
                 .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
         }
-        .frame(width: 320, height: 380)
+        .frame(width: 324, height: 420)
         .fixedSize()
         .background(.ultraThickMaterial)
         .onAppear {
             let settingsStyleMask: NSWindow.StyleMask.RawValue = 32771
-            if let settingsWindow = NSApp.windows.first(where: { $0.styleMask.rawValue == settingsStyleMask }) {
+            if let settingsWindow = NSApp.windows.first(where: {
+                $0.styleMask.rawValue == settingsStyleMask
+            }) {
                 settingsWindow.level = .statusBar + 2
             }
         }

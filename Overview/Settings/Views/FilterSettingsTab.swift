@@ -2,89 +2,98 @@
  Settings/Views/FilterSettingsTab.swift
  Overview
 
- Created by William Pierce on 1/6/25.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct FilterSettingsTab: View {
-    @ObservedObject var appSettings: AppSettings
-    @State private var newAppFilterName = ""
+    // MARK: - State
+    @State private var filterAppNames: [String] = []
+    @State private var newAppName = ""
+    @AppStorage(FilterSettingsKeys.isBlocklist)
+    private var isBlocklist = FilterSettingsKeys.defaults.isBlocklist
     private let logger = AppLogger.settings
 
-    var body: some View {
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
+    // MARK: - Init
+    init() {
+        if let storedNames = UserDefaults.standard.array(forKey: FilterSettingsKeys.appNames)
+            as? [String]
+        {
+            _filterAppNames = State(initialValue: storedNames)
         } else {
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
-                }
-                .padding()
-            }
+            _filterAppNames = State(initialValue: FilterSettingsKeys.defaults.appNames)
         }
     }
 
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            Text("Source Selection Dropdown")
-                .font(.headline)
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    Text("Source Selection Dropdown")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
                 .padding(.bottom, 4)
 
-            Picker("Filter Mode", selection: $appSettings.filterBlocklist) {
-                Text("Blocklist").tag(true)
-                Text("Allowlist").tag(false)
-            }
-            .pickerStyle(.segmented)
-
-            if appSettings.filterAppNames.isEmpty {
-                List {
-                    Text("No applications filtered")
-                        .foregroundColor(.secondary)
-                }
-                .padding(6)
-            } else {
-                List(appSettings.filterAppNames, id: \.self) { appName in
-                    HStack {
-                        Text(appName)
-                        Spacer()
-                        Button(action: {
-                            removeAppFilterName(appName)
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
+                VStack {
+                    if filterAppNames.isEmpty {
+                        List {
+                            Text("No applications filtered")
                                 .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
+                    } else {
+                        List(filterAppNames, id: \.self) { appName in
+                            HStack {
+                                Text(appName)
+                                Spacer()
+                                Button(action: { removeAppFilter(appName) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                }.padding(6)
-            }
-
-            HStack {
-                TextField("App Name", text: $newAppFilterName)
-                    .textFieldStyle(.roundedBorder)
-                    .disableAutocorrection(true)
-                Button("Add") {
-                    addAppFilterName()
                 }
-                .disabled(newAppFilterName.isEmpty)
+
+                Picker("Filter Mode", selection: $isBlocklist) {
+                    Text("Blocklist").tag(true)
+                    Text("Allowlist").tag(false)
+                }
+                .pickerStyle(.segmented)
+
+                HStack {
+                    TextField("App Name", text: $newAppName)
+                        .textFieldStyle(.roundedBorder)
+                        .disableAutocorrection(true)
+                    Button("Add") {
+                        addAppFilter()
+                    }
+                    .disabled(newAppName.isEmpty)
+                }
             }
         }
+        .formStyle(.grouped)
     }
 
-    private func addAppFilterName() {
-        guard !newAppFilterName.isEmpty else { return }
-        logger.info("Adding app filter: '\(newAppFilterName)'")
-        appSettings.filterAppNames.append(newAppFilterName)
-        newAppFilterName = ""
+    private func addAppFilter() {
+        guard !newAppName.isEmpty else { return }
+        logger.info("Adding app filter: '\(newAppName)'")
+        filterAppNames.append(newAppName)
+        UserDefaults.standard.set(filterAppNames, forKey: FilterSettingsKeys.appNames)
+        newAppName = ""
     }
 
-    private func removeAppFilterName(_ appName: String) {
-        if let index = appSettings.filterAppNames.firstIndex(of: appName) {
-            appSettings.filterAppNames.remove(at: index)
+    private func removeAppFilter(_ appName: String) {
+        if let index = filterAppNames.firstIndex(of: appName) {
+            filterAppNames.remove(at: index)
+            UserDefaults.standard.set(filterAppNames, forKey: FilterSettingsKeys.appNames)
             logger.info("Removed app filter: '\(appName)'")
         }
     }

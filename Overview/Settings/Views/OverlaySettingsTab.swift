@@ -2,76 +2,82 @@
  Settings/Views/OverlaySettingsTab.swift
  Overview
 
- Created by William Pierce on 1/6/25.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct OverlaySettingsTab: View {
-    @ObservedObject var appSettings: AppSettings
+    // MARK: - Focus Border Settings
+    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
+    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
+
+    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
+    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
+
+    @AppStorage(OverlaySettingsKeys.focusBorderColor)
+    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+
+    // MARK: - Source Title Settings
+    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
+    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
+
+    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
+    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
+
+    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
+    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
+        .sourceTitleBackgroundOpacity
 
     var body: some View {
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
-
-        } else {
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
+        Form {
+            // Focus Border Section
+            Section {
+                HStack {
+                    Text("Window Focus")
+                        .font(.headline)
+                    Spacer()
+                    Toggle("", isOn: $focusBorderEnabled)
                 }
-                .padding()
-            }
-        }
-    }
+                .padding(.bottom, 4)
 
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            HStack {
-                Text("Window Focus")
-                    .font(.headline)
-                Spacer()
-                Toggle("", isOn: $appSettings.focusBorderEnabled)
-            }
-            if appSettings.focusBorderEnabled {
-                VStack {
+                if focusBorderEnabled {
                     HStack {
                         Text("Border width")
                         Spacer()
                         TextField(
-                            "", value: $appSettings.focusBorderWidth, formatter: NumberFormatter()
+                            "", value: $focusBorderWidth, formatter: NumberFormatter()
                         )
                         .frame(width: 60)
                         .textFieldStyle(.roundedBorder)
                         Text("px")
                             .foregroundColor(.secondary)
                     }
+
                     HStack {
                         Text("Border color")
                         Spacer()
-                        ColorPicker("", selection: $appSettings.focusBorderColor)
+                        ColorPicker("", selection: $focusBorderColor)
                     }
                 }
             }
-        }
 
-        Section {
-            HStack {
-                Text("Source Title")
-                    .font(.headline)
-                Spacer()
-                Toggle("", isOn: $appSettings.sourceTitleEnabled)
-            }
-            if appSettings.sourceTitleEnabled {
-                VStack {
+            // Source Title Section
+            Section {
+                HStack {
+                    Text("Source Title")
+                        .font(.headline)
+                    Spacer()
+                    Toggle("", isOn: $sourceTitleEnabled)
+                }
+                .padding(.bottom, 4)
+
+                if sourceTitleEnabled {
                     HStack {
                         Text("Font size")
                         Spacer()
                         TextField(
-                            "", value: $appSettings.sourceTitleFontSize,
+                            "", value: $sourceTitleFontSize,
                             formatter: NumberFormatter()
                         )
                         .frame(width: 60)
@@ -81,16 +87,15 @@ struct OverlaySettingsTab: View {
                     }
 
                     HStack {
-                        VStack {
-                            Text("Opacity")
-                        }
-                        OpacitySlider(value: $appSettings.sourceTitleBackgroundOpacity)
-                        Text("\(Int(appSettings.sourceTitleBackgroundOpacity * 100))%")
+                        Text("Opacity")
+                        OpacitySlider(value: $sourceTitleBackgroundOpacity)
+                        Text("\(Int(sourceTitleBackgroundOpacity * 100))%")
                             .foregroundColor(.secondary)
                             .frame(width: 40)
                     }
                 }
             }
         }
+        .formStyle(.grouped)
     }
 }

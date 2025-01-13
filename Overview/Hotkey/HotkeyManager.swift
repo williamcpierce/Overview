@@ -14,14 +14,14 @@ import SwiftUI
 final class HotkeyManager: ObservableObject {
     // MARK: - Dependencies
 
-    @ObservedObject private var appSettings: AppSettings
+    @ObservedObject private var hotkeyStorage: HotkeyStorage
     @ObservedObject private var sourceManager: SourceManager
     let hotkeyService: HotkeyService = HotkeyService.shared
     private let logger = AppLogger.hotkeys
 
-    init(appSettings: AppSettings, sourceManager: SourceManager) {
+    init(hotkeyStorage: HotkeyStorage, sourceManager: SourceManager) {
         logger.debug("Initializing HotkeyManager")
-        self.appSettings = appSettings
+        self.hotkeyStorage = hotkeyStorage
         self.sourceManager = sourceManager
 
         do {

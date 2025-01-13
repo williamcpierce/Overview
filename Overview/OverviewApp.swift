@@ -20,7 +20,7 @@ struct OverviewApp: App {
     var body: some Scene {
         Settings {
             SettingsView(
-                appSettings: appDelegate.appSettings,
+                hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager
             )
         }.commands {
@@ -66,7 +66,7 @@ struct OverviewApp: App {
 @MainActor
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Public Properties
-    let appSettings = AppSettings()
+    let hotkeyStorage = HotkeyStorage()
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
@@ -80,14 +80,13 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Initialization
 
     override init() {
-        sourceManager = SourceManager(appSettings: appSettings)
+        sourceManager = SourceManager()
         previewManager = PreviewManager(sourceManager: sourceManager)
-        hotkeyManager = HotkeyManager(appSettings: appSettings, sourceManager: sourceManager)
+        hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
 
         super.init()
 
         windowManager = WindowManager(
-            appSettings: appSettings,
             previewManager: previewManager,
             sourceManager: sourceManager
         )

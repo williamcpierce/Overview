@@ -1,25 +1,45 @@
 /*
  Preview/Views/PreviewCaptureView.swift
  Overview
-
- Created by William Pierce on 10/13/24.
-
- Renders the captured source window content with configurable overlays for
- focus borders and window titles.
+ 
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct PreviewCaptureView: View {
-    @ObservedObject private var appSettings: AppSettings
+    // MARK: - Window Settings
+    @AppStorage(WindowSettingsKeys.previewOpacity)
+    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+    
+    // MARK: - Overlay Settings
+    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
+    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
+    
+    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
+    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
+
+    @AppStorage(OverlaySettingsKeys.focusBorderColor)
+    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+    
+    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
+    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
+    
+    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
+    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
+    
+    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
+    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults.sourceTitleBackgroundOpacity
+
+    // MARK: - Preview Settings
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var previewHideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    
+    // MARK: - Dependencies
     @ObservedObject private var captureManager: CaptureManager
     private let logger = AppLogger.interface
 
-    init(
-        appSettings: AppSettings,
-        captureManager: CaptureManager
-    ) {
-        self.appSettings = appSettings
+    init(captureManager: CaptureManager) {
         self.captureManager = captureManager
     }
 
@@ -36,15 +56,14 @@ struct PreviewCaptureView: View {
     // MARK: - View Components
 
     private var loadingPlaceholder: some View {
-        Color.black.opacity(appSettings.previewOpacity)
+        Color.black.opacity(previewOpacity)
     }
 
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(focusBorderOverlay)
             .overlay(titleOverlay)
-            .opacity(appSettings.previewOpacity)
-
+            .opacity(previewOpacity)
     }
 
     private var focusBorderOverlay: some View {
@@ -57,23 +76,24 @@ struct PreviewCaptureView: View {
 
     private var shouldShowFocusBorder: Bool {
         let shouldShow: Bool =
-            appSettings.focusBorderEnabled && captureManager.isSourceWindowFocused
-            && !appSettings.previewHideActiveWindow
+            focusBorderEnabled &&
+            captureManager.isSourceWindowFocused &&
+            !previewHideActiveWindow
 
         return shouldShow
     }
 
     private var focusBorder: some View {
         RoundedRectangle(cornerRadius: 0)
-            .stroke(appSettings.focusBorderColor, lineWidth: appSettings.focusBorderWidth)
+            .stroke(focusBorderColor, lineWidth: focusBorderWidth)
     }
 
     private var titleOverlay: some View {
         Group {
-            if appSettings.sourceTitleEnabled {
+            if sourceTitleEnabled {
                 PreviewTitleView(
-                    backgroundOpacity: appSettings.sourceTitleBackgroundOpacity,
-                    fontSize: appSettings.sourceTitleFontSize,
+                    backgroundOpacity: sourceTitleBackgroundOpacity,
+                    fontSize: sourceTitleFontSize,
                     title: captureManager.sourceTitle
                 )
             }

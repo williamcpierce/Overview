@@ -2,10 +2,7 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- Manages the main preview interface, coordinating capture state, window visibility,
- and user interactions across the application's preview functionality.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
@@ -14,8 +11,21 @@ struct PreviewView: View {
     // MARK: - Environment
     @Environment(\.dismiss) private var dismiss: DismissAction
 
+    // MARK: - Window Settings
+    @AppStorage(WindowSettingsKeys.previewOpacity)
+    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+    
+    // MARK: - Preview Settings
+    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
+    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
+    
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    
+    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
+    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
     // MARK: - Dependencies
-    @ObservedObject private var appSettings: AppSettings
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
@@ -27,16 +37,13 @@ struct PreviewView: View {
     @State private var previewAspectRatio: CGFloat
 
     init(
-        appSettings: AppSettings,
         captureManager: CaptureManager,
         previewManager: PreviewManager,
         sourceManager: SourceManager
     ) {
-        self.appSettings = appSettings
         self.captureManager = captureManager
         self.previewManager = previewManager
         self.sourceManager = sourceManager
-
         self._previewAspectRatio = State(initialValue: 0)
     }
 
@@ -71,10 +78,10 @@ struct PreviewView: View {
         .onChange(of: sourceManager.isOverviewActive) { _ in
             updatePreviewVisibility()
         }
-        .onChange(of: appSettings.previewHideInactiveApplications) { _ in
+        .onChange(of: hideInactiveApplications) { _ in
             updatePreviewVisibility()
         }
-        .onChange(of: appSettings.previewHideActiveWindow) { _ in
+        .onChange(of: hideActiveWindow) { _ in
             updatePreviewVisibility()
         }
     }
@@ -85,13 +92,11 @@ struct PreviewView: View {
         VStack(spacing: 0) {
             if isSelectionViewVisible {
                 PreviewSelectionView(
-                    appSettings: appSettings,
                     captureManager: captureManager,
                     previewManager: previewManager
                 )
             } else {
                 PreviewCaptureView(
-                    appSettings: appSettings,
                     captureManager: captureManager
                 )
             }
@@ -109,13 +114,12 @@ struct PreviewView: View {
     }
 
     private var previewBackgroundLayer: some View {
-        Color.black.opacity(isSelectionViewVisible ? appSettings.previewOpacity : 0)
+        Color.black.opacity(isSelectionViewVisible ? previewOpacity : 0)
     }
 
     private var windowConfigurationLayer: some View {
         WindowAccessor(
             aspectRatio: $previewAspectRatio,
-            appSettings: appSettings,
             captureManager: captureManager,
             previewManager: previewManager
         )
@@ -137,7 +141,7 @@ struct PreviewView: View {
             Spacer()
             Image(systemName: "righttriangle.fill")
                 .font(.caption)
-                .foregroundColor(appSettings.focusBorderColor)
+                .foregroundColor(.accentColor)
         }
     }
 
@@ -167,7 +171,7 @@ struct PreviewView: View {
     }
 
     private func updateViewState() {
-        if !captureManager.isCapturing && appSettings.previewCloseOnCaptureStop {
+        if !captureManager.isCapturing && closeOnCaptureStop {
             logger.info("Closing preview window on capture stop")
             dismiss()
         }
@@ -188,10 +192,10 @@ struct PreviewView: View {
         }
 
         let shouldHideForInactiveApps =
-            appSettings.previewHideInactiveApplications && !captureManager.isSourceAppFocused
+            hideInactiveApplications && !captureManager.isSourceAppFocused
 
         let shouldHideForActiveWindow =
-            appSettings.previewHideActiveWindow && captureManager.isSourceWindowFocused
+            hideActiveWindow && captureManager.isSourceWindowFocused
 
         isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
     }

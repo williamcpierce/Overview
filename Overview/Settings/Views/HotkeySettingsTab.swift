@@ -8,71 +8,68 @@
 import SwiftUI
 
 struct HotkeySettingsTab: View {
-    @ObservedObject var appSettings: AppSettings
-    @ObservedObject var sourceManager: SourceManager
+    // MARK: - State
     @State private var isAddingHotkey = false
+
+    // MARK: - Dependencies
+    @ObservedObject var hotkeyStorage: HotkeyStorage
+    @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     var body: some View {
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
-        } else {
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
+        Form {
+            Section {
+                HStack {
+                    Text("Window Activation")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .padding()
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            Text("Window Activation")
-                .font(.headline)
                 .padding(.bottom, 4)
 
-            if appSettings.hotkeyBindings.isEmpty {
-                List {
-                    Text("No hotkeys configured")
-                        .foregroundColor(.secondary)
-                }
-                .padding(6)
-            } else {
-                List(appSettings.hotkeyBindings, id: \.sourceTitle) { binding in
-                    HStack {
-                        Text(binding.sourceTitle)
-                        Spacer()
-                        Text(binding.hotkeyDisplayString)
-                            .foregroundColor(.secondary)
-                        Button(action: {
-                            removeHotkeyBinding(binding)
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
+                VStack {
+                    if hotkeyStorage.hotkeyBindings.isEmpty {
+                        List {
+                            Text("No hotkeys configured")
                                 .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
+                    } else {
+                        List(hotkeyStorage.hotkeyBindings, id: \.sourceTitle) { binding in
+                            HStack {
+                                Text(binding.sourceTitle)
+                                Spacer()
+                                Text(binding.hotkeyDisplayString)
+                                    .foregroundColor(.secondary)
+                                Button(action: { removeHotkeyBinding(binding) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                }.padding(6)
-            }
-
-            Button("Add Hotkey") {
-                logger.debug("Opening hotkey binding sheet")
-                isAddingHotkey = true
+                }
+                HStack {
+                    Spacer()
+                    Button("Add") {
+                        isAddingHotkey = true
+                    }
+                }
             }
         }
+        .formStyle(.grouped)
         .sheet(isPresented: $isAddingHotkey) {
-            HotkeyBindingSheet(appSettings: appSettings, sourceManager: sourceManager)
+            HotkeyBindingSheet(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
         }
     }
 
     private func removeHotkeyBinding(_ binding: HotkeyBinding) {
-        if let index = appSettings.hotkeyBindings.firstIndex(of: binding) {
-            appSettings.hotkeyBindings.remove(at: index)
+        if let index = hotkeyStorage.hotkeyBindings.firstIndex(of: binding) {
+            hotkeyStorage.hotkeyBindings.remove(at: index)
             logger.info("Removed hotkey binding for '\(binding.sourceTitle)'")
         }
     }
