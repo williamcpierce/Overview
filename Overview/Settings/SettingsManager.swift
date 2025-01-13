@@ -40,6 +40,9 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
+        let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
+        UserDefaults.standard.removePersistentDomain(forName: domain)
+
         // Reset Window settings
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.previewOpacity,

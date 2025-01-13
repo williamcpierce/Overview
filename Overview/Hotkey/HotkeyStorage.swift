@@ -45,16 +45,12 @@ class HotkeyStorage: ObservableObject {
 
     // MARK: - Public Methods
     func resetToDefaults() {
-        logger.debug("Initiating settings reset")
-
-        let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
+        logger.debug("Initiating hotkey settings reset")
 
         hotkeyBindings = HotkeySettingsKeys.defaults.bindings
 
         clearHotkeyBindings()
-        logger.info("Settings reset completed successfully")
+        logger.info("Hotkey settings reset completed successfully")
     }
 
     // MARK: - Private Methods
