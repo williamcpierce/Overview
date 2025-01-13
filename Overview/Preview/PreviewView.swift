@@ -14,16 +14,20 @@ struct PreviewView: View {
     // MARK: - Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
     private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
-    
+
     // MARK: - Preview Settings
     @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
     private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-    
+
     @AppStorage(PreviewSettingsKeys.hideActiveWindow)
     private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
-    
+
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
+    // MARK: - Overlay Settings
+    @AppStorage(OverlaySettingsKeys.focusBorderColor)
+    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
 
     // MARK: - Dependencies
     @ObservedObject private var captureManager: CaptureManager
@@ -141,7 +145,7 @@ struct PreviewView: View {
             Spacer()
             Image(systemName: "righttriangle.fill")
                 .font(.caption)
-                .foregroundColor(.accentColor)
+                .foregroundColor(focusBorderColor)
         }
     }
 
