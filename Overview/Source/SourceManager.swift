@@ -20,23 +20,19 @@ final class SourceManager: ObservableObject {
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
     // MARK: - Dependencies
-    private let appSettings: AppSettings
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
     private let observerId = UUID()
 
     // MARK: - Types
-
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
     }
 
     // MARK: - Initialization
-
-    init(appSettings: AppSettings) {
-        self.appSettings = appSettings
+    init() {
         setupObservers()
         logger.debug("Source window manager initialization complete")
     }
@@ -63,13 +59,18 @@ final class SourceManager: ObservableObject {
         logger.debug("Retrieving filtered window list")
 
         let availableSources = try await captureServices.getAvailableSources()
+        
+        // Get current filter settings from UserDefaults
+        let filterAppNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames) as? [String] ?? []
+        let isBlocklist = UserDefaults.standard.bool(forKey: SourceSettingsKeys.isBlocklist)
+        
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
-            appFilterNames: appSettings.filterAppNames,
-            isFilterBlocklist: appSettings.filterBlocklist
+            appFilterNames: filterAppNames,
+            isFilterBlocklist: isBlocklist
         )
 
-        logger.info("Retrieved \(filteredSources.count) filtered source window")
+        logger.info("Retrieved \(filteredSources.count) filtered source windows")
         return filteredSources
     }
 

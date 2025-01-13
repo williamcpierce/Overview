@@ -45,6 +45,7 @@
 				HotkeyManager.swift,
 				HotkeyRecorder.swift,
 				HotkeyService.swift,
+				HotkeyStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -63,14 +64,20 @@
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AppSettings.swift,
-				ColorExtension.swift,
-				OpacitySlider.swift,
+				Extensions/ColorExtension.swift,
+				Keys/HotkeySettingsKeys.swift,
+				Keys/OverlaySettingsKeys.swift,
+				Keys/PreviewSettingsKeys.swift,
+				Keys/SourceSettingsKeys.swift,
+				Keys/WindowSettingsKeys.swift,
+				SettingsManager.swift,
 				SettingsView.swift,
-				Views/FilterSettingsTab.swift,
+				Views/Components/OpacitySlider.swift,
+				Views/Components/ResetSettingsButton.swift,
 				Views/HotkeySettingsTab.swift,
 				Views/OverlaySettingsTab.swift,
 				Views/PreviewSettingsTab.swift,
+				Views/SourceSettingsTab.swift,
 				Views/WindowSettingsTab.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
@@ -400,7 +407,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = "0.6.0-alpha-dev.2";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -430,7 +437,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = "0.6.0-alpha-dev.2";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";

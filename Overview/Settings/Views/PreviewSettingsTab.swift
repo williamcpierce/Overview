@@ -2,98 +2,80 @@
  Settings/Views/PreviewSettingsTab.swift
  Overview
 
- Created by William Pierce on 1/6/25.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct PreviewSettingsTab: View {
-    @ObservedObject var appSettings: AppSettings
+    // MARK: - Preview Settings
+    @AppStorage(PreviewSettingsKeys.captureFrameRate)
+    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
+
+    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
+    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
+
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+
     @State private var showingResetAlert = false
     private let logger = AppLogger.settings
+    private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
 
     var body: some View {
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
-            .safeAreaInset(edge: .bottom) {
-                Button("Reset All Settings") {
-                    logger.debug("Settings reset requested")
-                    showingResetAlert = true
-                }
-                .padding(.bottom, 10)
-            }
-        } else {
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
-                }
-                .padding()
-                .safeAreaInset(edge: .bottom) {
-                    Button("Reset All Settings") {
-                        logger.debug("Settings reset requested")
-                        showingResetAlert = true
-                    }
-                    .padding(.bottom, 10)
-                }
-            }
-        }
-    }
+        Form {
 
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            HStack {
-                Text("Frame Rate")
-                    .font(.headline)
-                Spacer()
-                Button(action: {}) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.orange)
-                }
-                .buttonStyle(.plain)
-            }
+            // MARK: - Frame Rate Section
 
-            Picker("FPS", selection: $appSettings.captureFrameRate) {
-                ForEach(appSettings.availableCaptureFrameRates, id: \.self) { rate in
-                    Text("\(Int(rate))").tag(rate)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-
-        Section {
-            HStack {
-                Text("Automatic Hiding")
-                    .font(.headline)
-                Spacer()
-                Button(action: {}) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-            VStack {
+            Section {
                 HStack {
+                    Text("Frame Rate")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundColor(.orange)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 4)
+
+                Picker("FPS", selection: $captureFrameRate) {
+                    ForEach(availableFrameRates, id: \.self) { rate in
+                        Text("\(Int(rate))").tag(rate)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            // MARK: - Auto Hiding Section
+
+            Section {
+                HStack {
+                    Text("Automatic Hiding")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 4)
+
+                VStack {
                     Toggle(
                         "Hide inactive app previews",
-                        isOn: $appSettings.previewHideInactiveApplications)
-                    Spacer()
-                }
-                HStack {
-                    Toggle("Hide active window preview", isOn: $appSettings.previewHideActiveWindow)
-                    Spacer()
+                        isOn: $hideInactiveApplications
+                    )
+
+                    Toggle(
+                        "Hide active window preview",
+                        isOn: $hideActiveWindow
+                    )
                 }
             }
         }
-        .alert("Reset Settings", isPresented: $showingResetAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                logger.info("Performing settings reset")
-                appSettings.resetToDefaults()
-            }
-        }
+        .formStyle(.grouped)
     }
 }

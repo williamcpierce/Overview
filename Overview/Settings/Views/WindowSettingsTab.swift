@@ -2,119 +2,108 @@
  Settings/Views/WindowSettingsTab.swift
  Overview
 
- Created by William Pierce on 1/6/25.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct WindowSettingsTab: View {
-    @ObservedObject var appSettings: AppSettings
+    // MARK: - Window Settings
+    @AppStorage(WindowSettingsKeys.previewOpacity)
+    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+
+    @AppStorage(WindowSettingsKeys.defaultWidth)
+    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
+
+    @AppStorage(WindowSettingsKeys.defaultHeight)
+    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+
+    @AppStorage(WindowSettingsKeys.managedByMissionControl)
+    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
+
+    @AppStorage(WindowSettingsKeys.createOnLaunch)
+    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
+
+    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
+    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
+    @AppStorage(WindowSettingsKeys.alignmentEnabled)
+    private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 
     var body: some View {
-        if #available(macOS 13.0, *) {
-            Form {
-                formContent
-            }
-            .formStyle(.grouped)
-        } else {
-            ScrollView {
-                VStack(spacing: 20) {
-                    formContent
-                }
-                .padding()
-            }
-        }
-    }
+        Form {
 
-    @ViewBuilder
-    private var formContent: some View {
-        Section {
-            HStack {
-                Text("Appearance")
-                    .font(.headline)
-                Spacer()
-                Button(action: {}) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-            VStack {
-                HStack(spacing: 8) {
-                    VStack {
-                        Text("Opacity")
+            // MARK: - Appearance Section
+
+            Section {
+                HStack {
+                    Text("Appearance")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
                     }
-                    OpacitySlider(value: $appSettings.previewOpacity)
-                    Text("\(Int(appSettings.previewOpacity * 100))%")
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 4)
+
+                HStack(spacing: 8) {
+                    Text("Opacity")
+                    OpacitySlider(value: $previewOpacity)
+                    Text("\(Int(previewOpacity * 100))%")
                         .foregroundColor(.secondary)
                         .frame(width: 40)
                 }
 
-                HStack {
-                    Toggle("Shadows", isOn: $appSettings.windowShadowEnabled)
-                    Spacer()
+                Toggle("Shadows", isOn: $shadowEnabled)
+                VStack {
+                    HStack {
+                        Text("Default width")
+                        Spacer()
+                        TextField("", value: $defaultWidth, formatter: NumberFormatter())
+                            .frame(width: 120)
+                            .textFieldStyle(.roundedBorder)
+                        Text("px")
+                            .foregroundColor(.secondary)
+                    }
+
+                    HStack {
+                        Text("Default height")
+                        Spacer()
+                        TextField("", value: $defaultHeight, formatter: NumberFormatter())
+                            .frame(width: 120)
+                            .textFieldStyle(.roundedBorder)
+                        Text("px")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
-            VStack {
-                HStack {
-                    Text("Default width")
-                    Spacer()
-                    TextField(
-                        "", value: $appSettings.windowDefaultWidth, formatter: NumberFormatter()
-                    )
-                    .frame(width: 120)
-                    .textFieldStyle(.roundedBorder)
-                    Text("px")
-                        .foregroundColor(.secondary)
-                }
 
+            // MARK: - Behavior Section
+            Section {
                 HStack {
-                    Text("Default height")
+                    Text("Behavior")
+                        .font(.headline)
                     Spacer()
-                    TextField(
-                        "", value: $appSettings.windowDefaultHeight, formatter: NumberFormatter()
-                    ).frame(width: 120)
-                        .textFieldStyle(.roundedBorder)
-                    Text("px")
-                        .foregroundColor(.secondary)
+                    Button(action: {}) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 4)
+                VStack {
+                    Toggle("Show in Mission Control", isOn: $managedByMissionControl)
+                    Toggle("Create window on launch", isOn: $createOnLaunch)
+                    Toggle("Close with preview source", isOn: $closeOnCaptureStop)
+                    Toggle("Enable alignment help", isOn: $alignmentEnabled)
                 }
             }
         }
-
-        Section {
-            HStack {
-                Text("Behavior")
-                    .font(.headline)
-                Spacer()
-                Button(action: {}) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-            VStack {
-                HStack {
-                    Toggle(
-                        "Show in Mission Control", isOn: $appSettings.windowManagedByMissionControl)
-                    Spacer()
-                }
-                HStack {
-                    Toggle(
-                        "Create window on launch", isOn: $appSettings.windowCreateOnLaunch)
-                    Spacer()
-                }
-                HStack {
-                    Toggle(
-                        "Close with preview source", isOn: $appSettings.previewCloseOnCaptureStop
-                    )
-                    Spacer()
-                }
-                HStack {
-                    Toggle(
-                        "Enable alignment help", isOn: $appSettings.windowAlignmentEnabled)
-                    Spacer()
-                }
-            }
-        }
+        .formStyle(.grouped)
     }
 }

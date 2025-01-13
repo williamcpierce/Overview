@@ -2,17 +2,13 @@
  Window/WindowAccessor.swift
  Overview
 
- Created by William Pierce on 9/15/24.
-
- Manages window configuration and layout for preview windows,
- handling resizing, aspect ratio maintenance, and window behavior.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
     // MARK: - Constants
-
     private struct Constants {
         static let throttleInterval: TimeInterval = 0.1
         static let minHeightDifference: CGFloat = 1.0
@@ -26,12 +22,20 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     // MARK: - Dependencies
-
     @Binding var aspectRatio: CGFloat
-    @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
     private let logger = AppLogger.interface
+
+    // MARK: - Window Settings
+    @AppStorage(WindowSettingsKeys.managedByMissionControl)
+    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
+    
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+    
+    @AppStorage(WindowSettingsKeys.alignmentEnabled)
+    private var alignmentEnabled = WindowSettingsKeys.defaults.alignmentEnabled
 
     // MARK: - NSViewRepresentable
 
@@ -106,7 +110,7 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && appSettings.windowAlignmentEnabled
+        let shouldFloat = previewManager.editModeEnabled && alignmentEnabled
         let newLevel: NSWindow.Level =
             shouldFloat ? Constants.Window.floatingLevel : Constants.Window.defaultLevel
 
@@ -117,27 +121,24 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func updateShadow(_ window: NSWindow) {
-        let enableShadow = appSettings.windowShadowEnabled
+        guard window.hasShadow != shadowEnabled else { return }
 
-        guard window.hasShadow != enableShadow else { return }
-
-        window.hasShadow = enableShadow
-        logger.debug("Window shadow updated: \(enableShadow ? "Enabled" : "Disabled")")
+        window.hasShadow = shadowEnabled
+        logger.debug("Window shadow updated: \(shadowEnabled ? "Enabled" : "Disabled")")
     }
 
     private func updateMissionControl(_ window: NSWindow) {
-        let shouldManage = appSettings.windowManagedByMissionControl
         let currentlyManaged: Bool = window.collectionBehavior.contains(.managed)
 
-        guard shouldManage != currentlyManaged else { return }
+        guard managedByMissionControl != currentlyManaged else { return }
 
-        if shouldManage {
+        if managedByMissionControl {
             window.collectionBehavior.insert(.managed)
         } else {
             window.collectionBehavior.remove(.managed)
         }
 
-        logger.debug("Mission Control management updated: managed=\(shouldManage)")
+        logger.debug("Mission Control management updated: managed=\(managedByMissionControl)")
     }
 
     private func synchronizeAspectRatio(_ window: NSWindow) {

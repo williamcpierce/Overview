@@ -2,10 +2,7 @@
  Window/WindowManager.swift
  Overview
 
- Created by William Pierce on 1/5/25.
-
- Manages the creation, configuration, and lifecycle of preview windows,
- coordinating window state persistence and restoration.
+ Created by William Pierce on 1/12/25.
 */
 
 import SwiftUI
@@ -46,6 +43,7 @@ struct WindowConfiguration {
     )
 }
 
+@MainActor
 final class WindowManager {
     // MARK: - Constants
 
@@ -64,23 +62,28 @@ final class WindowManager {
     }
 
     // MARK: - Dependencies
+    @AppStorage(WindowSettingsKeys.defaultWidth)
+    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
+    
+    @AppStorage(WindowSettingsKeys.defaultHeight)
+    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    
+    @AppStorage(WindowSettingsKeys.createOnLaunch)
+    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
-    private let appSettings: AppSettings
     private let previewManager: PreviewManager
     private let sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
     private let logger = AppLogger.interface
 
     // MARK: - Private State
-
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
     private var sessionWindowCounter: Int
 
     // MARK: - Initialization
 
-    init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
-        self.appSettings = appSettings
+    init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.sessionWindowCounter = 0
@@ -88,7 +91,7 @@ final class WindowManager {
     }
 
     deinit {
-        cleanupResources()
+//        cleanupResources()
     }
 
     // MARK: - Window Management
@@ -172,7 +175,7 @@ final class WindowManager {
     }
 
     private func handleRestoreCompletion(_ restoredCount: Int) {
-        if restoredCount == 0 && appSettings.windowCreateOnLaunch {
+        if restoredCount == 0 && createOnLaunch {
             logger.info("No windows restored, creating default window")
             createDefaultWindow()
         } else {
@@ -201,8 +204,8 @@ final class WindowManager {
         let frame = NSRect(
             x: Constants.fallbackPosition,
             y: Constants.fallbackPosition,
-            width: max(appSettings.windowDefaultWidth, Constants.minWidth),
-            height: max(appSettings.windowDefaultHeight, Constants.minHeight)
+            width: max(defaultWidth, Constants.minWidth),
+            height: max(defaultHeight, Constants.minHeight)
         )
 
         logger.debug("Created fallback frame: \(frame.size.width)x\(frame.size.height)")
@@ -210,19 +213,19 @@ final class WindowManager {
     }
 
     private func calculateCenteredFrame(in visibleFrame: NSRect) -> NSRect {
-        let defaultWidth = max(appSettings.windowDefaultWidth, Constants.minWidth)
-        let defaultHeight = max(appSettings.windowDefaultHeight, Constants.minHeight)
+        let width = max(defaultWidth, Constants.minWidth)
+        let height = max(defaultHeight, Constants.minHeight)
 
-        let centerX = visibleFrame.minX + (visibleFrame.width - defaultWidth) / 2
-        let centerY = visibleFrame.minY + (visibleFrame.height - defaultHeight) / 2
+        let centerX = visibleFrame.minX + (visibleFrame.width - width) / 2
+        let centerY = visibleFrame.minY + (visibleFrame.height - height) / 2
 
         let offset = CGFloat(sessionWindowCounter) * Constants.cascadeOffset
 
         let frame = NSRect(
             x: centerX + offset,
             y: centerY - offset,
-            width: defaultWidth,
-            height: defaultHeight
+            width: width,
+            height: height
         )
 
         return frame.ensureOnScreen()
@@ -271,16 +274,10 @@ final class WindowManager {
 
     private func setupWindowContent(_ window: NSWindow) {
         let contentView = ContentView(
-            appSettings: appSettings,
             previewManager: previewManager,
             sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
-    }
-
-    func toggleWindowShadow(for window: NSWindow, enableShadow: Bool) {
-        window.hasShadow = enableShadow
-        logger.info("Window shadow toggled: \(enableShadow ? "Enabled" : "Disabled")")
     }
 
     private func validateWindowStates() throws {

@@ -16,7 +16,7 @@ struct HotkeyBindingSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Dependencies
-    @ObservedObject var appSettings: AppSettings
+    @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
 
@@ -155,7 +155,7 @@ struct HotkeyBindingSheet: View {
     }
 
     private func hasConflictingShortcut(_ shortcut: HotkeyBinding) -> Bool {
-        appSettings.hotkeyBindings.contains { binding in
+        hotkeyStorage.hotkeyBindings.contains { binding in
             binding.keyCode == shortcut.keyCode && binding.modifiers == shortcut.modifiers
         }
     }
@@ -171,7 +171,7 @@ struct HotkeyBindingSheet: View {
 
     private func saveHotkeyBinding() {
         if let shortcut: HotkeyBinding = currentShortcut {
-            appSettings.hotkeyBindings.append(shortcut)
+            hotkeyStorage.hotkeyBindings.append(shortcut)
             logger.info(
                 "Added new hotkey binding: '\(shortcut.sourceTitle)' - \(shortcut.hotkeyDisplayString)"
             )
