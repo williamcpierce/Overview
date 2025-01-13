@@ -21,7 +21,8 @@ struct OverviewApp: App {
         Settings {
             SettingsView(
                 hotkeyStorage: appDelegate.hotkeyStorage,
-                sourceManager: appDelegate.sourceManager
+                sourceManager: appDelegate.sourceManager,
+                settingsManager: appDelegate.settingsManager
             )
         }.commands {
             windowCommands
@@ -70,6 +71,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
+    let settingsManager: SettingsManager
     var windowManager: WindowManager!
     let logger = AppLogger.interface
     
@@ -83,7 +85,8 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         sourceManager = SourceManager()
         previewManager = PreviewManager(sourceManager: sourceManager)
         hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
-
+        settingsManager = SettingsManager(hotkeyStorage: hotkeyStorage)
+    
         super.init()
 
         windowManager = WindowManager(

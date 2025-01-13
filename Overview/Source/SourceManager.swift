@@ -61,8 +61,8 @@ final class SourceManager: ObservableObject {
         let availableSources = try await captureServices.getAvailableSources()
         
         // Get current filter settings from UserDefaults
-        let filterAppNames = UserDefaults.standard.array(forKey: FilterSettingsKeys.appNames) as? [String] ?? []
-        let isBlocklist = UserDefaults.standard.bool(forKey: FilterSettingsKeys.isBlocklist)
+        let filterAppNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames) as? [String] ?? []
+        let isBlocklist = UserDefaults.standard.bool(forKey: SourceSettingsKeys.isBlocklist)
         
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,

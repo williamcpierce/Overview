@@ -18,7 +18,7 @@ final class SettingsManager: ObservableObject {
     // MARK: - Published State
     @Published var filterAppNames: [String] {
         didSet {
-            UserDefaults.standard.set(filterAppNames, forKey: FilterSettingsKeys.appNames)
+            UserDefaults.standard.set(filterAppNames, forKey: SourceSettingsKeys.appNames)
         }
     }
 
@@ -26,12 +26,12 @@ final class SettingsManager: ObservableObject {
         self.hotkeyStorage = hotkeyStorage
 
         // Initialize filter app names from UserDefaults
-        if let storedNames = UserDefaults.standard.array(forKey: FilterSettingsKeys.appNames)
+        if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
             as? [String]
         {
             self.filterAppNames = storedNames
         } else {
-            self.filterAppNames = FilterSettingsKeys.defaults.appNames
+            self.filterAppNames = SourceSettingsKeys.defaults.appNames
         }
     }
 
@@ -98,10 +98,10 @@ final class SettingsManager: ObservableObject {
             forKey: PreviewSettingsKeys.captureFrameRate)
 
         // Reset Filter settings
-        filterAppNames = FilterSettingsKeys.defaults.appNames
+        filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
-            FilterSettingsKeys.defaults.isBlocklist,
-            forKey: FilterSettingsKeys.isBlocklist)
+            SourceSettingsKeys.defaults.isBlocklist,
+            forKey: SourceSettingsKeys.isBlocklist)
 
         // Reset Hotkey settings through HotkeyStorage
         hotkeyStorage.resetToDefaults()

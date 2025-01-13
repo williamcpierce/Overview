@@ -1,5 +1,5 @@
 /*
- Settings/Views/FilterSettingsTab.swift
+ Settings/Views/SourceSettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.
@@ -7,21 +7,23 @@
 
 import SwiftUI
 
-struct FilterSettingsTab: View {
+struct SourceSettingsTab: View {
+    // MARK: - App Filter Settings
+    @AppStorage(SourceSettingsKeys.isBlocklist)
+    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
+    
     // MARK: - Dependencies
     @ObservedObject var settingsManager: SettingsManager
     private let logger = AppLogger.settings
 
     // MARK: - State
     @State private var newAppName = ""
-    @AppStorage(FilterSettingsKeys.isBlocklist)
-    private var isBlocklist = FilterSettingsKeys.defaults.isBlocklist
 
     var body: some View {
         Form {
             Section {
                 HStack {
-                    Text("Source Selection Dropdown")
+                    Text("Source App Filter")
                         .font(.headline)
                     Spacer()
                     Button(action: {}) {

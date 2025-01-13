@@ -13,7 +13,6 @@ import SwiftUI
 @MainActor
 final class HotkeyManager: ObservableObject {
     // MARK: - Dependencies
-
     @ObservedObject private var hotkeyStorage: HotkeyStorage
     @ObservedObject private var sourceManager: SourceManager
     let hotkeyService: HotkeyService = HotkeyService.shared

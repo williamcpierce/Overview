@@ -35,7 +35,9 @@ struct WindowSettingsTab: View {
 
     var body: some View {
         Form {
-            // Appearance Section
+
+            // MARK: - Appearance Section
+
             Section {
                 HStack {
                     Text("Appearance")
@@ -81,7 +83,7 @@ struct WindowSettingsTab: View {
                 }
             }
 
-            // Behavior Section
+            // MARK: - Behavior Section
             Section {
                 HStack {
                     Text("Behavior")

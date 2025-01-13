@@ -24,7 +24,9 @@ struct PreviewSettingsTab: View {
 
     var body: some View {
         Form {
-            // Frame Rate Section
+
+            // MARK: - Frame Rate Section
+
             Section {
                 HStack {
                     Text("Frame Rate")
@@ -46,7 +48,8 @@ struct PreviewSettingsTab: View {
                 .pickerStyle(.segmented)
             }
 
-            // Auto Hiding Section
+            // MARK: - Auto Hiding Section
+
             Section {
                 HStack {
                     Text("Automatic Hiding")

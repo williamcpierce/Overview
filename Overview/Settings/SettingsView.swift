@@ -14,32 +14,33 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
-    @StateObject private var settingsManager: SettingsManager
+    @ObservedObject var settingsManager: SettingsManager
     private let logger = AppLogger.settings
 
-    init(hotkeyStorage: HotkeyStorage, sourceManager: SourceManager) {
+    init(
+        hotkeyStorage: HotkeyStorage, sourceManager: SourceManager, settingsManager: SettingsManager
+    ) {
         self.hotkeyStorage = hotkeyStorage
         self.sourceManager = sourceManager
-        self._settingsManager = StateObject(
-            wrappedValue: SettingsManager(hotkeyStorage: hotkeyStorage))
+        self.settingsManager = settingsManager
     }
 
     var body: some View {
         TabView {
             PreviewSettingsTab()
-                .tabItem { Label("Preview", systemImage: "rectangle.dashed.badge.record") }
+                .tabItem { Label("Previews", systemImage: "rectangle.dashed.badge.record") }
 
             WindowSettingsTab()
-                .tabItem { Label("Window", systemImage: "macwindow") }
+                .tabItem { Label("Windows", systemImage: "macwindow") }
 
             OverlaySettingsTab()
-                .tabItem { Label("Overlay", systemImage: "square.2.layers.3d.bottom.filled") }
+                .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
 
             HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
-                .tabItem { Label("Hotkey", systemImage: "command.square.fill") }
+                .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
 
-            FilterSettingsTab(settingsManager: settingsManager)
-                .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
+            SourceSettingsTab(settingsManager: settingsManager)
+                .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
         }
         .safeAreaInset(edge: .bottom) {
             VStack {

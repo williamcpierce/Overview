@@ -1,5 +1,5 @@
 /*
- Settings/OpacitySlider.swift
+ Settings/Views/Components/OpacitySlider.swift
  Overview
 
  Created by William Pierce on 1/9/25.

@@ -1,13 +1,13 @@
 /*
- Settings/FilterSettingsKeys.swift
+ Settings/Keys/SourceSettingsKeys.swift
  Overview
 
  Created by William Pierce on 1/12/25.
 
- Defines storage keys for filter-related settings.
+ Defines storage keys for source-related settings.
 */
 
-enum FilterSettingsKeys {
+enum SourceSettingsKeys {
     static let appNames = "appFilterNames"
     static let isBlocklist = "isFilterBlocklist"
 

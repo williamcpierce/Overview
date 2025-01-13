@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct HotkeySettingsTab: View {
-    // MARK: - State
-    @State private var isAddingHotkey = false
-
     // MARK: - Dependencies
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.settings
+
+    // MARK: - State
+    @State private var isAddingHotkey = false
 
     var body: some View {
         Form {
