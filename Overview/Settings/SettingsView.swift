@@ -43,17 +43,17 @@ struct SettingsView: View {
             SourceSettingsTab(settingsManager: settingsManager)
                 .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
         }
+        .background(.ultraThickMaterial)
         .safeAreaInset(edge: .bottom) {
             VStack {
                 Divider()
                 ResetSettingsButton(settingsManager: settingsManager)
             }
             .padding(.bottom, 8)
-            .background(.background)
+            .background(.regularMaterial)
         }
         .frame(width: 324, height: 432)
         .fixedSize()
-        .background(.ultraThickMaterial)
 
         // MARK: - Settings Window Level
 
