@@ -20,7 +20,7 @@ struct HotkeySettingsTab: View {
         Form {
             Section {
                 HStack {
-                    Text("Window Activation")
+                    Text("Source Window Activation")
                         .font(.headline)
                     Spacer()
                     Button(action: {}) {

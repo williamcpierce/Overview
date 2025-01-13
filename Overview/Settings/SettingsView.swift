@@ -50,7 +50,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.background)
         }
-        .frame(width: 324, height: 420)
+        .frame(width: 324, height: 432)
         .fixedSize()
         .background(.ultraThickMaterial)
         .onAppear {
