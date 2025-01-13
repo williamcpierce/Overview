@@ -123,7 +123,8 @@ struct PreviewView: View {
         WindowAccessor(
             aspectRatio: $previewAspectRatio,
             captureManager: captureManager,
-            previewManager: previewManager
+            previewManager: previewManager,
+            sourceManager: sourceManager
         )
     }
 
