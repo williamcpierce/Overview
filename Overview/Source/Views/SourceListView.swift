@@ -12,10 +12,13 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SourceListView: View {
+    // Dependencies
     @Binding var selectedSource: SCWindow?
+    private let logger = AppLogger.interface
+
+    // Public Properties
     var sources: [SCWindow]
     let onSourceSelected: (SCWindow?) -> Void
-    private let logger = AppLogger.interface
 
     var body: some View {
         Picker("", selection: $selectedSource) {

@@ -7,46 +7,9 @@
 
 import SwiftUI
 
-// MARK: - Types
-
-enum WindowManagerError: LocalizedError {
-    case windowCreationFailed
-    case invalidScreenConfiguration
-    case windowRestoreValidationFailed
-    case windowValidationFailed
-
-    var errorDescription: String? {
-        switch self {
-        case .windowCreationFailed:
-            return "Failed to create window with valid configuration"
-        case .invalidScreenConfiguration:
-            return "No valid screen configuration available"
-        case .windowRestoreValidationFailed:
-            return "Window restore state validation failed"
-        case .windowValidationFailed:
-            return "Window state validation failed"
-        }
-    }
-}
-
-struct WindowConfiguration {
-    let frame: NSRect
-    let styleMask: NSWindow.StyleMask
-    let backing: NSWindow.BackingStoreType
-    let deferCreation: Bool
-
-    static let `default` = WindowConfiguration(
-        frame: .zero,
-        styleMask: [.fullSizeContentView],
-        backing: .buffered,
-        deferCreation: false
-    )
-}
-
 @MainActor
 final class WindowManager {
-    // MARK: - Constants
-
+    // Constants
     private struct Constants {
         static let cascadeOffset: CGFloat = 25
         static let fallbackPosition: CGFloat = 100
@@ -61,25 +24,24 @@ final class WindowManager {
         }
     }
 
-    // MARK: - Dependencies
-    @AppStorage(WindowSettingsKeys.defaultWidth)
-    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-    
-    @AppStorage(WindowSettingsKeys.defaultHeight)
-    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-    
-    @AppStorage(WindowSettingsKeys.createOnLaunch)
-    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-
-    private let previewManager: PreviewManager
-    private let sourceManager: SourceManager
+    // Dependencies
+    private var previewManager: PreviewManager
+    private var sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
     private let logger = AppLogger.interface
 
-    // MARK: - Private State
+    // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
     private var sessionWindowCounter: Int
+
+    // Window Settings
+    @AppStorage(WindowSettingsKeys.defaultWidth)
+    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
+    @AppStorage(WindowSettingsKeys.defaultHeight)
+    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.createOnLaunch)
+    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
     // MARK: - Initialization
 
@@ -91,7 +53,7 @@ final class WindowManager {
     }
 
     deinit {
-//        cleanupResources()
+        //        cleanupResources()
     }
 
     // MARK: - Window Management
@@ -307,4 +269,40 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
         self.windowManager = windowManager
         super.init()
     }
+}
+
+// MARK: - Supporting Types
+
+enum WindowManagerError: LocalizedError {
+    case windowCreationFailed
+    case invalidScreenConfiguration
+    case windowRestoreValidationFailed
+    case windowValidationFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .windowCreationFailed:
+            return "Failed to create window with valid configuration"
+        case .invalidScreenConfiguration:
+            return "No valid screen configuration available"
+        case .windowRestoreValidationFailed:
+            return "Window restore state validation failed"
+        case .windowValidationFailed:
+            return "Window state validation failed"
+        }
+    }
+}
+
+struct WindowConfiguration {
+    let frame: NSRect
+    let styleMask: NSWindow.StyleMask
+    let backing: NSWindow.BackingStoreType
+    let deferCreation: Bool
+
+    static let `default` = WindowConfiguration(
+        frame: .zero,
+        styleMask: [.fullSizeContentView],
+        backing: .buffered,
+        deferCreation: false
+    )
 }

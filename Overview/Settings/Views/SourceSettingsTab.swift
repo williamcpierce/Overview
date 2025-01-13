@@ -8,19 +8,22 @@
 import SwiftUI
 
 struct SourceSettingsTab: View {
-    // MARK: - App Filter Settings
-    @AppStorage(SourceSettingsKeys.isBlocklist)
-    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
-    
-    // MARK: - Dependencies
+    // Dependencies
     @ObservedObject var settingsManager: SettingsManager
     private let logger = AppLogger.settings
 
-    // MARK: - State
-    @State private var newAppName = ""
+    // Private State
+    @State private var newAppName: String = ""
+
+    // App Filter Settings
+    @AppStorage(SourceSettingsKeys.isBlocklist)
+    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
 
     var body: some View {
         Form {
+
+            // MARK: - App Filter Section
+
             Section {
                 HStack {
                     Text("Source App Filter")
@@ -74,6 +77,8 @@ struct SourceSettingsTab: View {
         }
         .formStyle(.grouped)
     }
+
+    // MARK: - Actions
 
     private func addAppFilter() {
         guard !newAppName.isEmpty else { return }

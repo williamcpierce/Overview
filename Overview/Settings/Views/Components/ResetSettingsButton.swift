@@ -8,8 +8,11 @@
 import SwiftUI
 
 struct ResetSettingsButton: View {
+    // Dependencies
     @ObservedObject var settingsManager: SettingsManager
-    @State private var showingResetAlert = false
+
+    // Private State
+    @State private var showingResetAlert: Bool = false
 
     var body: some View {
         Button("Reset All Settings") {

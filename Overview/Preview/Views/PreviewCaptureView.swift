@@ -1,43 +1,42 @@
 /*
  Preview/Views/PreviewCaptureView.swift
  Overview
- 
- Created by William Pierce on 1/12/25.
+
+ Created by William Pierce on 10/13/24.
+
+ Renders the captured source window content with configurable overlays for
+ focus borders and window titles.
 */
 
 import SwiftUI
 
 struct PreviewCaptureView: View {
-    // MARK: - Window Settings
-    @AppStorage(WindowSettingsKeys.previewOpacity)
-    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
-    
-    // MARK: - Overlay Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
-    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
-    
-    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
-    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
-
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
-    
-    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
-    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
-    
-    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
-    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
-    
-    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults.sourceTitleBackgroundOpacity
-
-    // MARK: - Preview Settings
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var previewHideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
-    
-    // MARK: - Dependencies
+    // Dependencies
     @ObservedObject private var captureManager: CaptureManager
     private let logger = AppLogger.interface
+
+    // Window Settings
+    @AppStorage(WindowSettingsKeys.previewOpacity)
+    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+
+    // Preview Settings
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var previewHideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+
+    // Overlay Settings
+    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
+    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
+    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
+    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
+    @AppStorage(OverlaySettingsKeys.focusBorderColor)
+    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
+    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
+    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
+    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
+    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
+    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
+        .sourceTitleBackgroundOpacity
 
     init(captureManager: CaptureManager) {
         self.captureManager = captureManager
@@ -76,9 +75,7 @@ struct PreviewCaptureView: View {
 
     private var shouldShowFocusBorder: Bool {
         let shouldShow: Bool =
-            focusBorderEnabled &&
-            captureManager.isSourceWindowFocused &&
-            !previewHideActiveWindow
+            focusBorderEnabled && captureManager.isSourceWindowFocused && !previewHideActiveWindow
 
         return shouldShow
     }

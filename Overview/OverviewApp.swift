@@ -12,22 +12,25 @@ import SwiftUI
 
 @main
 struct OverviewApp: App {
+    // App Delevate
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
-    @State private var showError = false
-    @State private var errorMessage = ""
 
+    // Dependencies
+    private var editModeBinding: Binding<Bool> {
+        Binding(
+            get: { appDelegate.previewManager.editModeEnabled },
+            set: { appDelegate.previewManager.editModeEnabled = $0 }
+        )
+    }
+
+    // Private State
+    @State private var showError: Bool = false
+    @State private var errorMessage: String = ""
+
+    // Actions
     @available(macOS 14.0, *)
     private var openSettingsAction: OpenSettingsAction? {
         Environment(\.openSettings).wrappedValue
-    }
-
-    private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14.0, *), let action = openSettingsAction {
-            action()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
     }
 
     var body: some Scene {
@@ -99,24 +102,31 @@ struct OverviewApp: App {
         }
     }
 
-    private var editModeBinding: Binding<Bool> {
-        Binding(
-            get: { appDelegate.previewManager.editModeEnabled },
-            set: { appDelegate.previewManager.editModeEnabled = $0 }
-        )
+    private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *), let action = openSettingsAction {
+            action()
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
     }
+
 }
+
+// MARK: - Application Delegate
 
 @MainActor
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
-    // MARK: - Public Properties
+    // Dependencies
+    let logger = AppLogger.interface
+
+    // Public Properties
     let hotkeyStorage = HotkeyStorage()
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
     let settingsManager: SettingsManager
     var windowManager: WindowManager!
-    let logger = AppLogger.interface
 
     override init() {
         sourceManager = SourceManager()
@@ -138,8 +148,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
     }
-
-    // MARK: - NSApplicationDelegate
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)

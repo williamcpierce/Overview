@@ -13,18 +13,22 @@ import Cocoa
 import SwiftUI
 
 final class HotkeyService {
-    // MARK: - Constants
+    // Constants
     private static let registrationLimit: Int = 50
-    static let shared: HotkeyService = HotkeyService()
-
-    // MARK: - Properties
+    
+    // Dependencies
     private let logger = AppLogger.hotkeys
+
+    // Private State
     private var activeHotkeys: [UInt32: (EventHotKeyRef, HotkeyBinding)] = [:]
     private var eventHandlerIdentifier: EventHandlerRef?
     private var nextIdentifier: UInt32 = 1
     private var previousEvent: HotkeyEventProcessor?
     private var sourceFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
     private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
+    
+    // Singleton
+    static let shared: HotkeyService = HotkeyService()
 
     deinit {
         cleanupResources()

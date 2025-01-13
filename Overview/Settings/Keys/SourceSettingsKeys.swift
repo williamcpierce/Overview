@@ -8,8 +8,8 @@
 */
 
 enum SourceSettingsKeys {
-    static let appNames = "appFilterNames"
-    static let isBlocklist = "isFilterBlocklist"
+    static let appNames: String = "appFilterNames"
+    static let isBlocklist: String = "isFilterBlocklist"
 
     static let defaults = Defaults()
 

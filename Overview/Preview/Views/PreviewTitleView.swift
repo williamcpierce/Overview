@@ -11,6 +11,7 @@
 import SwiftUI
 
 struct PreviewTitleView: View {
+    // Dependencies
     private let backgroundOpacity: Double
     private let fontSize: Double
     private let title: String?

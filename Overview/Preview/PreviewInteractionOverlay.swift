@@ -11,13 +11,16 @@
 import SwiftUI
 
 struct PreviewInteractionOverlay: NSViewRepresentable {
+    // Dependencies
+    @Environment(\.dismiss) private var dismiss
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
-    @Environment(\.dismiss) private var dismiss
+    private let logger = AppLogger.interface
+
+    // Actions
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
     let teardownCapture: () async -> Void
-    private let logger = AppLogger.interface
 
     func makeNSView(context: Context) -> NSView {
         let handler = PreviewInteractionHandler()
@@ -96,6 +99,8 @@ struct PreviewInteractionOverlay: NSViewRepresentable {
         return item
     }
 }
+
+// MARK: - Interaction Handler
 
 private final class PreviewInteractionHandler: NSView {
     private let logger = AppLogger.interface

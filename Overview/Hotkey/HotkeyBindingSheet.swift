@@ -12,15 +12,13 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct HotkeyBindingSheet: View {
-    // MARK: - Environment
-    @Environment(\.dismiss) private var dismiss
-
-    // MARK: - Dependencies
+    // Dependencies
+    @Environment(\.dismiss) private var dismiss: DismissAction
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
 
-    // MARK: - View State
+    // Private State
     @State private var filteredSources: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
     @State private var selectedSource: SCWindow?

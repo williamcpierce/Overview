@@ -12,6 +12,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    // Dependencies
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
@@ -53,6 +54,9 @@ struct SettingsView: View {
         .frame(width: 324, height: 432)
         .fixedSize()
         .background(.ultraThickMaterial)
+
+        // MARK: - Settings Window Level
+
         .onAppear {
             let settingsStyleMask: NSWindow.StyleMask.RawValue = 32771
             if let settingsWindow = NSApp.windows.first(where: {

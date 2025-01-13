@@ -8,8 +8,6 @@
 import OSLog
 
 struct AppLogger {
-    // MARK: - Configuration
-
     private static let loggers: [Category: Logger] = Category.allCases.reduce(into: [:]) {
         dict, category in
         dict[category] = Logger(subsystem: subsystem, category: category.rawValue)

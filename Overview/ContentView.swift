@@ -11,6 +11,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    // Dependencies
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
     @StateObject private var captureManager: CaptureManager

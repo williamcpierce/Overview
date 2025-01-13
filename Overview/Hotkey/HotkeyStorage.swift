@@ -1,5 +1,5 @@
 /*
- Settings/HotkeyStorage.swift
+ Hotkey/HotkeyStorage.swift
  Overview
 
  Created by William Pierce on 1/12/24.
@@ -8,14 +8,16 @@
 import SwiftUI
 
 class HotkeyStorage: ObservableObject {
-    // MARK: - Dependencies
+    // Dependencies
     private let logger = AppLogger.settings
-    private let hotkeyService = HotkeyService.shared
 
-    // MARK: - Private State
+    // Private State
     private var isInitializing: Bool = true
 
-    // MARK: - Hotkey Settings
+    // Singleton
+    private let hotkeyService = HotkeyService.shared
+    
+    // Published State
     @Published var hotkeyBindings: [HotkeyBinding] {
         didSet {
             guard !isInitializing,
@@ -32,7 +34,6 @@ class HotkeyStorage: ObservableObject {
         }
     }
 
-    // MARK: - Initialization
     init() {
         logger.debug("Initializing settings manager")
         self.hotkeyBindings = HotkeySettingsKeys.defaults.bindings
@@ -44,6 +45,7 @@ class HotkeyStorage: ObservableObject {
     }
 
     // MARK: - Public Methods
+
     func resetToDefaults() {
         logger.debug("Initiating hotkey settings reset")
 
@@ -54,6 +56,7 @@ class HotkeyStorage: ObservableObject {
     }
 
     // MARK: - Private Methods
+
     private func loadHotkeyBindings() {
         logger.debug("Loading hotkey bindings from storage")
 

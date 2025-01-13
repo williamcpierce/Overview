@@ -10,12 +10,12 @@
 import SwiftUI
 
 enum OverlaySettingsKeys {
-    static let focusBorderEnabled = "showFocusedBorder"
-    static let focusBorderWidth = "focusBorderWidth"
-    static let focusBorderColor = "focusBorderColor"
-    static let sourceTitleEnabled = "showWindowTitle"
-    static let sourceTitleFontSize = "titleFontSize"
-    static let sourceTitleBackgroundOpacity = "titleBackgroundOpacity"
+    static let focusBorderEnabled: String = "showFocusedBorder"
+    static let focusBorderWidth: String = "focusBorderWidth"
+    static let focusBorderColor: String = "focusBorderColor"
+    static let sourceTitleEnabled: String = "showWindowTitle"
+    static let sourceTitleFontSize: String = "titleFontSize"
+    static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
 
     static let defaults = Defaults()
 

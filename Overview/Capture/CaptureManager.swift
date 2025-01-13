@@ -2,7 +2,10 @@
  Capture/CaptureManager.swift
  Overview
 
- Created by William Pierce on 1/12/25.
+ Created by William Pierce on 9/15/24.
+
+ Manages the lifecycle of each screen capture operations coordinating source
+ window selection, frame processing, and state synchronization.
 */
 
 import Combine
@@ -11,7 +14,7 @@ import SwiftUI
 
 @MainActor
 final class CaptureManager: ObservableObject {
-    // MARK: - Published State
+    // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
@@ -24,20 +27,20 @@ final class CaptureManager: ObservableObject {
         }
     }
 
-    // MARK: - Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-
-    // MARK: - Dependencies
-    private let sourceManager: SourceManager
+    // Dependencies
+    private var sourceManager: SourceManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
 
-    // MARK: - State Management
+    // Private State
     private var hasPermission: Bool = false
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var subscriptions = Set<AnyCancellable>()
+
+    // Preview Settings
+    @AppStorage(PreviewSettingsKeys.captureFrameRate)
+    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
 
     init(
         sourceManager: SourceManager,
@@ -116,7 +119,6 @@ final class CaptureManager: ObservableObject {
     }
 
     private func setupSubscriptions() {
-        // Source manager subscriptions
         sourceManager.$focusedProcessId
             .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
             .store(in: &subscriptions)
@@ -124,8 +126,7 @@ final class CaptureManager: ObservableObject {
         sourceManager.$sourceTitles
             .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
             .store(in: &subscriptions)
-            
-        // Settings subscriptions
+
         NotificationCenter.default.publisher(
             for: UserDefaults.didChangeNotification
         )

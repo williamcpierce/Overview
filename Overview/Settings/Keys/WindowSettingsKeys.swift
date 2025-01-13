@@ -8,14 +8,14 @@
 */
 
 enum WindowSettingsKeys {
-    static let previewOpacity = "windowOpacity"
-    static let defaultWidth = "defaultWindowWidth"
-    static let defaultHeight = "defaultWindowHeight"
-    static let managedByMissionControl = "managedByMissionControl"
-    static let shadowEnabled = "windowShadowEnabled"
-    static let createOnLaunch = "windowCreateOnLaunch"
-    static let alignmentEnabled = "enableEditModeAlignment"
-    static let closeOnCaptureStop = "closeOnCaptureStop"
+    static let previewOpacity: String = "windowOpacity"
+    static let defaultWidth: String = "defaultWindowWidth"
+    static let defaultHeight: String = "defaultWindowHeight"
+    static let managedByMissionControl: String = "managedByMissionControl"
+    static let shadowEnabled: String = "windowShadowEnabled"
+    static let createOnLaunch: String = "windowCreateOnLaunch"
+    static let alignmentEnabled: String = "enableEditModeAlignment"
+    static let closeOnCaptureStop: String = "closeOnCaptureStop"
 
     static let defaults = Defaults()
 

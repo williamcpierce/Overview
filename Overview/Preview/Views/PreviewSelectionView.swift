@@ -12,11 +12,14 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct PreviewSelectionView: View {
+    // Dependencies
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-    @State private var selectedSource: SCWindow?
     private let logger = AppLogger.interface
 
+    // Private State
+    @State private var selectedSource: SCWindow?
+    
     init(
         captureManager: CaptureManager,
         previewManager: PreviewManager
