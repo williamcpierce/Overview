@@ -3,30 +3,20 @@
  Overview
 
  Created by William Pierce on 1/12/25.
+
+ Coordinates window lifecycle management and state persistence.
 */
 
 import SwiftUI
 
 @MainActor
 final class WindowManager {
-    // Constants
-    private struct Constants {
-        static let cascadeOffset: CGFloat = 25
-        static let fallbackPosition: CGFloat = 100
-        static let statusBarOffset: Int = 1
-        static let minWidth: CGFloat = 180
-        static let minHeight: CGFloat = 60
-
-        struct Window {
-            static let defaultBackgroundColor: NSColor = .clear
-            static let defaultIsMovable: Bool = true
-        }
-    }
-
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
+    private let configService = WindowConfigurationService()
+    private let positionService = WindowPositionService()
     private let logger = AppLogger.interface
 
     // Private State
@@ -44,8 +34,6 @@ final class WindowManager {
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
-    // MARK: - Initialization
-
     init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
@@ -53,20 +41,22 @@ final class WindowManager {
         logger.debug("Window manager initialized")
     }
 
-    deinit {
-        //        cleanupResources()
-    }
-
     // MARK: - Window Management
 
     func createPreviewWindow(at frame: NSRect? = nil) throws {
         do {
-            let initialFrame = try frame ?? createDefaultFrame()
+            let initialFrame =
+                try frame
+                ?? positionService.createDefaultFrame(
+                    defaultWidth: defaultWidth,
+                    defaultHeight: defaultHeight,
+                    windowCount: sessionWindowCounter
+                )
             let validatedFrame = initialFrame.ensureOnScreen()
 
             logFrameAdjustment(initial: initialFrame, validated: validatedFrame)
 
-            let window = try createConfiguredWindow(with: validatedFrame)
+            let window = try configService.createWindow(with: validatedFrame)
             configureWindow(window)
 
             activeWindows.insert(window)
@@ -83,13 +73,7 @@ final class WindowManager {
     // MARK: - State Management
 
     func saveWindowStates() {
-        do {
-            try validateWindowStates()
-            windowStorage.saveWindowStates()
-            logger.info("Saved state for \(activeWindows.count) windows")
-        } catch {
-            logger.logError(error, context: "Failed to save window states")
-        }
+        windowStorage.saveWindowStates()
     }
 
     func restoreWindowStates() {
@@ -100,7 +84,8 @@ final class WindowManager {
                 throw WindowManagerError.windowRestoreValidationFailed
             }
 
-            windowStorage.restoreWindows { [self] frame in
+            windowStorage.restoreWindows { [weak self] frame in
+                guard let self = self else { return }
                 do {
                     try createPreviewWindow(at: frame)
                     restoredCount += 1
@@ -117,12 +102,6 @@ final class WindowManager {
     }
 
     // MARK: - Private Methods
-
-    private func cleanupResources() {
-        windowDelegates.removeAll()
-        activeWindows.removeAll()
-        logger.debug("Window manager resources cleaned up")
-    }
 
     private func logFrameAdjustment(initial: NSRect, validated: NSRect) {
         if validated != initial {
@@ -154,78 +133,10 @@ final class WindowManager {
         }
     }
 
-    private func createDefaultFrame() throws -> NSRect {
-        guard let screen = NSScreen.main else {
-            logger.warning("No main screen detected, using fallback dimensions")
-            return createFallbackFrame()
-        }
-
-        return calculateCenteredFrame(in: screen.visibleFrame)
-    }
-
-    private func createFallbackFrame() -> NSRect {
-        let frame = NSRect(
-            x: Constants.fallbackPosition,
-            y: Constants.fallbackPosition,
-            width: max(defaultWidth, Constants.minWidth),
-            height: max(defaultHeight, Constants.minHeight)
-        )
-
-        logger.debug("Created fallback frame: \(frame.size.width)x\(frame.size.height)")
-        return frame
-    }
-
-    private func calculateCenteredFrame(in visibleFrame: NSRect) -> NSRect {
-        let width = max(defaultWidth, Constants.minWidth)
-        let height = max(defaultHeight, Constants.minHeight)
-
-        let centerX = visibleFrame.minX + (visibleFrame.width - width) / 2
-        let centerY = visibleFrame.minY + (visibleFrame.height - height) / 2
-
-        let offset = CGFloat(sessionWindowCounter) * Constants.cascadeOffset
-
-        let frame = NSRect(
-            x: centerX + offset,
-            y: centerY - offset,
-            width: width,
-            height: height
-        )
-
-        return frame.ensureOnScreen()
-    }
-
-    private func createConfiguredWindow(with frame: NSRect) throws -> NSWindow {
-        let config = WindowConfiguration.default
-
-        let window = NSWindow(
-            contentRect: frame,
-            styleMask: config.styleMask,
-            backing: config.backing,
-            defer: config.deferCreation
-        )
-
-        guard window.contentView != nil,
-            window.frame.size.width > 0,
-            window.frame.size.height > 0
-        else {
-            logger.error("Window creation failed: invalid window state")
-            throw WindowManagerError.windowCreationFailed
-        }
-
-        return window
-    }
-
     private func configureWindow(_ window: NSWindow) {
-        applyWindowStyle(to: window)
+        configService.applyConfiguration(to: window, hasShadow: shadowEnabled)
         setupWindowDelegate(for: window)
         setupWindowContent(window)
-    }
-
-    private func applyWindowStyle(to window: NSWindow) {
-        window.hasShadow = shadowEnabled
-        window.backgroundColor = Constants.Window.defaultBackgroundColor
-        window.isMovableByWindowBackground = Constants.Window.defaultIsMovable
-        window.level = .statusBar + Constants.statusBarOffset
     }
 
     private func setupWindowDelegate(for window: NSWindow) {
@@ -241,23 +152,6 @@ final class WindowManager {
             sourceManager: sourceManager
         )
         window.contentView = NSHostingView(rootView: contentView)
-    }
-
-    private func validateWindowStates() throws {
-        let invalidWindows = activeWindows.filter { window in
-            guard window.contentView != nil,
-                window.frame.size.width > 0,
-                window.frame.size.height > 0
-            else {
-                return true
-            }
-            return false
-        }
-
-        if !invalidWindows.isEmpty {
-            logger.warning("Detected \(invalidWindows.count) invalid windows")
-            throw WindowManagerError.windowValidationFailed
-        }
     }
 }
 
