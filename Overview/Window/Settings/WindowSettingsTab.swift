@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct WindowSettingsTab: View {
+    // Private State
+    @State private var showingAppearanceInfo: Bool = false
+    @State private var showingBehaviorInfo: Bool = false
+
     // Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
     private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
@@ -34,11 +38,10 @@ struct WindowSettingsTab: View {
                     Text("Appearance")
                         .font(.headline)
                     Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
+                    InfoPopover(
+                        content: .windowAppearance,
+                        isPresented: $showingAppearanceInfo
+                    )
                 }
                 .padding(.bottom, 4)
 
@@ -81,11 +84,10 @@ struct WindowSettingsTab: View {
                     Text("Behavior")
                         .font(.headline)
                     Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
+                    InfoPopover(
+                        content: .windowBehavior,
+                        isPresented: $showingBehaviorInfo
+                    )
                 }
                 .padding(.bottom, 4)
                 VStack {

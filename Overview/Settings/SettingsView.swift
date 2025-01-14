@@ -52,7 +52,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 324, height: 432)
+        .frame(width: 324, height: 408)
         .fixedSize()
 
         // MARK: - Settings Window Level

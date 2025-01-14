@@ -14,6 +14,7 @@ struct SourceSettingsTab: View {
 
     // Private State
     @State private var newAppName: String = ""
+    @State private var showingSourceFilterInfo: Bool = false
 
     // App Filter Settings
     @AppStorage(SourceSettingsKeys.isBlocklist)
@@ -29,11 +30,10 @@ struct SourceSettingsTab: View {
                     Text("Source App Filter")
                         .font(.headline)
                     Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
+                    InfoPopover(
+                        content: .sourceFilter,
+                        isPresented: $showingSourceFilterInfo
+                    )
                 }
                 .padding(.bottom, 4)
 
