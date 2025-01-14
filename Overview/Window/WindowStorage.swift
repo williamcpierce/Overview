@@ -1,5 +1,5 @@
 /*
- Window/Settings/WindowStorage.swift
+ Window/WindowStorage.swift
  Overview
 
  Created by William Pierce on 1/5/25.

@@ -40,13 +40,13 @@
 			membershipExceptions = (
 				HotkeyBinding.swift,
 				HotkeyManager.swift,
+				HotkeyRecorder.swift,
 				HotkeyService.swift,
-				Settings/HotkeyBindingSheet.swift,
-				Settings/HotkeyRecorder.swift,
+				HotkeyStorage.swift,
 				Settings/HotkeySettingsContent.swift,
 				Settings/HotkeySettingsKeys.swift,
 				Settings/HotkeySettingsTab.swift,
-				Settings/HotkeyStorage.swift,
+				Views/HotkeyBindingSheet.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -114,10 +114,10 @@
 				Settings/WindowSettingsContent.swift,
 				Settings/WindowSettingsKeys.swift,
 				Settings/WindowSettingsTab.swift,
-				Settings/WindowStorage.swift,
 				WindowAccessor.swift,
 				WindowInteraction.swift,
 				WindowManager.swift,
+				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

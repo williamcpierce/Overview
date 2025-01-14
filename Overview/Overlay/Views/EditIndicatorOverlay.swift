@@ -39,8 +39,3 @@ struct EditIndicatorOverlay: View {
         }
     }
 }
-
-#Preview {
-    EditIndicatorOverlay(isEditModeEnabled: true)
-        .frame(width: 300, height: 200)
-}
