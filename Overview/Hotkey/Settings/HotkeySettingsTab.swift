@@ -15,6 +15,7 @@ struct HotkeySettingsTab: View {
 
     // Private State
     @State private var isAddingHotkey: Bool = false
+    @State private var showingHotkeyInfo: Bool = false
 
     var body: some View {
         Form {
@@ -26,11 +27,10 @@ struct HotkeySettingsTab: View {
                     Text("Source Window Activation")
                         .font(.headline)
                     Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "info.circle")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
+                    InfoPopover(
+                        content: .hotkeyActivation,
+                        isPresented: $showingHotkeyInfo
+                    )
                 }
                 .padding(.bottom, 4)
 

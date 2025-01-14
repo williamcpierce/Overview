@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct OverlaySettingsTab: View {
+    // Private State
+    @State private var showingWindowFocusInfo: Bool = false
+    @State private var showingSourceTitleInfo: Bool = false
+
     // Focus Border Settings
     @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
     private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
@@ -34,6 +38,10 @@ struct OverlaySettingsTab: View {
                 HStack {
                     Text("Window Focus")
                         .font(.headline)
+                    InfoPopover(
+                        content: .windowFocus,
+                        isPresented: $showingWindowFocusInfo
+                    )
                     Spacer()
                     Toggle("", isOn: $focusBorderEnabled)
                 }
@@ -66,6 +74,10 @@ struct OverlaySettingsTab: View {
                 HStack {
                     Text("Source Title")
                         .font(.headline)
+                    InfoPopover(
+                        content: .sourceTitle,
+                        isPresented: $showingSourceTitleInfo
+                    )
                     Spacer()
                     Toggle("", isOn: $sourceTitleEnabled)
                 }

@@ -68,6 +68,7 @@
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Components/InfoPopoverComponent.swift,
 				Components/OpacitySlider.swift,
 				Components/ResetSettingsButton.swift,
 				Extensions/ColorExtension.swift,
