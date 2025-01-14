@@ -1,9 +1,9 @@
 /*
  Settings/Components/InfoPopover.swift
  Overview
- 
+
  Created by William Pierce on 1/13/25.
- 
+
  Provides informational popovers for settings controls with consistent styling
  and optional warning states.
 */
@@ -15,7 +15,7 @@ struct InfoPopoverContent {
         let title: String
         let text: String
     }
-    
+
     let title: String
     let sections: [Section]
     let isWarning: Bool
@@ -49,7 +49,7 @@ struct InfoPopover: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(content.title)
                     .font(.headline)
-                
+
                 ForEach(content.sections, id: \.title) { section in
                     VStack(alignment: .leading, spacing: 4) {
                         Text(section.title)

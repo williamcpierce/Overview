@@ -18,7 +18,7 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
-    
+
     // Private State
     private let modifierFlags: UInt
 

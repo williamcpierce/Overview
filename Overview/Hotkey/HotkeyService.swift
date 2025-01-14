@@ -15,7 +15,7 @@ import SwiftUI
 final class HotkeyService {
     // Constants
     private static let registrationLimit: Int = 50
-    
+
     // Dependencies
     private let logger = AppLogger.hotkeys
 
@@ -26,7 +26,7 @@ final class HotkeyService {
     private var previousEvent: HotkeyEventProcessor?
     private var sourceFocusCallbacks: [ObjectIdentifier: (String) -> Void] = [:]
     private let processingQueue = DispatchQueue(label: "com.Overview.HotkeyEventQueue")
-    
+
     // Singleton
     static let shared: HotkeyService = HotkeyService()
 

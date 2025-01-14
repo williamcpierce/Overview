@@ -16,7 +16,7 @@ final class HotkeyManager: ObservableObject {
     private var hotkeyStorage: HotkeyStorage
     private var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
-    
+
     // Singleton
     let hotkeyService: HotkeyService = HotkeyService.shared
 

@@ -16,7 +16,7 @@ class HotkeyStorage: ObservableObject {
 
     // Singleton
     private let hotkeyService = HotkeyService.shared
-    
+
     // Published State
     @Published var hotkeyBindings: [HotkeyBinding] {
         didSet {
