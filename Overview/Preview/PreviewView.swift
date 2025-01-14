@@ -2,7 +2,10 @@
  Preview/PreviewView.swift
  Overview
 
- Created by William Pierce on 1/12/25.
+ Created by William Pierce on 9/15/24.
+
+ Manages the main preview interface, coordinating capture state, window visibility,
+ and user interactions across the application's preview functionality.
 */
 
 import SwiftUI
@@ -10,19 +13,15 @@ import SwiftUI
 struct PreviewView: View {
     // Dependencies
     @Environment(\.dismiss) private var dismiss: DismissAction
-    @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
+    @StateObject private var captureManager: CaptureManager
     private let logger = AppLogger.interface
 
     // Private State
     @State private var isSelectionViewVisible: Bool = true
     @State private var isPreviewVisible: Bool = true
-    @State private var previewAspectRatio: CGFloat
-
-    // Window Settings
-    @AppStorage(WindowSettingsKeys.previewOpacity)
-    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+    @State private var previewAspectRatio: CGFloat = 0
 
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
@@ -32,19 +31,13 @@ struct PreviewView: View {
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
 
-    // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
-
-    init(
-        captureManager: CaptureManager,
-        previewManager: PreviewManager,
-        sourceManager: SourceManager
-    ) {
-        self.captureManager = captureManager
+    init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
-        self._previewAspectRatio = State(initialValue: 0)
+        // Initialize CaptureManager as a StateObject
+        self._captureManager = StateObject(
+            wrappedValue: CaptureManager(sourceManager: sourceManager)
+        )
     }
 
     var body: some View {
@@ -55,9 +48,10 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
-                .overlay(editModeOverlay)
+                .overlay(EditIndicatorOverlay(isEditModeEnabled: previewManager.editModeEnabled))
                 .opacity(isPreviewVisible ? 1 : 0)
         }
+        .frame(minWidth: 160, minHeight: 80)
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureManager.capturedFrame?.size) { newSize in
@@ -91,12 +85,12 @@ struct PreviewView: View {
     private func previewContentStack(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             if isSelectionViewVisible {
-                PreviewSelectionView(
+                PreviewSelection(
                     captureManager: captureManager,
                     previewManager: previewManager
                 )
             } else {
-                PreviewCaptureView(
+                PreviewCapture(
                     captureManager: captureManager
                 )
             }
@@ -104,7 +98,7 @@ struct PreviewView: View {
     }
 
     private var previewInteractionLayer: some View {
-        PreviewInteractionOverlay(
+        WindowInteraction(
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
@@ -126,26 +120,6 @@ struct PreviewView: View {
             previewManager: previewManager,
             sourceManager: sourceManager
         )
-    }
-
-    private var editModeOverlay: some View {
-        Group {
-            if previewManager.editModeEnabled {
-                VStack {
-                    Spacer()
-                    editModeIndicator
-                }
-            }
-        }
-    }
-
-    private var editModeIndicator: some View {
-        HStack {
-            Spacer()
-            Image(systemName: "righttriangle.fill")
-                .font(.caption)
-                .foregroundColor(focusBorderColor)
-        }
     }
 
     // MARK: - Lifecycle Methods

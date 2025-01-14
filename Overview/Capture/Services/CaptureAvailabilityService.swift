@@ -29,7 +29,6 @@ final class CaptureAvailabilityService {
             let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)
 
-            logger.debug("Retrieved \(content.windows.count) available source windows")
             return content.windows
         } catch {
             logger.logError(error, context: "Failed to get source windows")

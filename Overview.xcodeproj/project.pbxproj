@@ -13,7 +13,6 @@
 		C876959F2CBA087400FBCA6C /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695982CBA087400FBCA6C /* LICENSE.md */; };
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
 		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
-		C8A838372D0410CF002EC00B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838332D0410CF002EC00B /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,7 +23,6 @@
 		C876958E2CBA082F00FBCA6C /* Overview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Overview.entitlements; sourceTree = "<group>"; };
 		C87695982CBA087400FBCA6C /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		C87695A42CBA1B5800FBCA6C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		C8A838332D0410CF002EC00B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
 		C8CE2DC12D2BEFC5002D11AC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -83,18 +81,13 @@
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				PreviewInteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
-				Settings/OverlaySettingsContent.swift,
-				Settings/OverlaySettingsKeys.swift,
-				Settings/OverlaySettingsTab.swift,
 				Settings/PreviewSettingsContent.swift,
 				Settings/PreviewSettingsKeys.swift,
 				Settings/PreviewSettingsTab.swift,
-				Views/PreviewCaptureView.swift,
-				Views/PreviewSelectionView.swift,
-				Views/PreviewTitleView.swift,
+				Views/PreviewCapture.swift,
+				Views/PreviewSelection.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -120,7 +113,20 @@
 				Settings/WindowSettingsTab.swift,
 				Settings/WindowStorage.swift,
 				WindowAccessor.swift,
+				WindowInteraction.swift,
 				WindowManager.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
+		C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Settings/OverlaySettingsContent.swift,
+				Settings/OverlaySettingsKeys.swift,
+				Settings/OverlaySettingsTab.swift,
+				Views/EditIndicatorOverlay.swift,
+				Views/FocusBorderOverlay.swift,
+				Views/TitleOverlay.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -134,6 +140,7 @@
 		C8A8387E2D0421ED002EC00B /* Preview */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Preview; sourceTree = "<group>"; };
 		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
 		C8C2E4942D2BAEA8004F8C1F /* Window */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Window; sourceTree = "<group>"; };
+		C8CCFE3E2D36307C005F724E /* Overlay */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Overlay; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,12 +177,12 @@
 			isa = PBXGroup;
 			children = (
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
-				C8A838332D0410CF002EC00B /* ContentView.swift */,
-				C8C2E4942D2BAEA8004F8C1F /* Window */,
 				C8A8387E2D0421ED002EC00B /* Preview */,
-				C8A838892D0421EF002EC00B /* Capture */,
+				C8C2E4942D2BAEA8004F8C1F /* Window */,
+				C8CCFE3E2D36307C005F724E /* Overlay */,
 				C8323A2B2D081388001B91A6 /* Hotkey */,
 				C868D7E22D082CCB00EF1F4C /* Source */,
+				C8A838892D0421EF002EC00B /* Capture */,
 				C8A837D72D0405B7002EC00B /* Settings */,
 				C828A4032D0A948D0023E7F1 /* Logging */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
@@ -268,7 +275,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */,
-				C8A838372D0410CF002EC00B /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

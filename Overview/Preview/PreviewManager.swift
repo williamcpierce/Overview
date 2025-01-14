@@ -23,17 +23,26 @@ final class PreviewManager: ObservableObject {
     private var sourceManager: SourceManager
     private let logger = AppLogger.interface
 
+    // Private State
+    @State private var captureSystemInitialized: Bool = false
+
     init(sourceManager: SourceManager) {
         self.sourceManager = sourceManager
         logger.debug("Initializing preview manager")
     }
 
     func initializeCaptureSystem(_ captureManager: CaptureManager) async {
+        guard !captureSystemInitialized else {
+            logger.debug("Capture system already initialized")
+            return
+        }
+
         do {
             logger.debug("Starting capture system initialization")
             try await captureManager.requestPermission()
             await updateAvailableSources()
             logger.debug("Capture system initialization completed")
+            captureSystemInitialized = true
         } catch {
             logger.logError(error, context: "Capture system initialization failed")
         }
