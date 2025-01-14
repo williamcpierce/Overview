@@ -33,7 +33,7 @@ final class WindowStorage {
         self.defaults = defaults
         logger.debug("Window storage initialized")
     }
-    
+
     // MARK: - Window State
 
     struct WindowState: Codable, Equatable {
@@ -73,7 +73,6 @@ final class WindowStorage {
             }
         }
     }
-
 
     // MARK: - Public Methods
 
@@ -126,7 +125,7 @@ final class WindowStorage {
 
     private func collectWindowStates() -> [WindowState] {
         NSApplication.shared.windows.compactMap { window in
-            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<ContentView>.self) != nil
+            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
             else {
                 return nil
             }

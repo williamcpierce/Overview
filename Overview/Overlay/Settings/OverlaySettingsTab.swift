@@ -1,5 +1,5 @@
 /*
- Preview/Settings/OverlaySettingsTab.swift
+ Overlay/Settings/OverlaySettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.
