@@ -14,7 +14,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Performance Impact",
                 text:
-                    "Increasing preview frame rates can increase CPU usage proportionally.\nValues above 10 FPS may impact system performance significantly.\n\nNote that preview frame rate is automatically throttled for windows without any content changes. This may mean that with a high FPS setting, performance can be fine for some applicaitons, but degrade significantly in games or while scrolling."
+                    "Increasing preview frame rates can increase CPU usage proportionally.\nValues above 10 FPS may impact system performance significantly.\n\nNote that preview frame rate is automatically throttled for windows without any content changes. This may mean that with a high FPS setting, performance can be fine for some applications, but degrade significantly in games or while scrolling."
             ),
             Section(
                 title: "Recommended Settings",

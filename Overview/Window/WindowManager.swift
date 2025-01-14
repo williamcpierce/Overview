@@ -15,8 +15,8 @@ final class WindowManager {
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
-    private let configService = WindowConfigurationService()
-    private let positionService = WindowPositionService()
+    private let configService = WindowServices.shared.windowConfiguration
+    private let positionService = WindowServices.shared.windowPosition
     private let logger = AppLogger.interface
 
     // Private State

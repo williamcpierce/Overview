@@ -117,6 +117,7 @@
 				WindowAccessor.swift,
 				WindowInteraction.swift,
 				WindowManager.swift,
+				WindowServices.swift,
 				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
