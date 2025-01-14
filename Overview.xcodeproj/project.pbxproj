@@ -108,6 +108,9 @@
 			membershipExceptions = (
 				Extensions/NSRectExtension.swift,
 				Extensions/NSViewExtension.swift,
+				Services/WindowAspectService.swift,
+				Services/WindowConfigurationService.swift,
+				Services/WindowPositionService.swift,
 				Settings/WindowSettingsContent.swift,
 				Settings/WindowSettingsKeys.swift,
 				Settings/WindowSettingsTab.swift,
