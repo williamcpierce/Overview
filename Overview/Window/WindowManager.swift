@@ -19,7 +19,6 @@ final class WindowManager {
 
         struct Window {
             static let defaultBackgroundColor: NSColor = .clear
-            static let defaultHasShadow: Bool = true
             static let defaultIsMovable: Bool = true
         }
     }
@@ -36,6 +35,8 @@ final class WindowManager {
     private var sessionWindowCounter: Int
 
     // Window Settings
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.defaultWidth)
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
     @AppStorage(WindowSettingsKeys.defaultHeight)
@@ -221,8 +222,8 @@ final class WindowManager {
     }
 
     private func applyWindowStyle(to window: NSWindow) {
+        window.hasShadow = shadowEnabled
         window.backgroundColor = Constants.Window.defaultBackgroundColor
-        window.hasShadow = Constants.Window.defaultHasShadow
         window.isMovableByWindowBackground = Constants.Window.defaultIsMovable
         window.level = .statusBar + Constants.statusBarOffset
     }
@@ -235,7 +236,7 @@ final class WindowManager {
     }
 
     private func setupWindowContent(_ window: NSWindow) {
-        let contentView = ContentView(
+        let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager
         )

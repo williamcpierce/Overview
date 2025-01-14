@@ -23,7 +23,7 @@ final class SourceManager: ObservableObject {
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
-    
+
     // Private State
     private let observerId = UUID()
 
@@ -111,7 +111,6 @@ final class SourceManager: ObservableObject {
                     return (SourceID(processID: processID, windowID: source.windowID), title)
                 }
             )
-            logger.debug("Source window titles updated: count=\(sourceTitles.count)")
         } catch {
             logger.logError(error, context: "Failed to update source window titles")
         }
