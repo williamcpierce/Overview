@@ -45,6 +45,7 @@
 				HotkeyService.swift,
 				Settings/HotkeyBindingSheet.swift,
 				Settings/HotkeyRecorder.swift,
+				Settings/HotkeySettingsContent.swift,
 				Settings/HotkeySettingsKeys.swift,
 				Settings/HotkeySettingsTab.swift,
 				Settings/HotkeyStorage.swift,
@@ -57,6 +58,7 @@
 				Services/SourceFilterService.swift,
 				Services/SourceFocusService.swift,
 				Services/SourceObserverService.swift,
+				Settings/SourceSettingsContent.swift,
 				Settings/SourceSettingsKeys.swift,
 				Settings/SourceSettingsTab.swift,
 				SourceManager.swift,
@@ -68,9 +70,10 @@
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Components/InfoPopoverComponent.swift,
+				Components/InfoPopover.swift,
 				Components/OpacitySlider.swift,
 				Components/ResetSettingsButton.swift,
+				Components/WiggleModifier.swift,
 				Extensions/ColorExtension.swift,
 				SettingsManager.swift,
 				SettingsView.swift,
@@ -83,8 +86,10 @@
 				PreviewInteractionOverlay.swift,
 				PreviewManager.swift,
 				PreviewView.swift,
+				Settings/OverlaySettingsContent.swift,
 				Settings/OverlaySettingsKeys.swift,
 				Settings/OverlaySettingsTab.swift,
+				Settings/PreviewSettingsContent.swift,
 				Settings/PreviewSettingsKeys.swift,
 				Settings/PreviewSettingsTab.swift,
 				Views/PreviewCaptureView.swift,
@@ -110,6 +115,7 @@
 			membershipExceptions = (
 				Extensions/NSRectExtension.swift,
 				Extensions/NSViewExtension.swift,
+				Settings/WindowSettingsContent.swift,
 				Settings/WindowSettingsKeys.swift,
 				Settings/WindowSettingsTab.swift,
 				Settings/WindowStorage.swift,
