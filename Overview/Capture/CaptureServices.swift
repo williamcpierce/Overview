@@ -18,7 +18,7 @@ final class CaptureServices {
     // Private State
     private let configService = CaptureConfigurationService()
     private let availabilityService = CaptureAvailabilityService()
-    
+
     // Singleton
     static let shared = CaptureServices()
 

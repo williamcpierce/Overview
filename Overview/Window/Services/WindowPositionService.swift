@@ -60,13 +60,13 @@ final class WindowPositionService {
         defaultHeight: CGFloat,
         windowCount: Int
     ) -> NSRect {
-        let width = max(defaultWidth, Constants.minWidth)
-        let height = max(defaultHeight, Constants.minHeight)
+        let width: CGFloat = max(defaultWidth, Constants.minWidth)
+        let height: CGFloat = max(defaultHeight, Constants.minHeight)
 
-        let centerX = visibleFrame.minX + (visibleFrame.width - width) / 2
-        let centerY = visibleFrame.minY + (visibleFrame.height - height) / 2
+        let centerX: CGFloat = visibleFrame.minX + (visibleFrame.width - width) / 2
+        let centerY: CGFloat = visibleFrame.minY + (visibleFrame.height - height) / 2
 
-        let offset = CGFloat(windowCount) * Constants.cascadeOffset
+        let offset: CGFloat = CGFloat(windowCount) * Constants.cascadeOffset
 
         let frame = NSRect(
             x: centerX + offset,

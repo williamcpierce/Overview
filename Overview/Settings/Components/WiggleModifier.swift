@@ -1,9 +1,9 @@
 /*
  Settings/Components/WiggleModifier.swift
  Overview
- 
+
  Created by William Pierce on 1/13/25.
- 
+
  Provides an attention-getting animation for warning indicators.
 */
 

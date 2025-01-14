@@ -20,8 +20,8 @@ struct WindowAccessor: NSViewRepresentable {
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var sourceManager: SourceManager
-    private let configService = WindowConfigurationService()
-    private let aspectService = WindowAspectService()
+    private let configService = WindowServices.shared.windowConfiguration
+    private let aspectService = WindowServices.shared.windowAspect
     private let logger = AppLogger.interface
 
     // Window Settings

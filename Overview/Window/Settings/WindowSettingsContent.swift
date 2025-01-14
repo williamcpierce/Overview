@@ -1,9 +1,9 @@
 /*
  Window/Settings/WindowSettingsContent.swift
  Overview
- 
+
  Created by William Pierce on 1/13/25.
- 
+
  Provides help content for window-related settings.
 */
 
@@ -21,12 +21,13 @@ extension InfoPopoverContent {
             ),
             Section(
                 title: "Default Dimensions",
-                text: "Sets initial dimensions for new windows. Windows can be resized while in Edit Mode."
-            )
+                text:
+                    "Sets initial dimensions for new windows. Windows can be resized while in Edit Mode."
+            ),
         ],
         isWarning: false
     )
-    
+
     static let windowBehavior = InfoPopoverContent(
         title: "Window Behavior",
         sections: [
@@ -41,7 +42,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Close With Preview Source",
                 text: "Closes preview window when source window closes"
-            )
+            ),
         ],
         isWarning: false
     )

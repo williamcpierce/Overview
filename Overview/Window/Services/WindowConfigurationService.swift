@@ -64,14 +64,14 @@ final class WindowConfigurationService {
         guard window.styleMask != newStyleMask else { return }
 
         window.styleMask = newStyleMask
-        logger.debug("Window resizability updated: editable=\\(isEditable)")
+        logger.debug("Window resizability updated: editable=\(isEditable)")
     }
 
     func updateMovability(_ window: NSWindow, isMovable: Bool) {
         guard window.isMovable != isMovable else { return }
 
         window.isMovable = isMovable
-        logger.debug("Window movability updated: movable=\\(isMovable)")
+        logger.debug("Window movability updated: movable=\(isMovable)")
     }
 
     func updateMissionControl(_ window: NSWindow, isManaged: Bool) {
@@ -85,7 +85,7 @@ final class WindowConfigurationService {
             window.collectionBehavior.remove(.managed)
         }
 
-        logger.debug("Mission Control management updated: managed=\\(isManaged)")
+        logger.debug("Mission Control management updated: managed=\(isManaged)")
     }
 
     // MARK: - Private Methods

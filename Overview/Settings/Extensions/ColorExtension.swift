@@ -14,7 +14,8 @@ extension Color: @retroactive RawRepresentable {
         guard let data = Data(base64Encoded: rawValue),
             let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: data)
         else {
-            self = .gray  /// Fallback color
+            self = .gray
+            /// Fallback color
             return
         }
 
