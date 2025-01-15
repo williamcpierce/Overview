@@ -36,6 +36,7 @@ struct EditIndicatorOverlay: View {
             Image(systemName: "righttriangle.fill")
                 .font(.caption)
                 .foregroundColor(focusBorderColor)
+                .offset(x: 0.5)
         }
     }
 }
