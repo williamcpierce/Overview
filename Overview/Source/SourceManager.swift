@@ -20,12 +20,17 @@ final class SourceManager: ObservableObject {
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
     // Dependencies
+    @ObservedObject var settingsManager: SettingsManager
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
 
     // Private State
     private let observerId = UUID()
+    
+    // Source Settings
+    @AppStorage(SourceSettingsKeys.isBlocklist)
+    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
 
     // Types
     struct SourceID: Hashable {
@@ -33,7 +38,8 @@ final class SourceManager: ObservableObject {
         let windowID: CGWindowID
     }
 
-    init() {
+    init(settingsManager: SettingsManager) {
+        self.settingsManager = settingsManager
         setupObservers()
         logger.debug("Source window manager initialization complete")
     }
@@ -61,13 +67,9 @@ final class SourceManager: ObservableObject {
 
         let availableSources = try await captureServices.getAvailableSources()
 
-        let filterAppNames =
-            UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames) as? [String] ?? []
-        let isBlocklist = UserDefaults.standard.bool(forKey: SourceSettingsKeys.isBlocklist)
-
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
-            appFilterNames: filterAppNames,
+            appFilterNames: settingsManager.filterAppNames,
             isFilterBlocklist: isBlocklist
         )
 

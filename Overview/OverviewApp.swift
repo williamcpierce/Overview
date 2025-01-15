@@ -122,17 +122,17 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     // Public Properties
     let hotkeyStorage = HotkeyStorage()
+    let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
-    let settingsManager: SettingsManager
     var windowManager: WindowManager!
 
     override init() {
-        sourceManager = SourceManager()
+        settingsManager = SettingsManager(hotkeyStorage: hotkeyStorage)
+        sourceManager = SourceManager(settingsManager: settingsManager)
         previewManager = PreviewManager(sourceManager: sourceManager)
         hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
-        settingsManager = SettingsManager(hotkeyStorage: hotkeyStorage)
 
         super.init()
 
