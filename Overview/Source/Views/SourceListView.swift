@@ -12,17 +12,20 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct SourceListView: View {
+    // Dependencies
     @Binding var selectedSource: SCWindow?
+    private let logger = AppLogger.interface
+
+    // Public Properties
     var sources: [SCWindow]
     let onSourceSelected: (SCWindow?) -> Void
-    private let logger = AppLogger.interface
 
     var body: some View {
         Picker("", selection: $selectedSource) {
-            Text("Select a source window").tag(nil as SCWindow?)
+            Text("Select source window...").tag(nil as SCWindow?)
             sourcesListContent
         }
-        .onChange(of: selectedSource) { _, newValue in
+        .onChange(of: selectedSource) { newValue in
             handleSourceSelection(newValue)
         }
     }

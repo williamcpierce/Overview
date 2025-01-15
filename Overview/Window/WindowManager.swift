@@ -2,63 +2,72 @@
  Window/WindowManager.swift
  Overview
 
- Created by William Pierce on 1/5/25.
+ Created by William Pierce on 1/12/25.
 
- Manages the creation, configuration, and lifecycle of preview windows,
- coordinating window state persistence and restoration.
+ Coordinates window lifecycle management and state persistence.
 */
 
 import SwiftUI
 
+@MainActor
 final class WindowManager {
-    // MARK: - Dependencies
-    private let appSettings: AppSettings
-    private let previewManager: PreviewManager
-    private let sourceManager: SourceManager
+    // Dependencies
+    private var previewManager: PreviewManager
+    private var sourceManager: SourceManager
     private let windowStorage: WindowStorage = WindowStorage.shared
+    private let configService = WindowServices.shared.windowConfiguration
+    private let positionService = WindowServices.shared.windowPosition
     private let logger = AppLogger.interface
 
-    // MARK: - Private State
+    // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
     private var sessionWindowCounter: Int
 
-    // MARK: - Constants
-    private let cascadeOffsetMultiplier: CGFloat = 25
+    // Window Settings
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+    @AppStorage(WindowSettingsKeys.defaultWidth)
+    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
+    @AppStorage(WindowSettingsKeys.defaultHeight)
+    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.createOnLaunch)
+    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
-    init(appSettings: AppSettings, previewManager: PreviewManager, sourceManager: SourceManager) {
-        self.appSettings = appSettings
+    init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.sessionWindowCounter = 0
-        logger.debug("Window service initialized")
-    }
-
-    deinit {
-        windowDelegates.removeAll()
-        activeWindows.removeAll()
-        logger.debug("Window service resources cleaned up")
+        logger.debug("Window manager initialized")
     }
 
     // MARK: - Window Management
 
-    func createPreviewWindow(at frame: NSRect? = nil) {
-        let initialFrame: NSRect = frame ?? createDefaultFrame()
-        let validatedFrame: NSRect = initialFrame.ensureOnScreen()
+    func createPreviewWindow(at frame: NSRect? = nil) throws {
+        do {
+            let initialFrame =
+                try frame
+                ?? positionService.createDefaultFrame(
+                    defaultWidth: defaultWidth,
+                    defaultHeight: defaultHeight,
+                    windowCount: sessionWindowCounter
+                )
+            let validatedFrame = initialFrame.ensureOnScreen()
 
-        if validatedFrame != initialFrame {
-            logger.info("Adjusted window position to ensure visibility on screen")
+            logFrameAdjustment(initial: initialFrame, validated: validatedFrame)
+
+            let window = try configService.createWindow(with: validatedFrame)
+            configureWindow(window)
+
+            activeWindows.insert(window)
+            sessionWindowCounter += 1
+
+            window.orderFront(nil)
+            logger.info("Created new preview window: id=\(sessionWindowCounter)")
+        } catch {
+            logger.logError(error, context: "Failed to create preview window")
+            throw WindowManagerError.windowCreationFailed
         }
-
-        let window: NSWindow = createConfiguredWindow(with: validatedFrame)
-        setupWindowDelegate(for: window)
-        setupWindowContent(window)
-
-        activeWindows.insert(window)
-        sessionWindowCounter += 1
-
-        window.orderFront(nil)
-        logger.info("Created new preview window")
     }
 
     // MARK: - State Management
@@ -68,94 +77,77 @@ final class WindowManager {
     }
 
     func restoreWindowStates() {
-        var restoredCount: Int = 0
-        windowStorage.restoreWindows { [weak self] frame in
-            self?.createPreviewWindow(at: frame)
-            restoredCount += 1
+        var restoredCount = 0
+
+        do {
+            guard windowStorage.validateStoredState() else {
+                throw WindowManagerError.windowRestoreValidationFailed
+            }
+
+            windowStorage.restoreWindows { [weak self] frame in
+                guard let self = self else { return }
+                do {
+                    try createPreviewWindow(at: frame)
+                    restoredCount += 1
+                    logger.debug("Restored window \(restoredCount)")
+                } catch {
+                    logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
+                }
+            }
+        } catch {
+            logger.logError(error, context: "Window state restoration failed")
         }
 
-        if restoredCount == 0 {
-            logger.info("No windows restored, creating default window")
-            createPreviewWindow()
-        }
-    }
-
-    func validateRestoredWindowCount() -> Bool {
-        let currentWindows: Int = activeWindows.count
-        let expectedWindows = windowStorage.getStoredWindowCount()
-
-        // Log if there's a mismatch between stored and restored windows
-        if currentWindows != expectedWindows {
-            logger.warning(
-                "Window restoration mismatch: expected=\(expectedWindows), restored=\(currentWindows)"
-            )
-            return false
-        }
-        return true
-    }
-
-    private func handleWindowRestoreFailure() {
-        logger.error("Window restoration failed, creating default window")
-        let frame: NSRect = createDefaultFrame()
-        createPreviewWindow(at: frame)
+        handleRestoreCompletion(restoredCount)
     }
 
     // MARK: - Private Methods
 
-    private func createDefaultFrame() -> NSRect {
-        guard let screen: NSScreen = NSScreen.main else {
-            logger.warning("No main screen detected, using fallback dimensions")
-            return NSRect(
-                x: 100, y: 100, width: appSettings.windowDefaultWidth,
-                height: appSettings.windowDefaultHeight)
+    private func logFrameAdjustment(initial: NSRect, validated: NSRect) {
+        if validated != initial {
+            logger.debug(
+                """
+                Window frame adjusted:
+                initial=(\(Int(initial.origin.x)), \(Int(initial.origin.y)), \
+                \(Int(initial.size.width)), \(Int(initial.size.height)))
+                validated=(\(Int(validated.origin.x)), \(Int(validated.origin.y)), \
+                \(Int(validated.size.width)), \(Int(validated.size.height)))
+                """)
         }
-
-        let defaultWidth = appSettings.windowDefaultWidth
-        let defaultHeight = appSettings.windowDefaultHeight
-
-        let visibleFrame: NSRect = screen.visibleFrame
-
-        let centerX = visibleFrame.minX + (visibleFrame.width - defaultWidth) / 2
-        let centerY = visibleFrame.minY + (visibleFrame.height - defaultHeight) / 2
-
-        let xOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
-        let yOffset: CGFloat = CGFloat(sessionWindowCounter) * 25
-
-        let frame = NSRect(
-            x: centerX + xOffset,
-            y: centerY - yOffset,
-            width: defaultWidth,
-            height: defaultHeight
-        )
-
-        return frame.ensureOnScreen()
     }
 
-    private func createConfiguredWindow(with frame: NSRect) -> NSWindow {
-        let window = NSWindow(
-            contentRect: frame,
-            styleMask: [.fullSizeContentView],
-            backing: .buffered,
-            defer: false
-        )
+    private func handleRestoreCompletion(_ restoredCount: Int) {
+        if restoredCount == 0 && createOnLaunch {
+            logger.info("No windows restored, creating default window")
+            createDefaultWindow()
+        } else {
+            logger.info("Successfully restored \(restoredCount) windows")
+        }
+    }
 
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.isMovableByWindowBackground = true
-        window.level = .statusBar + 1
+    private func createDefaultWindow() {
+        do {
+            try createPreviewWindow()
+        } catch {
+            logger.logError(error, context: "Failed to create default window")
+        }
+    }
 
-        return window
+    private func configureWindow(_ window: NSWindow) {
+        configService.applyConfiguration(to: window, hasShadow: shadowEnabled)
+        setupWindowDelegate(for: window)
+        setupWindowContent(window)
     }
 
     private func setupWindowDelegate(for window: NSWindow) {
         let delegate = WindowDelegate(windowManager: self)
         windowDelegates[window] = delegate
         window.delegate = delegate
+        logger.debug("Window delegate configured: id=\(sessionWindowCounter)")
     }
 
     private func setupWindowContent(_ window: NSWindow) {
-        let contentView = ContentView(
-            appSettings: appSettings,
+        let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager
         )
@@ -170,77 +162,42 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
 
     init(windowManager: WindowManager) {
         self.windowManager = windowManager
+        super.init()
     }
 }
 
-// MARK: - Window Visibility Validation
+// MARK: - Supporting Types
 
-extension NSRect {
-    func ensureOnScreen() -> NSRect {
-        // Get the visible frame of all screens
-        let screens: [NSScreen] = NSScreen.screens
-        let visibleFrames: [NSRect] = screens.map { $0.visibleFrame }
+enum WindowManagerError: LocalizedError {
+    case windowCreationFailed
+    case invalidScreenConfiguration
+    case windowRestoreValidationFailed
+    case windowValidationFailed
 
-        // If no screens are available, return centered frame on main screen bounds
-        guard !visibleFrames.isEmpty else {
-            let screenBounds: NSRect =
-                NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-            return NSRect(
-                x: (screenBounds.width - width) / 2,
-                y: (screenBounds.height - height) / 2,
-                width: width,
-                height: height
-            )
+    var errorDescription: String? {
+        switch self {
+        case .windowCreationFailed:
+            return "Failed to create window with valid configuration"
+        case .invalidScreenConfiguration:
+            return "No valid screen configuration available"
+        case .windowRestoreValidationFailed:
+            return "Window restore state validation failed"
+        case .windowValidationFailed:
+            return "Window state validation failed"
         }
-
-        // First try to find the screen this window belongs to
-        let containingScreen: NSScreen? = screens.first { $0.visibleFrame.intersects(self) }
-        let targetScreen: NSScreen = containingScreen ?? NSScreen.main ?? screens[0]
-        let targetFrame: NSRect = targetScreen.visibleFrame
-
-        var adjustedFrame: CGRect = self
-
-        // Account for screen scale factor
-        let scaleFactor: CGFloat = targetScreen.backingScaleFactor
-        adjustedFrame.size.width *= scaleFactor
-        adjustedFrame.size.height *= scaleFactor
-
-        // Ensure minimum and maximum dimensions
-        let minWidth: CGFloat = 200
-        let minHeight: CGFloat = 150
-        let maxWidth: CGFloat = min(targetFrame.width, 2000)  // Prevent excessive sizes
-        let maxHeight: CGFloat = min(targetFrame.height, 1500)
-
-        adjustedFrame.size.width = min(max(minWidth, adjustedFrame.size.width), maxWidth)
-        adjustedFrame.size.height = min(max(minHeight, adjustedFrame.size.height), maxHeight)
-
-        // Adjust for screen scale factor
-        adjustedFrame.size.width /= scaleFactor
-        adjustedFrame.size.height /= scaleFactor
-
-        // Ensure the window is at least partially visible
-        let minVisiblePortion: CGFloat = 50
-        let menuBarHeight: CGFloat = 25
-
-        // Adjust x-position, accounting for screen bounds
-        if adjustedFrame.maxX < targetFrame.minX + minVisiblePortion {
-            adjustedFrame.origin.x = targetFrame.minX
-        } else if adjustedFrame.minX > targetFrame.maxX - minVisiblePortion {
-            adjustedFrame.origin.x = targetFrame.maxX - adjustedFrame.width
-        }
-
-        // Adjust y-position, accounting for menu bar and dock
-        if adjustedFrame.maxY < targetFrame.minY + minVisiblePortion {
-            adjustedFrame.origin.y = targetFrame.minY
-        } else if adjustedFrame.minY > targetFrame.maxY - minVisiblePortion - menuBarHeight {
-            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height - menuBarHeight
-        }
-
-        // Ensure window isn't positioned under the menu bar
-        if adjustedFrame.maxY > targetFrame.maxY - menuBarHeight {
-            adjustedFrame.origin.y = targetFrame.maxY - adjustedFrame.height - menuBarHeight
-        }
-
-        return adjustedFrame
     }
+}
+
+struct WindowConfiguration {
+    let frame: NSRect
+    let styleMask: NSWindow.StyleMask
+    let backing: NSWindow.BackingStoreType
+    let deferCreation: Bool
+
+    static let `default` = WindowConfiguration(
+        frame: .zero,
+        styleMask: [.fullSizeContentView],
+        backing: .buffered,
+        deferCreation: false
+    )
 }

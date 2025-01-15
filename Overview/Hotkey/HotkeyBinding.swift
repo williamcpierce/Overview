@@ -12,13 +12,15 @@ import Carbon
 import Cocoa
 
 struct HotkeyBinding: Codable, Equatable, Hashable {
+    // Public Properties
     let keyCode: Int
     let sourceTitle: String
-    private let modifierFlags: UInt
-
     var modifiers: NSEvent.ModifierFlags {
         NSEvent.ModifierFlags(rawValue: modifierFlags)
     }
+
+    // Private State
+    private let modifierFlags: UInt
 
     init(sourceTitle: String, keyCode: Int, modifiers: NSEvent.ModifierFlags) {
         self.sourceTitle = sourceTitle
@@ -38,6 +40,8 @@ struct HotkeyBinding: Codable, Equatable, Hashable {
 
         return modifierSymbols.joined()
     }
+
+    // MARK: - Key Code Translation
 
     /// Translates Carbon key codes to human-readable symbols using the current keyboard layout
     private static func translateKeyCodeToSymbol(_ keyCode: Int) -> String? {

@@ -11,33 +11,32 @@
 import SwiftUI
 
 struct PreviewView: View {
-    // MARK: - Environment
+    // Dependencies
     @Environment(\.dismiss) private var dismiss: DismissAction
-
-    // MARK: - Dependencies
-    @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
+    @StateObject private var captureManager: CaptureManager
     private let logger = AppLogger.interface
 
-    // MARK: - State
+    // Private State
     @State private var isSelectionViewVisible: Bool = true
     @State private var isPreviewVisible: Bool = true
-    @State private var previewAspectRatio: CGFloat
+    @State private var previewAspectRatio: CGFloat = 0
 
-    init(
-        appSettings: AppSettings,
-        captureManager: CaptureManager,
-        previewManager: PreviewManager,
-        sourceManager: SourceManager
-    ) {
-        self.appSettings = appSettings
-        self.captureManager = captureManager
+    // Preview Settings
+    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
+    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
+    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
+    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
+    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
+    init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
-
-        self._previewAspectRatio = State(initialValue: 0)
+        self._captureManager = StateObject(
+            wrappedValue: CaptureManager(sourceManager: sourceManager)
+        )
     }
 
     var body: some View {
@@ -48,19 +47,40 @@ struct PreviewView: View {
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
-                .overlay(editModeOverlay)
+                .overlay(EditIndicatorOverlay(isEditModeEnabled: previewManager.editModeEnabled))
+                .overlay(CloseButtonOverlay(
+                    isEditModeEnabled: previewManager.editModeEnabled,
+                    teardownCapture: teardownCapture
+                ))
                 .opacity(isPreviewVisible ? 1 : 0)
         }
+        .frame(minWidth: 160, minHeight: 80)
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
-        .onChange(of: captureManager.capturedFrame?.size, updatePreviewDimensions)
-        .onChange(of: captureManager.isCapturing, updateViewState)
-        .onChange(of: previewManager.editModeEnabled, updatePreviewVisibility)
-        .onChange(of: captureManager.isSourceAppFocused, updatePreviewVisibility)
-        .onChange(of: captureManager.isSourceWindowFocused, updatePreviewVisibility)
-        .onChange(of: sourceManager.isOverviewActive, updatePreviewVisibility)
-        .onChange(of: appSettings.previewHideInactiveApplications, updatePreviewVisibility)
-        .onChange(of: appSettings.previewHideActiveWindow, updatePreviewVisibility)
+        .onChange(of: captureManager.capturedFrame?.size) { newSize in
+            updatePreviewDimensions(from: captureManager.capturedFrame?.size, to: newSize)
+        }
+        .onChange(of: captureManager.isCapturing) { _ in
+            updateViewState()
+        }
+        .onChange(of: previewManager.editModeEnabled) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: captureManager.isSourceAppFocused) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: captureManager.isSourceWindowFocused) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: sourceManager.isOverviewActive) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: hideInactiveApplications) { _ in
+            updatePreviewVisibility()
+        }
+        .onChange(of: hideActiveWindow) { _ in
+            updatePreviewVisibility()
+        }
     }
 
     // MARK: - View Components
@@ -68,14 +88,12 @@ struct PreviewView: View {
     private func previewContentStack(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             if isSelectionViewVisible {
-                PreviewSelectionView(
-                    appSettings: appSettings,
+                PreviewSelection(
                     captureManager: captureManager,
                     previewManager: previewManager
                 )
             } else {
-                PreviewCaptureView(
-                    appSettings: appSettings,
+                PreviewCapture(
                     captureManager: captureManager
                 )
             }
@@ -83,45 +101,28 @@ struct PreviewView: View {
     }
 
     private var previewInteractionLayer: some View {
-        PreviewInteractionOverlay(
+        WindowInteraction(
             editModeEnabled: $previewManager.editModeEnabled,
             isSelectionViewVisible: $isSelectionViewVisible,
             onEditModeToggle: { previewManager.editModeEnabled.toggle() },
-            onSourceWindowFocus: { captureManager.focusSource() }
+            onSourceWindowFocus: { captureManager.focusSource() },
+            teardownCapture: teardownCapture
         )
     }
 
     private var previewBackgroundLayer: some View {
-        Color.black.opacity(isSelectionViewVisible ? appSettings.previewOpacity : 0)
+        Rectangle()
+            .fill(.regularMaterial)
+            .opacity(isSelectionViewVisible ? 1 : 0)
     }
 
     private var windowConfigurationLayer: some View {
         WindowAccessor(
             aspectRatio: $previewAspectRatio,
-            appSettings: appSettings,
             captureManager: captureManager,
-            previewManager: previewManager
+            previewManager: previewManager,
+            sourceManager: sourceManager
         )
-    }
-
-    private var editModeOverlay: some View {
-        Group {
-            if previewManager.editModeEnabled {
-                VStack {
-                    Spacer()
-                    editModeIndicator
-                }
-            }
-        }
-    }
-
-    private var editModeIndicator: some View {
-        HStack {
-            Spacer()
-            Image(systemName: "righttriangle.fill")
-                .font(.caption)
-                .foregroundColor(.gray)
-        }
     }
 
     // MARK: - Lifecycle Methods
@@ -150,7 +151,7 @@ struct PreviewView: View {
     }
 
     private func updateViewState() {
-        if !captureManager.isCapturing && appSettings.previewCloseOnCaptureStop {
+        if !captureManager.isCapturing && closeOnCaptureStop {
             logger.info("Closing preview window on capture stop")
             dismiss()
         }
@@ -171,10 +172,10 @@ struct PreviewView: View {
         }
 
         let shouldHideForInactiveApps =
-            appSettings.previewHideInactiveApplications && !captureManager.isSourceAppFocused
+            hideInactiveApplications && !captureManager.isSourceAppFocused
 
         let shouldHideForActiveWindow =
-            appSettings.previewHideActiveWindow && captureManager.isSourceWindowFocused
+            hideActiveWindow && captureManager.isSourceWindowFocused
 
         isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
     }

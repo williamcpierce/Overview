@@ -10,7 +10,10 @@
 import ScreenCaptureKit
 
 final class SourceFilterService {
+    // Dependencies
     private let logger = AppLogger.sources
+
+    // Constants
     private let systemAppBundleIDs: Set<String> = Set([
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",

@@ -12,16 +12,17 @@ import SwiftUI
 
 @MainActor
 final class HotkeyManager: ObservableObject {
-    // MARK: - Dependencies
-
-    @ObservedObject private var appSettings: AppSettings
-    @ObservedObject private var sourceManager: SourceManager
-    let hotkeyService: HotkeyService = HotkeyService.shared
+    // Dependencies
+    private var hotkeyStorage: HotkeyStorage
+    private var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
 
-    init(appSettings: AppSettings, sourceManager: SourceManager) {
+    // Singleton
+    let hotkeyService: HotkeyService = HotkeyService.shared
+
+    init(hotkeyStorage: HotkeyStorage, sourceManager: SourceManager) {
         logger.debug("Initializing HotkeyManager")
-        self.appSettings = appSettings
+        self.hotkeyStorage = hotkeyStorage
         self.sourceManager = sourceManager
 
         do {
@@ -39,8 +40,6 @@ final class HotkeyManager: ObservableObject {
         logger.debug("Cleanup completed")
     }
 
-    // MARK: - Event Configuration
-
     private func configureHotkeyEventHandling() {
         hotkeyService.registerCallback(owner: self) { [weak self] sourceTitle in
             Task { @MainActor in
@@ -48,8 +47,6 @@ final class HotkeyManager: ObservableObject {
             }
         }
     }
-
-    // MARK: - Source Window Activation
 
     private func activateSourceWithTitle(_ sourceTitle: String) {
         logger.debug("Processing source window activation: '\(sourceTitle)'")
