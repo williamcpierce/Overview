@@ -32,7 +32,8 @@ struct SourceSettingsTab: View {
                     Spacer()
                     InfoPopover(
                         content: .sourceFilter,
-                        isPresented: $showingSourceFilterInfo
+                        isPresented: $showingSourceFilterInfo,
+                        showWarning: !isBlocklist
                     )
                 }
                 .padding(.bottom, 4)
@@ -40,7 +41,7 @@ struct SourceSettingsTab: View {
                 VStack {
                     if settingsManager.filterAppNames.isEmpty {
                         List {
-                            Text("No applications filtered")
+                            Text("No applications configured")
                                 .foregroundColor(.secondary)
                         }
                     } else {
