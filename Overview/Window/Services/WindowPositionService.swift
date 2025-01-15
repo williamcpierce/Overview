@@ -15,8 +15,8 @@ final class WindowPositionService {
     private struct Constants {
         static let cascadeOffset: CGFloat = 25
         static let fallbackPosition: CGFloat = 100
-        static let minWidth: CGFloat = 180
-        static let minHeight: CGFloat = 60
+        static let minWidth: CGFloat = 160
+        static let minHeight: CGFloat = 80
     }
 
     // Dependencies
