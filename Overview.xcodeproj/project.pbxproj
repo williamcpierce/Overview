@@ -412,7 +412,7 @@
 				CODE_SIGN_ENTITLEMENTS = Overview/Overview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -427,7 +427,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.6.0-alpha-dev.5";
+				MARKETING_VERSION = "0.6.0-alpha-rc.1";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -443,7 +443,7 @@
 				CODE_SIGN_ENTITLEMENTS = Overview/Overview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -458,7 +458,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.6.0-alpha-dev.5";
+				MARKETING_VERSION = "0.6.0-alpha-rc.1";
 				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
