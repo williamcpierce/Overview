@@ -34,7 +34,6 @@ struct PreviewView: View {
     init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
-        // Initialize CaptureManager as a StateObject
         self._captureManager = StateObject(
             wrappedValue: CaptureManager(sourceManager: sourceManager)
         )
@@ -49,6 +48,10 @@ struct PreviewView: View {
                 .background(windowConfigurationLayer)
                 .overlay(previewInteractionLayer)
                 .overlay(EditIndicatorOverlay(isEditModeEnabled: previewManager.editModeEnabled))
+                .overlay(CloseButtonOverlay(
+                    isEditModeEnabled: previewManager.editModeEnabled,
+                    teardownCapture: teardownCapture
+                ))
                 .opacity(isPreviewVisible ? 1 : 0)
         }
         .frame(minWidth: 160, minHeight: 80)
