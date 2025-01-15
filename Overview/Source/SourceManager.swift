@@ -13,30 +13,33 @@ import SwiftUI
 
 @MainActor
 final class SourceManager: ObservableObject {
-    // MARK: - Published State
+    // Published State
     @Published private(set) var focusedBundleId: String?
     @Published private(set) var focusedProcessId: pid_t?
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
-    // MARK: - Dependencies
-    private let appSettings: AppSettings
+    // Dependencies
+    @ObservedObject var settingsManager: SettingsManager
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
+
+    // Private State
     private let observerId = UUID()
+    
+    // Source Settings
+    @AppStorage(SourceSettingsKeys.isBlocklist)
+    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
 
-    // MARK: - Types
-
+    // Types
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
     }
 
-    // MARK: - Initialization
-
-    init(appSettings: AppSettings) {
-        self.appSettings = appSettings
+    init(settingsManager: SettingsManager) {
+        self.settingsManager = settingsManager
         setupObservers()
         logger.debug("Source window manager initialization complete")
     }
@@ -63,13 +66,14 @@ final class SourceManager: ObservableObject {
         logger.debug("Retrieving filtered window list")
 
         let availableSources = try await captureServices.getAvailableSources()
+
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
-            appFilterNames: appSettings.filterAppNames,
-            isFilterBlocklist: appSettings.filterBlocklist
+            appFilterNames: settingsManager.filterAppNames,
+            isFilterBlocklist: isBlocklist
         )
 
-        logger.info("Retrieved \(filteredSources.count) filtered source window")
+        logger.info("Retrieved \(filteredSources.count) filtered source windows")
         return filteredSources
     }
 
@@ -109,7 +113,6 @@ final class SourceManager: ObservableObject {
                     return (SourceID(processID: processID, windowID: source.windowID), title)
                 }
             )
-            logger.debug("Source window titles updated: count=\(sourceTitles.count)")
         } catch {
             logger.logError(error, context: "Failed to update source window titles")
         }

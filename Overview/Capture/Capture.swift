@@ -11,8 +11,11 @@
 import SwiftUI
 
 struct Capture: NSViewRepresentable {
-    let frame: CapturedFrame
+    // Dependencies
     private let logger = AppLogger.capture
+
+    // Public Properties
+    let frame: CapturedFrame
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
@@ -32,7 +35,7 @@ struct Capture: NSViewRepresentable {
         renderLayer.contentsScale = frame.contentScale
         renderLayer.bounds = frame.contentRect
 
-        // Critical section: Layer assignment must be atomic to prevent screen tearing
+        /// Critical section: Layer assignment must be atomic to prevent screen tearing
         nsView.layer = renderLayer
     }
 }

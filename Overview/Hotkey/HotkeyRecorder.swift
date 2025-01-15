@@ -1,5 +1,5 @@
 /*
- Hotkey/HotkeyRecorder.swift
+ Hotkey/Settings/HotkeyRecorder.swift
  Overview
 
  Created by William Pierce on 12/8/24.
@@ -11,7 +11,10 @@
 import SwiftUI
 
 struct HotkeyRecorder: NSViewRepresentable {
+    // Dependencies
     @Binding var shortcut: HotkeyBinding?
+
+    // Public Properties
     let sourceTitle: String
 
     func makeNSView(context: Context) -> NSButton {

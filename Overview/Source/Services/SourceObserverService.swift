@@ -10,10 +10,10 @@
 import ScreenCaptureKit
 
 final class SourceObserverService {
+    // Dependencies
     private let logger = AppLogger.sources
 
-    // MARK: - Private State
-
+    // Private State
     private var focusObservers: [UUID: () async -> Void] = [:]
     private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]

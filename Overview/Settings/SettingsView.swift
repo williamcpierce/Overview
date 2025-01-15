@@ -12,29 +12,58 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject var appSettings: AppSettings
+    // Dependencies
+    @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
+    @ObservedObject var settingsManager: SettingsManager
     private let logger = AppLogger.settings
+
+    init(
+        hotkeyStorage: HotkeyStorage, sourceManager: SourceManager, settingsManager: SettingsManager
+    ) {
+        self.hotkeyStorage = hotkeyStorage
+        self.sourceManager = sourceManager
+        self.settingsManager = settingsManager
+    }
 
     var body: some View {
         TabView {
-            GeneralSettingsTab(appSettings: appSettings)
-                .tabItem { Label("General", systemImage: "gear") }
+            PreviewSettingsTab()
+                .tabItem { Label("Previews", systemImage: "rectangle.dashed.badge.record") }
 
-            PreviewSettingsTab(appSettings: appSettings)
-                .tabItem { Label("Previews", systemImage: "macwindow") }
+            WindowSettingsTab()
+                .tabItem { Label("Windows", systemImage: "macwindow") }
 
-            PerformanceSettingsTab(appSettings: appSettings)
-                .tabItem { Label("Performance", systemImage: "gauge.medium") }
+            OverlaySettingsTab()
+                .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
 
-            HotkeySettingsTab(appSettings: appSettings, sourceManager: sourceManager)
+            HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
                 .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
 
-            FilterSettingsTab(appSettings: appSettings)
-                .tabItem { Label("Filter", systemImage: "line.3.horizontal.decrease.circle.fill") }
+            SourceSettingsTab(settingsManager: settingsManager)
+                .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
         }
-        .frame(width: 360, height: 450)
-        .fixedSize()
         .background(.ultraThickMaterial)
+        .safeAreaInset(edge: .bottom) {
+            VStack {
+                Divider()
+                ResetSettingsButton(settingsManager: settingsManager)
+            }
+            .padding(.bottom, 8)
+            .background(.regularMaterial)
+        }
+        .frame(width: 324, height: 408)
+        .fixedSize()
+
+        // MARK: - Settings Window Level
+
+        .onAppear {
+            let settingsStyleMask: NSWindow.StyleMask.RawValue = 32771
+            if let settingsWindow = NSApp.windows.first(where: {
+                $0.styleMask.rawValue == settingsStyleMask
+            }) {
+                settingsWindow.level = .statusBar + 2
+            }
+        }
     }
 }

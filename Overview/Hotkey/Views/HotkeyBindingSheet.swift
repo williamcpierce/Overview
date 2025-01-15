@@ -1,5 +1,5 @@
 /*
- Hotkey/HotkeyBindingSheet.swift
+ Hotkey/Settings/HotkeyBindingSheet.swift
  Overview
 
  Created by William Pierce on 12/8/24.
@@ -12,15 +12,13 @@ import ScreenCaptureKit
 import SwiftUI
 
 struct HotkeyBindingSheet: View {
-    // MARK: - Environment
-    @Environment(\.dismiss) private var dismiss
-
-    // MARK: - Dependencies
-    @ObservedObject var appSettings: AppSettings
+    // Dependencies
+    @Environment(\.dismiss) private var dismiss: DismissAction
+    @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     private let logger = AppLogger.hotkeys
 
-    // MARK: - View State
+    // Private State
     @State private var filteredSources: [SCWindow] = []
     @State private var currentShortcut: HotkeyBinding?
     @State private var selectedSource: SCWindow?
@@ -75,7 +73,7 @@ struct HotkeyBindingSheet: View {
                     HotkeyRecorder(shortcut: $currentShortcut, sourceTitle: title)
                         .frame(height: 24)
                         .accessibilityLabel("Hotkey Recorder")
-                        .onChange(of: currentShortcut) { _, _ in
+                        .onChange(of: currentShortcut) { _ in
                             validateShortcutConfiguration()
                         }
                     Text("Hotkeys must consist of ⌘/⌥/⌃/⇧ plus another standard character.")
@@ -155,7 +153,7 @@ struct HotkeyBindingSheet: View {
     }
 
     private func hasConflictingShortcut(_ shortcut: HotkeyBinding) -> Bool {
-        appSettings.hotkeyBindings.contains { binding in
+        hotkeyStorage.hotkeyBindings.contains { binding in
             binding.keyCode == shortcut.keyCode && binding.modifiers == shortcut.modifiers
         }
     }
@@ -171,7 +169,7 @@ struct HotkeyBindingSheet: View {
 
     private func saveHotkeyBinding() {
         if let shortcut: HotkeyBinding = currentShortcut {
-            appSettings.hotkeyBindings.append(shortcut)
+            hotkeyStorage.hotkeyBindings.append(shortcut)
             logger.info(
                 "Added new hotkey binding: '\(shortcut.sourceTitle)' - \(shortcut.hotkeyDisplayString)"
             )

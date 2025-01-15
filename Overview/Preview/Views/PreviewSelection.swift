@@ -1,5 +1,5 @@
 /*
- Preview/Views/PreviewSelectionView.swift
+ Preview/Views/PreviewSelection.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -11,19 +11,19 @@
 import ScreenCaptureKit
 import SwiftUI
 
-struct PreviewSelectionView: View {
-    @ObservedObject private var appSettings: AppSettings
+struct PreviewSelection: View {
+    // Dependencies
     @ObservedObject private var captureManager: CaptureManager
     @ObservedObject private var previewManager: PreviewManager
-    @State private var selectedSource: SCWindow?
     private let logger = AppLogger.interface
 
+    // Private State
+    @State private var selectedSource: SCWindow?
+
     init(
-        appSettings: AppSettings,
         captureManager: CaptureManager,
         previewManager: PreviewManager
     ) {
-        self.appSettings = appSettings
         self.captureManager = captureManager
         self.previewManager = previewManager
     }
@@ -71,7 +71,7 @@ struct PreviewSelectionView: View {
     }
 
     private func handleSourceSelection(_ source: SCWindow?) {
-        if let source = source {
+        if let source: SCWindow = source {
             previewManager.startSourcePreview(
                 captureManager: captureManager,
                 source: source

@@ -4,8 +4,8 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages the lifecycle of screen capture operations, coordinating source window selection,
- frame processing, and state synchronization across the application.
+ Manages the lifecycle of each screen capture operations coordinating source
+ window selection, frame processing, and state synchronization.
 */
 
 import Combine
@@ -14,7 +14,7 @@ import SwiftUI
 
 @MainActor
 final class CaptureManager: ObservableObject {
-    // MARK: - Published State
+    // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
@@ -27,24 +27,25 @@ final class CaptureManager: ObservableObject {
         }
     }
 
-    // MARK: - Dependencies
-    private let appSettings: AppSettings
-    private let sourceManager: SourceManager
+    // Dependencies
+    private var sourceManager: SourceManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
 
-    // MARK: - State Management
+    // Private State
     private var hasPermission: Bool = false
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var subscriptions = Set<AnyCancellable>()
 
+    // Preview Settings
+    @AppStorage(PreviewSettingsKeys.captureFrameRate)
+    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
+
     init(
-        appSettings: AppSettings,
         sourceManager: SourceManager,
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
-        self.appSettings = appSettings
         self.sourceManager = sourceManager
         self.captureEngine = captureEngine
         setupSubscriptions()
@@ -71,7 +72,7 @@ final class CaptureManager: ObservableObject {
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
-            frameRate: appSettings.captureFrameRate
+            frameRate: captureFrameRate
         )
 
         await startFrameProcessing(stream: stream)
@@ -126,10 +127,16 @@ final class CaptureManager: ObservableObject {
             .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
             .store(in: &subscriptions)
 
-        appSettings.$captureFrameRate
-            .dropFirst()
-            .sink { [weak self] _ in Task { await self?.synchronizeStreamConfiguration() } }
-            .store(in: &subscriptions)
+        NotificationCenter.default.publisher(
+            for: UserDefaults.didChangeNotification
+        )
+        .compactMap { [weak self] _ in self?.captureFrameRate }
+        .sink { [weak self] _ in
+            Task { [weak self] in
+                await self?.synchronizeStreamConfiguration()
+            }
+        }
+        .store(in: &subscriptions)
     }
 
     private func synchronizeFocusState() async {
@@ -156,13 +163,13 @@ final class CaptureManager: ObservableObject {
 
     private func synchronizeStreamConfiguration() async {
         guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(appSettings.captureFrameRate)")
+        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
 
         do {
             try await captureServices.updateStreamConfiguration(
                 source: source,
                 stream: captureEngine.stream,
-                frameRate: appSettings.captureFrameRate
+                frameRate: captureFrameRate
             )
             logger.info("Stream configuration updated successfully")
         } catch {

@@ -2,121 +2,86 @@
  Window/WindowAccessor.swift
  Overview
 
- Created by William Pierce on 9/15/24.
+ Created by William Pierce on 1/12/25.
 
- Manages window configuration and layout for preview windows,
- handling resizing, aspect ratio maintenance, and window behavior.
+ Manages window state synchronization through SwiftUI's NSViewRepresentable interface.
 */
 
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // MARK: - Dependencies
+    // Constants
+    private struct Constants {
+        static let throttleInterval: TimeInterval = 0.1
+    }
+
+    // Dependencies
     @Binding var aspectRatio: CGFloat
-    @ObservedObject var appSettings: AppSettings
     @ObservedObject var captureManager: CaptureManager
     @ObservedObject var previewManager: PreviewManager
+    @ObservedObject var sourceManager: SourceManager
+    private let configService = WindowServices.shared.windowConfiguration
+    private let aspectService = WindowServices.shared.windowAspect
     private let logger = AppLogger.interface
 
-    // MARK: - Constants
-    private let throttleInterval: TimeInterval = 0.1
+    // Window Settings
+    @AppStorage(WindowSettingsKeys.managedByMissionControl)
+    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+
+    // MARK: - NSViewRepresentable
 
     func makeNSView(context: Context) -> NSView {
-        return NSView()
+        let view = NSView()
+        logger.debug("Created window accessor view")
+        return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard nsView.window != nil, nsView.superview != nil else {
-            return
-        }
+        guard let window = validateWindowState(nsView) else { return }
 
         DispatchQueue.main.async {
-            guard let window: NSWindow = nsView.window else { return }
-            synchronizeEditableState(window)
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + throttleInterval) {
-                guard nsView.window != nil, nsView.superview != nil else { return }
-                synchronizeAspectRatio(window)
-                synchronizeBehavior(window)
-            }
+            synchronizeWindowState(window)
         }
     }
 
-    // MARK: - Editable State Management
+    // MARK: - Private Methods
+
+    private func validateWindowState(_ view: NSView) -> NSWindow? {
+        guard view.window != nil, view.superview != nil else {
+            logger.debug("Invalid window state detected")
+            return nil
+        }
+        return view.window
+    }
+
+    private func synchronizeWindowState(_ window: NSWindow) {
+        synchronizeEditableState(window)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.throttleInterval) {
+            synchronizeLayoutAndBehavior(window)
+        }
+    }
 
     private func synchronizeEditableState(_ window: NSWindow) {
-        updateResizability(window)
-        updateMovability(window)
+        configService.updateResizability(window, isEditable: previewManager.editModeEnabled)
+        configService.updateMovability(window, isMovable: previewManager.editModeEnabled)
     }
 
-    private func updateResizability(_ window: NSWindow) {
-        var newStyleMask: NSWindow.StyleMask = .fullSizeContentView
-
-        if previewManager.editModeEnabled {
-            newStyleMask.insert(.resizable)
-        }
-        if window.styleMask != newStyleMask {
-            window.styleMask = newStyleMask
-            logger.debug("Window resizability updated")
-        }
-    }
-
-    private func updateMovability(_ window: NSWindow) {
-        let newMovability: Bool = previewManager.editModeEnabled
-        if window.isMovable != newMovability {
-            window.isMovable = newMovability
-            logger.debug("Window movability updated")
-        }
-    }
-
-    // MARK: - Behavior Management
-
-    private func synchronizeBehavior(_ window: NSWindow) {
-        updateLevel(window)
-        updateMissionControl(window)
-    }
-
-    private func updateLevel(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && appSettings.windowAlignmentEnabled
+    private func synchronizeLayoutAndBehavior(_ window: NSWindow) {
+        let shouldFloat = previewManager.editModeEnabled && sourceManager.isOverviewActive
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
-        if window.level != newLevel {
-            window.level = newLevel
-            logger.debug("Window level updated: floating=\(shouldFloat)")
-        }
-    }
+        window.level = newLevel
+        window.hasShadow = shadowEnabled
 
-    private func updateMissionControl(_ window: NSWindow) {
-        let shouldManage = appSettings.windowManagedByMissionControl
+        aspectService.synchronizeAspectRatio(
+            for: window,
+            aspectRatio: aspectRatio,
+            isCapturing: captureManager.isCapturing
+        )
 
-        if shouldManage {
-            guard !window.collectionBehavior.contains(.managed) else { return }
-            window.collectionBehavior.insert(.managed)
-        } else {
-            guard window.collectionBehavior.contains(.managed) else { return }
-            window.collectionBehavior.remove(.managed)
-        }
-
-        logger.debug("Mission Control management updated: managed=\(shouldManage)")
-    }
-
-    // MARK: - Layout Management
-
-    private func synchronizeAspectRatio(_ window: NSWindow) {
-        guard captureManager.isCapturing else { return }
-        guard aspectRatio != 0 else { return }
-
-        let windowWidth: CGFloat = window.frame.width
-        let windowHeight: CGFloat = window.frame.height
-        let desiredHeight: CGFloat = windowWidth / aspectRatio
-
-        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
-        guard heightDifference > 1.0 else { return }
-
-        let updatedSize = NSSize(width: windowWidth, height: desiredHeight)
-        window.setContentSize(updatedSize)
-        window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
-
-        logger.info("Window resized: \(Int(updatedSize.width))x\(Int(updatedSize.height))")
+        configService.updateMissionControl(window, isManaged: managedByMissionControl)
     }
 }
