@@ -131,7 +131,6 @@ final class CaptureManager: ObservableObject {
             for: UserDefaults.didChangeNotification
         )
         .compactMap { [weak self] _ in self?.captureFrameRate }
-        .dropFirst()
         .sink { [weak self] _ in
             Task { [weak self] in
                 await self?.synchronizeStreamConfiguration()
