@@ -63,6 +63,7 @@ struct SettingsView: View {
                 $0.styleMask.rawValue == settingsStyleMask
             }) {
                 settingsWindow.level = .statusBar + 2
+                settingsWindow.collectionBehavior = [.managed]
             }
         }
     }
