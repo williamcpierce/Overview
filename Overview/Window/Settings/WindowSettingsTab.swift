@@ -54,11 +54,17 @@ struct WindowSettingsTab: View {
                 }
 
                 Toggle("Shadows", isOn: $shadowEnabled)
+                
                 VStack {
                     HStack {
                         Text("Default width")
                         Spacer()
-                        TextField("", value: $defaultWidth, formatter: NumberFormatter())
+                        TextField("", value: Binding(
+                            get: { defaultWidth },
+                            set: { newValue in
+                                defaultWidth = max(newValue, 160)
+                            }
+                        ), formatter: NumberFormatter())
                             .frame(width: 120)
                             .textFieldStyle(.roundedBorder)
                         Text("px")
@@ -68,7 +74,12 @@ struct WindowSettingsTab: View {
                     HStack {
                         Text("Default height")
                         Spacer()
-                        TextField("", value: $defaultHeight, formatter: NumberFormatter())
+                        TextField("", value: Binding(
+                            get: { defaultHeight },
+                            set: { newValue in
+                                defaultHeight = max(newValue, 80)
+                            }
+                        ), formatter: NumberFormatter())
                             .frame(width: 120)
                             .textFieldStyle(.roundedBorder)
                         Text("px")
