@@ -28,6 +28,8 @@ struct OverlaySettingsTab: View {
     @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
     private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
         .sourceTitleBackgroundOpacity
+    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
+    private var sourceTitleLocation = OverlaySettingsKeys.sourceTitleLocation
 
     var body: some View {
         Form {
@@ -103,6 +105,14 @@ struct OverlaySettingsTab: View {
                         Text("\(Int(sourceTitleBackgroundOpacity * 100))%")
                             .foregroundColor(.secondary)
                             .frame(width: 40)
+                    }
+                    HStack {
+                        Picker("Location", selection: $sourceTitleLocation) {
+                            Text("Upper").tag(true)
+                            Text("Lower").tag(false)
+                        }
+                        .pickerStyle(.segmented)
+
                     }
                 }
             }
