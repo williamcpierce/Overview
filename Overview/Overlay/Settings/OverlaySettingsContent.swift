@@ -44,6 +44,11 @@ extension InfoPopoverContent {
                 text:
                     "Control title backdrop visibility. Higher opacity values improve text legibility but obstruct preview content."
             ),
+            Section(
+                title: "Location",
+                text:
+                    "Control title location on previews. Upper places the title at the top of the preview, while lower places it on the bottom of the preview."
+            ),
         ],
         isWarning: false
     )
