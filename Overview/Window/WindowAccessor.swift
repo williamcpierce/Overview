@@ -29,6 +29,8 @@ struct WindowAccessor: NSViewRepresentable {
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
+    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults.assignPreviewsToAllDesktops
 
     // MARK: - NSViewRepresentable
 
