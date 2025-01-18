@@ -43,6 +43,10 @@ extension InfoPopoverContent {
                 title: "Close With Preview Source",
                 text: "Closes preview window when source window closes"
             ),
+            Section(
+                title: "Display Previews in all Spaces",
+                text: "Displays Preview windows on all desktops"
+            ),            
         ],
         isWarning: false
     )

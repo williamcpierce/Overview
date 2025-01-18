@@ -83,5 +83,13 @@ struct WindowAccessor: NSViewRepresentable {
         )
 
         configService.updateMissionControl(window, isManaged: managedByMissionControl)
+
+        var currentBehavior = window.collectionBehavior
+        if assignPreviewsToAllDesktops {
+            currentBehavior.insert(.canJoinAllSpaces)
+        } else {
+            currentBehavior.remove(.canJoinAllSpaces)
+        }
+        window.collectionBehavior = currentBehavior
     }
 }
