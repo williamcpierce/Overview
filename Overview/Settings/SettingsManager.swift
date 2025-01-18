@@ -66,8 +66,8 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.closeOnCaptureStop,
             forKey: WindowSettingsKeys.closeOnCaptureStop)
         UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
-            forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
+            WindowSettingsKeys.defaults.desktopAssignmentBehavior,
+            forKey: WindowSettingsKeys.desktopAssignmentBehavior)
 
         /// Reset Overlay settings
         UserDefaults.standard.set(

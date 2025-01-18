@@ -27,8 +27,8 @@ struct WindowSettingsTab: View {
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults.assignPreviewsToAllDesktops
+    @AppStorage(WindowSettingsKeys.desktopAssignmentBehavior)
+    private var desktopAssignmentBehavior = WindowSettingsKeys.defaults.desktopAssignmentBehavior
 
     var body: some View {
         Form {
@@ -56,19 +56,22 @@ struct WindowSettingsTab: View {
                 }
 
                 Toggle("Shadows", isOn: $shadowEnabled)
-                
+
                 VStack {
                     HStack {
                         Text("Default width")
                         Spacer()
-                        TextField("", value: Binding(
-                            get: { defaultWidth },
-                            set: { newValue in
-                                defaultWidth = max(newValue, 160)
-                            }
-                        ), formatter: NumberFormatter())
-                            .frame(width: 120)
-                            .textFieldStyle(.roundedBorder)
+                        TextField(
+                            "",
+                            value: Binding(
+                                get: { defaultWidth },
+                                set: { newValue in
+                                    defaultWidth = max(newValue, 160)
+                                }
+                            ), formatter: NumberFormatter()
+                        )
+                        .frame(width: 120)
+                        .textFieldStyle(.roundedBorder)
                         Text("px")
                             .foregroundColor(.secondary)
                     }
@@ -76,14 +79,17 @@ struct WindowSettingsTab: View {
                     HStack {
                         Text("Default height")
                         Spacer()
-                        TextField("", value: Binding(
-                            get: { defaultHeight },
-                            set: { newValue in
-                                defaultHeight = max(newValue, 80)
-                            }
-                        ), formatter: NumberFormatter())
-                            .frame(width: 120)
-                            .textFieldStyle(.roundedBorder)
+                        TextField(
+                            "",
+                            value: Binding(
+                                get: { defaultHeight },
+                                set: { newValue in
+                                    defaultHeight = max(newValue, 80)
+                                }
+                            ), formatter: NumberFormatter()
+                        )
+                        .frame(width: 120)
+                        .textFieldStyle(.roundedBorder)
                         Text("px")
                             .foregroundColor(.secondary)
                     }
@@ -107,7 +113,7 @@ struct WindowSettingsTab: View {
                     Toggle("Show in Mission Control", isOn: $managedByMissionControl)
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Display Previews on all spaces", isOn: $assignPreviewsToAllDesktops)
+                    Toggle("Display Previews on all spaces", isOn: $desktopAssignmentBehavior)
                 }
             }
         }
