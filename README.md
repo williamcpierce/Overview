@@ -2,7 +2,7 @@
 
 Overview is a macOS app that creates floating live previews of other application windows, and enables quick switching between them.
 
-![Example Screenshot](https://downloads.williampierce.io/GitHub.jpg)
+![Example Screenshot](https://downloads.williampierce.io/Banner.jpg)
 
 ## Alpha Release
 
@@ -92,6 +92,23 @@ If you want preview windows to show in all spaces, follow instructions [here](ht
 -   Cannot overlay full-screen applications
 
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+
+## Project Funding
+
+Overview is a free and open source project that accepts donations to cover operating expenses (e.g., Apple Developer Program fees, hosting costs, development tools). 100% of donations will be used for project expenses or reinvested in development - no profits will be distributed to any individuals.
+
+Financial operations are managed with full transparency:
+
+-   Complete accounting ledger maintained in [Overview-Finance](https://github.com/williamcpierce/Overview-Finance)
+-   Quarterly financial summaries
+-   Detailed financial policy available in FUNDING.md
+
+Note: Overview is not registered as a non-profit organization, and donations are not tax-deductible.
+
+To support Overview's development:
+
+-   [GitHub Sponsors](https://github.com/sponsors/williamcpierce) (preferred)
+-   [Patreon](https://www.patreon.com/overview_app)
 
 ## Contributing
 
