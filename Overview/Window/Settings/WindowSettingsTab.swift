@@ -27,8 +27,8 @@ struct WindowSettingsTab: View {
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-    @AppStorage(WindowSettingsKeys.desktopAssignmentBehavior)
-    private var desktopAssignmentBehavior = WindowSettingsKeys.defaults.desktopAssignmentBehavior
+    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
+    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults.assignPreviewsToAllDesktops
 
     var body: some View {
         Form {
@@ -113,7 +113,7 @@ struct WindowSettingsTab: View {
                     Toggle("Show in Mission Control", isOn: $managedByMissionControl)
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Display Previews on all spaces", isOn: $desktopAssignmentBehavior)
+                    Toggle("Display Previews on all spaces", isOn: $assignPreviewsToAllDesktops)
                 }
             }
         }
