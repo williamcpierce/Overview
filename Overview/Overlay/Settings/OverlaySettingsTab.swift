@@ -29,7 +29,7 @@ struct OverlaySettingsTab: View {
     private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
         .sourceTitleBackgroundOpacity
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
-    private var sourceTitleLocation = OverlaySettingsKeys.sourceTitleLocation
+    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
 
     var body: some View {
         Form {
