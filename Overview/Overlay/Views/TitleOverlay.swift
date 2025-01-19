@@ -54,9 +54,15 @@ private struct TitleContainerView: View {
 
     var body: some View {
         VStack {
-            titleBar
-            Spacer()
+            if sourceTitleLocation {
+                titleBar
+                Spacer()
+            } else {
+                Spacer()
+                titleBar
+            }
         }
+        .padding(5)
     }
 
     // MARK: - Private Views
@@ -66,7 +72,7 @@ private struct TitleContainerView: View {
             titleText
             Spacer()
         }
-        .padding(6)
+        .padding(5)
     }
 
     private var titleText: some View {
