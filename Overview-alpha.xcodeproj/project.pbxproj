@@ -17,7 +17,7 @@
 
 /* Begin PBXFileReference section */
 		C871615F2D2A18D20098E42C /* STYLE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = STYLE.md; sourceTree = "<group>"; };
-		C87695822CBA082D00FBCA6C /* Overview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Overview.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C87695822CBA082D00FBCA6C /* Overview-alpha.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Overview-alpha.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C87695892CBA082F00FBCA6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C876958E2CBA082F00FBCA6C /* Overview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Overview.entitlements; sourceTree = "<group>"; };
@@ -33,7 +33,7 @@
 			membershipExceptions = (
 				AppLogger.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -48,7 +48,7 @@
 				Settings/HotkeySettingsTab.swift,
 				Views/HotkeyBindingSheet.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -63,7 +63,7 @@
 				SourceServices.swift,
 				Views/SourceListView.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -76,7 +76,7 @@
 				SettingsManager.swift,
 				SettingsView.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -89,7 +89,7 @@
 				Views/PreviewCapture.swift,
 				Views/PreviewSelection.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -101,7 +101,7 @@
 				Services/CaptureAvailabilityService.swift,
 				Services/CaptureConfigurationService.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -120,7 +120,7 @@
 				WindowServices.swift,
 				WindowStorage.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 		C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -133,7 +133,7 @@
 				Views/FocusBorderOverlay.swift,
 				Views/TitleOverlay.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
+			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -173,7 +173,7 @@
 		C87695832CBA082D00FBCA6C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C87695822CBA082D00FBCA6C /* Overview.app */,
+				C87695822CBA082D00FBCA6C /* Overview-alpha.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -209,9 +209,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C87695812CBA082D00FBCA6C /* Overview */ = {
+		C87695812CBA082D00FBCA6C /* Overview-alpha */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview" */;
+			buildConfigurationList = C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-alpha" */;
 			buildPhases = (
 				C876957E2CBA082D00FBCA6C /* Sources */,
 				C876957F2CBA082D00FBCA6C /* Frameworks */,
@@ -221,9 +221,9 @@
 			);
 			dependencies = (
 			);
-			name = Overview;
+			name = "Overview-alpha";
 			productName = Overview;
-			productReference = C87695822CBA082D00FBCA6C /* Overview.app */;
+			productReference = C87695822CBA082D00FBCA6C /* Overview-alpha.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -241,7 +241,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview" */;
+			buildConfigurationList = C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview-alpha" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -254,7 +254,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C87695812CBA082D00FBCA6C /* Overview */,
+				C87695812CBA082D00FBCA6C /* Overview-alpha */,
 			);
 		};
 /* End PBXProject section */
@@ -343,6 +343,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "Overview-alpha";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -399,6 +400,7 @@
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "Overview-alpha";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
@@ -412,14 +414,14 @@
 				CODE_SIGN_ENTITLEMENTS = Overview/Overview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Overview/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Overview;
+				INFOPLIST_KEY_CFBundleDisplayName = "Overview-alpha";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -428,7 +430,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = "0.6.0-alpha";
-				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
+				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -443,14 +445,14 @@
 				CODE_SIGN_ENTITLEMENTS = Overview/Overview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Overview/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Overview;
+				INFOPLIST_KEY_CFBundleDisplayName = "Overview-alpha";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -459,7 +461,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = "0.6.0-alpha";
-				PRODUCT_BUNDLE_IDENTIFIER = WilliamPierce.Overview;
+				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -469,7 +471,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview" */ = {
+		C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview-alpha" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C876958F2CBA082F00FBCA6C /* Debug */,
@@ -478,7 +480,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview" */ = {
+		C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-alpha" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C87695922CBA082F00FBCA6C /* Debug */,
