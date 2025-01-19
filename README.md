@@ -32,6 +32,7 @@ For development updates, please join our Discord:
 
 -   The app package is _unsigned_ at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.
     -   If you aren't comfortable running unsigned apps, you can also clone this project and build it yourself in Xcode 16.
+    -   If you get a "Malware Blocked" error, this is due to a certificate issue documented in https://github.com/williamcpierce/Overview/pull/227. This affects all disk images downloaded before 2025-01-19. To resolve this issue, delete old disk images and download the latest release from GitHub [Releases](https://github.com/williamcpierce/Overview/releases).
 -   Grant screen recording permission when prompted
     -   Click "Open System Settings" in the permission dialog
     -   Enable Overview under Privacy & Security > Screen Recording
