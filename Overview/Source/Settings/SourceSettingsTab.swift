@@ -17,8 +17,8 @@ struct SourceSettingsTab: View {
     @State private var showingSourceFilterInfo: Bool = false
 
     // App Filter Settings
-    @AppStorage(SourceSettingsKeys.isBlocklist)
-    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
+    @AppStorage(SourceSettingsKeys.filterMode)
+    private var filterMode = SourceSettingsKeys.defaults.filterMode
 
     var body: some View {
         Form {
@@ -33,7 +33,7 @@ struct SourceSettingsTab: View {
                     InfoPopover(
                         content: .sourceFilter,
                         isPresented: $showingSourceFilterInfo,
-                        showWarning: !isBlocklist
+                        showWarning: filterMode == FilterMode.allowlist
                     )
                 }
                 .padding(.bottom, 4)
@@ -59,9 +59,9 @@ struct SourceSettingsTab: View {
                     }
                 }
 
-                Picker("Filter Mode", selection: $isBlocklist) {
-                    Text("Blocklist").tag(true)
-                    Text("Allowlist").tag(false)
+                Picker("Filter Mode", selection: $filterMode) {
+                    Text("Blocklist").tag(FilterMode.blocklist)
+                    Text("Allowlist").tag(FilterMode.allowlist)
                 }
                 .pickerStyle(.segmented)
 

@@ -9,12 +9,17 @@
 
 enum SourceSettingsKeys {
     static let appNames: String = "appFilterNames"
-    static let isBlocklist: String = "isFilterBlocklist"
+    static let filterMode: String = "isFilterBlocklist"
 
     static let defaults = Defaults()
 
     struct Defaults {
         let appNames: [String] = []
-        let isBlocklist: Bool = true
+        let filterMode: Bool = FilterMode.blocklist
     }
+}
+
+enum FilterMode {
+    static let allowlist: Bool = false
+    static let blocklist: Bool = true
 }
