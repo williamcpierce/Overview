@@ -29,6 +29,9 @@ struct WindowAccessor: NSViewRepresentable {
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
+    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
+    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
+        .assignPreviewsToAllDesktops
 
     // MARK: - NSViewRepresentable
 
@@ -83,5 +86,13 @@ struct WindowAccessor: NSViewRepresentable {
         )
 
         configService.updateMissionControl(window, isManaged: managedByMissionControl)
+
+        var currentBehavior = window.collectionBehavior
+        if assignPreviewsToAllDesktops {
+            currentBehavior.insert(.canJoinAllSpaces)
+        } else {
+            currentBehavior.remove(.canJoinAllSpaces)
+        }
+        window.collectionBehavior = currentBehavior
     }
 }
