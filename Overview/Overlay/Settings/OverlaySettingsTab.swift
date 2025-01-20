@@ -30,6 +30,8 @@ struct OverlaySettingsTab: View {
         .sourceTitleBackgroundOpacity
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Form {
@@ -110,6 +112,14 @@ struct OverlaySettingsTab: View {
                         Picker("Location", selection: $sourceTitleLocation) {
                             Text("Upper").tag(true)
                             Text("Lower").tag(false)
+                        }
+                        .pickerStyle(.segmented)
+
+                    }
+                    HStack {
+                        Picker("Type", selection: $sourceTitleType) {
+                            Text("Window").tag(true)
+                            Text("App").tag(false)
                         }
                         .pickerStyle(.segmented)
 
