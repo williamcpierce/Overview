@@ -110,10 +110,10 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Show in Mission Control", isOn: $managedByMissionControl)
+                    Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
                     Toggle("Create window on launch", isOn: $createOnLaunch)
-                    Toggle("Close with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Display Previews on all spaces", isOn: $assignPreviewsToAllDesktops)
+                    Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
+                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
                 }
             }
         }
