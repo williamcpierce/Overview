@@ -29,8 +29,8 @@ final class SourceManager: ObservableObject {
     private let observerId = UUID()
     
     // Source Settings
-    @AppStorage(SourceSettingsKeys.isBlocklist)
-    private var isBlocklist = SourceSettingsKeys.defaults.isBlocklist
+    @AppStorage(SourceSettingsKeys.filterMode)
+    private var filterMode = SourceSettingsKeys.defaults.filterMode
 
     // Types
     struct SourceID: Hashable {
@@ -70,7 +70,7 @@ final class SourceManager: ObservableObject {
         let filteredSources = sourceServices.sourceFilter.filterSources(
             availableSources,
             appFilterNames: settingsManager.filterAppNames,
-            isFilterBlocklist: isBlocklist
+            isFilterBlocklist: filterMode == FilterMode.blocklist
         )
 
         logger.info("Retrieved \(filteredSources.count) filtered source windows")

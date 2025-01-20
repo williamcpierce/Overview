@@ -106,8 +106,8 @@ final class SettingsManager: ObservableObject {
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
-            SourceSettingsKeys.defaults.isBlocklist,
-            forKey: SourceSettingsKeys.isBlocklist)
+            SourceSettingsKeys.defaults.filterMode,
+            forKey: SourceSettingsKeys.filterMode)
 
         /// Reset Hotkey settings
         hotkeyStorage.resetToDefaults()
