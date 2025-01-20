@@ -30,7 +30,8 @@ struct WindowAccessor: NSViewRepresentable {
     @AppStorage(WindowSettingsKeys.shadowEnabled)
     private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults.assignPreviewsToAllDesktops
+    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
+        .assignPreviewsToAllDesktops
 
     // MARK: - NSViewRepresentable
 
@@ -85,15 +86,11 @@ struct WindowAccessor: NSViewRepresentable {
         )
 
         configService.updateMissionControl(window, isManaged: managedByMissionControl)
-        
+
         var currentBehavior = window.collectionBehavior
-        if currentBehavior.contains(.canJoinAllSpaces) && !assignPreviewsToAllDesktops {
-            assignPreviewsToAllDesktops = true
-        }
-        
         if assignPreviewsToAllDesktops {
             currentBehavior.insert(.canJoinAllSpaces)
-        } else {    
+        } else {
             currentBehavior.remove(.canJoinAllSpaces)
         }
         window.collectionBehavior = currentBehavior
