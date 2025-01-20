@@ -91,6 +91,22 @@ final class CaptureManager: ObservableObject {
         logger.debug("Capture stopped")
     }
 
+    func updateStreamConfiguration() async {
+        guard isCapturing, let source: SCWindow = selectedSource else { return }
+        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
+
+        do {
+            try await captureServices.updateStreamConfiguration(
+                source: source,
+                stream: captureEngine.stream,
+                frameRate: captureFrameRate
+            )
+            logger.info("Stream configuration updated successfully")
+        } catch {
+            logger.logError(error, context: "Failed to update stream configuration")
+        }
+    }
+
     func focusSource() {
         guard let source: SCWindow = selectedSource else { return }
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
@@ -126,17 +142,6 @@ final class CaptureManager: ObservableObject {
         sourceManager.$sourceTitles
             .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
             .store(in: &subscriptions)
-
-        NotificationCenter.default.publisher(
-            for: UserDefaults.didChangeNotification
-        )
-        .compactMap { [weak self] _ in self?.captureFrameRate }
-        .sink { [weak self] _ in
-            Task { [weak self] in
-                await self?.synchronizeStreamConfiguration()
-            }
-        }
-        .store(in: &subscriptions)
     }
 
     private func synchronizeFocusState() async {
@@ -159,21 +164,5 @@ final class CaptureManager: ObservableObject {
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
         sourceTitle = titles[sourceID]
-    }
-
-    private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
-
-        do {
-            try await captureServices.updateStreamConfiguration(
-                source: source,
-                stream: captureEngine.stream,
-                frameRate: captureFrameRate
-            )
-            logger.info("Stream configuration updated successfully")
-        } catch {
-            logger.logError(error, context: "Failed to update stream configuration")
-        }
     }
 }
