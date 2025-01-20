@@ -24,12 +24,17 @@ struct PreviewView: View {
     @State private var previewAspectRatio: CGFloat = 0
 
     // Preview Settings
+    @AppStorage(PreviewSettingsKeys.captureFrameRate)
+    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
     @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
     private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
     @AppStorage(PreviewSettingsKeys.hideActiveWindow)
     private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    
+    // Window Settings
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+
 
     init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
@@ -80,6 +85,9 @@ struct PreviewView: View {
         }
         .onChange(of: hideActiveWindow) { _ in
             updatePreviewVisibility()
+        }
+        .onChange(of: captureFrameRate) { _ in
+            updatePreviewFrameRate()
         }
     }
 
@@ -178,5 +186,12 @@ struct PreviewView: View {
             hideActiveWindow && captureManager.isSourceWindowFocused
 
         isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
+    }
+
+    private func updatePreviewFrameRate() {
+        logger.info("Updating capture frame rate")
+        Task {
+            await captureManager.updateStreamConfiguration()
+        }
     }
 }
