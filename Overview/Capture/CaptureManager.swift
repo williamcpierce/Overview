@@ -42,7 +42,7 @@ final class CaptureManager: ObservableObject {
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
     private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-    
+
     // Overlay Settings
     @AppStorage(OverlaySettingsKeys.sourceTitleType)
     private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
@@ -158,14 +158,14 @@ final class CaptureManager: ObservableObject {
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
-            guard let source: SCWindow = selectedSource,
-                let processID: pid_t = source.owningApplication?.processID
-            else { return }
+        guard let source: SCWindow = selectedSource,
+            let processID: pid_t = source.owningApplication?.processID
+        else { return }
 
-            let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-            sourceWindowTitle = titles[sourceID]
+        let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
+        sourceWindowTitle = titles[sourceID]
         sourceApplicationTitle = source.owningApplication?.applicationName
-        }
+    }
 
     private func synchronizeStreamConfiguration() async {
         guard isCapturing, let source: SCWindow = selectedSource else { return }
