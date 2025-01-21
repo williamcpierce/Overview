@@ -50,7 +50,7 @@ extension InfoPopoverContent {
                     "Control title location on previews. Upper places the title at the top of the preview, while lower places it on the bottom of the preview."
             ),
             Section(
-                title: "Title Name",
+                title: "Title Type",
                 text:
                     "Choose whether to display the title of the application or the title of the window."
             ),
