@@ -24,6 +24,7 @@ final class CaptureManager: ObservableObject {
     @Published var selectedSource: SCWindow? {
         didSet {
             sourceWindowTitle = selectedSource?.title
+            sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
             Task { await synchronizeFocusState() }
         }
     }
