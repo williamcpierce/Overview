@@ -35,6 +35,7 @@ struct PreviewView: View {
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
 
+
     init(previewManager: PreviewManager, sourceManager: SourceManager) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
