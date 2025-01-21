@@ -36,7 +36,7 @@ struct SettingsView: View {
 
             OverlaySettingsTab()
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
-                .frame(minHeight: 336)
+//                .frame(minHeight: 336)
 
             HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
                 .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
