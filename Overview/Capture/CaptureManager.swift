@@ -19,10 +19,11 @@ final class CaptureManager: ObservableObject {
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
     @Published private(set) var isSourceWindowFocused: Bool = false
-    @Published private(set) var sourceTitle: String?
+    @Published private(set) var sourceWindowTitle: String?
+    @Published private(set) var sourceApplicationTitle: String?
     @Published var selectedSource: SCWindow? {
         didSet {
-            sourceTitle = sourceTitleType ? selectedSource?.title : selectedSource?.owningApplication?.applicationName
+            sourceWindowTitle = selectedSource?.title
             Task { await synchronizeFocusState() }
         }
     }
@@ -157,18 +158,13 @@ final class CaptureManager: ObservableObject {
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
-        guard let source: SCWindow = selectedSource,
-            let processID: pid_t = source.owningApplication?.processID
-        else { return }
+            guard let source: SCWindow = selectedSource,
+                let processID: pid_t = source.owningApplication?.processID
+            else { return }
 
-        let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-
-        if sourceTitleType {
-            sourceTitle = titles[sourceID]
-        } else {
-            sourceTitle = source.owningApplication?.applicationName
+            let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
+            sourceWindowTitle = titles[sourceID]
         }
-    }
 
     private func synchronizeStreamConfiguration() async {
         guard isCapturing, let source: SCWindow = selectedSource else { return }
