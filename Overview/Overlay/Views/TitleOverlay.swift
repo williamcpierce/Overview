@@ -14,7 +14,7 @@ struct TitleOverlay: View {
     // Public Properties
     let windowTitle: String?
     let applicationTitle: String?
-    
+
     // Overlay Settings
     @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
     private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
@@ -32,10 +32,9 @@ struct TitleOverlay: View {
         Group {
             if sourceTitleEnabled && sourceTitleType, let title = windowTitle {
                 titleContainer(for: title)
-            }
-            else if sourceTitleEnabled, let title = applicationTitle {
+            } else if sourceTitleEnabled, let title = applicationTitle {
                 titleContainer(for: title)
-                
+
             }
         }
     }
