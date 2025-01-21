@@ -12,8 +12,9 @@ import SwiftUI
 
 struct TitleOverlay: View {
     // Public Properties
-    let title: String?
-
+    let windowTitle: String?
+    let applicationTitle: String?
+    
     // Overlay Settings
     @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
     private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
@@ -24,11 +25,17 @@ struct TitleOverlay: View {
         .sourceTitleBackgroundOpacity
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Group {
-            if sourceTitleEnabled, let title = title {
+            if sourceTitleEnabled && sourceTitleType, let title = windowTitle {
                 titleContainer(for: title)
+            }
+            else if sourceTitleEnabled, let title = applicationTitle {
+                titleContainer(for: title)
+                
             }
         }
     }
