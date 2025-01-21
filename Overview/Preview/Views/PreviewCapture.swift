@@ -43,7 +43,7 @@ struct PreviewCapture: View {
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
             .overlay(FocusBorderOverlay(isWindowFocused: captureManager.isSourceWindowFocused))
-            .overlay(TitleOverlay(title: captureManager.sourceTitle))
+            .overlay(TitleOverlay(windowTitle: captureManager.sourceWindowTitle, applicationTitle: captureManager.sourceApplicationTitle))
             .opacity(previewOpacity)
     }
 }

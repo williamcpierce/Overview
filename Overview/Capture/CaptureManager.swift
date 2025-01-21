@@ -19,10 +19,12 @@ final class CaptureManager: ObservableObject {
     @Published private(set) var isCapturing: Bool = false
     @Published private(set) var isSourceAppFocused: Bool = false
     @Published private(set) var isSourceWindowFocused: Bool = false
-    @Published private(set) var sourceTitle: String?
+    @Published private(set) var sourceWindowTitle: String?
+    @Published private(set) var sourceApplicationTitle: String?
     @Published var selectedSource: SCWindow? {
         didSet {
-            sourceTitle = selectedSource?.title
+            sourceWindowTitle = selectedSource?.title
+            sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
             Task { await synchronizeFocusState() }
         }
     }
@@ -41,6 +43,10 @@ final class CaptureManager: ObservableObject {
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
     private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
+
+    // Overlay Settings
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     init(
         sourceManager: SourceManager,
@@ -163,6 +169,23 @@ final class CaptureManager: ObservableObject {
         else { return }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceTitle = titles[sourceID]
+        sourceWindowTitle = titles[sourceID]
+        sourceApplicationTitle = source.owningApplication?.applicationName
+    }
+
+    private func synchronizeStreamConfiguration() async {
+        guard isCapturing, let source: SCWindow = selectedSource else { return }
+        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
+
+        do {
+            try await captureServices.updateStreamConfiguration(
+                source: source,
+                stream: captureEngine.stream,
+                frameRate: captureFrameRate
+            )
+            logger.info("Stream configuration updated successfully")
+        } catch {
+            logger.logError(error, context: "Failed to update stream configuration")
+        }
     }
 }
