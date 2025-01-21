@@ -164,6 +164,7 @@ final class CaptureManager: ObservableObject {
 
             let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
             sourceWindowTitle = titles[sourceID]
+        sourceApplicationTitle = source.owningApplication?.applicationName
         }
 
     private func synchronizeStreamConfiguration() async {
