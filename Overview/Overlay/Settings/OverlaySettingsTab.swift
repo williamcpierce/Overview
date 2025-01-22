@@ -28,6 +28,10 @@ struct OverlaySettingsTab: View {
     @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
     private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
         .sourceTitleBackgroundOpacity
+    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
+    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Form {
@@ -104,11 +108,27 @@ struct OverlaySettingsTab: View {
                             .foregroundColor(.secondary)
                             .frame(width: 40)
                     }
+                    HStack {
+                        Picker("Location", selection: $sourceTitleLocation) {
+                            Text("Upper").tag(true)
+                            Text("Lower").tag(false)
+                        }
+                        .pickerStyle(.segmented)
+
+                    }
+                    HStack {
+                        Picker("Type", selection: $sourceTitleType) {
+                            Text("Window").tag(true)
+                            Text("App").tag(false)
+                        }
+                        .pickerStyle(.segmented)
+
+                    }
                 }
             }
         }
         .formStyle(.grouped)
-        .animation(.easeInOut(duration: 0.3), value: focusBorderEnabled)
-        .animation(.easeInOut(duration: 0.3), value: sourceTitleEnabled)
+//        .animation(.easeInOut(duration: 0.3), value: focusBorderEnabled)
+//        .animation(.easeInOut(duration: 0.3), value: sourceTitleEnabled)
     }
 }
