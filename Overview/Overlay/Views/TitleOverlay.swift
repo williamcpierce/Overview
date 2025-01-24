@@ -12,7 +12,8 @@ import SwiftUI
 
 struct TitleOverlay: View {
     // Public Properties
-    let title: String?
+    let windowTitle: String?
+    let applicationTitle: String?
 
     // Overlay Settings
     @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
@@ -22,11 +23,18 @@ struct TitleOverlay: View {
     @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
     private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
         .sourceTitleBackgroundOpacity
+    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
+    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Group {
-            if sourceTitleEnabled, let title = title {
+            if sourceTitleEnabled && sourceTitleType, let title = windowTitle {
                 titleContainer(for: title)
+            } else if sourceTitleEnabled, let title = applicationTitle {
+                titleContainer(for: title)
+
             }
         }
     }
@@ -37,7 +45,8 @@ struct TitleOverlay: View {
         TitleContainerView(
             title: title,
             fontSize: sourceTitleFontSize,
-            backgroundOpacity: sourceTitleBackgroundOpacity
+            backgroundOpacity: sourceTitleBackgroundOpacity,
+            sourceTitleLocation: sourceTitleLocation
         )
     }
 }
@@ -47,12 +56,19 @@ private struct TitleContainerView: View {
     let title: String
     let fontSize: Double
     let backgroundOpacity: Double
+    let sourceTitleLocation: Bool
 
     var body: some View {
         VStack {
-            titleBar
-            Spacer()
+            if sourceTitleLocation {
+                titleBar
+                Spacer()
+            } else {
+                Spacer()
+                titleBar
+            }
         }
+        .padding(5)
     }
 
     // MARK: - Private Views
@@ -62,7 +78,7 @@ private struct TitleContainerView: View {
             titleText
             Spacer()
         }
-        .padding(6)
+        .padding(5)
     }
 
     private var titleText: some View {

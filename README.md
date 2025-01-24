@@ -72,6 +72,7 @@ For development updates, please join our Discord:
         -   Show in Mission Control
         -   Create window on launch
         -   Close with preview source
+        -   Show windows on all desktops
 -   Overlays
     -   Window focus
         -   Border width
@@ -79,6 +80,8 @@ For development updates, please join our Discord:
     -   Source title
         -   Font size
         -   Opacity
+        -   Location
+        -   Type (window or application)
 -   Hotkeys
     -   Source window activation
 -   Sources
@@ -113,7 +116,7 @@ To support Overview's development:
 
 ## Contributing
 
-Contributions to Overview are welcome, but as the project is in its early stages, please contact me to coordinate before starting any work.
+Contributions to the codebase are welcome, but as the project is in its early stages, please contact me to coordinate before starting any work.
 
 ## License
 

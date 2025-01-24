@@ -65,6 +65,9 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.closeOnCaptureStop,
             forKey: WindowSettingsKeys.closeOnCaptureStop)
+        UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
+            forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
 
         /// Reset Overlay settings
         UserDefaults.standard.set(
@@ -85,6 +88,12 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             OverlaySettingsKeys.defaults.sourceTitleBackgroundOpacity,
             forKey: OverlaySettingsKeys.sourceTitleBackgroundOpacity)
+        UserDefaults.standard.set(
+            OverlaySettingsKeys.defaults.sourceTitleLocation,
+            forKey: OverlaySettingsKeys.sourceTitleLocation)
+        UserDefaults.standard.set(
+            OverlaySettingsKeys.defaults.sourceTitleType,
+            forKey: OverlaySettingsKeys.sourceTitleType)
 
         /// Reset Preview settings
         UserDefaults.standard.set(
@@ -100,8 +109,8 @@ final class SettingsManager: ObservableObject {
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
-            SourceSettingsKeys.defaults.isBlocklist,
-            forKey: SourceSettingsKeys.isBlocklist)
+            SourceSettingsKeys.defaults.filterMode,
+            forKey: SourceSettingsKeys.filterMode)
 
         /// Reset Hotkey settings
         hotkeyStorage.resetToDefaults()

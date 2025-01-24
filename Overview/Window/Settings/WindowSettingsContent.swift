@@ -32,16 +32,20 @@ extension InfoPopoverContent {
         title: "Window Behavior",
         sections: [
             Section(
-                title: "Show in Mission Control",
-                text: "Show previews in Mission Control"
+                title: "Show Windows in Mission Control",
+                text: "Show preview windows in Mission Control"
             ),
             Section(
                 title: "Create Window on Launch",
-                text: "Opens a window at startup if none were restored from a previous session"
+                text: "Opens a preview window at startup if none were restored from a previous session"
             ),
             Section(
-                title: "Close With Preview Source",
+                title: "Close Window with Preview Source",
                 text: "Closes preview window when source window closes"
+            ),
+            Section(
+                title: "Show Windows on All Desktops",
+                text: "Show preview windows on all desktops"
             ),
         ],
         isWarning: false
