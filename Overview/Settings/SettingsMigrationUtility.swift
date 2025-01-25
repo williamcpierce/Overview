@@ -4,83 +4,120 @@
 
  Created by William Pierce on 1/24/25.
 
- Handles migration of user settings when bundle identifier changes, ensuring
- preferences are preserved when users update from Overview to Overview-alpha.
+ Manages migration of user settings between bundle identifiers during app updates,
+ preserving user preferences when transitioning from Overview to Overview-alpha.
 */
 
 import Foundation
 
-/// Manages the migration of user settings between bundle identifiers during app updates
 struct SettingsMigrationUtility {
-    // MARK: - Constants
+    // Constants
+    private static let prefixesToFilter: Set<String> = Set([
+        "NS",
+        "com.apple",
+        "Apple",
+    ])
     private static let oldBundleId = "WilliamPierce.Overview"
-    private static let newBundleId = "WilliamPierce.Overview-alpha"
-    
-    // MARK: - Dependencies
+    private static let settingsToMigrate = Set([
+        PreviewSettingsKeys.captureFrameRate,
+        PreviewSettingsKeys.hideInactiveApplications,
+        PreviewSettingsKeys.hideActiveWindow,
+
+        WindowSettingsKeys.previewOpacity,
+        WindowSettingsKeys.defaultWidth,
+        WindowSettingsKeys.defaultHeight,
+        WindowSettingsKeys.managedByMissionControl,
+        WindowSettingsKeys.shadowEnabled,
+        WindowSettingsKeys.createOnLaunch,
+        WindowSettingsKeys.closeOnCaptureStop,
+
+        OverlaySettingsKeys.focusBorderEnabled,
+        OverlaySettingsKeys.focusBorderWidth,
+        OverlaySettingsKeys.focusBorderColor,
+        OverlaySettingsKeys.sourceTitleEnabled,
+        OverlaySettingsKeys.sourceTitleFontSize,
+        OverlaySettingsKeys.sourceTitleBackgroundOpacity,
+
+        HotkeySettingsKeys.bindings,
+
+        SourceSettingsKeys.appNames,
+        SourceSettingsKeys.filterMode,
+    ])
+
+    // Dependencies
     private static let logger = AppLogger.settings
-    
+
     // MARK: - Public Methods
-    
+
     static func migrateSettingsIfNeeded() {
-        let standardDefaults = UserDefaults.standard
-        
-        if hasExistingSettings(in: standardDefaults) {
-            logger.debug("Settings exist in new location, skipping migration")
+        logger.debug("Checking for settings to migrate")
+
+        let newDefaults = UserDefaults.standard
+        guard !hasExistingSettings(in: newDefaults) else {
+            logger.debug("Migration skipped: settings exist in new location")
             return
         }
-        
-        guard let oldSettings = loadOldSettings() else {
-            logger.debug("No settings found in old location")
+
+        guard let oldDefaults = UserDefaults(suiteName: oldBundleId) else {
+            logger.warning("Migration skipped: cannot access old settings")
             return
         }
-        
-        migrateSettings(oldSettings, to: standardDefaults)
+
+        migrateSettings(from: oldDefaults, to: newDefaults)
     }
-    
+
     // MARK: - Private Methods
-    
+
     private static func hasExistingSettings(in defaults: UserDefaults) -> Bool {
-        defaults.dictionaryRepresentation().keys.contains { key in
-            [
-                "windowOpacity",
-                "frameRate",
-                "focusBorderEnabled",
-                "sourceTitleEnabled",
-                "hotkeyBindings"
-            ].contains(key)
+        Set(defaults.dictionaryRepresentation().keys)
+            .intersection(settingsToMigrate)
+            .isEmpty == false
+    }
+
+    private static func migrateSettings(
+        from oldDefaults: UserDefaults, to newDefaults: UserDefaults
+    ) {
+        guard let oldDomain: [String : Any] = oldDefaults.persistentDomain(forName: oldBundleId),
+            !oldDomain.isEmpty
+        else {
+            logger.debug("Migration skipped: no settings in old location")
+            return
+        }
+
+        let migratedSettings: [String: Any] = filterSystemSettings(from: oldDomain)
+        migrateIndividualSettings(migratedSettings, to: newDefaults)
+
+        logMigrationResults(migratedSettings)
+    }
+
+    private static func filterSystemSettings(from settings: [String: Any]) -> [String: Any] {
+        settings.filter { key, _ in
+            prefixesToFilter.allSatisfy { prefix in
+                !key.hasPrefix(prefix)
+            }
         }
     }
-    
-    private static func loadOldSettings() -> [String: Any]? {
-        guard let prefsDirectory = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true).first else {
-            logger.warning("Could not locate preferences directory")
-            return nil
-        }
-        
-        let oldPrefsPath = "\(prefsDirectory)/Preferences/\(oldBundleId).plist"
-        
-        guard FileManager.default.fileExists(atPath: oldPrefsPath),
-              let oldSettings = NSDictionary(contentsOfFile: oldPrefsPath) as? [String: Any],
-              !oldSettings.isEmpty else {
-            return nil
-        }
-        
-        return oldSettings
-    }
-    
-    private static func migrateSettings(_ settings: [String: Any], to defaults: UserDefaults) {
-        let migratedSettings = settings.filter { key, _ in
-            !key.hasPrefix("NS") &&      // Skip system UI state
-            !key.hasPrefix("com.apple") && // Skip Apple-specific settings
-            !key.hasPrefix("Apple")      // Skip Apple-specific settings
-        }
-        
-        for (key, value) in migratedSettings {
+
+    private static func migrateIndividualSettings(
+        _ settings: [String: Any], to defaults: UserDefaults
+    ) {
+        for (key, value) in settings {
             defaults.set(value, forKey: key)
         }
-        
         defaults.synchronize()
-        logger.info("Successfully migrated \(migratedSettings.count) settings")
-        logger.debug("Migrated settings: \(migratedSettings.keys.joined(separator: ", "))")
+    }
+
+    private static func logMigrationResults(_ settings: [String: Any]) {
+        let migratedKeys = settings.keys
+            .filter { settingsToMigrate.contains($0) }
+            .sorted()
+
+        if migratedKeys.isEmpty {
+            logger.info("No valid settings found to migrate")
+            return
+        }
+
+        logger.info("Migrated \(migratedKeys.count) settings successfully")
+        logger.debug("Settings migrated: \(migratedKeys.joined(separator: ", "))")
     }
 }
