@@ -12,6 +12,10 @@ import SwiftUI
 
 @main
 struct OverviewApp: App {
+    init() {
+        SettingsMigrationUtility.migrateSettingsIfNeeded()
+    }
+
     // App Delevate
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
 
