@@ -19,12 +19,14 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     private let logger = AppLogger.capture
 
     // Private State
-    private let frameProcessingQueue: DispatchQueue = DispatchQueue(
+    private let frameProcessingQueue = DispatchQueue(
         label: "com.example.apple-samplecode.VideoSampleBufferQueue"
     )
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private var streamOutput: CaptureEngineStreamOutput?
     private(set) var stream: SCStream?
+
+    // MARK: - Stream Control
 
     func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
         -> AsyncThrowingStream<CapturedFrame, Error>
@@ -85,7 +87,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
 // MARK: - Stream Output
 
-/// Handles stream output processing and delegate callbacks
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     // Dependencies
     private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
@@ -99,6 +100,8 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         super.init()
         logger.debug("Initialized stream output handler")
     }
+
+    // MARK: - Stream Output Handling
 
     func stream(
         _ stream: SCStream,
@@ -189,6 +192,8 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         )
     }
 
+    // MARK: - Error Handling
+
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         if let scError = error as? SCStreamError {
             if scError.code.isFatal {
@@ -203,16 +208,15 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     }
 }
 
-// MARK: - Captured Frame
+// MARK: - Support Types
 
-/// Represents a single captured frame with associated metadata
 struct CapturedFrame {
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
     let surface: IOSurface?
 
-    static let invalid: CapturedFrame = CapturedFrame(
+    static let invalid = CapturedFrame(
         contentRect: .zero,
         contentScale: 0,
         scaleFactor: 0,
