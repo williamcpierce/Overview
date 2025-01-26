@@ -1,5 +1,5 @@
 /*
- Capture/CaptureManager.swift
+ Capture/CaptureCoordinator.swift
  Overview
 
  Created by William Pierce on 9/15/24.
@@ -13,7 +13,7 @@ import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
-final class CaptureManager: ObservableObject {
+final class CaptureCoordinator: ObservableObject {
     // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
