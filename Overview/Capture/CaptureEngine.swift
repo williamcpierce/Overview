@@ -190,8 +190,16 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        logger.logError(error, context: "Stream stopped unexpectedly")
-        frameStreamContinuation?.finish(throwing: error)
+        if let scError = error as? SCStreamError {
+            if scError.code.isFatal {
+                logger.logError(error, context: "Fatal stream error")
+                frameStreamContinuation?.finish(throwing: error)
+            } else {
+                logger.warning("Recoverable stream error: \(error.localizedDescription)")
+            }
+        } else {
+            logger.warning("Non-stream error: \(error.localizedDescription)")
+        }
     }
 }
 
@@ -212,4 +220,20 @@ struct CapturedFrame {
     )
 
     var size: CGSize { contentRect.size }
+}
+
+extension SCStreamError.Code {
+    var isFatal: Bool {
+        switch self {
+        case .userDeclined, .missingEntitlements, .userStopped,
+            .noCaptureSource, .noWindowList,
+            .failedApplicationConnectionInvalid,
+            .failedApplicationConnectionInterrupted,
+            .failedNoMatchingApplicationContext,
+            .systemStoppedStream, .internalError:
+            return true
+        default:
+            return false
+        }
+    }
 }

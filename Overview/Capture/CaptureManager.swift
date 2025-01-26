@@ -130,14 +130,16 @@ final class CaptureManager: ObservableObject {
                     self.capturedFrame = frame
                 }
             } catch {
-                await self.handleCaptureFailure(error)
+                if let scError = error as? SCStreamError, scError.code.isFatal {
+                    logger.logError(error, context: "Fatal capture error")
+                    await stopCapture()
+                } else {
+                    logger.warning("Recoverable capture error: \(error.localizedDescription)")
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    try? await startCapture()
+                }
             }
         }
-    }
-
-    private func handleCaptureFailure(_ error: Error) async {
-        logger.logError(error, context: "Capture stream error")
-        await stopCapture()
     }
 
     private func setupSubscriptions() {
