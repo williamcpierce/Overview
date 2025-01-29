@@ -27,26 +27,25 @@ struct TitleOverlay: View {
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
     @AppStorage(OverlaySettingsKeys.sourceTitleType)
     private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
-  
 
     var body: some View {
         Group {
             if sourceTitleEnabled && sourceTitleType == TitleType.processTitle,
-                let title = windowTitle {
-                    titleContainer(for: title)
+                let title = windowTitle
+            {
+                titleContainer(for: title)
             }
 
             if sourceTitleEnabled && sourceTitleType == TitleType.appName,
-                let title = applicationTitle {
-                    titleContainer(for: title)
-            } 
-            
-            else if sourceTitleEnabled && sourceTitleType == TitleType.fullTitle {
+                let title = applicationTitle
+            {
+                titleContainer(for: title)
+            } else if sourceTitleEnabled && sourceTitleType == TitleType.fullTitle {
                 let combinedTitle = buildFullTitle(
                     applicationTitle: applicationTitle,
                     windowTitle: windowTitle
                 )
-                
+
                 if let title = combinedTitle, !title.isEmpty {
                     titleContainer(for: title)
                 }
@@ -123,4 +122,3 @@ private struct TitleContainerView: View {
         Color.black.opacity(backgroundOpacity)
     }
 }
-
