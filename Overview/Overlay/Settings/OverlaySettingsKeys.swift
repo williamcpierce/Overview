@@ -27,9 +27,15 @@ enum OverlaySettingsKeys {
         let focusBorderColor: Color = .gray
         let sourceTitleEnabled: Bool = true
         let sourceTitleLocation: Bool = true
-        let sourceTitleType: Bool = true
         let sourceTitleFontSize: Double = 12.0
         let sourceTitleBackgroundOpacity: Double = 0.4
+        let sourceTitleType: String = TitleType.fullTitle
 
     }
+}
+
+enum TitleType {
+    static let processTitle = "processTitle"
+    static let appName = "appName"
+    static let fullTitle = "fullTitle"
 }
