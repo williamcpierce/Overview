@@ -118,8 +118,10 @@ struct OverlaySettingsTab: View {
                     }
                     HStack {
                         Picker("Type", selection: $sourceTitleType) {
-                            Text("Window").tag(true)
-                            Text("App").tag(false)
+                            Text("Full").tag(TitleType.fullTitle)
+                            Text("Window").tag(TitleType.processTitle)
+                            Text("App").tag(TitleType.appName)
+                            
                         }
                         .pickerStyle(.segmented)
 
