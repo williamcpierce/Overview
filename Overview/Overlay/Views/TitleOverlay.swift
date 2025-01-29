@@ -27,14 +27,29 @@ struct TitleOverlay: View {
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
     @AppStorage(OverlaySettingsKeys.sourceTitleType)
     private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+  
 
     var body: some View {
         Group {
-            if sourceTitleEnabled && sourceTitleType, let title = windowTitle {
-                titleContainer(for: title)
-            } else if sourceTitleEnabled, let title = applicationTitle {
-                titleContainer(for: title)
+            if sourceTitleEnabled && sourceTitleType == .processTitle,
+                let title = windowTitle {
+                    titleContainer(for: title)
+            }
 
+            if sourceTitleEnabled && sourceTitleType == .appName,
+                let title = applicationTitle {
+                    titleContainer(for: title)
+            } 
+            
+            else if sourceTitleEnabled && sourceTitleType == .fullTitle {
+                let combinedTitle = buildFullTitle(
+                    applicationTitle: applicationTitle,
+                    windowTitle: windowTitle
+                )
+                
+                if let title = combinedTitle, !title.isEmpty {
+                    titleContainer(for: title)
+                }
             }
         }
     }
@@ -48,6 +63,21 @@ struct TitleOverlay: View {
             backgroundOpacity: sourceTitleBackgroundOpacity,
             sourceTitleLocation: sourceTitleLocation
         )
+    }
+
+    // MARK: - Helper for Combined Title
+
+    private func buildFullTitle(applicationTitle: String?, windowTitle: String?) -> String? {
+        switch (applicationTitle, windowTitle) {
+        case let (.some(app), .some(window)):
+            return "\(app): \(window)"
+        case let (.some(app), .none):
+            return app
+        case let (.none, .some(window)):
+            return window
+        default:
+            return nil
+        }
     }
 }
 
@@ -93,3 +123,4 @@ private struct TitleContainerView: View {
         Color.black.opacity(backgroundOpacity)
     }
 }
+
