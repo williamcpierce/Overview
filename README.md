@@ -22,6 +22,7 @@ For development updates, please join our Discord:
 ## System Requirements
 
 -   macOS Big Sur (13.0) or later
+-   Screen Recording permission (required for window capture)
 
 ## Installation
 
@@ -85,15 +86,9 @@ For development updates, please join our Discord:
 -   Hotkeys
     -   Source window activation
 -   Sources
-    -   Source app filter
-
-If you want preview windows to show in all spaces, follow instructions [here](https://support.apple.com/guide/mac-help/work-in-multiple-spaces-mh14112/mac#:~:text=On%20your%20Mac%2C%20Control%2Dclick,app%20opens%20in%20every%20space.)
+    -   Application filtering (blocklist/allowlist)
 
 ## Known Issues/Limitations
-
--   Performance optimizations in progress
--   Stage Manager compatibility issues (preview distortion)
--   Cannot overlay full-screen applications
 
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
@@ -114,19 +109,43 @@ To support Overview's development:
 -   [GitHub Sponsors](https://github.com/sponsors/williamcpierce) (preferred)
 -   [Patreon](https://www.patreon.com/overview_app)
 
-## Contributing
+## Development
+
+### Technical Requirements
+
+-   Xcode 15.0
+-   Swift 5.0
+-   macOS 13.0+ deployment target
+
+### Key Technologies
+
+-   SwiftUI for user interface
+-   ScreenCaptureKit for window capture
+-   Combine for reactive state management
+-   Carbon API for hotkey management
+
+### Contributing
 
 Contributions to the codebase are welcome, but as the project is in its early stages, please contact me to coordinate before starting any work.
+
+## Privacy & Security
+
+Overview requires Screen Recording permission to function but:
+
+-   Only captures window content for preview purposes
+-   Does not store or transmit window content
 
 ## License
 
 This project is MIT licensed, see the LICENSE file for full details.
 
-## Acknowledgements
+## Acknowledgments
 
 The design, features, and general purpose of Overview are heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview).
 
 Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen.
+
+Parts of this application include code derived from Apple Inc.'s ScreenRecorder sample code, used under the MIT License.
 
 ## Disclaimer
 
