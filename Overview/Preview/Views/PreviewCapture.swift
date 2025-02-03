@@ -12,20 +12,20 @@ import SwiftUI
 
 struct PreviewCapture: View {
     // Dependencies
-    @ObservedObject private var captureManager: CaptureManager
+    @ObservedObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
 
     // Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
     private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
 
-    init(captureManager: CaptureManager) {
-        self.captureManager = captureManager
+    init(captureCoordinator: CaptureCoordinator) {
+        self.captureCoordinator = captureCoordinator
     }
 
     var body: some View {
         Group {
-            if let frame: CapturedFrame = captureManager.capturedFrame {
+            if let frame: CapturedFrame = captureCoordinator.capturedFrame {
                 previewContent(for: frame)
             } else {
                 loadingPlaceholder
@@ -42,8 +42,8 @@ struct PreviewCapture: View {
 
     private func previewContent(for frame: CapturedFrame) -> some View {
         Capture(frame: frame)
-            .overlay(FocusBorderOverlay(isWindowFocused: captureManager.isSourceWindowFocused))
-            .overlay(TitleOverlay(windowTitle: captureManager.sourceWindowTitle, applicationTitle: captureManager.sourceApplicationTitle))
+            .overlay(FocusBorderOverlay(isWindowFocused: captureCoordinator.isSourceWindowFocused))
+            .overlay(TitleOverlay(windowTitle: captureCoordinator.sourceWindowTitle, applicationTitle: captureCoordinator.sourceApplicationTitle))
             .opacity(previewOpacity)
     }
 }

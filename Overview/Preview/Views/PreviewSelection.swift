@@ -13,7 +13,7 @@ import SwiftUI
 
 struct PreviewSelection: View {
     // Dependencies
-    @ObservedObject private var captureManager: CaptureManager
+    @ObservedObject private var captureCoordinator: CaptureCoordinator
     @ObservedObject private var previewManager: PreviewManager
     private let logger = AppLogger.interface
 
@@ -21,10 +21,10 @@ struct PreviewSelection: View {
     @State private var selectedSource: SCWindow?
 
     init(
-        captureManager: CaptureManager,
+        captureCoordinator: CaptureCoordinator,
         previewManager: PreviewManager
     ) {
-        self.captureManager = captureManager
+        self.captureCoordinator = captureCoordinator
         self.previewManager = previewManager
     }
 
@@ -73,7 +73,7 @@ struct PreviewSelection: View {
     private func handleSourceSelection(_ source: SCWindow?) {
         if let source: SCWindow = source {
             previewManager.startSourcePreview(
-                captureManager: captureManager,
+                captureCoordinator: captureCoordinator,
                 source: source
             )
         }

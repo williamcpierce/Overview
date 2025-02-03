@@ -70,6 +70,16 @@ final class WindowManager {
         }
     }
 
+    func closeWindow(_ window: NSWindow) {
+        Task {
+            logger.debug("Initiating window closure")
+            window.orderOut(nil)
+            activeWindows.remove(window)
+            windowDelegates.removeValue(forKey: window)
+            logger.info("Window closed successfully")
+        }
+    }
+
     // MARK: - State Management
 
     func saveWindowStates() {
@@ -149,7 +159,11 @@ final class WindowManager {
     private func setupWindowContent(_ window: NSWindow) {
         let contentView = PreviewView(
             previewManager: previewManager,
-            sourceManager: sourceManager
+            sourceManager: sourceManager,
+            onClose: { [weak self, weak window] in
+                guard let window = window else { return }
+                self?.closeWindow(window)
+            }
         )
         window.contentView = NSHostingView(rootView: contentView)
     }
@@ -163,6 +177,11 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
     init(windowManager: WindowManager) {
         self.windowManager = windowManager
         super.init()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        windowManager?.closeWindow(window)
     }
 }
 
