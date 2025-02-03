@@ -12,7 +12,6 @@ import SwiftUI
 
 struct WindowInteraction: NSViewRepresentable {
     // Dependencies
-    @Environment(\.dismiss) private var dismiss: DismissAction
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
     private let logger = AppLogger.interface
@@ -21,6 +20,7 @@ struct WindowInteraction: NSViewRepresentable {
     let onEditModeToggle: () -> Void
     let onSourceWindowFocus: () -> Void
     let teardownCapture: () async -> Void
+    let onClose: () -> Void
 
     func makeNSView(context: Context) -> NSView {
         let handler = WindowInteractionHandler()
@@ -48,7 +48,7 @@ struct WindowInteraction: NSViewRepresentable {
         handler.onCloseWindow = {
             Task { @MainActor in
                 await teardownCapture()
-                dismiss()
+                onClose()
             }
         }
         handler.menu = createContextMenu(for: handler)

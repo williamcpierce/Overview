@@ -1,10 +1,10 @@
 /*
- Capture/CaptureManager.swift
+ Capture/CaptureCoordinator.swift
  Overview
 
  Created by William Pierce on 9/15/24.
 
- Manages the lifecycle of each screen capture operations coordinating source
+ Manages the lifecycle of each screen capture operation, coordinating source
  window selection, frame processing, and state synchronization.
 */
 
@@ -13,7 +13,7 @@ import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
-final class CaptureManager: ObservableObject {
+final class CaptureCoordinator: ObservableObject {
     // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
@@ -44,10 +44,6 @@ final class CaptureManager: ObservableObject {
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
     private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
 
-    // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
-
     init(
         sourceManager: SourceManager,
         captureEngine: CaptureEngine = CaptureEngine()
@@ -64,7 +60,7 @@ final class CaptureManager: ObservableObject {
         logger.debug("Requesting screen recording permission")
         try await captureServices.requestScreenRecordingPermission()
         hasPermission = true
-        logger.debug("Screen recording permission granted")
+        logger.info("Screen recording permission granted")
     }
 
     func startCapture() async throws {
@@ -119,7 +115,7 @@ final class CaptureManager: ObservableObject {
         sourceManager.focusSource(source)
     }
 
-    // MARK: - Private Methods
+    // MARK: - Frame Processing
 
     private func startFrameProcessing(stream: AsyncThrowingStream<CapturedFrame, Error>) async {
         activeFrameProcessingTask?.cancel()
@@ -130,15 +126,23 @@ final class CaptureManager: ObservableObject {
                     self.capturedFrame = frame
                 }
             } catch {
-                await self.handleCaptureFailure(error)
+                await handleCaptureError(error)
             }
         }
     }
 
-    private func handleCaptureFailure(_ error: Error) async {
-        logger.logError(error, context: "Capture stream error")
-        await stopCapture()
+    private func handleCaptureError(_ error: Error) async {
+        if let scError = error as? SCStreamError, scError.code.isFatal {
+            logger.logError(error, context: "Fatal capture error")
+            await stopCapture()
+        } else {
+            logger.warning("Recoverable capture error: \(error.localizedDescription)")
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await startCapture()
+        }
     }
+
+    // MARK: - State Synchronization
 
     private func setupSubscriptions() {
         sourceManager.$focusedProcessId
@@ -171,21 +175,5 @@ final class CaptureManager: ObservableObject {
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
         sourceWindowTitle = titles[sourceID]
         sourceApplicationTitle = source.owningApplication?.applicationName
-    }
-
-    private func synchronizeStreamConfiguration() async {
-        guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
-
-        do {
-            try await captureServices.updateStreamConfiguration(
-                source: source,
-                stream: captureEngine.stream,
-                frameRate: captureFrameRate
-            )
-            logger.info("Stream configuration updated successfully")
-        } catch {
-            logger.logError(error, context: "Failed to update stream configuration")
-        }
     }
 }
