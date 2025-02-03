@@ -435,7 +435,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.7.1-alpha";
+				MARKETING_VERSION = "0.7.2-alpha-dev.1";
 				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -468,7 +468,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.7.1-alpha";
+				MARKETING_VERSION = "0.7.2-alpha-dev.1";
 				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
