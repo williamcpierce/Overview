@@ -31,7 +31,7 @@ final class PreviewManager: ObservableObject {
         logger.debug("Initializing preview manager")
     }
 
-    func initializeCaptureSystem(_ captureManager: CaptureManager) async {
+    func initializeCaptureSystem(_ captureCoordinator: CaptureCoordinator) async {
         guard !captureSystemInitialized else {
             logger.debug("Capture system already initialized")
             return
@@ -39,7 +39,7 @@ final class PreviewManager: ObservableObject {
 
         do {
             logger.debug("Starting capture system initialization")
-            try await captureManager.requestPermission()
+            try await captureCoordinator.requestPermission()
             await updateAvailableSources()
             logger.debug("Capture system initialization completed")
             captureSystemInitialized = true
@@ -48,18 +48,18 @@ final class PreviewManager: ObservableObject {
         }
     }
 
-    func startSourcePreview(captureManager: CaptureManager, source: SCWindow?) {
+    func startSourcePreview(captureCoordinator: CaptureCoordinator, source: SCWindow?) {
         guard let selectedSource: SCWindow = source else {
             logger.warning("Cannot start preview: no source window selected")
             return
         }
 
         logger.debug("Starting preview for source window: '\(selectedSource.title ?? "Untitled")'")
-        captureManager.selectedSource = selectedSource
+        captureCoordinator.selectedSource = selectedSource
 
         Task {
             do {
-                try await captureManager.startCapture()
+                try await captureCoordinator.startCapture()
                 logger.info("Preview started successfully")
             } catch {
                 logger.logError(error, context: "Preview initialization failed")

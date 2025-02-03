@@ -17,7 +17,7 @@ struct WindowAccessor: NSViewRepresentable {
 
     // Dependencies
     @Binding var aspectRatio: CGFloat
-    @ObservedObject var captureManager: CaptureManager
+    @ObservedObject var captureCoordinator: CaptureCoordinator
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var sourceManager: SourceManager
     private let configService = WindowServices.shared.windowConfiguration
@@ -82,7 +82,7 @@ struct WindowAccessor: NSViewRepresentable {
         aspectService.synchronizeAspectRatio(
             for: window,
             aspectRatio: aspectRatio,
-            isCapturing: captureManager.isCapturing
+            isCapturing: captureCoordinator.isCapturing
         )
 
         configService.updateMissionControl(window, isManaged: managedByMissionControl)
