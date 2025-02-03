@@ -70,9 +70,9 @@ extension AppLogger {
         category: Category,
         location: SourceLocation
     ) {
-//        #if !DEBUG
-//            guard level == .error || level == .fault else { return }
-//        #endif
+        #if !DEBUG
+            guard level == .error || level == .fault else { return }
+        #endif
 
         let formattedMessage: String = "\(location.description) \(message)"
         loggers[category]?.log(level: level.osLogType, "\(formattedMessage)")
