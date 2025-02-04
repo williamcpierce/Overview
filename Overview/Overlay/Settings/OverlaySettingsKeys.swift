@@ -15,9 +15,9 @@ enum OverlaySettingsKeys {
     static let focusBorderColor: String = "focusBorderColor"
     static let sourceTitleEnabled: String = "showWindowTitle"
     static let sourceTitleLocation: String = "windowTitleLocation"
-    static let sourceTitleType: String = "windowTitleType"
     static let sourceTitleFontSize: String = "titleFontSize"
     static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
+    static let sourceTitleType: String = "windowTitleType"
 
     static let defaults = Defaults()
 
@@ -35,7 +35,7 @@ enum OverlaySettingsKeys {
 }
 
 enum TitleType {
-    static let processTitle = "processTitle"
+    static let windowTitle = "windowTitle"
     static let appName = "appName"
     static let fullTitle = "fullTitle"
 }

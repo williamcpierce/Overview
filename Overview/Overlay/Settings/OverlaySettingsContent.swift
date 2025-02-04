@@ -52,7 +52,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Title Type",
                 text:
-                    "Choose whether to display the title of the application, the title of the window, or both."
+                    "Choose whether to display the name of the application, the title of the window, or both."
             ),
         ],
         isWarning: false

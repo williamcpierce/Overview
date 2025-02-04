@@ -30,7 +30,7 @@ struct TitleOverlay: View {
 
     var body: some View {
         Group {
-            if sourceTitleEnabled && sourceTitleType == TitleType.processTitle,
+            if sourceTitleEnabled && sourceTitleType == TitleType.windowTitle,
                 let title = windowTitle
             {
                 titleContainer(for: title)

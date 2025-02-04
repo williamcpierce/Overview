@@ -119,7 +119,7 @@ struct OverlaySettingsTab: View {
                     HStack {
                         Picker("Type", selection: $sourceTitleType) {
                             Text("Full").tag(TitleType.fullTitle)
-                            Text("Window").tag(TitleType.processTitle)
+                            Text("Window").tag(TitleType.windowTitle)
                             Text("App").tag(TitleType.appName)
                             
                         }
