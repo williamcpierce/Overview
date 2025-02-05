@@ -16,14 +16,19 @@ struct SettingsView: View {
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
+    @ObservedObject var updateManager: UpdateManager
     private let logger = AppLogger.settings
 
     init(
-        hotkeyStorage: HotkeyStorage, sourceManager: SourceManager, settingsManager: SettingsManager
+        hotkeyStorage: HotkeyStorage,
+        sourceManager: SourceManager,
+        settingsManager: SettingsManager,
+        updateManager: UpdateManager
     ) {
         self.hotkeyStorage = hotkeyStorage
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
+        self.updateManager = updateManager
     }
 
     var body: some View {
@@ -36,7 +41,6 @@ struct SettingsView: View {
 
             OverlaySettingsTab()
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
-//                .frame(minHeight: 336)
 
             HotkeySettingsTab(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
                 .tabItem { Label("Hotkeys", systemImage: "command.square.fill") }
@@ -45,6 +49,9 @@ struct SettingsView: View {
             SourceSettingsTab(settingsManager: settingsManager)
                 .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
+
+            UpdateSettingsTab(updateManager: updateManager)
+                .tabItem { Label("Updates", systemImage: "arrow.clockwise.circle.fill") }
         }
         .background(.ultraThickMaterial)
         .safeAreaInset(edge: .bottom) {
@@ -55,7 +62,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 324)
+        .frame(width: 384)
         .fixedSize()
 
         // MARK: - Settings Window Level

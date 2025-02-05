@@ -106,6 +106,17 @@ final class SettingsManager: ObservableObject {
             PreviewSettingsKeys.defaults.captureFrameRate,
             forKey: PreviewSettingsKeys.captureFrameRate)
 
+        /// Reset Update settings
+        UserDefaults.standard.set(
+            UpdateSettingsKeys.defaults.automaticUpdateChecks,
+            forKey: UpdateSettingsKeys.automaticUpdateChecks)
+        UserDefaults.standard.set(
+            UpdateSettingsKeys.defaults.automaticDownloads,
+            forKey: UpdateSettingsKeys.automaticDownloads)
+        UserDefaults.standard.set(
+            UpdateSettingsKeys.defaults.stableUpdateURL,
+            forKey: UpdateSettingsKeys.betaUpdates)
+
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
