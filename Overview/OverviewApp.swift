@@ -79,7 +79,8 @@ struct OverviewApp: App {
             SettingsView(
                 hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager,
-                settingsManager: appDelegate.settingsManager
+                settingsManager: appDelegate.settingsManager,
+                updateManager: appDelegate.updateManager
             )
         }
         .commands {
@@ -123,13 +124,12 @@ struct OverviewApp: App {
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
-
-    // Public Properties
     let hotkeyStorage = HotkeyStorage()
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
+    let updateManager: UpdateManager
     var windowManager: WindowManager!
 
     override init() {
@@ -137,6 +137,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         sourceManager = SourceManager(settingsManager: settingsManager)
         previewManager = PreviewManager(sourceManager: sourceManager)
         hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
+        updateManager = UpdateManager()
 
         super.init()
 
