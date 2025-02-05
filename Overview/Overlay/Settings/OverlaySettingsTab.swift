@@ -30,8 +30,8 @@ struct OverlaySettingsTab: View {
         .sourceTitleBackgroundOpacity
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
-    @AppStorage(OverlaySettingsKeys.previewSourceTitleType)
-    private var previewSourceTitleType = OverlaySettingsKeys.defaults.previewSourceTitleType
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var previewSourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Form {
@@ -120,7 +120,7 @@ struct OverlaySettingsTab: View {
                         Picker("Type", selection: $previewSourceTitleType) {
                             Text("Window Title").tag(TitleType.windowTitle)
                             Text("Application Name").tag(TitleType.appName)
-                            Text("Full Name").tag(TitleType.fullTitle)
+                            Text("Both").tag(TitleType.fullTitle)
                             
                         }
                         .pickerStyle(.menu)

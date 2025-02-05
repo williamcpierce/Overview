@@ -92,8 +92,8 @@ final class SettingsManager: ObservableObject {
             OverlaySettingsKeys.defaults.sourceTitleLocation,
             forKey: OverlaySettingsKeys.sourceTitleLocation)
         UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.previewSourceTitleType,
-            forKey: OverlaySettingsKeys.previewSourceTitleType)
+            OverlaySettingsKeys.defaults.sourceTitleType,
+            forKey: OverlaySettingsKeys.sourceTitleType)
 
         /// Reset Preview settings
         UserDefaults.standard.set(

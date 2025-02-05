@@ -25,8 +25,8 @@ struct TitleOverlay: View {
         .sourceTitleBackgroundOpacity
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
-    @AppStorage(OverlaySettingsKeys.previewSourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.previewSourceTitleType
+    @AppStorage(OverlaySettingsKeys.sourceTitleType)
+    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Group {

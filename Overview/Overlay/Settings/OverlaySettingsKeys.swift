@@ -17,7 +17,7 @@ enum OverlaySettingsKeys {
     static let sourceTitleLocation: String = "windowTitleLocation"
     static let sourceTitleFontSize: String = "titleFontSize"
     static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
-    static let previewSourceTitleType: String = "windowTitleType"
+    static let sourceTitleType: String = "sourceTitleType"
 
     static let defaults = Defaults()
 
@@ -29,7 +29,7 @@ enum OverlaySettingsKeys {
         let sourceTitleLocation: Bool = true
         let sourceTitleFontSize: Double = 12.0
         let sourceTitleBackgroundOpacity: Double = 0.4
-        let previewSourceTitleType: String = TitleType.windowTitle
+        let sourceTitleType: String = TitleType.windowTitle
 
     }
 }
