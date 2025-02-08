@@ -8,11 +8,13 @@
 */
 
 import SwiftUI
+import Sparkle
 
 @MainActor
 final class SettingsManager: ObservableObject {
     // Dependencies
     private let hotkeyStorage: HotkeyStorage
+    private let updater: SPUUpdater
     private let logger = AppLogger.settings
 
     // Published State
@@ -22,8 +24,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(hotkeyStorage: HotkeyStorage) {
+    init(hotkeyStorage: HotkeyStorage, updater: SPUUpdater) {
         self.hotkeyStorage = hotkeyStorage
+        self.updater = updater
 
         /// Initialize filter app names from UserDefaults
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
@@ -107,15 +110,8 @@ final class SettingsManager: ObservableObject {
             forKey: PreviewSettingsKeys.captureFrameRate)
 
         /// Reset Update settings
-        UserDefaults.standard.set(
-            UpdateSettingsKeys.defaults.automaticUpdateChecks,
-            forKey: UpdateSettingsKeys.automaticUpdateChecks)
-        UserDefaults.standard.set(
-            UpdateSettingsKeys.defaults.automaticDownloads,
-            forKey: UpdateSettingsKeys.automaticDownloads)
-        UserDefaults.standard.set(
-            UpdateSettingsKeys.defaults.stableUpdateURL,
-            forKey: UpdateSettingsKeys.betaUpdates)
+        updater.automaticallyChecksForUpdates = true
+        updater.automaticallyDownloadsUpdates = false
 
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames

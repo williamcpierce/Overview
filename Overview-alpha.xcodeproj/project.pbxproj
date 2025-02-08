@@ -35,9 +35,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Settings/UpdateSettingsContent.swift,
-				Settings/UpdateSettingsKeys.swift,
 				Settings/UpdateSettingsTab.swift,
-				UpdateManager.swift,
+				UpdateViewModel.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
 		};

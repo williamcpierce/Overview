@@ -1,30 +1,27 @@
 /*
  Update/Settings/UpdateSettingsTab.swift
  Overview
-
- Created by William Pierce on 2/4/25.
 */
 
 import SwiftUI
+import Sparkle
 
 struct UpdateSettingsTab: View {
-    // Dependencies
-    @ObservedObject var updateManager: UpdateManager
+    private let updater: SPUUpdater
     private let logger = AppLogger.settings
-
-    // Private State
+    
+    @State private var automaticallyChecksForUpdates: Bool
+    @State private var automaticallyDownloadsUpdates: Bool
     @State private var showingUpdateInfo = false
-
-    // Update Settings
-    @AppStorage(UpdateSettingsKeys.automaticUpdateChecks)
-    private var automaticUpdateChecks = UpdateSettingsKeys.defaults.automaticUpdateChecks
-
-    @AppStorage(UpdateSettingsKeys.automaticDownloads)
-    private var automaticDownloads = UpdateSettingsKeys.defaults.automaticDownloads
-
-    @AppStorage(UpdateSettingsKeys.betaUpdates)
-    private var betaUpdates = UpdateSettingsKeys.defaults.betaUpdates
-
+    @ObservedObject private var updateViewModel: UpdateViewModel
+    
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        self.automaticallyChecksForUpdates = updater.automaticallyChecksForUpdates
+        self.automaticallyDownloadsUpdates = updater.automaticallyDownloadsUpdates
+        self._updateViewModel = ObservedObject(wrappedValue: UpdateViewModel(updater: updater))
+    }
+    
     var body: some View {
         Form {
             Section {
@@ -38,42 +35,29 @@ struct UpdateSettingsTab: View {
                     )
                 }
                 .padding(.bottom, 4)
-
+                
                 VStack {
-                    Toggle("Automatically check for updates", isOn: $automaticUpdateChecks)
-
-                    if automaticUpdateChecks {
-                        Toggle(
-                            "Automatically download and install updates", isOn: $automaticDownloads)
-                    }
-
-                    Toggle("Include beta releases", isOn: $betaUpdates)
-                        .onChange(of: betaUpdates) { _ in
-                            updateFeedURL()
+                    Toggle("Automatically check for updates", isOn: $automaticallyChecksForUpdates)
+                        .onChange(of: automaticallyChecksForUpdates) { newValue in
+                            updater.automaticallyChecksForUpdates = newValue
+                        }
+                    
+                    Toggle("Automatically download updates", isOn: $automaticallyDownloadsUpdates)
+                        .disabled(!automaticallyChecksForUpdates)
+                        .onChange(of: automaticallyDownloadsUpdates) { newValue in
+                            updater.automaticallyDownloadsUpdates = newValue
                         }
                 }
-
+                
                 HStack {
                     Spacer()
                     Button("Check Now") {
-                        updateManager.checkForUpdates()
+                        updateViewModel.checkForUpdates()
                     }
-                    .disabled(!updateManager.canCheckForUpdates)
+                    .disabled(!updateViewModel.canCheckForUpdates)
                 }
             }
         }
         .formStyle(.grouped)
-    }
-
-    // MARK: - Private Methods
-
-    private func updateFeedURL() {
-        let feedURL =
-            betaUpdates
-            ? UpdateSettingsKeys.defaults.betaUpdateURL
-            : UpdateSettingsKeys.defaults.stableUpdateURL
-
-        UserDefaults.standard.set(feedURL, forKey: UpdateSettingsKeys.betaUpdates)
-        logger.info("Updated feed URL: \(feedURL)")
     }
 }

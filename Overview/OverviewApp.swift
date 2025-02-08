@@ -9,6 +9,7 @@
 */
 
 import SwiftUI
+import Sparkle
 
 @main
 struct OverviewApp: App {
@@ -80,7 +81,7 @@ struct OverviewApp: App {
                 hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
-                updateManager: appDelegate.updateManager
+                updater: appDelegate.updaterController.updater
             )
         }
         .commands {
@@ -129,22 +130,31 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
-    let updateManager: UpdateManager
+    let updaterController: SPUStandardUpdaterController
     var windowManager: WindowManager!
 
     override init() {
-        settingsManager = SettingsManager(hotkeyStorage: hotkeyStorage)
-        sourceManager = SourceManager(settingsManager: settingsManager)
-        previewManager = PreviewManager(sourceManager: sourceManager)
-        hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
-        updateManager = UpdateManager()
+            // Create updater controller first since we'll need it for settings
+            updaterController = SPUStandardUpdaterController(
+                startingUpdater: true,
+                updaterDelegate: nil,
+                userDriverDelegate: nil
+            )
+            
+            settingsManager = SettingsManager(
+                hotkeyStorage: hotkeyStorage,
+                updater: updaterController.updater
+            )
+            sourceManager = SourceManager(settingsManager: settingsManager)
+            previewManager = PreviewManager(sourceManager: sourceManager)
+            hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
 
-        super.init()
+            super.init()
 
-        windowManager = WindowManager(
-            previewManager: previewManager,
-            sourceManager: sourceManager
-        )
+            windowManager = WindowManager(
+                previewManager: previewManager,
+                sourceManager: sourceManager
+            )
 
         NotificationCenter.default.addObserver(
             self,
