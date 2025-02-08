@@ -150,7 +150,3 @@ Parts of this application include code derived from Apple Inc.'s ScreenRecorder 
 ## Disclaimer
 
 Overview is alpha software and is not intended for production use. Use of this software is at your own risk. The developers are not responsible for any data loss or system instability that may occur as a result of using Overview.
-
-## Contact
-
-For all inquiries, email will@williampierce.io
