@@ -4,20 +4,20 @@ Overview is a macOS app that creates floating live previews of other application
 
 ![Example Screenshot](https://downloads.williampierce.io/Banner.jpg)
 
-## Alpha Release
+## Beta Release
 
-**Note: Overview is alpha software. It is not yet feature-complete and may contain bugs or unexpected behavior. Use at your own risk.**
+**Note: Overview is beta software. It may contain bugs or unexpected behavior. Use at your own risk.**
 
 For development updates, please join our Discord:
 
-[![Discord Banner](https://discord.com/api/guilds/1295309622445473865/widget.png?style=banner2)](https://discord.gg/ZFXK5txaVh)
+[![Discord Banner](https://discord.com/api/guilds/1295309622445473865/widget.png?style=banner2)](https://discord.gg/ekKMnejQbA)
 
 ## Features
 
--   Live window previews
--   Quick switching to source applications via preview clicks or customizable hotkeys
--   Adjustable preview window appearance and behavior
--   Overlays for window title and focus status
+-   Live Window Previews: Real-time window previews with configurable frame rates and automatic hiding
+-   Quick App Switching: Switch to source applications through preview clicks or hotkey bindings
+-   Preview Customization: Customize preview window opacity, shadows, dimensions, and behavior
+-   Optional Overlays: Overlays show source app names, window titles, and focus status at a glance
 
 ## System Requirements
 
@@ -26,18 +26,16 @@ For development updates, please join our Discord:
 
 ## Installation
 
-1. Download the latest version from GitHub [Releases](https://github.com/williamcpierce/Overview/releases).
+1. Download the latest version from the Overview website [williampierce.io/overview/](https://williampierce.io/overview/).
 2. Mount the disk image and drag Overview into your Applications folder.
 
 ### On First Launch
 
--   The app package is _unsigned_ at this stage of development. Follow instructions [here](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) for your macOS version to run the application.
-    -   If you aren't comfortable running unsigned apps, you can also clone this project and build it yourself in Xcode 16.
-    -   If you get a "Malware Blocked" error, this is due to a certificate issue documented in https://github.com/williamcpierce/Overview/pull/227. This affects all disk images downloaded before 2025-01-19. To resolve this issue, delete old disk images and download the latest release from GitHub [Releases](https://github.com/williamcpierce/Overview/releases).
--   Grant screen recording permission when prompted
-    -   Click "Open System Settings" in the permission dialog
-    -   Enable Overview under Privacy & Security > Screen Recording
-    -   Relaunch Overview
+Grant screen recording permission when prompted
+
+-   Click "Open System Settings" in the permission dialog
+-   Enable Overview under Privacy & Security > Screen Recording
+-   Relaunch Overview
 
 ## Usage
 
@@ -55,7 +53,7 @@ For development updates, please join our Discord:
     -   Toggle Edit Mode for repositioning/resizing
     -   Close preview window
 -   ⌘N: Create new preview window
--   Settings (⌘,): Configure preview appearance, behavior, hotkeys, and more
+-   ⌘,: Open settings
 
 ### Settings
 
@@ -82,11 +80,14 @@ For development updates, please join our Discord:
         -   Font size
         -   Opacity
         -   Location
-        -   Type (window or application)
+        -   Type (window, application, both)
 -   Hotkeys
     -   Source window activation
 -   Sources
     -   Application filtering (blocklist/allowlist)
+-   Updates
+    -   Automatic update checking
+    -   Automatic update downloads
 
 ## Known Issues/Limitations
 

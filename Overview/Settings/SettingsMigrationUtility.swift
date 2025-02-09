@@ -5,7 +5,7 @@
  Created by William Pierce on 1/24/25.
 
  Manages migration of user settings between bundle identifiers during app updates,
- preserving user preferences when transitioning from Overview to Overview-alpha.
+ preserving user preferences when transitioning from Overview and Overview-alpha.
 */
 
 import Foundation
@@ -17,7 +17,10 @@ struct SettingsMigrationUtility {
         "com.apple",
         "Apple",
     ])
-    private static let oldBundleId = "WilliamPierce.Overview"
+    private static let oldBundleIds: [String] = [
+        "WilliamPierce.Overview-alpha",
+        "WilliamPierce.Overview",
+    ]
     private static let settingsToMigrate = Set([
         PreviewSettingsKeys.captureFrameRate,
         PreviewSettingsKeys.hideInactiveApplications,
@@ -37,6 +40,8 @@ struct SettingsMigrationUtility {
         OverlaySettingsKeys.sourceTitleEnabled,
         OverlaySettingsKeys.sourceTitleFontSize,
         OverlaySettingsKeys.sourceTitleBackgroundOpacity,
+        OverlaySettingsKeys.sourceTitleLocation,
+        OverlaySettingsKeys.sourceTitleType,
 
         HotkeySettingsKeys.bindings,
 
@@ -58,12 +63,12 @@ struct SettingsMigrationUtility {
             return
         }
 
-        guard let oldDefaults = UserDefaults(suiteName: oldBundleId) else {
-            logger.warning("Migration skipped: cannot access old settings")
-            return
+        // Try each old bundle ID in order until we find one with settings
+        for bundleId: String in oldBundleIds {
+            if tryMigrateSettings(from: bundleId, to: newDefaults) {
+                break
+            }
         }
-
-        migrateSettings(from: oldDefaults, to: newDefaults)
     }
 
     // MARK: - Private Methods
@@ -74,20 +79,26 @@ struct SettingsMigrationUtility {
             .isEmpty == false
     }
 
-    private static func migrateSettings(
-        from oldDefaults: UserDefaults, to newDefaults: UserDefaults
-    ) {
-        guard let oldDomain: [String : Any] = oldDefaults.persistentDomain(forName: oldBundleId),
+    private static func tryMigrateSettings(from bundleId: String, to newDefaults: UserDefaults)
+        -> Bool
+    {
+        guard let oldDefaults = UserDefaults(suiteName: bundleId) else {
+            logger.warning("Cannot access old settings for bundle: \(bundleId)")
+            return false
+        }
+
+        guard let oldDomain: [String: Any] = oldDefaults.persistentDomain(forName: bundleId),
             !oldDomain.isEmpty
         else {
-            logger.debug("Migration skipped: no settings in old location")
-            return
+            logger.debug("No settings found in bundle: \(bundleId)")
+            return false
         }
 
         let migratedSettings: [String: Any] = filterSystemSettings(from: oldDomain)
         migrateIndividualSettings(migratedSettings, to: newDefaults)
 
-        logMigrationResults(migratedSettings)
+        logMigrationResults(migratedSettings, from: bundleId)
+        return true
     }
 
     private static func filterSystemSettings(from settings: [String: Any]) -> [String: Any] {
@@ -107,17 +118,17 @@ struct SettingsMigrationUtility {
         defaults.synchronize()
     }
 
-    private static func logMigrationResults(_ settings: [String: Any]) {
+    private static func logMigrationResults(_ settings: [String: Any], from bundleId: String) {
         let migratedKeys = settings.keys
             .filter { settingsToMigrate.contains($0) }
             .sorted()
 
         if migratedKeys.isEmpty {
-            logger.info("No valid settings found to migrate")
+            logger.info("No valid settings found to migrate from \(bundleId)")
             return
         }
 
-        logger.info("Migrated \(migratedKeys.count) settings successfully")
+        logger.info("Migrated \(migratedKeys.count) settings from \(bundleId)")
         logger.debug("Settings migrated: \(migratedKeys.joined(separator: ", "))")
     }
 }

@@ -7,12 +7,14 @@
  Manages centralized settings operations and reset functionality across the application.
 */
 
+import Sparkle
 import SwiftUI
 
 @MainActor
 final class SettingsManager: ObservableObject {
     // Dependencies
     private let hotkeyStorage: HotkeyStorage
+    private let updater: SPUUpdater
     private let logger = AppLogger.settings
 
     // Published State
@@ -22,8 +24,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(hotkeyStorage: HotkeyStorage) {
+    init(hotkeyStorage: HotkeyStorage, updater: SPUUpdater) {
         self.hotkeyStorage = hotkeyStorage
+        self.updater = updater
 
         /// Initialize filter app names from UserDefaults
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
@@ -105,6 +108,10 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             PreviewSettingsKeys.defaults.captureFrameRate,
             forKey: PreviewSettingsKeys.captureFrameRate)
+
+        /// Reset Update settings
+        updater.automaticallyChecksForUpdates = true
+        updater.automaticallyDownloadsUpdates = false
 
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames

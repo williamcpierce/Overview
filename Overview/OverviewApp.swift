@@ -8,6 +8,7 @@
  through the app delegate and window service.
 */
 
+import Sparkle
 import SwiftUI
 
 @main
@@ -79,7 +80,8 @@ struct OverviewApp: App {
             SettingsView(
                 hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager,
-                settingsManager: appDelegate.settingsManager
+                settingsManager: appDelegate.settingsManager,
+                updater: appDelegate.updaterController.updater
             )
         }
         .commands {
@@ -123,17 +125,26 @@ struct OverviewApp: App {
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
-
-    // Public Properties
     let hotkeyStorage = HotkeyStorage()
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
+    let updaterController: SPUStandardUpdaterController
     var windowManager: WindowManager!
 
     override init() {
-        settingsManager = SettingsManager(hotkeyStorage: hotkeyStorage)
+        // Create updater controller first since we'll need it for settings
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+
+        settingsManager = SettingsManager(
+            hotkeyStorage: hotkeyStorage,
+            updater: updaterController.updater
+        )
         sourceManager = SourceManager(settingsManager: settingsManager)
         previewManager = PreviewManager(sourceManager: sourceManager)
         hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
