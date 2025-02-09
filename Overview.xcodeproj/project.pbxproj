@@ -12,13 +12,14 @@
 		C876958D2CBA082F00FBCA6C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */; };
 		C876959F2CBA087400FBCA6C /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695982CBA087400FBCA6C /* LICENSE.md */; };
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
+		C88D5D792D5871B000F0990C /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C88D5D782D5871B000F0990C /* Sparkle */; };
 		C8A4D35C2D50975E0003B5C9 /* FUNDING.md in Resources */ = {isa = PBXBuildFile; fileRef = C8A4D35B2D50975E0003B5C9 /* FUNDING.md */; };
 		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		C871615F2D2A18D20098E42C /* STYLE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = STYLE.md; sourceTree = "<group>"; };
-		C87695822CBA082D00FBCA6C /* Overview-alpha.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Overview-alpha.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C87695822CBA082D00FBCA6C /* Overview-beta.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Overview-beta.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C87695892CBA082F00FBCA6C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C876958E2CBA082F00FBCA6C /* Overview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Overview.entitlements; sourceTree = "<group>"; };
@@ -35,7 +36,7 @@
 			membershipExceptions = (
 				AppLogger.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -50,7 +51,7 @@
 				Settings/HotkeySettingsTab.swift,
 				Views/HotkeyBindingSheet.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -65,7 +66,16 @@
 				SourceServices.swift,
 				Views/SourceListView.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
+		};
+		C88D5D6F2D58715700F0990C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Settings/UpdateSettingsContent.swift,
+				Settings/UpdateSettingsTab.swift,
+				UpdateViewModel.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -79,7 +89,7 @@
 				SettingsMigrationUtility.swift,
 				SettingsView.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -92,7 +102,7 @@
 				Views/PreviewCapture.swift,
 				Views/PreviewSelection.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -104,7 +114,7 @@
 				Services/CaptureAvailabilityService.swift,
 				Services/CaptureConfigurationService.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -123,7 +133,7 @@
 				WindowServices.swift,
 				WindowStorage.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 		C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -136,7 +146,7 @@
 				Views/FocusBorderOverlay.swift,
 				Views/TitleOverlay.swift,
 			);
-			target = C87695812CBA082D00FBCA6C /* Overview-alpha */;
+			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -144,6 +154,7 @@
 		C828A4032D0A948D0023E7F1 /* Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C828A4062D0A94A20023E7F1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Logging; sourceTree = "<group>"; };
 		C8323A2B2D081388001B91A6 /* Hotkey */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Hotkey; sourceTree = "<group>"; };
 		C868D7E22D082CCB00EF1F4C /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Source; sourceTree = "<group>"; };
+		C88D5D6C2D58714B00F0990C /* Update */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C88D5D6F2D58715700F0990C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Update; sourceTree = "<group>"; };
 		C8A837D72D0405B7002EC00B /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		C8A8387E2D0421ED002EC00B /* Preview */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Preview; sourceTree = "<group>"; };
 		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
@@ -156,6 +167,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C88D5D792D5871B000F0990C /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,7 +189,7 @@
 		C87695832CBA082D00FBCA6C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C87695822CBA082D00FBCA6C /* Overview-alpha.app */,
+				C87695822CBA082D00FBCA6C /* Overview-beta.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -193,6 +205,7 @@
 				C868D7E22D082CCB00EF1F4C /* Source */,
 				C8A838892D0421EF002EC00B /* Capture */,
 				C8A837D72D0405B7002EC00B /* Settings */,
+				C88D5D6C2D58714B00F0990C /* Update */,
 				C828A4032D0A948D0023E7F1 /* Logging */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
@@ -213,9 +226,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C87695812CBA082D00FBCA6C /* Overview-alpha */ = {
+		C87695812CBA082D00FBCA6C /* Overview-beta */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-alpha" */;
+			buildConfigurationList = C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-beta" */;
 			buildPhases = (
 				C876957E2CBA082D00FBCA6C /* Sources */,
 				C876957F2CBA082D00FBCA6C /* Frameworks */,
@@ -225,9 +238,12 @@
 			);
 			dependencies = (
 			);
-			name = "Overview-alpha";
+			name = "Overview-beta";
+			packageProductDependencies = (
+				C88D5D782D5871B000F0990C /* Sparkle */,
+			);
 			productName = Overview;
-			productReference = C87695822CBA082D00FBCA6C /* Overview-alpha.app */;
+			productReference = C87695822CBA082D00FBCA6C /* Overview-beta.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -245,7 +261,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview-alpha" */;
+			buildConfigurationList = C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview" */;
 			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -254,11 +270,14 @@
 				Base,
 			);
 			mainGroup = C87695792CBA082D00FBCA6C;
+			packageReferences = (
+				C88D5D772D5871B000F0990C /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = C87695832CBA082D00FBCA6C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C87695812CBA082D00FBCA6C /* Overview-alpha */,
+				C87695812CBA082D00FBCA6C /* Overview-beta */,
 			);
 		};
 /* End PBXProject section */
@@ -348,7 +367,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = "Overview-alpha";
+				PRODUCT_NAME = "Overview-beta";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -405,7 +424,7 @@
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				PRODUCT_NAME = "Overview-alpha";
+				PRODUCT_NAME = "Overview-beta";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
@@ -420,14 +439,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.9.9;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Overview/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Overview-alpha";
+				INFOPLIST_KEY_CFBundleDisplayName = "Overview-beta";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -435,8 +454,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.7.1-alpha";
-				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
+				MARKETING_VERSION = "v1.0.0-beta-rc.1";
+				PRODUCT_BUNDLE_IDENTIFIER = "io.williampierce.Overview-beta";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -453,14 +472,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.9.9;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Overview/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Overview-alpha";
+				INFOPLIST_KEY_CFBundleDisplayName = "Overview-beta";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -468,8 +487,8 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "0.7.1-alpha";
-				PRODUCT_BUNDLE_IDENTIFIER = "WilliamPierce.Overview-alpha";
+				MARKETING_VERSION = "v1.0.0-beta-rc.1";
+				PRODUCT_BUNDLE_IDENTIFIER = "io.williampierce.Overview-beta";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -480,7 +499,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview-alpha" */ = {
+		C876957D2CBA082D00FBCA6C /* Build configuration list for PBXProject "Overview" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C876958F2CBA082F00FBCA6C /* Debug */,
@@ -489,7 +508,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-alpha" */ = {
+		C87695912CBA082F00FBCA6C /* Build configuration list for PBXNativeTarget "Overview-beta" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C87695922CBA082F00FBCA6C /* Debug */,
@@ -499,6 +518,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C88D5D772D5871B000F0990C /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C88D5D782D5871B000F0990C /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C88D5D772D5871B000F0990C /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C876957A2CBA082D00FBCA6C /* Project object */;
 }

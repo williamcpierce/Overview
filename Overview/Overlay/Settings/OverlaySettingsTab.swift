@@ -31,7 +31,7 @@ struct OverlaySettingsTab: View {
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
     @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+    private var previewSourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Form {
@@ -117,11 +117,13 @@ struct OverlaySettingsTab: View {
 
                     }
                     HStack {
-                        Picker("Type", selection: $sourceTitleType) {
-                            Text("Window").tag(true)
-                            Text("App").tag(false)
+                        Picker("Type", selection: $previewSourceTitleType) {
+                            Text("Window Title").tag(TitleType.windowTitle)
+                            Text("Application Name").tag(TitleType.appName)
+                            Text("Both").tag(TitleType.fullTitle)
+                            
                         }
-                        .pickerStyle(.segmented)
+                        .pickerStyle(.menu)
 
                     }
                 }
