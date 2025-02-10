@@ -19,19 +19,14 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
-    let updaterController: SPUStandardUpdaterController
+    let updateManager: UpdateManager
     var windowManager: WindowManager!
 
     override init() {
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
-        )
-
+        updateManager = UpdateManager()
         settingsManager = SettingsManager(
             hotkeyStorage: hotkeyStorage,
-            updater: updaterController.updater
+            updateManager: updateManager
         )
         sourceManager = SourceManager(settingsManager: settingsManager)
         previewManager = PreviewManager(sourceManager: sourceManager)

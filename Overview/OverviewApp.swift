@@ -50,7 +50,7 @@ struct OverviewApp: App {
                 hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
-                updater: appDelegate.updaterController.updater
+                updateManager: appDelegate.updateManager
             )
         }
         .commands {

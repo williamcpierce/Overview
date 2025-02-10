@@ -14,7 +14,7 @@ import SwiftUI
 final class SettingsManager: ObservableObject {
     // Dependencies
     private let hotkeyStorage: HotkeyStorage
-    private let updater: SPUUpdater
+    private let updateManager: UpdateManager
     private let logger = AppLogger.settings
 
     // Published State
@@ -24,9 +24,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(hotkeyStorage: HotkeyStorage, updater: SPUUpdater) {
+    init(hotkeyStorage: HotkeyStorage, updateManager: UpdateManager) {
         self.hotkeyStorage = hotkeyStorage
-        self.updater = updater
+        self.updateManager = updateManager
 
         /// Initialize filter app names from UserDefaults
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
@@ -110,8 +110,8 @@ final class SettingsManager: ObservableObject {
             forKey: PreviewSettingsKeys.captureFrameRate)
 
         /// Reset Update settings
-        updater.automaticallyChecksForUpdates = true
-        updater.automaticallyDownloadsUpdates = false
+        updateManager.updater.automaticallyChecksForUpdates = true
+        updateManager.updater.automaticallyDownloadsUpdates = false
 
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
