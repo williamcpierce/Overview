@@ -51,8 +51,12 @@ struct WindowInteraction: NSViewRepresentable {
                 onClose()
             }
         }
+        handler.onStopCapture = {
+            Task { @MainActor in
+                await teardownCapture()
+            }
+        }
         handler.menu = createContextMenu(for: handler)
-
         logger.debug("Handler configured with initial state")
     }
 
@@ -61,6 +65,7 @@ struct WindowInteraction: NSViewRepresentable {
         handler.editModeEnabled = editModeEnabled
         handler.isSelectionViewVisible = isSelectionViewVisible
         handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
+        handler.stopCaptureMenuItem?.isEnabled = !isSelectionViewVisible
 
         if previousEditMode != editModeEnabled {
             logger.debug("Edit mode state updated: \(editModeEnabled)")
@@ -70,12 +75,15 @@ struct WindowInteraction: NSViewRepresentable {
     private func createContextMenu(for handler: WindowInteractionHandler) -> NSMenu {
         let menu = NSMenu()
         let editModeItem: NSMenuItem = createEditModeMenuItem(for: handler)
+        let stopCaptureItem: NSMenuItem = createStopCaptureMenuItem(for: handler)
 
         menu.addItem(editModeItem)
+        menu.addItem(stopCaptureItem)
         menu.addItem(NSMenuItem.separator())
         menu.addItem(createCloseWindowMenuItem(for: handler))
 
         handler.editModeMenuItem = editModeItem
+        handler.stopCaptureMenuItem = stopCaptureItem
         return menu
     }
 
@@ -83,6 +91,16 @@ struct WindowInteraction: NSViewRepresentable {
         let item = NSMenuItem(
             title: "Edit Mode",
             action: #selector(WindowInteractionHandler.toggleEditMode),
+            keyEquivalent: ""
+        )
+        item.target = handler
+        return item
+    }
+
+    private func createStopCaptureMenuItem(for handler: WindowInteractionHandler) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: "Stop Capture",
+            action: #selector(WindowInteractionHandler.stopCapture),
             keyEquivalent: ""
         )
         item.target = handler
@@ -103,13 +121,20 @@ struct WindowInteraction: NSViewRepresentable {
 // MARK: - Interaction Handler
 
 private final class WindowInteractionHandler: NSView {
+    // Dependencies
     private let logger = AppLogger.interface
+
+    // Private State
     var editModeEnabled: Bool = false
     var isSelectionViewVisible: Bool = false
+    weak var editModeMenuItem: NSMenuItem?
+    weak var stopCaptureMenuItem: NSMenuItem?
+
+    // Actions
     var onEditModeToggle: (() -> Void)?
     var onSourceWindowFocus: (() -> Void)?
     var onCloseWindow: (() -> Void)?
-    weak var editModeMenuItem: NSMenuItem?
+    var onStopCapture: (() -> Void)?
 
     // MARK: - Mouse Event Handling
 
@@ -140,6 +165,11 @@ private final class WindowInteractionHandler: NSView {
     @objc func toggleEditMode() {
         logger.info("Edit mode toggled via context menu")
         onEditModeToggle?()
+    }
+
+    @objc func stopCapture() {
+        logger.info("Stop capture requested via context menu")
+        onStopCapture?()
     }
 
     @objc func closeWindow() {
