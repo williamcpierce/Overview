@@ -13,10 +13,6 @@ import SwiftUI
 
 @main
 struct OverviewApp: App {
-    init() {
-        SettingsMigrationUtility.migrateSettingsIfNeeded()
-    }
-
     // App Delevate
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
 
@@ -116,7 +112,6 @@ struct OverviewApp: App {
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
     }
-
 }
 
 // MARK: - Application Delegate
@@ -156,6 +151,12 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             sourceManager: sourceManager
         )
 
+        // Configure setup coordinator with required dependencies
+        SetupCoordinator.shared.setDependencies(
+            windowManager: windowManager,
+            previewManager: previewManager
+        )
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(applicationWillTerminate),
@@ -168,7 +169,15 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         Task {
-            windowManager.restoreWindowStates()
+            // Only restore windows for existing users
+            if !SetupCoordinator.shared.shouldShowSetup {
+                windowManager.restoreWindowStates()
+            }
+            // Run the setup coordinator first
+            await SetupCoordinator.shared.startSetupIfNeeded()
+            SettingsMigrationUtility.migrateSettingsIfNeeded()
+
+            logger.info("Application initialization completed")
         }
     }
 
