@@ -109,6 +109,9 @@ struct OverviewApp: App {
     }
 
     private func openSettings() {
+        // Switch to regular activation policy to show dock icon
+        NSApp.setActivationPolicy(.regular)
+        
         NSApp.activate(ignoringOtherApps: true)
         if #available(macOS 14.0, *), let action = openSettingsAction {
             action()
@@ -167,9 +170,33 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(settingsWindowWillClose),
+            name: NSWindow.willCloseNotification,
+            object: nil
+        )
+
         Task {
             windowManager.restoreWindowStates()
         }
+    }
+
+    @objc private func settingsWindowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow,
+              isSettingsWindow(window) else { return }
+              
+        // Check if this was the last settings window
+        let hasOpenSettingsWindows = NSApp.windows.contains { isSettingsWindow($0) && $0 != window }
+        if !hasOpenSettingsWindows {
+            NSApp.setActivationPolicy(.accessory)
+            logger.debug("Last settings window closing, hiding Dock icon")
+        }
+    }
+    
+    private func isSettingsWindow(_ window: NSWindow) -> Bool {
+        // Settings windows have a specific style mask that we can check
+        return window.styleMask.rawValue == 32771
     }
 
     func applicationWillTerminate(_ notification: Notification) {
