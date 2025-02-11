@@ -38,6 +38,11 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             previewManager: previewManager,
             sourceManager: sourceManager
         )
+        
+        SetupCoordinator.shared.setDependencies(
+            windowManager: windowManager,
+            previewManager: previewManager
+        )
 
         setupObservers()
     }
@@ -56,7 +61,11 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         )
 
         Task {
-            windowManager.restoreWindowStates()
+            if !SetupCoordinator.shared.shouldShowSetup {
+                windowManager.restoreWindowStates()
+            }
+            await SetupCoordinator.shared.startSetupIfNeeded()
+            logger.info("Application initialization completed")
         }
     }
 
