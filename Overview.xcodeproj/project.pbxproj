@@ -12,6 +12,7 @@
 		C876958D2CBA082F00FBCA6C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C876958C2CBA082F00FBCA6C /* Preview Assets.xcassets */; };
 		C876959F2CBA087400FBCA6C /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695982CBA087400FBCA6C /* LICENSE.md */; };
 		C87695A52CBA1B5800FBCA6C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C87695A42CBA1B5800FBCA6C /* README.md */; };
+		C881CD112D59F56700B5A480 /* OverviewAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8BBECDF2D59F50E00459820 /* OverviewAppDelegate.swift */; };
 		C88D5D792D5871B000F0990C /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C88D5D782D5871B000F0990C /* Sparkle */; };
 		C8A4D35C2D50975E0003B5C9 /* FUNDING.md in Resources */ = {isa = PBXBuildFile; fileRef = C8A4D35B2D50975E0003B5C9 /* FUNDING.md */; };
 		C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A838342D0410CF002EC00B /* OverviewApp.swift */; };
@@ -27,6 +28,7 @@
 		C87695A42CBA1B5800FBCA6C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C8A4D35B2D50975E0003B5C9 /* FUNDING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FUNDING.md; sourceTree = "<group>"; };
 		C8A838342D0410CF002EC00B /* OverviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewApp.swift; sourceTree = "<group>"; };
+		C8BBECDF2D59F50E00459820 /* OverviewAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewAppDelegate.swift; sourceTree = "<group>"; };
 		C8CE2DC12D2BEFC5002D11AC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -73,7 +75,7 @@
 			membershipExceptions = (
 				Settings/UpdateSettingsContent.swift,
 				Settings/UpdateSettingsTab.swift,
-				UpdateViewModel.swift,
+				UpdateManager.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview-beta */;
 		};
@@ -198,6 +200,7 @@
 			isa = PBXGroup;
 			children = (
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
+				C8BBECDF2D59F50E00459820 /* OverviewAppDelegate.swift */,
 				C8A8387E2D0421ED002EC00B /* Preview */,
 				C8C2E4942D2BAEA8004F8C1F /* Window */,
 				C8CCFE3E2D36307C005F724E /* Overlay */,
@@ -304,6 +307,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C8A838362D0410CF002EC00B /* OverviewApp.swift in Sources */,
+				C881CD112D59F56700B5A480 /* OverviewAppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
