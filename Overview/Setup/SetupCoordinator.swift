@@ -29,8 +29,14 @@ final class SetupCoordinator: ObservableObject {
     static let shared = SetupCoordinator()
 
     private init() {
-        self.shouldShowSetup = !UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup)
-        logger.debug("Initializing onboarding coordinator: shouldShow=\(shouldShowSetup)")
+        #if DEBUG
+            // Always show setup during development
+            self.shouldShowSetup = true
+            logger.debug("Debug mode: Setup will always show")
+        #else
+            self.shouldShowSetup = !UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup)
+            logger.debug("Initializing setup coordinator: shouldShow=\(shouldShowSetup)")
+        #endif
     }
 
     func startSetupIfNeeded() async {

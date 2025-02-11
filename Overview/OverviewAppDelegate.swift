@@ -56,10 +56,8 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         )
 
         Task {
-            if !SetupCoordinator.shared.shouldShowSetup {
-                windowManager.restoreWindowStates()
-            }
             await SetupCoordinator.shared.startSetupIfNeeded()
+            windowManager.restoreWindowStates()
             logger.info("Application initialization completed")
         }
     }
