@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-               BuildableName = "Overview-beta.app"
-               BlueprintName = "Overview-beta"
+               BuildableName = "Overview.app"
+               BlueprintName = "Overview"
                ReferencedContainer = "container:Overview.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-            BuildableName = "Overview-beta.app"
-            BlueprintName = "Overview-beta"
+            BuildableName = "Overview.app"
+            BlueprintName = "Overview"
             ReferencedContainer = "container:Overview.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-            BuildableName = "Overview-beta.app"
-            BlueprintName = "Overview-beta"
+            BuildableName = "Overview.app"
+            BlueprintName = "Overview"
             ReferencedContainer = "container:Overview.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
