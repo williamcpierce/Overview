@@ -8,11 +8,9 @@
 import SwiftUI
 
 struct SetupView: View {
-    // Dependencies
     @ObservedObject var coordinator: SetupCoordinator
     private let logger = AppLogger.interface
     
-    // Private State
     @State private var currentStep = 0
     
     var body: some View {
@@ -31,8 +29,6 @@ struct SetupView: View {
             .shadow(radius: 20)
         }
     }
-    
-    // MARK: - View Components
     
     private var header: some View {
         VStack(spacing: 12) {
@@ -54,10 +50,6 @@ struct SetupView: View {
             case 1:
                 permissionsStep
             case 2:
-                windowCreationStep
-            case 3:
-                editModeStep
-            case 4:
                 finalStep
             default:
                 EmptyView()
@@ -69,11 +61,9 @@ struct SetupView: View {
     
     private var welcomeStep: some View {
         VStack(spacing: 16) {
-            Text(
-                "Overview helps you manage multiple windows by creating floating preview windows that let you monitor and quickly switch between applications."
-            )
-            .multilineTextAlignment(.center)
-            .foregroundColor(.secondary)
+            Text("Overview helps you manage multiple windows by creating floating preview windows that let you monitor and quickly switch between applications.")
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
             
             Text("Let's get you set up!")
                 .fontWeight(.medium)
@@ -133,61 +123,14 @@ struct SetupView: View {
         }
     }
     
-    private var windowCreationStep: some View {
-        VStack(spacing: 16) {
-            Text("Let's create your first preview window!")
-                .fontWeight(.medium)
-            
-            Text(
-                "Once you create a window, you'll be able to select which application window to preview."
-            )
-            .multilineTextAlignment(.center)
-            .foregroundColor(.secondary)
-            
-            Button("Create Preview Window") {
-                Task {
-                    await coordinator.createInitialWindow()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(coordinator.hasCreatedWindow)
-            
-            if coordinator.hasCreatedWindow {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.green)
-            }
-        }
-    }
-    
-    private var editModeStep: some View {
-        VStack(spacing: 16) {
-            Text("Edit Mode")
-                .fontWeight(.medium)
-            
-            Text(
-                "Edit mode lets you move and resize preview windows. Toggle it with ⌘E or from the menu bar."
-            )
-            .multilineTextAlignment(.center)
-            .foregroundColor(.secondary)
-            
-            Button(coordinator.isEditModeEnabled ? "Disable Edit Mode" : "Enable Edit Mode") {
-                coordinator.toggleEditMode()
-            }
-            .buttonStyle(.borderedProminent)
-        }
-    }
-    
     private var finalStep: some View {
         VStack(spacing: 16) {
             Text("You're all set!")
                 .fontWeight(.medium)
             
-            Text(
-                "Access Overview's settings and create new windows from the menu bar icon in the top right."
-            )
-            .multilineTextAlignment(.center)
-            .foregroundColor(.secondary)
+            Text("Access Overview's settings and create new windows from the menu bar icon in the top right.")
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
         }
     }
     
@@ -201,21 +144,15 @@ struct SetupView: View {
             
             Spacer()
             
-            if currentStep < 4 {
+            if currentStep < 2 {
                 Button("Continue") {
                     if currentStep == 1 && !coordinator.hasScreenRecordingPermission {
-                        return
-                    }
-                    if currentStep == 2 && !coordinator.hasCreatedWindow {
                         return
                     }
                     currentStep += 1
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(
-                    (currentStep == 1 && !coordinator.hasScreenRecordingPermission)
-                    || (currentStep == 2 && !coordinator.hasCreatedWindow)
-                )
+                .disabled(currentStep == 1 && !coordinator.hasScreenRecordingPermission)
             } else {
                 Button("Get Started") {
                     coordinator.completeSetup()

@@ -9,7 +9,6 @@ import SwiftUI
 
 @MainActor
 final class SetupCoordinator: ObservableObject {
-    // Constants
     private enum SetupKeys {
         static let hasCompletedSetup: String = "hasCompletedSetup"
     }
@@ -17,8 +16,6 @@ final class SetupCoordinator: ObservableObject {
     // Dependencies
     private let captureServices = CaptureServices.shared
     private let logger = AppLogger.interface
-    private weak var windowManager: WindowManager?
-    private weak var previewManager: PreviewManager?
 
     // Private State
     private var onboardingWindow: NSWindow?
@@ -28,35 +25,23 @@ final class SetupCoordinator: ObservableObject {
     @Published var shouldShowSetup: Bool
     @Published private(set) var hasScreenRecordingPermission: Bool = false
     @Published private(set) var hasRequestedPermission: Bool = false
-    @Published private(set) var hasCreatedWindow: Bool = false
-    @Published private(set) var isEditModeEnabled: Bool = false
 
-    // Singleton
     static let shared = SetupCoordinator()
 
     private init() {
-        self.shouldShowSetup = !UserDefaults.standard.bool(
-            forKey: SetupKeys.hasCompletedSetup)
+        self.shouldShowSetup = !UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup)
         logger.debug("Initializing onboarding coordinator: shouldShow=\(shouldShowSetup)")
-    }
-
-    func setDependencies(windowManager: WindowManager, previewManager: PreviewManager) {
-        self.windowManager = windowManager
-        self.previewManager = previewManager
     }
 
     func startSetupIfNeeded() async {
         guard shouldShowSetup else { return }
-
-        // Set activation policy to regular during onboarding
         NSApp.setActivationPolicy(.regular)
-
+        
         await withCheckedContinuation { continuation in
             continuationHandler = continuation
             setupSetupWindow()
         }
-
-        // Reset to accessory after onboarding
+        
         NSApp.setActivationPolicy(.accessory)
     }
 
@@ -65,7 +50,6 @@ final class SetupCoordinator: ObservableObject {
 
         let onboardingView = SetupView(coordinator: self)
         let hostingView = NSHostingView(rootView: onboardingView)
-
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
             styleMask: [],
@@ -79,7 +63,6 @@ final class SetupCoordinator: ObservableObject {
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
-        window.isMovableByWindowBackground = true
 
         self.onboardingWindow = window
 
@@ -107,38 +90,9 @@ final class SetupCoordinator: ObservableObject {
         }
     }
 
-    func createInitialWindow() async {
-        guard let windowManager = windowManager else {
-            logger.error("Window manager not available")
-            return
-        }
-
-        do {
-            try windowManager.createPreviewWindow()
-            hasCreatedWindow = true
-            logger.info("Initial preview window created")
-        } catch {
-            logger.logError(error, context: "Failed to create initial window")
-        }
-    }
-
-    func toggleEditMode() {
-        guard let previewManager = previewManager else {
-            logger.error("Preview manager not available")
-            return
-        }
-
-        previewManager.editModeEnabled.toggle()
-        isEditModeEnabled = previewManager.editModeEnabled
-    }
-
     func openSystemPreferences() {
         logger.debug("Opening system preferences for screen recording")
-        guard
-            let url = URL(
-                string:
-                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
-        else {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else {
             logger.error("Failed to create system preferences URL")
             return
         }

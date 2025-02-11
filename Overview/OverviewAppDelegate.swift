@@ -38,11 +38,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             previewManager: previewManager,
             sourceManager: sourceManager
         )
-        
-        SetupCoordinator.shared.setDependencies(
-            windowManager: windowManager,
-            previewManager: previewManager
-        )
 
         setupObservers()
     }
