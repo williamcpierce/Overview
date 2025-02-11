@@ -14,8 +14,6 @@ struct SetupView: View {
     
     // Private State
     @State private var currentStep = 0
-    @State private var isDragging = false
-    @State private var dragOffset = CGSize.zero
     
     var body: some View {
         GeometryReader { geometry in
@@ -31,19 +29,6 @@ struct SetupView: View {
             .background(Material.ultraThick)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 20)
-            .offset(x: dragOffset.width, y: dragOffset.height)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        isDragging = true
-                        dragOffset = value.translation
-                    }
-                    .onEnded { value in
-                        isDragging = false
-                        dragOffset = .zero
-                        coordinator.moveWindow(by: value.translation)
-                    }
-            )
         }
     }
     

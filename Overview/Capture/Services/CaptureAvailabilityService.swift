@@ -10,9 +10,20 @@
 import ScreenCaptureKit
 
 final class CaptureAvailabilityService {
+    // Dependencies
     private let logger = AppLogger.capture
 
-    func requestPermission() async throws {
+    // Constants
+    private enum SetupKeys {
+        static let hasCompletedSetup: String = "hasCompletedSetup"
+    }
+
+    func requestPermission(duringSetup: Bool = false) async throws {
+        if !duringSetup && !UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup) {
+            logger.debug("Skipping permission request: setup not completed")
+            return
+        }
+
         logger.info("Requesting screen recording permission")
 
         do {
@@ -25,6 +36,11 @@ final class CaptureAvailabilityService {
     }
 
     func getAvailableSources() async throws -> [SCWindow] {
+        guard UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup) else {
+            logger.debug("Skipping source retrieval: setup not completed")
+            return []
+        }
+
         do {
             let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)

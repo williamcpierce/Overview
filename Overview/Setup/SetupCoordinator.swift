@@ -76,7 +76,6 @@ final class SetupCoordinator: ObservableObject {
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
-        window.level = .floating
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
@@ -92,20 +91,6 @@ final class SetupCoordinator: ObservableObject {
         logger.debug("Setup window created")
     }
 
-    func moveWindow(by translation: CGSize) {
-        guard let window: NSWindow = onboardingWindow else { return }
-        let currentFrame: NSRect = window.frame
-        window.setFrame(
-            NSRect(
-                x: currentFrame.origin.x + translation.width,
-                y: currentFrame.origin.y - translation.height,
-                width: currentFrame.width,
-                height: currentFrame.height
-            ),
-            display: true
-        )
-    }
-
     func requestScreenRecordingPermission() async {
         hasRequestedPermission = true
         await checkScreenRecordingPermission()
@@ -113,7 +98,7 @@ final class SetupCoordinator: ObservableObject {
 
     func checkScreenRecordingPermission() async {
         do {
-            try await captureServices.requestScreenRecordingPermission()
+            try await captureServices.requestScreenRecordingPermission(duringSetup: true)
             hasScreenRecordingPermission = true
             logger.info("Screen recording permission granted")
         } catch {
