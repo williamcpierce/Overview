@@ -28,7 +28,7 @@ final class SetupCoordinator: ObservableObject {
     
     // Published State
     @Published var shouldShowSetup: Bool
-    @Published var screenRecordingPermission: PermissionStatus = .unknown
+    @Published var screenRecordingPermission: PermissionStatus = .denied  // Start as denied
     @Published var accessibilityPermission: PermissionStatus = .unknown
     
     // Singleton
@@ -50,9 +50,7 @@ final class SetupCoordinator: ObservableObject {
         // Set activation policy to regular during setup
         NSApp.setActivationPolicy(.regular)
         
-        // Start permission monitoring
-        startPermissionMonitoring()
-        
+        // Note: Permission monitoring is now ONLY started after request
         await withCheckedContinuation { continuation in
             continuationHandler = continuation
             setupWindow()
@@ -64,10 +62,12 @@ final class SetupCoordinator: ObservableObject {
     }
     
     private func startPermissionMonitoring() {
-        permissionCheckTimer?.invalidate()
+        // Only start timer if not already running
+        guard permissionCheckTimer == nil else { return }
+        
         permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.checkPermissions()
+                await self?.checkScreenRecordingPermission()
             }
         }
     }
@@ -94,7 +94,6 @@ final class SetupCoordinator: ObservableObject {
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
-        window.level = .floating
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
@@ -110,30 +109,41 @@ final class SetupCoordinator: ObservableObject {
     }
     
     func checkPermissions() async {
-        // Check Screen Recording using direct SCShareableContent check
-        do {
-            _ = try await SCShareableContent.current
-            screenRecordingPermission = .granted
-            logger.info("Screen recording permission granted")
-        } catch {
-            screenRecordingPermission = .denied
-            logger.info("Screen recording permission denied: \(error.localizedDescription)")
-        }
-        
-        // Check Accessibility (existing code remains the same)
+        // Check Accessibility
         let accessibilityEnabled = AXIsProcessTrusted()
         accessibilityPermission = accessibilityEnabled ? .granted : .denied
         logger.info("Accessibility permission state: \(accessibilityEnabled ? "granted" : "denied")")
+        
+        // Screen recording starts as denied
+        screenRecordingPermission = .denied
     }
-
+    
+    private func checkScreenRecordingPermission() async {
+        // Specific method to check screen recording
+        do {
+            _ = try await SCShareableContent.current
+            screenRecordingPermission = .granted
+            // Stop monitoring once permission is granted
+            stopPermissionMonitoring()
+            logger.info("Screen recording permission granted")
+        } catch {
+            screenRecordingPermission = .denied
+            logger.info("Screen recording permission still denied: \(error.localizedDescription)")
+        }
+    }
+    
     func requestScreenRecordingPermission() {
         logger.debug("Requesting screen recording permission")
         
-        // Request access
+        // Start monitoring after request
+        startPermissionMonitoring()
+        
+        // Attempt to get permission
         Task {
             do {
                 _ = try await SCShareableContent.current
                 screenRecordingPermission = .granted
+                stopPermissionMonitoring()
                 logger.info("Screen recording permission granted after request")
             } catch {
                 screenRecordingPermission = .denied
