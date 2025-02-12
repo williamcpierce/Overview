@@ -17,11 +17,14 @@ struct SetupView: View {
         VStack(spacing: 24) {
             header
             Spacer()
+                .frame(height: 8)  // Constrain spacer height
             permissionsContent
             Spacer()
+                .frame(height: 8)  // Constrain spacer height
             navigationButtons
         }
         .padding(30)
+        .frame(height: 600)  // Set fixed height for content
         .background(.background)
         .task {
             await coordinator.checkPermissions()
@@ -96,34 +99,41 @@ struct PermissionRow: View {
                 .font(.title2)
                 .frame(width: 30)
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {  // Increased spacing
                 Text(title)
                     .font(.headline)
                 
                 Text(description)
                     .font(.body)
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)  // Allow text to wrap
+                    .lineLimit(nil)  // Remove line limit
                 
-                if state == .denied {
-                    HStack(spacing: 12) {
-                        Button("Request Permission") {
-                            if title == "Screen Recording" {
-                                coordinator.requestScreenRecordingPermission()
+                // Always maintain space for buttons
+                VStack {
+                    if state == .denied {
+                        HStack(spacing: 12) {
+                            Button("Request Permission") {
+                                if title == "Screen Recording" {
+                                    coordinator.requestScreenRecordingPermission()
+                                }
+                            }
+                            Button("Open Preferences...") {
+                                action()
                             }
                         }
-                        Button("Open Preferences...") {
-                            action()
-                        }
                     }
-                    .padding(.top, 8)
                 }
+                .frame(height: 32)  // Adjusted height
             }
             
-            Spacer()
+            Spacer(minLength: 16)
             
             permissionIndicator
         }
-        .padding()
+        .padding(.vertical, 16)  // Increased vertical padding
+        .padding(.horizontal)
+        .frame(maxWidth: .infinity)
         .background(backgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }

@@ -84,7 +84,7 @@ final class SetupCoordinator: ObservableObject {
         let hostingView = NSHostingView(rootView: setupView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 500),
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 600), // Adjusted height
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
