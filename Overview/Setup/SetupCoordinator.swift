@@ -15,6 +15,13 @@ final class SetupCoordinator: ObservableObject {
         static let hasCompletedSetup: String = "hasCompletedSetup"
     }
     
+    // Permission state tracking
+    enum PermissionStatus: Equatable {
+        case unknown
+        case denied
+        case granted
+    }
+    
     // Dependencies
     private let captureServices = CaptureServices.shared
     private let logger = AppLogger.interface
@@ -29,7 +36,6 @@ final class SetupCoordinator: ObservableObject {
     // Published State
     @Published var shouldShowSetup: Bool
     @Published var screenRecordingPermission: PermissionStatus = .denied  // Start as denied
-    @Published var accessibilityPermission: PermissionStatus = .unknown
     
     // Singleton
     static let shared = SetupCoordinator()
@@ -84,8 +90,8 @@ final class SetupCoordinator: ObservableObject {
         let hostingView = NSHostingView(rootView: setupView)
         
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 600), // Adjusted height
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 360), // Adjusted height
+            styleMask: [],
             backing: .buffered,
             defer: false
         )
@@ -95,6 +101,7 @@ final class SetupCoordinator: ObservableObject {
         window.isOpaque = false
         window.hasShadow = true
         window.contentView = hostingView
+        window.isMovableByWindowBackground = true
         window.center()
         window.isReleasedWhenClosed = false
         
@@ -106,16 +113,6 @@ final class SetupCoordinator: ObservableObject {
         }
         
         logger.debug("Setup window created")
-    }
-    
-    func checkPermissions() async {
-        // Check Accessibility
-        let accessibilityEnabled = AXIsProcessTrusted()
-        accessibilityPermission = accessibilityEnabled ? .granted : .denied
-        logger.info("Accessibility permission state: \(accessibilityEnabled ? "granted" : "denied")")
-        
-        // Screen recording starts as denied
-        screenRecordingPermission = .denied
     }
     
     private func checkScreenRecordingPermission() async {
@@ -152,15 +149,6 @@ final class SetupCoordinator: ObservableObject {
         }
     }
     
-    func openAccessibilityPreferences() {
-        logger.debug("Opening accessibility preferences")
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else {
-            logger.error("Failed to create accessibility preferences URL")
-            return
-        }
-        NSWorkspace.shared.open(url)
-    }
-    
     func openScreenRecordingPreferences() {
         logger.debug("Opening screen recording preferences")
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else {
@@ -181,11 +169,4 @@ final class SetupCoordinator: ObservableObject {
         continuationHandler?.resume(returning: ())
         continuationHandler = nil
     }
-}
-
-// Permission state tracking
-enum PermissionStatus: Equatable {
-    case unknown
-    case denied
-    case granted
 }

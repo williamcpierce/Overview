@@ -1,4 +1,3 @@
-
 /*
  Setup/SetupView.swift
  Overview
@@ -14,7 +13,7 @@ struct SetupView: View {
     private let logger = AppLogger.interface
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             header
             Spacer()
                 .frame(height: 8)  // Constrain spacer height
@@ -23,12 +22,10 @@ struct SetupView: View {
                 .frame(height: 8)  // Constrain spacer height
             navigationButtons
         }
-        .padding(30)
-        .frame(height: 600)  // Set fixed height for content
+        .padding(24)
+        .frame(height: 360)  // Set fixed height for content
         .background(.background)
-        .task {
-            await coordinator.checkPermissions()
-        }
+
     }
     
     // MARK: - View Components
@@ -36,17 +33,17 @@ struct SetupView: View {
     private var header: some View {
         VStack(spacing: 16) {
             Image(systemName: "square.2.layers.3d.top.filled")
-                .font(.system(size: 48))
+                .font(.system(size: 36))
                 .foregroundColor(.accentColor)
             
-            Text("Overview needs some permissions")
+            Text("Overview needs Screen Recording Permission")
                 .font(.title)
                 .fontWeight(.semibold)
         }
     }
     
     private var permissionsContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             // Screen Recording Permission
             PermissionRow(
                 icon: "rectangle.dashed",
@@ -54,17 +51,7 @@ struct SetupView: View {
                 description: "This permission is needed to show screenshots and titles of open windows",
                 state: coordinator.screenRecordingPermission,
                 action: coordinator.openScreenRecordingPreferences,
-                coordinator: coordinator
-            )
-            
-            // Accessibility Permission
-            PermissionRow(
-                icon: "accessibility",
-                title: "Accessibility",
-                description: "This permission is needed to focus windows after you release the shortcut",
-                state: coordinator.accessibilityPermission,
-                action: coordinator.openAccessibilityPreferences,
-                coordinator: coordinator
+                requestPermission: coordinator.requestScreenRecordingPermission
             )
         }
     }
@@ -75,13 +62,8 @@ struct SetupView: View {
                 coordinator.completeSetup()
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!canContinue)
+            .disabled(coordinator.screenRecordingPermission != .granted)
         }
-    }
-    
-    private var canContinue: Bool {
-        coordinator.screenRecordingPermission == .granted &&
-        coordinator.accessibilityPermission == .granted
     }
 }
 
@@ -89,9 +71,9 @@ struct PermissionRow: View {
     let icon: String
     let title: String
     let description: String
-    let state: PermissionStatus
+    let state: SetupCoordinator.PermissionStatus
     let action: () -> Void
-    let coordinator: SetupCoordinator
+    let requestPermission: () -> Void
     
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -114,9 +96,7 @@ struct PermissionRow: View {
                     if state == .denied {
                         HStack(spacing: 12) {
                             Button("Request Permission") {
-                                if title == "Screen Recording" {
-                                    coordinator.requestScreenRecordingPermission()
-                                }
+                                requestPermission()
                             }
                             Button("Open Preferences...") {
                                 action()
