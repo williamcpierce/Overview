@@ -56,7 +56,7 @@ final class PermissionSetupCoordinator: ObservableObject {
             defer: false
         )
 
-        window.title = "Welcome to Overview"
+        window.title = "Overview Permission Setup"
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true

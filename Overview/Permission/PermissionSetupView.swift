@@ -33,7 +33,7 @@ struct PermissionSetupView: View {
         VStack(spacing: 16) {
             Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
                 .foregroundColor(.accentColor)
-            Text("Overview needs Screen Recording Permission")
+            Text("Welcome to Overview")
                 .font(.title)
                 .fontWeight(.semibold)
         }
