@@ -17,19 +17,19 @@ struct SettingsView: View {
     @ObservedObject var hotkeyStorage: HotkeyStorage
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
-    private let updater: SPUUpdater
+    @ObservedObject var updateManager: UpdateManager
     private let logger = AppLogger.settings
 
     init(
         hotkeyStorage: HotkeyStorage,
         sourceManager: SourceManager,
         settingsManager: SettingsManager,
-        updater: SPUUpdater
+        updateManager: UpdateManager
     ) {
         self.hotkeyStorage = hotkeyStorage
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
-        self.updater = updater
+        self.updateManager = updateManager
     }
 
     var body: some View {
@@ -51,7 +51,7 @@ struct SettingsView: View {
                 .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
-            UpdateSettingsTab(updater: updater)
+            UpdateSettingsTab(updateManager: updateManager)
                 .tabItem { Label("Updates", systemImage: "arrow.clockwise.circle.fill") }
         }
         .background(.ultraThickMaterial)

@@ -14,6 +14,7 @@ final class WindowManager {
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
+    private var permissionManager: PermissionManager
     private let windowStorage: WindowStorage = WindowStorage.shared
     private let configService = WindowServices.shared.windowConfiguration
     private let positionService = WindowServices.shared.windowPosition
@@ -34,9 +35,14 @@ final class WindowManager {
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
-    init(previewManager: PreviewManager, sourceManager: SourceManager) {
+    init(
+        previewManager: PreviewManager,
+        sourceManager: SourceManager,
+        permissionManager: PermissionManager
+    ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
+        self.permissionManager = permissionManager
         self.sessionWindowCounter = 0
         logger.debug("Window manager initialized")
     }
@@ -160,6 +166,7 @@ final class WindowManager {
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,
+            permissionManager: permissionManager,
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)

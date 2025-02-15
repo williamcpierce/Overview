@@ -14,6 +14,7 @@ struct PreviewView: View {
     // Dependencies
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
+    @ObservedObject private var permissionManager: PermissionManager
     @StateObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
     let onClose: () -> Void
@@ -36,13 +37,18 @@ struct PreviewView: View {
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
 
     init(
-        previewManager: PreviewManager, sourceManager: SourceManager, onClose: @escaping () -> Void
+        previewManager: PreviewManager,
+        sourceManager: SourceManager,
+        permissionManager: PermissionManager,
+        onClose: @escaping () -> Void
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
+        self.permissionManager = permissionManager
         self.onClose = onClose
         self._captureCoordinator = StateObject(
-            wrappedValue: CaptureCoordinator(sourceManager: sourceManager)
+            wrappedValue: CaptureCoordinator(
+                sourceManager: sourceManager, permissionManager: permissionManager)
         )
     }
 
