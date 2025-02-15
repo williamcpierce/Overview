@@ -2,11 +2,10 @@
  Setup/SetupCoordinator.swift
  Overview
 
- Created by William Pierce on 2/15/25.
-
- Manages the setup and onboarding flow for screen recording permission.
+ Created by William Pierce on 2/10/25.
 */
 
+import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
@@ -21,38 +20,26 @@ final class SetupCoordinator: ObservableObject {
     // Dependencies
     private let logger = AppLogger.interface
 
+    // Actions
+    var onPermissionStatusChanged: ((Bool) -> Void)?
+
     // Private State
     private var onboardingWindow: NSWindow?
     private var continuationHandler: CheckedContinuation<Void, Never>?
     private var permissionCheckTimer: Timer?
 
     // Published State
-    @Published var screenRecordingPermission: PermissionStatus = .denied {
-        didSet {
-            if screenRecordingPermission == .granted {
-                completeSetup()
-            }
-        }
-    }
+    @Published var screenRecordingPermission: PermissionStatus = .denied
 
-    init() {
-        logger.debug("Initializing setup coordinator")
-    }
-
-    func startSetupIfNeeded() async {
+    func startSetup() async {
         NSApp.setActivationPolicy(.regular)
 
-        await withCheckedContinuation { [weak self] continuation in
-            guard let self = self else {
-                continuation.resume()
-                return
-            }
-
-            self.continuationHandler = continuation
-            self.setupWindow()
-            self.startPermissionMonitoring()
+        await withCheckedContinuation { continuation in
+            continuationHandler = continuation
+            setupWindow()
         }
 
+        stopPermissionMonitoring()
         NSApp.setActivationPolicy(.accessory)
     }
 
@@ -63,8 +50,8 @@ final class SetupCoordinator: ObservableObject {
         let hostingView = NSHostingView(rootView: setupView)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 360),
-            styleMask: [],
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 460),
+            styleMask: [.titled],
             backing: .buffered,
             defer: false
         )
@@ -91,12 +78,20 @@ final class SetupCoordinator: ObservableObject {
     func requestScreenRecordingPermission() {
         logger.debug("Requesting screen recording permission")
 
-        if CGRequestScreenCaptureAccess() {
-            screenRecordingPermission = .granted
-            logger.info("Screen recording permission granted")
-        } else {
-            screenRecordingPermission = .denied
-            logger.info("Screen recording permission denied")
+        startPermissionMonitoring()
+
+        Task {
+            do {
+                _ = try await SCShareableContent.current
+                screenRecordingPermission = .granted
+                stopPermissionMonitoring()
+                logger.info("Screen recording permission granted after request")
+            } catch {
+                screenRecordingPermission = .denied
+                logger.info(
+                    "Screen recording permission denied after request: \(error.localizedDescription)"
+                )
+            }
         }
     }
 
@@ -105,8 +100,7 @@ final class SetupCoordinator: ObservableObject {
         guard
             let url = URL(
                 string:
-                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
-            )
+                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
         else {
             logger.error("Failed to create screen recording preferences URL")
             return
@@ -145,11 +139,17 @@ final class SetupCoordinator: ObservableObject {
     }
 
     private func checkScreenRecordingPermission() async {
-        let hasAccess = CGPreflightScreenCaptureAccess()
-        screenRecordingPermission = hasAccess ? .granted : .denied
-
-        if hasAccess {
+        do {
+            _ = try await SCShareableContent.current
+            screenRecordingPermission = .granted
+            stopPermissionMonitoring()
+            onPermissionStatusChanged?(true)  // Notify permission manager
             logger.info("Screen recording permission granted")
+        } catch {
+            screenRecordingPermission = .denied
+            onPermissionStatusChanged?(false)  // Notify permission manager
+            logger.info("Screen recording permission still denied: \(error.localizedDescription)")
         }
     }
+
 }

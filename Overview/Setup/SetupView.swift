@@ -23,7 +23,7 @@ struct SetupView: View {
             navigationButtons
         }
         .padding(24)
-        .frame(height: 360)
+        .frame(height: 460)
         .background(.background)
     }
 
@@ -31,8 +31,7 @@ struct SetupView: View {
 
     private var header: some View {
         VStack(spacing: 16) {
-            Image(systemName: "square.2.layers.3d.top.filled")
-                .font(.system(size: 36))
+            Image(nsImage: NSImage(named: "AppIcon") ?? NSImage())
                 .foregroundColor(.accentColor)
             Text("Overview needs Screen Recording Permission")
                 .font(.title)
@@ -46,7 +45,7 @@ struct SetupView: View {
                 icon: "rectangle.dashed",
                 title: "Screen Recording",
                 description:
-                    "This permission is needed to show screenshots and titles of open windows",
+                    "This permission is needed to show live previews and titles of open windows",
                 state: coordinator.screenRecordingPermission,
                 action: coordinator.openScreenRecordingPreferences,
                 requestPermission: coordinator.requestScreenRecordingPermission

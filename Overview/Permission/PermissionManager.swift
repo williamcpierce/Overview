@@ -8,6 +8,7 @@
 */
 
 import CoreGraphics
+import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
@@ -30,8 +31,10 @@ final class PermissionManager: ObservableObject {
 
     init() {
         self.setupCoordinator = SetupCoordinator()
+        self.setupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
+            self?.permissionStatus = hasPermission ? .granted : .denied
+        }
         logger.debug("Initializing permission manager")
-        updatePermissionStatus()
     }
 
     // MARK: - Permission Status
@@ -55,9 +58,9 @@ final class PermissionManager: ObservableObject {
         isRequestingPermission = true
         defer { isRequestingPermission = false }
 
-        updatePermissionStatus()
+        let hasAccess: Bool = CGPreflightScreenCaptureAccess()
 
-        if permissionStatus == .denied {
+        if !hasAccess {
             try await launchSetupFlow()
             updatePermissionStatus()
 
@@ -68,13 +71,22 @@ final class PermissionManager: ObservableObject {
     }
 
     func updatePermissionStatus() {
-        let hasAccess = CGPreflightScreenCaptureAccess()
-        permissionStatus = hasAccess ? .granted : .denied
+        Task {
+            do {
+                _ = try await SCShareableContent.current
+                permissionStatus = .granted
+                logger.info("Screen recording permission granted")
+            } catch {
+                permissionStatus = .denied
+                logger.info(
+                    "Screen recording permission still denied: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func launchSetupFlow() async throws {
         logger.info("Launching setup flow")
-        await setupCoordinator.startSetupIfNeeded()
+        await setupCoordinator.startSetup()
 
         try? await Task.sleep(nanoseconds: 500_000_000)
         updatePermissionStatus()

@@ -14,11 +14,6 @@ final class CaptureAvailabilityService {
     private let logger = AppLogger.capture
 
     func getAvailableSources() async throws -> [SCWindow] {
-        if !CGPreflightScreenCaptureAccess() {
-            logger.debug("Skipping source retrieval: permission not granted")
-            return []
-        }
-
         do {
             let content: SCShareableContent = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: false)
