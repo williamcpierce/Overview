@@ -26,10 +26,6 @@ final class CaptureServices {
         logger.debug("Initializing capture services")
     }
 
-    func requestScreenRecordingPermission(duringSetup: Bool = false) async throws {
-        try await availabilityService.requestPermission(duringSetup: duringSetup)
-    }
-
     func getAvailableSources() async throws -> [SCWindow] {
         let availableSources = try await availabilityService.getAvailableSources()
         return availableSources

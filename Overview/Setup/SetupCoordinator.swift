@@ -2,19 +2,15 @@
  Setup/SetupCoordinator.swift
  Overview
 
- Created by William Pierce on 2/10/25.
+ Created by William Pierce on 2/15/25.
+
+ Manages the setup and onboarding flow for screen recording permission.
 */
 
-import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
 final class SetupCoordinator: ObservableObject {
-    // Constants
-    private enum SetupKeys {
-        static let hasCompletedSetup: String = "hasCompletedSetup"
-    }
-
     // Permission state tracking
     enum PermissionStatus: Equatable {
         case unknown
@@ -23,10 +19,7 @@ final class SetupCoordinator: ObservableObject {
     }
 
     // Dependencies
-    private let captureServices = CaptureServices.shared
     private let logger = AppLogger.interface
-    private weak var windowManager: WindowManager?
-    private weak var previewManager: PreviewManager?
 
     // Private State
     private var onboardingWindow: NSWindow?
@@ -34,54 +27,33 @@ final class SetupCoordinator: ObservableObject {
     private var permissionCheckTimer: Timer?
 
     // Published State
-    @Published var shouldShowSetup: Bool
-    @Published var screenRecordingPermission: PermissionStatus = .denied  // Start as denied
-
-    // Singleton
-    static let shared = SetupCoordinator()
-
-    private init() {
-        self.shouldShowSetup = !UserDefaults.standard.bool(forKey: SetupKeys.hasCompletedSetup)
-        logger.debug("Initializing setup coordinator: shouldShow=\(shouldShowSetup)")
-    }
-
-    func setDependencies(windowManager: WindowManager, previewManager: PreviewManager) {
-        self.windowManager = windowManager
-        self.previewManager = previewManager
-    }
-
-    func startSetupIfNeeded() async {
-        guard shouldShowSetup else { return }
-
-        // Set activation policy to regular during setup
-        NSApp.setActivationPolicy(.regular)
-
-        // Note: Permission monitoring is now ONLY started after request
-        await withCheckedContinuation { continuation in
-            continuationHandler = continuation
-            setupWindow()
-        }
-
-        // Cleanup
-        stopPermissionMonitoring()
-        NSApp.setActivationPolicy(.accessory)
-    }
-
-    private func startPermissionMonitoring() {
-        // Only start timer if not already running
-        guard permissionCheckTimer == nil else { return }
-
-        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
-            [weak self] _ in
-            Task { @MainActor [weak self] in
-                await self?.checkScreenRecordingPermission()
+    @Published var screenRecordingPermission: PermissionStatus = .denied {
+        didSet {
+            if screenRecordingPermission == .granted {
+                completeSetup()
             }
         }
     }
 
-    private func stopPermissionMonitoring() {
-        permissionCheckTimer?.invalidate()
-        permissionCheckTimer = nil
+    init() {
+        logger.debug("Initializing setup coordinator")
+    }
+
+    func startSetupIfNeeded() async {
+        NSApp.setActivationPolicy(.regular)
+
+        await withCheckedContinuation { [weak self] continuation in
+            guard let self = self else {
+                continuation.resume()
+                return
+            }
+
+            self.continuationHandler = continuation
+            self.setupWindow()
+            self.startPermissionMonitoring()
+        }
+
+        NSApp.setActivationPolicy(.accessory)
     }
 
     private func setupWindow() {
@@ -91,7 +63,7 @@ final class SetupCoordinator: ObservableObject {
         let hostingView = NSHostingView(rootView: setupView)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 360),  // Adjusted height
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 360),
             styleMask: [],
             backing: .buffered,
             defer: false
@@ -116,39 +88,15 @@ final class SetupCoordinator: ObservableObject {
         logger.debug("Setup window created")
     }
 
-    private func checkScreenRecordingPermission() async {
-        // Specific method to check screen recording
-        do {
-            _ = try await SCShareableContent.current
-            screenRecordingPermission = .granted
-            // Stop monitoring once permission is granted
-            stopPermissionMonitoring()
-            logger.info("Screen recording permission granted")
-        } catch {
-            screenRecordingPermission = .denied
-            logger.info("Screen recording permission still denied: \(error.localizedDescription)")
-        }
-    }
-
     func requestScreenRecordingPermission() {
         logger.debug("Requesting screen recording permission")
 
-        // Start monitoring after request
-        startPermissionMonitoring()
-
-        // Attempt to get permission
-        Task {
-            do {
-                _ = try await SCShareableContent.current
-                screenRecordingPermission = .granted
-                stopPermissionMonitoring()
-                logger.info("Screen recording permission granted after request")
-            } catch {
-                screenRecordingPermission = .denied
-                logger.info(
-                    "Screen recording permission denied after request: \(error.localizedDescription)"
-                )
-            }
+        if CGRequestScreenCaptureAccess() {
+            screenRecordingPermission = .granted
+            logger.info("Screen recording permission granted")
+        } else {
+            screenRecordingPermission = .denied
+            logger.info("Screen recording permission denied")
         }
     }
 
@@ -157,7 +105,8 @@ final class SetupCoordinator: ObservableObject {
         guard
             let url = URL(
                 string:
-                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+            )
         else {
             logger.error("Failed to create screen recording preferences URL")
             return
@@ -167,13 +116,40 @@ final class SetupCoordinator: ObservableObject {
 
     func completeSetup() {
         logger.info("Completing setup flow")
-        UserDefaults.standard.set(true, forKey: SetupKeys.hasCompletedSetup)
-        shouldShowSetup = false
+        stopPermissionMonitoring()
 
         onboardingWindow?.close()
         onboardingWindow = nil
 
+        // Always resume continuation when completing setup
         continuationHandler?.resume(returning: ())
         continuationHandler = nil
+    }
+
+    // MARK: - Permission Monitoring
+
+    private func startPermissionMonitoring() {
+        guard permissionCheckTimer == nil else { return }
+
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+            [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.checkScreenRecordingPermission()
+            }
+        }
+    }
+
+    private func stopPermissionMonitoring() {
+        permissionCheckTimer?.invalidate()
+        permissionCheckTimer = nil
+    }
+
+    private func checkScreenRecordingPermission() async {
+        let hasAccess = CGPreflightScreenCaptureAccess()
+        screenRecordingPermission = hasAccess ? .granted : .denied
+
+        if hasAccess {
+            logger.info("Screen recording permission granted")
+        }
     }
 }
