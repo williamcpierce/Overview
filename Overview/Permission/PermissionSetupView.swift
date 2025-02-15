@@ -1,5 +1,5 @@
 /*
- Setup/SetupView.swift
+ Permission/PermissionSetupView.swift
  Overview
 
  Created by William Pierce on 2/10/25.
@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-struct SetupView: View {
+struct PermissionSetupView: View {
     // Dependencies
-    @ObservedObject var coordinator: SetupCoordinator
+    @ObservedObject var coordinator: PermissionSetupCoordinator
     private let logger = AppLogger.interface
 
     var body: some View {
@@ -68,7 +68,7 @@ struct PermissionRow: View {
     let icon: String
     let title: String
     let description: String
-    let state: SetupCoordinator.PermissionStatus
+    let state: PermissionSetupCoordinator.PermissionStatus
     let action: () -> Void
     let requestPermission: () -> Void
 

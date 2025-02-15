@@ -24,14 +24,14 @@ final class PermissionManager: ObservableObject {
 
     // Dependencies
     private let logger = AppLogger.capture
-    private let setupCoordinator: SetupCoordinator
+    private let permissionSetupCoordinator: PermissionSetupCoordinator
 
     // Private State
     private var isRequestingPermission: Bool = false
 
     init() {
-        self.setupCoordinator = SetupCoordinator()
-        self.setupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
+        self.permissionSetupCoordinator = PermissionSetupCoordinator()
+        self.permissionSetupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
             self?.permissionStatus = hasPermission ? .granted : .denied
         }
         logger.debug("Initializing permission manager")
@@ -60,7 +60,9 @@ final class PermissionManager: ObservableObject {
 
         let hasAccess: Bool = CGPreflightScreenCaptureAccess()
 
-        if !hasAccess {
+        if hasAccess {
+            permissionStatus = .granted
+        } else {
             try await launchSetupFlow()
             updatePermissionStatus()
 
@@ -86,7 +88,7 @@ final class PermissionManager: ObservableObject {
 
     private func launchSetupFlow() async throws {
         logger.info("Launching setup flow")
-        await setupCoordinator.startSetup()
+        await permissionSetupCoordinator.startSetup()
 
         try? await Task.sleep(nanoseconds: 500_000_000)
         updatePermissionStatus()

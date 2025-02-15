@@ -59,6 +59,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				PermissionManager.swift,
+				PermissionSetupCoordinator.swift,
+				PermissionSetupView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -157,14 +159,6 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
-		C8CDD63A2D5B2CE50024240A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				SetupCoordinator.swift,
-				SetupView.swift,
-			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -178,7 +172,6 @@
 		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
 		C8C2E4942D2BAEA8004F8C1F /* Window */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Window; sourceTree = "<group>"; };
 		C8CCFE3E2D36307C005F724E /* Overlay */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Overlay; sourceTree = "<group>"; };
-		C8CDD6372D5B2CD50024240A /* Setup */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CDD63A2D5B2CE50024240A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Setup; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -225,7 +218,6 @@
 				C868D7E22D082CCB00EF1F4C /* Source */,
 				C8A838892D0421EF002EC00B /* Capture */,
 				C8544FAE2D6139570064AC74 /* Permission */,
-				C8CDD6372D5B2CD50024240A /* Setup */,
 				C8A837D72D0405B7002EC00B /* Settings */,
 				C88D5D6C2D58714B00F0990C /* Update */,
 				C828A4032D0A948D0023E7F1 /* Logging */,

@@ -1,5 +1,5 @@
 /*
- Setup/SetupCoordinator.swift
+ Permission/PermissionSetupCoordinator.swift
  Overview
 
  Created by William Pierce on 2/10/25.
@@ -9,7 +9,7 @@ import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
-final class SetupCoordinator: ObservableObject {
+final class PermissionSetupCoordinator: ObservableObject {
     // Permission state tracking
     enum PermissionStatus: Equatable {
         case unknown
@@ -24,7 +24,7 @@ final class SetupCoordinator: ObservableObject {
     var onPermissionStatusChanged: ((Bool) -> Void)?
 
     // Private State
-    private var onboardingWindow: NSWindow?
+    private var setupWindow: NSWindow?
     private var continuationHandler: CheckedContinuation<Void, Never>?
     private var permissionCheckTimer: Timer?
 
@@ -36,18 +36,18 @@ final class SetupCoordinator: ObservableObject {
 
         await withCheckedContinuation { continuation in
             continuationHandler = continuation
-            setupWindow()
+            createSetupWindow()
         }
 
         stopPermissionMonitoring()
         NSApp.setActivationPolicy(.accessory)
     }
 
-    private func setupWindow() {
-        guard onboardingWindow == nil else { return }
+    private func createSetupWindow() {
+        guard setupWindow == nil else { return }
 
-        let setupView = SetupView(coordinator: self)
-        let hostingView = NSHostingView(rootView: setupView)
+        let permissionSetupView = PermissionSetupView(coordinator: self)
+        let hostingView = NSHostingView(rootView: permissionSetupView)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 580, height: 460),
@@ -65,10 +65,10 @@ final class SetupCoordinator: ObservableObject {
         window.center()
         window.isReleasedWhenClosed = false
 
-        self.onboardingWindow = window
+        self.setupWindow = window
 
         DispatchQueue.main.async { [weak self] in
-            self?.onboardingWindow?.makeKeyAndOrderFront(nil)
+            self?.setupWindow?.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
 
@@ -112,8 +112,8 @@ final class SetupCoordinator: ObservableObject {
         logger.info("Completing setup flow")
         stopPermissionMonitoring()
 
-        onboardingWindow?.close()
-        onboardingWindow = nil
+        setupWindow?.close()
+        setupWindow = nil
 
         // Always resume continuation when completing setup
         continuationHandler?.resume(returning: ())
