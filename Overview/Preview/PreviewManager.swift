@@ -21,13 +21,15 @@ final class PreviewManager: ObservableObject {
 
     // Dependencies
     private var sourceManager: SourceManager
+    private var permissionManager: PermissionManager
     private let logger = AppLogger.interface
 
     // Private State
     @State private var captureSystemInitialized: Bool = false
 
-    init(sourceManager: SourceManager) {
+    init(sourceManager: SourceManager, permissionManager: PermissionManager) {
         self.sourceManager = sourceManager
+        self.permissionManager = permissionManager
         logger.debug("Initializing preview manager")
     }
 
@@ -39,7 +41,7 @@ final class PreviewManager: ObservableObject {
 
         do {
             logger.debug("Starting capture system initialization")
-            try await captureCoordinator.requestPermission()
+            try await permissionManager.ensurePermission()
             await updateAvailableSources()
             logger.debug("Capture system initialization completed")
             captureSystemInitialized = true
@@ -68,11 +70,15 @@ final class PreviewManager: ObservableObject {
     }
 
     func updateAvailableSources() async {
+        if permissionManager.permissionStatus != .granted {
+            logger.debug("Skipping source update: permission not granted")
+            return
+        }
+
         do {
             let sources = try await sourceManager.getFilteredSources()
             availableSources = sources
             sourceListVersion = UUID()
-
             logger.debug("Source window list updated: \(sources.count) available sources")
         } catch {
             logger.logError(error, context: "Failed to retrieve available source windows")

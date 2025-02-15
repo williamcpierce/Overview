@@ -20,23 +20,36 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let previewManager: PreviewManager
     let hotkeyManager: HotkeyManager
     let updateManager: UpdateManager
+    let permissionManager: PermissionManager
     var windowManager: WindowManager!
 
     override init() {
         updateManager = UpdateManager()
+        permissionManager = PermissionManager()
+
         settingsManager = SettingsManager(
             hotkeyStorage: hotkeyStorage,
             updateManager: updateManager
         )
-        sourceManager = SourceManager(settingsManager: settingsManager)
-        previewManager = PreviewManager(sourceManager: sourceManager)
-        hotkeyManager = HotkeyManager(hotkeyStorage: hotkeyStorage, sourceManager: sourceManager)
+        sourceManager = SourceManager(
+            settingsManager: settingsManager,
+            permissionManager: permissionManager
+        )
+        previewManager = PreviewManager(
+            sourceManager: sourceManager,
+            permissionManager: permissionManager
+        )
+        hotkeyManager = HotkeyManager(
+            hotkeyStorage: hotkeyStorage,
+            sourceManager: sourceManager
+        )
 
         super.init()
 
         windowManager = WindowManager(
             previewManager: previewManager,
-            sourceManager: sourceManager
+            sourceManager: sourceManager,
+            permissionManager: permissionManager
         )
 
         setupObservers()
@@ -56,7 +69,13 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         )
 
         Task {
-            windowManager.restoreWindowStates()
+            do {
+                try await permissionManager.ensurePermission()
+                windowManager.restoreWindowStates()
+                logger.info("Application initialization completed")
+            } catch {
+                logger.logError(error, context: "Failed to ensure permissions during launch")
+            }
         }
     }
 
@@ -78,15 +97,18 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func settingsWindowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow,
-              isSettingsWindow(window) else { return }
-              
-        let hasOpenSettingsWindows = NSApp.windows.contains { isSettingsWindow($0) && $0 != window }
+            isSettingsWindow(window)
+        else { return }
+
+        let hasOpenSettingsWindows: Bool = NSApp.windows.contains {
+            isSettingsWindow($0) && $0 != window
+        }
         if !hasOpenSettingsWindows {
             NSApp.setActivationPolicy(.accessory)
             logger.debug("Last settings window closing, hiding Dock icon")
         }
     }
-    
+
     private func isSettingsWindow(_ window: NSWindow) -> Bool {
         window.styleMask.rawValue == 32771
     }

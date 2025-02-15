@@ -31,6 +31,7 @@ final class CaptureCoordinator: ObservableObject {
 
     // Dependencies
     private var sourceManager: SourceManager
+    private var permissionManager: PermissionManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
@@ -46,9 +47,11 @@ final class CaptureCoordinator: ObservableObject {
 
     init(
         sourceManager: SourceManager,
+        permissionManager: PermissionManager,
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.sourceManager = sourceManager
+        self.permissionManager = permissionManager
         self.captureEngine = captureEngine
         setupSubscriptions()
     }
@@ -58,7 +61,7 @@ final class CaptureCoordinator: ObservableObject {
     func requestPermission() async throws {
         guard !hasPermission else { return }
         logger.debug("Requesting screen recording permission")
-        try await captureServices.requestScreenRecordingPermission()
+        try await permissionManager.ensurePermission()
         hasPermission = true
         logger.info("Screen recording permission granted")
     }

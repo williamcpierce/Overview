@@ -21,13 +21,14 @@ final class SourceManager: ObservableObject {
 
     // Dependencies
     @ObservedObject var settingsManager: SettingsManager
+    @ObservedObject var permissionManager: PermissionManager
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
 
     // Private State
     private let observerId = UUID()
-    
+
     // Source Settings
     @AppStorage(SourceSettingsKeys.filterMode)
     private var filterMode = SourceSettingsKeys.defaults.filterMode
@@ -38,8 +39,9 @@ final class SourceManager: ObservableObject {
         let windowID: CGWindowID
     }
 
-    init(settingsManager: SettingsManager) {
+    init(settingsManager: SettingsManager, permissionManager: PermissionManager) {
         self.settingsManager = settingsManager
+        self.permissionManager = permissionManager
         setupObservers()
         logger.debug("Source window manager initialization complete")
     }
@@ -62,9 +64,19 @@ final class SourceManager: ObservableObject {
         return success
     }
 
-    func getFilteredSources() async throws -> [SCWindow] {
-        logger.debug("Retrieving filtered window list")
+    func getAvailableSources() async throws -> [SCWindow] {
+        try await permissionManager.ensurePermission()
+        let availableSources = try await CaptureServices.shared.getAvailableSources()
+        return availableSources
+    }
 
+    func getFilteredSources() async throws -> [SCWindow] {
+        if permissionManager.permissionStatus != .granted {
+            logger.debug("Skipping source retrieval: permission not granted")
+            return []
+        }
+
+        logger.debug("Retrieving filtered window list")
         let availableSources = try await captureServices.getAvailableSources()
 
         let filteredSources = sourceServices.sourceFilter.filterSources(
@@ -103,6 +115,11 @@ final class SourceManager: ObservableObject {
     }
 
     private func updateSourceTitles() async {
+        if permissionManager.permissionStatus != .granted {
+            logger.debug("Skipping title update: permission not granted")
+            return
+        }
+
         do {
             let sources = try await captureServices.getAvailableSources()
             sourceTitles = Dictionary(
