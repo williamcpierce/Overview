@@ -18,6 +18,10 @@ struct UpdateSettingsTab: View {
     @State private var automaticallyDownloadsUpdates: Bool
     @State private var showingUpdateInfo: Bool = false
 
+    // Settings
+    @AppStorage(UpdateSettingsKeys.enableBetaUpdates)
+    private var enableBetaUpdates = UpdateSettingsKeys.defaults.enableBetaUpdates
+
     init(updateManager: UpdateManager) {
         self.updateManager = updateManager
         self.automaticallyChecksForUpdates = updateManager.updater.automaticallyChecksForUpdates
@@ -49,6 +53,8 @@ struct UpdateSettingsTab: View {
                         .onChange(of: automaticallyDownloadsUpdates) { newValue in
                             updateManager.updater.automaticallyDownloadsUpdates = newValue
                         }
+
+                    Toggle("Enable beta updates", isOn: $enableBetaUpdates)
                 }
 
                 HStack {
