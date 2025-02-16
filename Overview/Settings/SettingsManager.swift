@@ -112,6 +112,9 @@ final class SettingsManager: ObservableObject {
         /// Reset Update settings
         updateManager.updater.automaticallyChecksForUpdates = true
         updateManager.updater.automaticallyDownloadsUpdates = false
+        UserDefaults.standard.set(
+            UpdateSettingsKeys.defaults.enableBetaUpdates,
+            forKey: UpdateSettingsKeys.enableBetaUpdates)
 
         /// Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
