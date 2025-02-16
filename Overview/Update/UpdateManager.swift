@@ -12,7 +12,7 @@ import Sparkle
 import SwiftUI
 
 @MainActor
-final class UpdateManager: ObservableObject {
+final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     // Dependencies
     private let logger = AppLogger.settings
     private let updaterController: SPUStandardUpdaterController
@@ -21,16 +21,22 @@ final class UpdateManager: ObservableObject {
     @Published private(set) var updater: SPUUpdater
     @Published private(set) var canCheckForUpdates: Bool = false
 
-    init() {
+    // Update Settings
+    @AppStorage(UpdateSettingsKeys.enableBetaUpdates)
+    var enableBetaUpdates = UpdateSettingsKeys.defaults.enableBetaUpdates
+
+    override init() {
         logger.debug("Initializing update manager")
 
-        // Initialize the updater controller first
+        // Initialize the updater controller
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
         updater = updaterController.updater
+
+        super.init()
 
         // Configure update status binding
         updater.publisher(for: \.canCheckForUpdates)
@@ -44,5 +50,15 @@ final class UpdateManager: ObservableObject {
     func checkForUpdates() {
         logger.info("Initiating update check")
         updater.checkForUpdates()
+    }
+
+    // MARK: - SPUUpdaterDelegate
+
+    nonisolated func allowedChannels(for updater: SPUUpdater) -> Set<String> {
+        // Access @AppStorage value through UserDefaults since we're nonisolated
+        if UserDefaults.standard.bool(forKey: UpdateSettingsKeys.enableBetaUpdates) {
+            return Set(["beta"])
+        }
+        return Set()
     }
 }
