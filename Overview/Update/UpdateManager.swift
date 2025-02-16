@@ -28,7 +28,6 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     override init() {
         logger.debug("Initializing update manager")
 
-        // Initialize the updater controller
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -38,7 +37,6 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
 
         super.init()
 
-        // Configure update status binding
         updater.publisher(for: \.canCheckForUpdates)
             .assign(to: &$canCheckForUpdates)
 
@@ -55,7 +53,6 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     // MARK: - SPUUpdaterDelegate
 
     nonisolated func allowedChannels(for updater: SPUUpdater) -> Set<String> {
-        // Access @AppStorage value through UserDefaults since we're nonisolated
         if UserDefaults.standard.bool(forKey: UpdateSettingsKeys.enableBetaUpdates) {
             return Set(["beta"])
         }

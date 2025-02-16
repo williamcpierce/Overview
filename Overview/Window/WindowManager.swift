@@ -141,6 +141,8 @@ final class WindowManager {
         }
     }
 
+    // MARK: - Private Methods
+
     private func createDefaultWindow() {
         do {
             try createPreviewWindow()
