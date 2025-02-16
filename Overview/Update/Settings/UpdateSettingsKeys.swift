@@ -11,6 +11,6 @@ enum UpdateSettingsKeys {
     static let defaults = Defaults()
 
     struct Defaults {
-        let enableBetaUpdates: Bool = false
+        let enableBetaUpdates: Bool = true
     }
 }
