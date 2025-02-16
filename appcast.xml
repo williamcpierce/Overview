@@ -24,8 +24,8 @@
             </description>
             <enclosure 
                 url="https://williampierce.io/overview/releases/v1.0.0-beta/Overview.dmg"
-                sparkle:edSignature="5lfT/Q33M7YSa1XosNwH47Ysv+kr/hS2vL04SkPQuAKj9HsadJWQ4tJn1i+aUHhfi6pIFKdWyS01dSIopPSUBQ=="
-                length="2226658"
+                sparkle:edSignature=""
+                length=""
                 type="application/octet-stream" />
         </item>
     </channel>
