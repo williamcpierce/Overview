@@ -215,17 +215,3 @@ enum WindowManagerError: LocalizedError {
         }
     }
 }
-
-struct WindowConfiguration {
-    let frame: NSRect
-    let styleMask: NSWindow.StyleMask
-    let backing: NSWindow.BackingStoreType
-    let deferCreation: Bool
-
-    static let `default` = WindowConfiguration(
-        frame: .zero,
-        styleMask: [.fullSizeContentView],
-        backing: .buffered,
-        deferCreation: false
-    )
-}
