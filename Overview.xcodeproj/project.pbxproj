@@ -123,10 +123,10 @@
 			membershipExceptions = (
 				Capture.swift,
 				CaptureCoordinator.swift,
-				CaptureEngine.swift,
 				CaptureServices.swift,
 				Services/CaptureAvailabilityService.swift,
 				Services/CaptureConfigurationService.swift,
+				Services/CaptureEngine.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
