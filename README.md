@@ -14,10 +14,14 @@ For development updates, please join our Discord:
 
 ## Features
 
--   Live Window Previews: Real-time window previews with configurable frame rates and automatic hiding
--   Quick App Switching: Switch to source applications through preview clicks or keyboard shortcut bindings
--   Preview Customization: Customize preview window opacity, shadows, dimensions, and behavior
--   Optional Overlays: Overlays show source app names, window titles, and focus status at a glance
+### Live Window Previews
+Real-time window previews with configurable frame rates and automatic hiding
+### Quick App Switching
+Switch to source applications through preview clicks or keyboard shortcut bindings
+### Preview Customization
+Customize preview window opacity, shadows, dimensions, and behavior
+### Optional Overlays
+Display source app names, window titles, and focus status at a glance
 
 ## System Requirements
 
@@ -29,86 +33,86 @@ For development updates, please join our Discord:
 1. Download the latest version from the Overview website [williampierce.io/overview/](https://williampierce.io/overview/).
 2. Mount the disk image and drag Overview into your Applications folder.
 
-### On First Launch
-
-Grant screen recording permission when prompted
-
--   Click "Open System Settings" in the permission dialog
--   Enable Overview under Privacy & Security > Screen Recording
--   Relaunch Overview
-
 ## Usage
 
 ### Quick Start
 
-1. Create a new preview window from the menu bar icon
-2. Select a window to capture from the source windows list
-3. Enable edit mode via context menu or menu bar icon to move/resize preview windows
-4. Close preview windows via context menu
+1. Launch Overview and grant screen recording permission when prompted
+2. Create a new preview window from the menu bar icon (⌘N)
+3. Select a window to capture from the source windows list
+4. Enable edit mode to move/resize preview windows
+5. Customize behavior through the settings panel (⌘,)
 
 ### Controls
 
 -   Left-click preview: Switch to source application
 -   Right-click preview: Access context menu
     -   Toggle Edit Mode for repositioning/resizing
+    -   Stop capture
     -   Close preview window
--   ⌘N: Create new preview window
--   ⌘,: Open settings
+-   ``⌘N`` Create new preview window
+-   ``⌘E`` Toggle edit mode
+-   ``⌘,`` Open settings
 
 ### Settings
 
--   Previews
-    -   Frame rate
-    -   Automatic hiding
+See setting menu tooltips for full details
+
+- Previews
+    -   Frame rate configuration
+    -   Automatic hiding options
         -   Hide inactive app previews
         -   Hide active window preview
--   Windows
-    -   Appearance
+- Windows
+    -   Appearance customization
         -   Opacity
         -   Shadows
         -   Default dimensions
-    -   Behavior
+    -   Behavior settings
         -   Show in Mission Control
         -   Create window on launch
         -   Close with preview source
         -   Show windows on all desktops
--   Overlays
-    -   Window focus
+- Overlays
+    -   Window focus indicators
         -   Border width
         -   Border color
-    -   Source title
+    -   Source title display
         -   Font size
-        -   Opacity
+        -   Background opacity
         -   Location
-        -   Type (window, application, both)
--   Shortcuts
-    -   Source window activation
--   Sources
-    -   Application filtering (blocklist/allowlist)
--   Updates
+        -   Title type (window, application, or both)
+- Shortcuts
+    -   Custom keyboard shortcuts for window activation
+    -   Multiple window titles per shortcut
+- Sources
+    -   Window source list filtering (blocklist/allowlist)
+- Updates
     -   Automatic update checking
     -   Automatic update downloads
+    -   Beta update channel
 
-## Known Issues/Limitations
+## Privacy & Security
+
+Overview requires Screen Recording permission to function, but:
+
+-   Only captures window content for preview purposes
+-   Does not store or transmit window content
+-   All operations remain local to the device
+
+## Known Issues
 
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 ## Project Funding
-
-Overview is a free and open source project that accepts donations to cover operating expenses (e.g., Apple Developer Program fees, hosting costs, development tools). 100% of donations will be used for project expenses or reinvested in development - no profits will be distributed to any individuals.
-
-Financial operations are managed with full transparency:
-
--   Complete accounting ledger maintained in [Overview-Finance](https://github.com/williamcpierce/Overview-Finance)
--   Quarterly financial summaries
--   Detailed financial policy available in FUNDING.md
-
-Note: Overview is not registered as a non-profit organization, and donations are not tax-deductible.
-
-To support Overview's development:
+Support Overview's development:
 
 -   [GitHub Sponsors](https://github.com/sponsors/williamcpierce) (preferred)
 -   [Patreon](https://www.patreon.com/overview_app)
+
+100% of donations will be used for project expenses or reinvested in development - no profits will be distributed to any individuals.
+
+See [FUNDING.md](https://github.com/williamcpierce/Overview/blob/main/.github/FUNDING.md) for full details.
 
 ## Development
 
@@ -120,25 +124,24 @@ To support Overview's development:
 
 ### Key Technologies
 
--   SwiftUI for user interface
+-   SwiftUI for user interface components
 -   ScreenCaptureKit for window capture
 -   Combine for reactive state management
--   KeyboardShortcuts for shortcut management
+-   KeyboardShortcuts for global shortcut handling
+-   Sparkle for automatic updates
 
-### Contributing
+### Coding Standards
 
-Contributions to the codebase are welcome, but as the project is in its early stages, please contact me to coordinate before starting any work.
+The project adheres to a style guide (see [STYLE.md](https://github.com/williamcpierce/Overview/blob/main/STYLE.md)) that emphasizes:
 
-## Privacy & Security
-
-Overview requires Screen Recording permission to function but:
-
--   Only captures window content for preview purposes
--   Does not store or transmit window content
+-   Self-documenting code with clear naming
+-   Consistent file organization and documentation
+-   Structured logging with appropriate levels
+-   Clear separation of concerns and modularity
 
 ## License
 
-This project is MIT licensed, see the LICENSE file for full details.
+This project is MIT licensed (see [LICENSE.md](https://github.com/williamcpierce/Overview/blob/main/LICENSE.md))
 
 ## Acknowledgments
 
@@ -147,7 +150,3 @@ The design, features, and general purpose of Overview are heavily inspired by [E
 Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen.
 
 Parts of this application include code derived from Apple Inc.'s ScreenRecorder sample code, used under the MIT License.
-
-## Disclaimer
-
-Overview is alpha software and is not intended for production use. Use of this software is at your own risk. The developers are not responsible for any data loss or system instability that may occur as a result of using Overview.
