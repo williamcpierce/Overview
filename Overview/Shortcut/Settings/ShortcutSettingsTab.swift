@@ -71,11 +71,13 @@ struct ShortcutRow: View {
     // Dependencies
     @StateObject private var shortcutStorage = ShortcutStorage.shared
     let shortcut: ShortcutItem
-    
+
     var body: some View {
         HStack {
             Text(shortcut.windowTitle)
                 .frame(width: 140, alignment: .leading)
+                .lineLimit(1)
+                .help(shortcut.windowTitle)
             Spacer()
             KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                 .frame(width: 120)
