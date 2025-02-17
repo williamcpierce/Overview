@@ -476,7 +476,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.0.0-beta-rc.3";
+				MARKETING_VERSION = "v1.0.0-beta-rc.4";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -509,7 +509,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.0.0-beta-rc.3";
+				MARKETING_VERSION = "v1.0.0-beta-rc.4";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
