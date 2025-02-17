@@ -40,6 +40,9 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
+        // Reset Keyboard Shortcut settings
+        ShortcutStorage.shared.resetToDefaults()
+
         let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
 
@@ -118,9 +121,6 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             SourceSettingsKeys.defaults.filterMode,
             forKey: SourceSettingsKeys.filterMode)
-
-        // Reset Keyboard Shortcut settings
-        ShortcutStorage.shared.resetToDefaults()
 
         logger.info("Settings reset completed successfully")
     }
