@@ -21,7 +21,7 @@ extension KeyboardShortcuts.Name: Codable {
     }
 }
 
-struct ShortcutItem: Codable, Identifiable, Equatable {
+struct ShortcutItem: Codable, Identifiable, Equatable, Hashable {
     let id: UUID
     var windowTitle: String
     var shortcutName: KeyboardShortcuts.Name
@@ -30,5 +30,11 @@ struct ShortcutItem: Codable, Identifiable, Equatable {
         self.id = id
         self.windowTitle = windowTitle
         self.shortcutName = shortcutName
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(windowTitle)
+        hasher.combine(shortcutName)
     }
 }

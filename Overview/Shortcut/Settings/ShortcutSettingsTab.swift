@@ -31,18 +31,15 @@ struct ShortcutSettingsTab: View {
                 }
                 .padding(.bottom, 4)
 
-                if shortcutStorage.shortcuts.isEmpty {
-                    Text("No shortcuts configured")
-                        .foregroundColor(.secondary)
-                } else {
-                    List {
-                        ForEach(shortcutStorage.shortcuts) { shortcut in
-                            ShortcutRow(shortcut: shortcut)
+                VStack {
+                    if shortcutStorage.shortcuts.isEmpty {
+                        List {
+                            Text("No shortcuts configured")
+                                .foregroundColor(.secondary)
                         }
-                        .onDelete { indices in
-                            indices.forEach { index in
-                                shortcutStorage.removeShortcut(shortcutStorage.shortcuts[index])
-                            }
+                    } else {
+                        List(shortcutStorage.shortcuts, id: \.self) { shortcut in
+                            ShortcutRow(shortcut: shortcut)
                         }
                     }
                 }
@@ -61,6 +58,8 @@ struct ShortcutSettingsTab: View {
         .formStyle(.grouped)
     }
 
+    // MARK: - Actions
+
     private func addShortcut() {
         guard !newWindowTitle.isEmpty else { return }
         shortcutStorage.addShortcut(newWindowTitle)
@@ -69,15 +68,23 @@ struct ShortcutSettingsTab: View {
 }
 
 struct ShortcutRow: View {
+    // Dependencies
+    @StateObject private var shortcutStorage = ShortcutStorage.shared
     let shortcut: ShortcutItem
-
+    
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
-                Text(shortcut.windowTitle)
-                    .lineLimit(1)
-                KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
+            Text(shortcut.windowTitle)
+                .frame(width: 140, alignment: .leading)
+            Spacer()
+            KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
+                .frame(width: 120)
+            Button(action: { shortcutStorage.removeShortcut(shortcut) }) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 8)
             }
+            .buttonStyle(.plain)
         }
     }
 }
