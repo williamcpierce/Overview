@@ -15,12 +15,19 @@ For development updates, please join our Discord:
 ## Features
 
 ### Live Window Previews
+
 Real-time window previews with configurable frame rates and automatic hiding
+
 ### Quick App Switching
+
 Switch to source applications through preview clicks or keyboard shortcut bindings
+
 ### Preview Customization
+
 Customize preview window opacity, shadows, dimensions, and behavior
+
 ### Optional Overlays
+
 Display source app names, window titles, and focus status at a glance
 
 ## System Requirements
@@ -50,20 +57,20 @@ Display source app names, window titles, and focus status at a glance
     -   Toggle Edit Mode for repositioning/resizing
     -   Stop capture
     -   Close preview window
--   ``⌘N`` Create new preview window
--   ``⌘E`` Toggle edit mode
--   ``⌘,`` Open settings
+-   `⌘N` Create new preview window
+-   `⌘E` Toggle edit mode
+-   `⌘,` Open settings
 
 ### Settings
 
 See setting menu tooltips for full details
 
-- Previews
+-   Previews
     -   Frame rate configuration
     -   Automatic hiding options
         -   Hide inactive app previews
         -   Hide active window preview
-- Windows
+-   Windows
     -   Appearance customization
         -   Opacity
         -   Shadows
@@ -73,7 +80,7 @@ See setting menu tooltips for full details
         -   Create window on launch
         -   Close with preview source
         -   Show windows on all desktops
-- Overlays
+-   Overlays
     -   Window focus indicators
         -   Border width
         -   Border color
@@ -82,12 +89,12 @@ See setting menu tooltips for full details
         -   Background opacity
         -   Location
         -   Title type (window, application, or both)
-- Shortcuts
+-   Shortcuts
     -   Custom keyboard shortcuts for window activation
     -   Multiple window titles per shortcut
-- Sources
+-   Sources
     -   Window source list filtering (blocklist/allowlist)
-- Updates
+-   Updates
     -   Automatic update checking
     -   Automatic update downloads
     -   Beta update channel
@@ -105,6 +112,7 @@ Overview requires Screen Recording permission to function, but:
 For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 ## Project Funding
+
 Support Overview's development:
 
 -   [GitHub Sponsors](https://github.com/sponsors/williamcpierce) (preferred)
@@ -112,7 +120,7 @@ Support Overview's development:
 
 100% of donations will be used for project expenses or reinvested in development - no profits will be distributed to any individuals.
 
-See [FUNDING.md](https://github.com/williamcpierce/Overview/blob/main/.github/FUNDING.md) for full details.
+See [FUNDING.md](https://github.com/williamcpierce/Overview/blob/main/FUNDING.md) for full details.
 
 ## Development
 
