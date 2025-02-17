@@ -50,12 +50,12 @@ final class SourceManager: ObservableObject {
 
     func focusSource(_ source: SCWindow) {
         logger.debug("Processing source window focus request: '\(source.title ?? "untitled")'")
-        sourceServices.sourceFocus.focusSource(source: source)
+        sourceServices.focusSource(source)
     }
 
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
-        let success = sourceServices.sourceFocus.focusSource(withTitle: title)
+        let success = sourceServices.focusSource(withTitle: title)
 
         if !success {
             logger.error("Failed to focus source window: '\(title)'")
@@ -79,7 +79,7 @@ final class SourceManager: ObservableObject {
         logger.debug("Retrieving filtered window list")
         let availableSources = try await captureServices.getAvailableSources()
 
-        let filteredSources = sourceServices.sourceFilter.filterSources(
+        let filteredSources = sourceServices.filterSources(
             availableSources,
             appFilterNames: settingsManager.filterAppNames,
             isFilterBlocklist: filterMode == FilterMode.blocklist
