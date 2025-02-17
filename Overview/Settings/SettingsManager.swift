@@ -13,7 +13,6 @@ import SwiftUI
 @MainActor
 final class SettingsManager: ObservableObject {
     // Dependencies
-    private let hotkeyStorage: HotkeyStorage
     private let updateManager: UpdateManager
     private let logger = AppLogger.settings
 
@@ -24,8 +23,7 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(hotkeyStorage: HotkeyStorage, updateManager: UpdateManager) {
-        self.hotkeyStorage = hotkeyStorage
+    init(updateManager: UpdateManager) {
         self.updateManager = updateManager
 
         /// Initialize filter app names from UserDefaults
@@ -122,8 +120,8 @@ final class SettingsManager: ObservableObject {
             SourceSettingsKeys.defaults.filterMode,
             forKey: SourceSettingsKeys.filterMode)
 
-        /// Reset Hotkey settings
-        hotkeyStorage.resetToDefaults()
+        /// Reset Keyboard Shortcut settings
+        ShortcutStorage.shared.resetToDefaults()
 
         logger.info("Settings reset completed successfully")
     }

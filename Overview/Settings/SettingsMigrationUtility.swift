@@ -43,8 +43,6 @@ struct SettingsMigrationUtility {
         OverlaySettingsKeys.sourceTitleLocation,
         OverlaySettingsKeys.sourceTitleType,
 
-        HotkeySettingsKeys.bindings,
-
         SourceSettingsKeys.appNames,
         SourceSettingsKeys.filterMode,
     ])

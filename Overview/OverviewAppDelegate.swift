@@ -14,11 +14,10 @@ import SwiftUI
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
-    let hotkeyStorage = HotkeyStorage()
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
-    let hotkeyManager: HotkeyManager
+    let shortcutManager: ShortcutManager
     let updateManager: UpdateManager
     let permissionManager: PermissionManager
     var windowManager: WindowManager!
@@ -28,7 +27,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         permissionManager = PermissionManager()
 
         settingsManager = SettingsManager(
-            hotkeyStorage: hotkeyStorage,
             updateManager: updateManager
         )
         sourceManager = SourceManager(
@@ -39,8 +37,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             sourceManager: sourceManager,
             permissionManager: permissionManager
         )
-        hotkeyManager = HotkeyManager(
-            hotkeyStorage: hotkeyStorage,
+        shortcutManager = ShortcutManager(
             sourceManager: sourceManager
         )
 

@@ -29,7 +29,6 @@ struct OverviewApp: App {
 
         Settings {
             SettingsView(
-                hotkeyStorage: appDelegate.hotkeyStorage,
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
                 updateManager: appDelegate.updateManager

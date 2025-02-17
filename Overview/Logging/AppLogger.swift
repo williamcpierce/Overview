@@ -15,7 +15,7 @@ struct AppLogger {
     private static let subsystem: String = Bundle.main.bundleIdentifier ?? "com.Overview"
 
     static let capture: CategoryLogger = CategoryLogger(category: .capture)
-    static let hotkeys: CategoryLogger = CategoryLogger(category: .hotkeys)
+    static let shortcuts: CategoryLogger = CategoryLogger(category: .shortcuts)
     static let interface: CategoryLogger = CategoryLogger(category: .interface)
     static let performance: CategoryLogger = CategoryLogger(category: .performance)
     static let settings: CategoryLogger = CategoryLogger(category: .settings)
@@ -25,7 +25,7 @@ struct AppLogger {
 extension AppLogger {
     enum Category: String, CaseIterable {
         case capture = "Capture"
-        case hotkeys = "Hotkeys"
+        case shortcuts = "Shortcuts"
         case interface = "Interface"
         case performance = "Performance"
         case settings = "Settings"
