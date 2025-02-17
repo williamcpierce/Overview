@@ -94,3 +94,19 @@ final class WindowConfigurationService {
         window.contentView != nil && window.frame.size.width > 0 && window.frame.size.height > 0
     }
 }
+
+// MARK: - Supporting Types
+
+struct WindowConfiguration {
+    let frame: NSRect
+    let styleMask: NSWindow.StyleMask
+    let backing: NSWindow.BackingStoreType
+    let deferCreation: Bool
+
+    static let `default` = WindowConfiguration(
+        frame: .zero,
+        styleMask: [.fullSizeContentView],
+        backing: .buffered,
+        deferCreation: false
+    )
+}

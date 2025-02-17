@@ -14,9 +14,8 @@ final class WindowManager {
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
-    private let windowStorage: WindowStorage = WindowStorage.shared
-    private let configService = WindowServices.shared.windowConfiguration
-    private let positionService = WindowServices.shared.windowPosition
+    private var permissionManager: PermissionManager
+    private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
 
     // Private State
@@ -34,35 +33,32 @@ final class WindowManager {
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
 
-    init(previewManager: PreviewManager, sourceManager: SourceManager) {
+    init(
+        previewManager: PreviewManager,
+        sourceManager: SourceManager,
+        permissionManager: PermissionManager
+    ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
+        self.permissionManager = permissionManager
         self.sessionWindowCounter = 0
         logger.debug("Window manager initialized")
     }
 
-    // MARK: - Window Management
-
     func createPreviewWindow(at frame: NSRect? = nil) throws {
         do {
-            let initialFrame =
-                try frame
-                ?? positionService.createDefaultFrame(
-                    defaultWidth: defaultWidth,
-                    defaultHeight: defaultHeight,
-                    windowCount: sessionWindowCounter
-                )
-            let validatedFrame = initialFrame.ensureOnScreen()
+            let defaultSize = CGSize(width: defaultWidth, height: defaultHeight)
+            let window = try windowServices.createWindow(
+                defaultSize: defaultSize,
+                windowCount: sessionWindowCounter,
+                providedFrame: frame)
 
-            logFrameAdjustment(initial: initialFrame, validated: validatedFrame)
-
-            let window = try configService.createWindow(with: validatedFrame)
             configureWindow(window)
 
             activeWindows.insert(window)
             sessionWindowCounter += 1
 
-            window.orderFront(nil)
+            window.orderFront(self)
             logger.info("Created new preview window: id=\(sessionWindowCounter)")
         } catch {
             logger.logError(error, context: "Failed to create preview window")
@@ -73,28 +69,26 @@ final class WindowManager {
     func closeWindow(_ window: NSWindow) {
         Task {
             logger.debug("Initiating window closure")
-            window.orderOut(nil)
+            window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
             logger.info("Window closed successfully")
         }
     }
 
-    // MARK: - State Management
-
     func saveWindowStates() {
-        windowStorage.saveWindowStates()
+        windowServices.saveWindowStates()
     }
 
     func restoreWindowStates() {
         var restoredCount = 0
 
         do {
-            guard windowStorage.validateStoredState() else {
+            guard windowServices.validateStoredState() else {
                 throw WindowManagerError.windowRestoreValidationFailed
             }
 
-            windowStorage.restoreWindows { [weak self] frame in
+            windowServices.restoreWindows { [weak self] frame in
                 guard let self = self else { return }
                 do {
                     try createPreviewWindow(at: frame)
@@ -111,21 +105,6 @@ final class WindowManager {
         handleRestoreCompletion(restoredCount)
     }
 
-    // MARK: - Private Methods
-
-    private func logFrameAdjustment(initial: NSRect, validated: NSRect) {
-        if validated != initial {
-            logger.debug(
-                """
-                Window frame adjusted:
-                initial=(\(Int(initial.origin.x)), \(Int(initial.origin.y)), \
-                \(Int(initial.size.width)), \(Int(initial.size.height)))
-                validated=(\(Int(validated.origin.x)), \(Int(validated.origin.y)), \
-                \(Int(validated.size.width)), \(Int(validated.size.height)))
-                """)
-        }
-    }
-
     private func handleRestoreCompletion(_ restoredCount: Int) {
         if restoredCount == 0 && createOnLaunch {
             logger.info("No windows restored, creating default window")
@@ -134,6 +113,8 @@ final class WindowManager {
             logger.info("Successfully restored \(restoredCount) windows")
         }
     }
+
+    // MARK: - Private Methods
 
     private func createDefaultWindow() {
         do {
@@ -144,7 +125,7 @@ final class WindowManager {
     }
 
     private func configureWindow(_ window: NSWindow) {
-        configService.applyConfiguration(to: window, hasShadow: shadowEnabled)
+        windowServices.windowConfiguration.applyConfiguration(to: window, hasShadow: shadowEnabled)
         setupWindowDelegate(for: window)
         setupWindowContent(window)
     }
@@ -160,6 +141,7 @@ final class WindowManager {
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,
+            permissionManager: permissionManager,
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)
@@ -205,18 +187,4 @@ enum WindowManagerError: LocalizedError {
             return "Window state validation failed"
         }
     }
-}
-
-struct WindowConfiguration {
-    let frame: NSRect
-    let styleMask: NSWindow.StyleMask
-    let backing: NSWindow.BackingStoreType
-    let deferCreation: Bool
-
-    static let `default` = WindowConfiguration(
-        frame: .zero,
-        styleMask: [.fullSizeContentView],
-        backing: .buffered,
-        deferCreation: false
-    )
 }

@@ -7,12 +7,13 @@
  Manages centralized settings operations and reset functionality across the application.
 */
 
+import Sparkle
 import SwiftUI
 
 @MainActor
 final class SettingsManager: ObservableObject {
     // Dependencies
-    private let hotkeyStorage: HotkeyStorage
+    private let updateManager: UpdateManager
     private let logger = AppLogger.settings
 
     // Published State
@@ -22,10 +23,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(hotkeyStorage: HotkeyStorage) {
-        self.hotkeyStorage = hotkeyStorage
+    init(updateManager: UpdateManager) {
+        self.updateManager = updateManager
 
-        /// Initialize filter app names from UserDefaults
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
             as? [String]
         {
@@ -40,10 +40,13 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
+        // Reset Keyboard Shortcut settings
+        ShortcutStorage.shared.resetToDefaults()
+
         let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
 
-        /// Reset Window settings
+        // Reset Window settings
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.previewOpacity,
             forKey: WindowSettingsKeys.previewOpacity)
@@ -69,7 +72,7 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
             forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
 
-        /// Reset Overlay settings
+        // Reset Overlay settings
         UserDefaults.standard.set(
             OverlaySettingsKeys.defaults.focusBorderEnabled,
             forKey: OverlaySettingsKeys.focusBorderEnabled)
@@ -95,7 +98,7 @@ final class SettingsManager: ObservableObject {
             OverlaySettingsKeys.defaults.sourceTitleType,
             forKey: OverlaySettingsKeys.sourceTitleType)
 
-        /// Reset Preview settings
+        // Reset Preview settings
         UserDefaults.standard.set(
             PreviewSettingsKeys.defaults.hideInactiveApplications,
             forKey: PreviewSettingsKeys.hideInactiveApplications)
@@ -106,14 +109,18 @@ final class SettingsManager: ObservableObject {
             PreviewSettingsKeys.defaults.captureFrameRate,
             forKey: PreviewSettingsKeys.captureFrameRate)
 
-        /// Reset Filter settings
+        // Reset Update settings
+        updateManager.updater.automaticallyChecksForUpdates = true
+        updateManager.updater.automaticallyDownloadsUpdates = false
+        UserDefaults.standard.set(
+            UpdateSettingsKeys.defaults.enableBetaUpdates,
+            forKey: UpdateSettingsKeys.enableBetaUpdates)
+
+        // Reset Filter settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
             SourceSettingsKeys.defaults.filterMode,
             forKey: SourceSettingsKeys.filterMode)
-
-        /// Reset Hotkey settings
-        hotkeyStorage.resetToDefaults()
 
         logger.info("Settings reset completed successfully")
     }

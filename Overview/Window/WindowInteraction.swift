@@ -12,9 +12,11 @@ import SwiftUI
 
 struct WindowInteraction: NSViewRepresentable {
     // Dependencies
+    private let logger = AppLogger.interface
+
+    // Bindings
     @Binding var editModeEnabled: Bool
     @Binding var isSelectionViewVisible: Bool
-    private let logger = AppLogger.interface
 
     // Actions
     let onEditModeToggle: () -> Void
@@ -24,126 +26,97 @@ struct WindowInteraction: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let handler = WindowInteractionHandler()
-        configureHandler(handler)
-        logger.debug("Created interaction handler view")
-        return handler
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        guard let handler = nsView as? WindowInteractionHandler else {
-            logger.warning("Invalid handler type during update")
-            return
-        }
-
-        updateHandlerState(handler)
-    }
-
-    // MARK: - Configuration
-
-    private func configureHandler(_ handler: WindowInteractionHandler) {
-        handler.editModeEnabled = editModeEnabled
-        handler.isSelectionViewVisible = isSelectionViewVisible
         handler.onEditModeToggle = onEditModeToggle
         handler.onSourceWindowFocus = onSourceWindowFocus
+        handler.onStopCapture = { Task { @MainActor in await teardownCapture() } }
         handler.onCloseWindow = {
             Task { @MainActor in
                 await teardownCapture()
                 onClose()
             }
         }
-        handler.menu = createContextMenu(for: handler)
-
-        logger.debug("Handler configured with initial state")
+        handler.updateState(
+            editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
+        return handler
     }
 
-    private func updateHandlerState(_ handler: WindowInteractionHandler) {
-        let previousEditMode: Bool = handler.editModeEnabled
-        handler.editModeEnabled = editModeEnabled
-        handler.isSelectionViewVisible = isSelectionViewVisible
-        handler.editModeMenuItem?.state = editModeEnabled ? .on : .off
-
-        if previousEditMode != editModeEnabled {
-            logger.debug("Edit mode state updated: \(editModeEnabled)")
-        }
-    }
-
-    private func createContextMenu(for handler: WindowInteractionHandler) -> NSMenu {
-        let menu = NSMenu()
-        let editModeItem: NSMenuItem = createEditModeMenuItem(for: handler)
-
-        menu.addItem(editModeItem)
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(createCloseWindowMenuItem(for: handler))
-
-        handler.editModeMenuItem = editModeItem
-        return menu
-    }
-
-    private func createEditModeMenuItem(for handler: WindowInteractionHandler) -> NSMenuItem {
-        let item = NSMenuItem(
-            title: "Edit Mode",
-            action: #selector(WindowInteractionHandler.toggleEditMode),
-            keyEquivalent: ""
-        )
-        item.target = handler
-        return item
-    }
-
-    private func createCloseWindowMenuItem(for handler: WindowInteractionHandler) -> NSMenuItem {
-        let item = NSMenuItem(
-            title: "Close Window",
-            action: #selector(WindowInteractionHandler.closeWindow),
-            keyEquivalent: ""
-        )
-        item.target = handler
-        return item
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let handler = nsView as? WindowInteractionHandler else { return }
+        handler.updateState(
+            editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
     }
 }
 
-// MARK: - Interaction Handler
-
-private final class WindowInteractionHandler: NSView {
+private final class WindowInteractionHandler: NSView, NSMenuDelegate {
+    // Dependencies
     private let logger = AppLogger.interface
-    var editModeEnabled: Bool = false
-    var isSelectionViewVisible: Bool = false
+
+    // Menu Items
+    private let editModeItem: NSMenuItem
+    private let stopCaptureItem: NSMenuItem
+    private let contextMenu: NSMenu
+
+    // State
+    private var editModeEnabled = false
+    private var isSelectionVisible = false
+
+    // Actions
     var onEditModeToggle: (() -> Void)?
     var onSourceWindowFocus: (() -> Void)?
+    var onStopCapture: (() -> Void)?
     var onCloseWindow: (() -> Void)?
-    weak var editModeMenuItem: NSMenuItem?
 
-    // MARK: - Mouse Event Handling
+    override init(frame: NSRect) {
+        editModeItem = NSMenuItem(
+            title: "Edit Mode", action: #selector(toggleEditMode), keyEquivalent: "")
+        stopCaptureItem = NSMenuItem(
+            title: "Stop Capture", action: #selector(stopCapture), keyEquivalent: "")
+        let closeItem = NSMenuItem(
+            title: "Close Window", action: #selector(closeWindow), keyEquivalent: "")
+
+        contextMenu = NSMenu()
+        contextMenu.autoenablesItems = false
+
+        super.init(frame: frame)
+
+        editModeItem.target = self
+        stopCaptureItem.target = self
+        closeItem.target = self
+
+        contextMenu.addItem(editModeItem)
+        contextMenu.addItem(stopCaptureItem)
+        contextMenu.addItem(NSMenuItem.separator())
+        contextMenu.addItem(closeItem)
+
+        contextMenu.delegate = self
+        menu = contextMenu
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    func updateState(editModeEnabled: Bool, isSelectionVisible: Bool) {
+        self.editModeEnabled = editModeEnabled
+        self.isSelectionVisible = isSelectionVisible
+
+        editModeItem.state = editModeEnabled ? .on : .off
+        stopCaptureItem.isEnabled = !isSelectionVisible
+    }
 
     override func mouseDown(with event: NSEvent) {
-        if shouldHandleMouseClick {
-            handleMouseClick()
+        if !editModeEnabled && !isSelectionVisible {
+            onSourceWindowFocus?()
         } else {
-            handleSystemMouseEvent(event)
+            super.mouseDown(with: event)
         }
     }
 
-    private var shouldHandleMouseClick: Bool {
-        !editModeEnabled && !isSelectionViewVisible
+    func menuWillOpen(_ menu: NSMenu) {
+        stopCaptureItem.isEnabled = !isSelectionVisible
     }
 
-    private func handleMouseClick() {
-        logger.debug("Processing mouse click for source window focus")
-        onSourceWindowFocus?()
-    }
-
-    private func handleSystemMouseEvent(_ event: NSEvent) {
-        logger.debug("Delegating mouse event to system handler")
-        super.mouseDown(with: event)
-    }
-
-    // MARK: - Menu Actions
-
-    @objc func toggleEditMode() {
-        logger.info("Edit mode toggled via context menu")
-        onEditModeToggle?()
-    }
-
-    @objc func closeWindow() {
-        logger.info("Window close requested via context menu")
-        onCloseWindow?()
-    }
+    @objc private func toggleEditMode() { onEditModeToggle?() }
+    @objc private func stopCapture() { onStopCapture?() }
+    @objc private func closeWindow() { onCloseWindow?() }
 }

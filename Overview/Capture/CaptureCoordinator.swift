@@ -31,7 +31,7 @@ final class CaptureCoordinator: ObservableObject {
 
     // Dependencies
     private var sourceManager: SourceManager
-    private let captureEngine: CaptureEngine
+    private var permissionManager: PermissionManager
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
 
@@ -46,10 +46,11 @@ final class CaptureCoordinator: ObservableObject {
 
     init(
         sourceManager: SourceManager,
+        permissionManager: PermissionManager,
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.sourceManager = sourceManager
-        self.captureEngine = captureEngine
+        self.permissionManager = permissionManager
         setupSubscriptions()
     }
 
@@ -58,7 +59,7 @@ final class CaptureCoordinator: ObservableObject {
     func requestPermission() async throws {
         guard !hasPermission else { return }
         logger.debug("Requesting screen recording permission")
-        try await captureServices.requestScreenRecordingPermission()
+        try await permissionManager.ensurePermission()
         hasPermission = true
         logger.info("Screen recording permission granted")
     }
@@ -71,9 +72,9 @@ final class CaptureCoordinator: ObservableObject {
         }
 
         logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
+
         let stream = try await captureServices.startCapture(
             source: source,
-            engine: captureEngine,
             frameRate: captureFrameRate
         )
 
@@ -87,7 +88,7 @@ final class CaptureCoordinator: ObservableObject {
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
 
-        await captureEngine.stopCapture()
+        await captureServices.stopCapture()
         isCapturing = false
         capturedFrame = nil
         logger.debug("Capture stopped")
@@ -100,7 +101,6 @@ final class CaptureCoordinator: ObservableObject {
         do {
             try await captureServices.updateStreamConfiguration(
                 source: source,
-                stream: captureEngine.stream,
                 frameRate: captureFrameRate
             )
             logger.info("Stream configuration updated successfully")
@@ -175,5 +175,21 @@ final class CaptureCoordinator: ObservableObject {
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
         sourceWindowTitle = titles[sourceID]
         sourceApplicationTitle = source.owningApplication?.applicationName
+    }
+}
+
+// MARK - Support Types
+
+enum CaptureError: LocalizedError {
+    case noSourceSelected
+    case permissionDenied
+
+    var errorDescription: String? {
+        switch self {
+        case .noSourceSelected:
+            return "No source window is selected for capture"
+        case .permissionDenied:
+            return "Screen capture permission was denied"
+        }
     }
 }

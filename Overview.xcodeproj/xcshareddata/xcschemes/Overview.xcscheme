@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-               BuildableName = "Overview-alpha.app"
-               BlueprintName = "Overview-alpha"
-               ReferencedContainer = "container:Overview-alpha.xcodeproj">
+               BuildableName = "Overview.app"
+               BlueprintName = "Overview"
+               ReferencedContainer = "container:Overview.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-            BuildableName = "Overview-alpha.app"
-            BlueprintName = "Overview-alpha"
-            ReferencedContainer = "container:Overview-alpha.xcodeproj">
+            BuildableName = "Overview.app"
+            BlueprintName = "Overview"
+            ReferencedContainer = "container:Overview.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C87695812CBA082D00FBCA6C"
-            BuildableName = "Overview-alpha.app"
-            BlueprintName = "Overview-alpha"
-            ReferencedContainer = "container:Overview-alpha.xcodeproj">
+            BuildableName = "Overview.app"
+            BlueprintName = "Overview"
+            ReferencedContainer = "container:Overview.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
@@ -73,7 +73,6 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
-      customArchiveName = "Overview-alpha"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

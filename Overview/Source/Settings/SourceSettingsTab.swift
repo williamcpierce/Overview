@@ -48,6 +48,8 @@ struct SourceSettingsTab: View {
                         List(settingsManager.filterAppNames, id: \.self) { appName in
                             HStack {
                                 Text(appName)
+                                    .lineLimit(1)
+                                    .help(appName)
                                 Spacer()
                                 Button(action: { removeAppFilter(appName) }) {
                                     Image(systemName: "xmark.circle.fill")
