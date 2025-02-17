@@ -25,7 +25,7 @@ Display source app names, window titles, and focus status at a glance
 
 ## System Requirements
 
--   macOS Big Sur (13.0) or later
+-   macOS Ventura (13.0) or later
 -   Screen Recording permission (required for window capture)
 
 ## Installation
