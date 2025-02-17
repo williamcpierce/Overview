@@ -15,10 +15,9 @@ final class ShortcutStorage: ObservableObject {
     private let logger = AppLogger.settings
 
     // Published State
-    @Published var windowTitle: String? {
+    @Published var shortcuts: [ShortcutItem] {
         didSet {
-            UserDefaults.standard.set(
-                windowTitle, forKey: ShortcutSettingsKeys.storedWindowTitle)
+            saveShortcuts()
         }
     }
 
@@ -26,16 +25,46 @@ final class ShortcutStorage: ObservableObject {
     static let shared = ShortcutStorage()
 
     private init() {
-        // Load saved window title
-        self.windowTitle = UserDefaults.standard.string(
-            forKey: ShortcutSettingsKeys.storedWindowTitle)
+        self.shortcuts = ShortcutStorage.loadShortcuts()
         logger.debug("Keyboard shortcut storage initialized")
+    }
+
+    func addShortcut(_ windowTitle: String) {
+        let shortcutName = KeyboardShortcuts.Name("windowShortcut_\(UUID().uuidString)")
+        let shortcut = ShortcutItem(windowTitle: windowTitle, shortcutName: shortcutName)
+        shortcuts.append(shortcut)
+        logger.info("Added new keyboard shortcut for window: '\(windowTitle)'")
+    }
+
+    func removeShortcut(_ shortcut: ShortcutItem) {
+        if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
+            KeyboardShortcuts.reset(shortcut.shortcutName)
+            shortcuts.remove(at: index)
+            logger.info("Removed keyboard shortcut for window: '\(shortcut.windowTitle)'")
+        }
     }
 
     func resetToDefaults() {
         logger.debug("Resetting keyboard shortcut settings")
-        windowTitle = nil
-        KeyboardShortcuts.reset(.focusSelectedWindow)
+        shortcuts.forEach { shortcut in
+            KeyboardShortcuts.reset(shortcut.shortcutName)
+        }
+        shortcuts.removeAll()
         logger.info("Keyboard shortcut settings reset completed")
+    }
+
+    private func saveShortcuts() {
+        if let encoded = try? JSONEncoder().encode(shortcuts) {
+            UserDefaults.standard.set(encoded, forKey: ShortcutSettingsKeys.storedShortcuts)
+        }
+    }
+
+    private static func loadShortcuts() -> [ShortcutItem] {
+        guard let data = UserDefaults.standard.data(forKey: ShortcutSettingsKeys.storedShortcuts),
+            let shortcuts = try? JSONDecoder().decode([ShortcutItem].self, from: data)
+        else {
+            return []
+        }
+        return shortcuts
     }
 }

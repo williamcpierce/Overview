@@ -44,10 +44,11 @@
 		C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				KeyboardShortcut.swift,
+				Extensions/KeyboardShortcuts.swift,
 				Settings/ShortcutSettingsContent.swift,
 				Settings/ShortcutSettingsKeys.swift,
 				Settings/ShortcutSettingsTab.swift,
+				ShortcutItem.swift,
 				ShortcutManager.swift,
 				ShortcutStorage.swift,
 			);

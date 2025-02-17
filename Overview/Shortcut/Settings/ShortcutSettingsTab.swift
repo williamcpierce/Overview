@@ -10,14 +10,12 @@ import SwiftUI
 
 struct ShortcutSettingsTab: View {
     // Dependencies
-    @ObservedObject var sourceManager: SourceManager
     @StateObject private var shortcutStorage = ShortcutStorage.shared
     private let logger = AppLogger.settings
 
     // Private State
     @State private var showingShortcutInfo: Bool = false
-    @State private var selectedWindowTitle: String?
-    @State private var availableWindows: [String] = []
+    @State private var newWindowTitle: String = ""
 
     var body: some View {
         Form {
@@ -33,34 +31,53 @@ struct ShortcutSettingsTab: View {
                 }
                 .padding(.bottom, 4)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Picker("Window:", selection: $selectedWindowTitle) {
-                        Text("Select window...").tag(nil as String?)
-                        ForEach(availableWindows, id: \.self) { title in
-                            Text(title).tag(Optional(title))
+                if shortcutStorage.shortcuts.isEmpty {
+                    Text("No shortcuts configured")
+                        .foregroundColor(.secondary)
+                } else {
+                    List {
+                        ForEach(shortcutStorage.shortcuts) { shortcut in
+                            ShortcutRow(shortcut: shortcut)
+                        }
+                        .onDelete { indices in
+                            indices.forEach { index in
+                                shortcutStorage.removeShortcut(shortcutStorage.shortcuts[index])
+                            }
                         }
                     }
-                    .onChange(of: selectedWindowTitle) { newValue in
-                        shortcutStorage.windowTitle = newValue
-                    }
+                }
 
-                    KeyboardShortcuts.Recorder("Shortcut:", name: .focusSelectedWindow)
+                HStack {
+                    TextField("Window Title", text: $newWindowTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .disableAutocorrection(true)
+                    Button("Add") {
+                        addShortcut()
+                    }
+                    .disabled(newWindowTitle.isEmpty)
                 }
             }
         }
         .formStyle(.grouped)
-        .task {
-            await loadAvailableWindows()
-        }
     }
 
-    private func loadAvailableWindows() async {
-        do {
-            let sources = try await sourceManager.getFilteredSources()
-            availableWindows = sources.compactMap { $0.title }.sorted()
-        } catch {
-            logger.logError(error, context: "Failed to get window titles")
-            availableWindows = []
+    private func addShortcut() {
+        guard !newWindowTitle.isEmpty else { return }
+        shortcutStorage.addShortcut(newWindowTitle)
+        newWindowTitle = ""
+    }
+}
+
+struct ShortcutRow: View {
+    let shortcut: ShortcutItem
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(shortcut.windowTitle)
+                    .lineLimit(1)
+                KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
+            }
         }
     }
 }

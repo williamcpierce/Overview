@@ -10,11 +10,11 @@
 import Foundation
 
 enum ShortcutSettingsKeys {
-    static let storedWindowTitle: String = "storedWindowTitle"
+    static let storedShortcuts: String = "storedShortcuts"
 
     static let defaults = Defaults()
 
     struct Defaults {
-        let storedWindowTitle: String? = nil
+        let shortcuts: [ShortcutItem] = []
     }
 }

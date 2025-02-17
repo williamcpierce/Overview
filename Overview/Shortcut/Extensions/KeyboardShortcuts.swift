@@ -1,5 +1,5 @@
 /*
- Shortcut/KeyboardShortcutsExtension.swift
+ Shortcut/Extensions/KeyboardShortcutsExtension.swift
  Overview
 
  Created by William Pierce on 2/16/25.

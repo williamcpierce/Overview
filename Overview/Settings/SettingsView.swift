@@ -40,7 +40,7 @@ struct SettingsView: View {
             OverlaySettingsTab()
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
 
-            ShortcutSettingsTab(sourceManager: sourceManager)
+            ShortcutSettingsTab()
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
