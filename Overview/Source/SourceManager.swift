@@ -13,18 +13,18 @@ import SwiftUI
 
 @MainActor
 final class SourceManager: ObservableObject {
-    // Published State
-    @Published private(set) var focusedBundleId: String?
-    @Published private(set) var focusedProcessId: pid_t?
-    @Published private(set) var isOverviewActive: Bool = true
-    @Published private(set) var sourceTitles: [SourceID: String] = [:]
-
     // Dependencies
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var permissionManager: PermissionManager
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.sources
+
+    // Published State
+    @Published private(set) var focusedBundleId: String?
+    @Published private(set) var focusedProcessId: pid_t?
+    @Published private(set) var isOverviewActive: Bool = true
+    @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
     // Private State
     private let observerId = UUID()
@@ -33,7 +33,7 @@ final class SourceManager: ObservableObject {
     @AppStorage(SourceSettingsKeys.filterMode)
     private var filterMode = SourceSettingsKeys.defaults.filterMode
 
-    // Types
+    // Type Definitions
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
@@ -46,7 +46,7 @@ final class SourceManager: ObservableObject {
         logger.debug("Source window manager initialization complete")
     }
 
-    // MARK: - Public Interface
+    // MARK: - Public Methods
 
     func focusSource(_ source: SCWindow) {
         logger.debug("Processing source window focus request: '\(source.title ?? "untitled")'")

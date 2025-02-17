@@ -4,7 +4,7 @@
 
  Created by William Pierce on 9/15/24.
 
- Manages the main preview interface, coordinating capture state, window visibility,
+ The main preview interface, coordinating capture state, window visibility,
  and user interactions across the application's preview functionality.
 */
 

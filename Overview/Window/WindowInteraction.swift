@@ -28,15 +28,22 @@ struct WindowInteraction: NSViewRepresentable {
         let handler = WindowInteractionHandler()
         handler.onEditModeToggle = onEditModeToggle
         handler.onSourceWindowFocus = onSourceWindowFocus
-        handler.onStopCapture = { Task { @MainActor in await teardownCapture() }}
-        handler.onCloseWindow = { Task { @MainActor in await teardownCapture(); onClose() }}
-        handler.updateState(editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
+        handler.onStopCapture = { Task { @MainActor in await teardownCapture() } }
+        handler.onCloseWindow = {
+            Task { @MainActor in
+                await teardownCapture()
+                onClose()
+            }
+        }
+        handler.updateState(
+            editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
         return handler
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let handler = nsView as? WindowInteractionHandler else { return }
-        handler.updateState(editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
+        handler.updateState(
+            editModeEnabled: editModeEnabled, isSelectionVisible: isSelectionViewVisible)
     }
 }
 
@@ -60,9 +67,12 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
     var onCloseWindow: (() -> Void)?
 
     override init(frame: NSRect) {
-        editModeItem = NSMenuItem(title: "Edit Mode", action: #selector(toggleEditMode), keyEquivalent: "")
-        stopCaptureItem = NSMenuItem(title: "Stop Capture", action: #selector(stopCapture), keyEquivalent: "")
-        let closeItem = NSMenuItem(title: "Close Window", action: #selector(closeWindow), keyEquivalent: "")
+        editModeItem = NSMenuItem(
+            title: "Edit Mode", action: #selector(toggleEditMode), keyEquivalent: "")
+        stopCaptureItem = NSMenuItem(
+            title: "Stop Capture", action: #selector(stopCapture), keyEquivalent: "")
+        let closeItem = NSMenuItem(
+            title: "Close Window", action: #selector(closeWindow), keyEquivalent: "")
 
         contextMenu = NSMenu()
         contextMenu.autoenablesItems = false
@@ -77,7 +87,7 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
         contextMenu.addItem(stopCaptureItem)
         contextMenu.addItem(NSMenuItem.separator())
         contextMenu.addItem(closeItem)
-        
+
         contextMenu.delegate = self
         menu = contextMenu
     }
@@ -89,7 +99,7 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
     func updateState(editModeEnabled: Bool, isSelectionVisible: Bool) {
         self.editModeEnabled = editModeEnabled
         self.isSelectionVisible = isSelectionVisible
-        
+
         editModeItem.state = editModeEnabled ? .on : .off
         stopCaptureItem.isEnabled = !isSelectionVisible
     }
