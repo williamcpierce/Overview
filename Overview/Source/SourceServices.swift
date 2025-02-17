@@ -21,14 +21,47 @@ final class SourceServices {
     // Singleton
     static let shared = SourceServices()
 
-    private init(
-        sourceFilter: SourceFilterService = SourceFilterService(),
-        sourceFocus: SourceFocusService = SourceFocusService(),
-        sourceObserver: SourceObserverService = SourceObserverService()
+    private init() {
+        self.sourceFilter = SourceFilterService()
+        self.sourceFocus = SourceFocusService()
+        self.sourceObserver = SourceObserverService()
+        logger.debug("Initializing source services")
+    }
+
+    // MARK: - Window Filtering
+
+    func filterSources(_ sources: [SCWindow], appFilterNames: [String], isFilterBlocklist: Bool)
+        -> [SCWindow]
+    {
+        sourceFilter.filterSources(
+            sources, appFilterNames: appFilterNames, isFilterBlocklist: isFilterBlocklist)
+    }
+
+    // MARK: - Focus Management
+
+    func focusSource(_ source: SCWindow) {
+        sourceFocus.focusSource(source: source)
+    }
+
+    func focusSource(withTitle title: String) -> Bool {
+        sourceFocus.focusSource(withTitle: title)
+    }
+
+    // MARK: - State Observation
+
+    func addObserver(
+        id: UUID,
+        onFocusChanged: @escaping () async -> Void,
+        onTitleChanged: @escaping () async -> Void
     ) {
-        self.sourceFilter = sourceFilter
-        self.sourceFocus = sourceFocus
-        self.sourceObserver = sourceObserver
-        logger.debug("Initializing source window services")
+        sourceObserver.addObserver(
+            id: id,
+            onFocusChanged: onFocusChanged,
+            onTitleChanged: onTitleChanged
+        )
+    }
+
+    func removeObserver(id: UUID) {
+        sourceObserver.removeObserver(id: id)
     }
 }

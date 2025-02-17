@@ -99,7 +99,7 @@ private let logger = AppLogger.capture  // For capture-related components
 private let logger = AppLogger.interface // For UI-related components
 private let logger = AppLogger.windows   // For window management
 private let logger = AppLogger.settings  // For settings management
-private let logger = AppLogger.hotkeys   // For hotkey functionality
+private let logger = AppLogger.shortcuts   // For keyboard shortcut functionality
 ```
 
 ### Log Levels

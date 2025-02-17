@@ -28,7 +28,8 @@ struct WindowSettingsTab: View {
     @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
     private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults.assignPreviewsToAllDesktops
+    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
+        .assignPreviewsToAllDesktops
 
     var body: some View {
         Form {

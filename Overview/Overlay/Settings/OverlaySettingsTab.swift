@@ -121,7 +121,7 @@ struct OverlaySettingsTab: View {
                             Text("Window Title").tag(TitleType.windowTitle)
                             Text("Application Name").tag(TitleType.appName)
                             Text("Both").tag(TitleType.fullTitle)
-                            
+
                         }
                         .pickerStyle(.menu)
 
@@ -130,7 +130,5 @@ struct OverlaySettingsTab: View {
             }
         }
         .formStyle(.grouped)
-//        .animation(.easeInOut(duration: 0.3), value: focusBorderEnabled)
-//        .animation(.easeInOut(duration: 0.3), value: sourceTitleEnabled)
     }
 }
