@@ -24,4 +24,30 @@ extension InfoPopoverContent {
         ],
         isWarning: false
     )
+    static let shortcutWindowTitles = InfoPopoverContent(
+        title: "Multiple Window Titles",
+        sections: [
+            Section(
+                title: "Entering Multiple Titles",
+                text:
+                    "You can specify multiple window titles for a single shortcut by separating them with commas."
+            ),
+            Section(
+                title: "Title Matching",
+                text:
+                    "When activated, the shortcut will attempt to focus windows in the order they are listed."
+            ),
+            Section(
+                title: "Example",
+                text:
+                    "Input: \"Overview, Project Notes, Design\"\nThis will first try to focus the 'Overview' window, then 'Project Notes', then 'Design'."
+            ),
+            Section(
+                title: "Formatting Tips",
+                text:
+                    "• Separate titles with commas\n• Trim any extra spaces\n• Ensure window titles match exactly"
+            ),
+        ],
+        isWarning: false
+    )
 }

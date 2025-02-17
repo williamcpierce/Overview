@@ -15,7 +15,8 @@ struct ShortcutSettingsTab: View {
 
     // Private State
     @State private var showingShortcutInfo: Bool = false
-    @State private var newWindowTitle: String = ""
+    @State private var showingWindowTitlesInfo: Bool = false
+    @State private var newWindowTitles: String = ""
 
     var body: some View {
         Form {
@@ -45,13 +46,19 @@ struct ShortcutSettingsTab: View {
                 }
 
                 HStack {
-                    TextField("Window Title", text: $newWindowTitle)
+                    TextField("Window Titles", text: $newWindowTitles)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
+                    Spacer()
+                    InfoPopover(
+                        content: .shortcutWindowTitles,
+                        isPresented: $showingWindowTitlesInfo
+                    )
                     Button("Add") {
                         addShortcut()
                     }
-                    .disabled(newWindowTitle.isEmpty)
+                    .disabled(newWindowTitles.isEmpty)
+
                 }
             }
         }
@@ -59,11 +66,15 @@ struct ShortcutSettingsTab: View {
     }
 
     // MARK: - Actions
-
     private func addShortcut() {
-        guard !newWindowTitle.isEmpty else { return }
-        shortcutStorage.addShortcut(newWindowTitle)
-        newWindowTitle = ""
+        let titles = newWindowTitles.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard !titles.isEmpty else { return }
+
+        shortcutStorage.addShortcut(windowTitles: titles)
+        newWindowTitles = ""
     }
 }
 
@@ -74,13 +85,20 @@ struct ShortcutRow: View {
 
     var body: some View {
         HStack {
-            Text(shortcut.windowTitle)
-                .frame(width: 140, alignment: .leading)
-                .lineLimit(1)
-                .help(shortcut.windowTitle)
+            VStack(alignment: .leading) {
+                ForEach(shortcut.windowTitles, id: \.self) { title in
+                    Text(title)
+                        .lineLimit(1)
+                        .help(title)
+                }
+            }
+            .frame(width: 140, alignment: .leading)
+
             Spacer()
+
             KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                 .frame(width: 120)
+
             Button(action: { shortcutStorage.removeShortcut(shortcut) }) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.secondary)

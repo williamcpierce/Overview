@@ -29,18 +29,21 @@ final class ShortcutStorage: ObservableObject {
         logger.debug("Keyboard shortcut storage initialized")
     }
 
-    func addShortcut(_ windowTitle: String) {
+    func addShortcut(windowTitles: [String]) {
         let shortcutName = KeyboardShortcuts.Name("windowShortcut_\(UUID().uuidString)")
-        let shortcut = ShortcutItem(windowTitle: windowTitle, shortcutName: shortcutName)
+        let shortcut = ShortcutItem(windowTitles: windowTitles, shortcutName: shortcutName)
         shortcuts.append(shortcut)
-        logger.info("Added new keyboard shortcut for window: '\(windowTitle)'")
+        logger.info(
+            "Added new keyboard shortcut for windows: '\(windowTitles.joined(separator: ", "))'")
     }
 
     func removeShortcut(_ shortcut: ShortcutItem) {
         if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
             KeyboardShortcuts.reset(shortcut.shortcutName)
             shortcuts.remove(at: index)
-            logger.info("Removed keyboard shortcut for window: '\(shortcut.windowTitle)'")
+            logger.info(
+                "Removed keyboard shortcut for windows: '\(shortcut.windowTitles.joined(separator: ", "))'"
+            )
         }
     }
 

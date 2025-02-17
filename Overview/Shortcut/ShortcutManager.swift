@@ -46,18 +46,19 @@ final class ShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: shortcut.shortcutName) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
-                self.activateSourceWindow(withTitle: shortcut.windowTitle)
+                self.activateSourceWindow(for: shortcut)
             }
         }
     }
 
-    private func activateSourceWindow(withTitle title: String) {
-        let activated = sourceManager.focusSource(withTitle: title)
-
-        if activated {
-            logger.info("Window focused via shortcut: '\(title)'")
-        } else {
-            logger.warning("Failed to focus window: '\(title)'")
+    private func activateSourceWindow(for shortcut: ShortcutItem) {
+        for title in shortcut.windowTitles {
+            let activated = sourceManager.focusSource(withTitle: title)
+            if activated {
+                logger.info("Window focused via shortcut: '\(title)'")
+                return
+            }
         }
+        logger.warning("Failed to focus any window for shortcut: \(shortcut.windowTitles)")
     }
 }
