@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Overview Updates</title>
+        <item>
+            <title>v1.0.0-beta</title>
+            <sparkle:channel>beta</sparkle:channel>
+            <pubDate>Sun, 16 Feb 2025 09:34:18 +0000</pubDate>
+            <sparkle:version>1.0.0</sparkle:version>
+            <sparkle:shortVersionString>v1.0.0-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.0.0-beta</h3>
+                <h4>Features:</h4>
+                <ul>
+                    <li>Implemented developer ID Apple notarization for direct distribution</li>
+                    <li>Automatic update feature added, with beta channel</li>
+                    <li>Permission manager now handles permission state and setup window</li>
+                    <li>Context menu item added to stop capture/return to selectio view</li>
+                    <li>Option added to show both application name and window title in overlay</li>
+                    <li>Dock icon now shows while in permission setup or while settings window is open</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure 
+                url="https://williampierce.io/overview/releases/v1.0.0-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+    </channel>
+</rss>

@@ -13,6 +13,13 @@ import SwiftUI
 
 @MainActor
 final class PermissionManager: ObservableObject {
+    // Dependencies
+    private let logger = AppLogger.capture
+    private let permissionSetupCoordinator: PermissionSetupCoordinator
+
+    // Private State
+    private var isRequestingPermission: Bool = false
+
     // Published State
     @Published private(set) var permissionStatus: PermissionStatus = .unknown {
         didSet {
@@ -22,13 +29,6 @@ final class PermissionManager: ObservableObject {
         }
     }
 
-    // Dependencies
-    private let logger = AppLogger.capture
-    private let permissionSetupCoordinator: PermissionSetupCoordinator
-
-    // Private State
-    private var isRequestingPermission: Bool = false
-
     init() {
         self.permissionSetupCoordinator = PermissionSetupCoordinator()
         self.permissionSetupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
@@ -37,13 +37,15 @@ final class PermissionManager: ObservableObject {
         logger.debug("Initializing permission manager")
     }
 
-    // MARK: - Permission Status
+    // MARK: - Permission Types
 
     enum PermissionStatus: Equatable {
         case unknown
         case denied
         case granted
     }
+
+    // MARK: - Public Methods
 
     func ensurePermission() async throws {
         if permissionStatus == .granted {
@@ -85,6 +87,8 @@ final class PermissionManager: ObservableObject {
             }
         }
     }
+
+    // MARK: - Private Methods
 
     private func launchSetupFlow() async throws {
         logger.info("Launching setup flow")

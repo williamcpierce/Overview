@@ -13,7 +13,7 @@ import SwiftUI
 final class WindowStorage {
     // Constants
     private struct Constants {
-        static let storageKey = "StoredWindowPositions"
+        static let storageKey: String = "StoredWindowPositions"
 
         struct Validation {
             static let maxPosition: Double = 10000

@@ -37,7 +37,8 @@ extension InfoPopoverContent {
             ),
             Section(
                 title: "Create Window on Launch",
-                text: "Opens a preview window at startup if none were restored from a previous session"
+                text:
+                    "Opens a preview window at startup if none were restored from a previous session"
             ),
             Section(
                 title: "Close Window with Preview Source",
