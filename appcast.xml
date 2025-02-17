@@ -4,7 +4,6 @@
         <title>Overview Updates</title>
         <item>
             <title>v1.0.0-beta</title>
-            <sparkle:channel>beta</sparkle:channel>
             <pubDate>Sun, 17 Feb 2025 09:05:58 +0000</pubDate>
             <sparkle:version>1.0.0</sparkle:version>
             <sparkle:shortVersionString>v1.0.0-beta</sparkle:shortVersionString>
