@@ -15,7 +15,7 @@ For development updates, please join our Discord:
 ## Features
 
 -   Live Window Previews: Real-time window previews with configurable frame rates and automatic hiding
--   Quick App Switching: Switch to source applications through preview clicks or hotkey bindings
+-   Quick App Switching: Switch to source applications through preview clicks or keyboard shortcut bindings
 -   Preview Customization: Customize preview window opacity, shadows, dimensions, and behavior
 -   Optional Overlays: Overlays show source app names, window titles, and focus status at a glance
 
@@ -81,7 +81,7 @@ Grant screen recording permission when prompted
         -   Opacity
         -   Location
         -   Type (window, application, both)
--   Hotkeys
+-   Shortcuts
     -   Source window activation
 -   Sources
     -   Application filtering (blocklist/allowlist)
@@ -123,7 +123,7 @@ To support Overview's development:
 -   SwiftUI for user interface
 -   ScreenCaptureKit for window capture
 -   Combine for reactive state management
--   Carbon API for hotkey management
+-   KeyboardShortcuts for shortcut management
 
 ### Contributing
 
