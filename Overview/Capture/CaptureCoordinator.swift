@@ -32,6 +32,7 @@ final class CaptureCoordinator: ObservableObject {
     // Dependencies
     private var sourceManager: SourceManager
     private var permissionManager: PermissionManager
+    private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
 
@@ -51,6 +52,7 @@ final class CaptureCoordinator: ObservableObject {
     ) {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.captureEngine = captureEngine
         setupSubscriptions()
     }
 
@@ -72,9 +74,9 @@ final class CaptureCoordinator: ObservableObject {
         }
 
         logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
-
         let stream = try await captureServices.startCapture(
             source: source,
+            engine: captureEngine,
             frameRate: captureFrameRate
         )
 
@@ -88,7 +90,7 @@ final class CaptureCoordinator: ObservableObject {
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
 
-        await captureServices.stopCapture()
+        await captureEngine.stopCapture()
         isCapturing = false
         capturedFrame = nil
         logger.debug("Capture stopped")
@@ -101,6 +103,7 @@ final class CaptureCoordinator: ObservableObject {
         do {
             try await captureServices.updateStreamConfiguration(
                 source: source,
+                stream: captureEngine.stream,
                 frameRate: captureFrameRate
             )
             logger.info("Stream configuration updated successfully")

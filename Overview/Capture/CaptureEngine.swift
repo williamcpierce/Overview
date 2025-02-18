@@ -13,6 +13,7 @@
 
 import ScreenCaptureKit
 
+/// Manages the lifecycle and processing of screen capture streams
 class CaptureEngine: NSObject, @unchecked Sendable {
     // Dependencies
     private let logger = AppLogger.capture
