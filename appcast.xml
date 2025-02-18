@@ -3,6 +3,26 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.0.1-beta</title>
+            <pubDate>Sun, 17 Feb 2025 09:05:58 +0000</pubDate>
+            <sparkle:version>1.0.1</sparkle:version>
+            <sparkle:shortVersionString>v1.0.1-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.0.1-beta</h3>
+                <h4>Bug Fixes:</h4>
+                <ul>
+                    <li>Fixed issue with multiple captures</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.0.1-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.0.0-beta</title>
             <pubDate>Sun, 17 Feb 2025 09:05:58 +0000</pubDate>
             <sparkle:version>1.0.0</sparkle:version>

@@ -117,10 +117,10 @@
 			membershipExceptions = (
 				Capture.swift,
 				CaptureCoordinator.swift,
+				CaptureEngine.swift,
 				CaptureServices.swift,
 				Services/CaptureAvailabilityService.swift,
 				Services/CaptureConfigurationService.swift,
-				Services/CaptureEngine.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
@@ -451,7 +451,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1.0.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -466,7 +466,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.0.0-beta";
+				MARKETING_VERSION = "v1.0.1-beta";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -484,7 +484,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.0.0;
+				CURRENT_PROJECT_VERSION = 1.0.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -499,7 +499,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.0.0-beta";
+				MARKETING_VERSION = "v1.0.1-beta";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
