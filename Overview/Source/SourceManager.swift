@@ -8,6 +8,8 @@
  filtering, and state observation across the application.
 */
 
+import AppKit
+import ApplicationServices
 import ScreenCaptureKit
 import SwiftUI
 
@@ -23,6 +25,7 @@ final class SourceManager: ObservableObject {
     // Published State
     @Published private(set) var focusedBundleId: String?
     @Published private(set) var focusedProcessId: pid_t?
+    @Published private(set) var focusedWindowTitle: String?
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
@@ -89,6 +92,23 @@ final class SourceManager: ObservableObject {
         return filteredSources
     }
 
+    // TODO: Make private
+    func updateFocusedSource() async {
+        guard let activeApp = NSWorkspace.shared.frontmostApplication else {
+            logger.debug("No active application found")
+            return
+        }
+
+        focusedProcessId = activeApp.processIdentifier
+        focusedBundleId = activeApp.bundleIdentifier
+        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
+        focusedWindowTitle = getAXWindowTitle(for: activeApp.processIdentifier)
+
+        logger.debug(
+            "Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown"), title=\(focusedWindowTitle ?? "unknown")"
+        )
+    }
+
     // MARK: - Private Methods
 
     private func setupObservers() {
@@ -101,17 +121,29 @@ final class SourceManager: ObservableObject {
         logger.info("Window observers configured successfully")
     }
 
-    private func updateFocusedSource() async {
-        guard let activeApp: NSRunningApplication = NSWorkspace.shared.frontmostApplication else {
-            logger.debug("No active application found")
-            return
+    // Uses Accessibility API to get the real window title
+    private func getAXWindowTitle(for pid: pid_t) -> String? {
+        let appElement = AXUIElementCreateApplication(pid)
+        var window: CFTypeRef?
+
+        // Get the focused window
+        guard
+            AXUIElementCopyAttributeValue(
+                appElement, kAXFocusedWindowAttribute as CFString, &window) == .success,
+            let windowElement = window
+        else {
+            return nil
         }
 
-        focusedProcessId = activeApp.processIdentifier
-        focusedBundleId = activeApp.bundleIdentifier
-        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
+        var title: CFTypeRef?
+        // Get the window title
+        if AXUIElementCopyAttributeValue(
+            windowElement as! AXUIElement, kAXTitleAttribute as CFString, &title) == .success
+        {
+            return title as? String
+        }
 
-        logger.debug("Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown")")
+        return nil
     }
 
     private func updateSourceTitles() async {
