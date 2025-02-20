@@ -26,6 +26,7 @@ final class ShortcutManager: ObservableObject {
     }
 
     private func setupShortcuts() {
+        // Setup observers for all shortcuts
         shortcutStorage.shortcuts.forEach { shortcut in
             setupShortcutObserver(for: shortcut)
         }
@@ -51,34 +52,13 @@ final class ShortcutManager: ObservableObject {
     }
 
     private func activateSourceWindow(for shortcut: ShortcutItem) {
-        let titles = shortcut.windowTitles
-        guard !titles.isEmpty else {
-            logger.warning("Empty window title list for shortcut")
-            return
-        }
-
-        let currentTitle = sourceManager.getActiveWindowTitle()
-
-        let startIndex: Int
-        if let currentTitle = currentTitle,
-            let currentIndex = titles.firstIndex(of: currentTitle)
-        {
-            startIndex = (currentIndex + 1) % titles.count
-        } else {
-            startIndex = 0
-        }
-
-        // Try to activate windows in order starting from the calculated index
-        for offset in 0..<titles.count {
-            let index = (startIndex + offset) % titles.count
-            let title = titles[index]
-
-            if sourceManager.focusSource(withTitle: title) {
-                logger.info("Window focused via shortcut cycle: '\(title)'")
+        for title in shortcut.windowTitles {
+            let activated = sourceManager.focusSource(withTitle: title)
+            if activated {
+                logger.info("Window focused via shortcut: '\(title)'")
                 return
             }
         }
-
-        logger.warning("Failed to focus any window for shortcut: \(titles.joined(separator: ", "))")
+        logger.warning("Failed to focus any window for shortcut: \(shortcut.windowTitles)")
     }
 }

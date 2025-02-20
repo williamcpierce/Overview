@@ -104,28 +104,6 @@ final class SourceFocusService {
         return true
     }
 
-    func getActiveWindowTitle() -> String? {
-        let options = CGWindowListOption(arrayLiteral: .optionOnScreenOnly)
-        let windowList =
-            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
-
-        guard let frontmostApp: NSRunningApplication = NSWorkspace.shared.frontmostApplication
-        else {
-            return nil
-        }
-
-        let frontPID: pid_t = frontmostApp.processIdentifier
-
-        return windowList.first { info in
-            guard let windowPID = info[kCGWindowOwnerPID] as? pid_t,
-                windowPID == frontPID,
-                let title = info[kCGWindowName] as? String,
-                !title.isEmpty
-            else { return false }
-            return true
-        }?[kCGWindowName] as? String
-    }
-
     // MARK: - Private Methods
 
     private func isWindowFocused(windowID: CGWindowID, processID: pid_t) -> Bool {

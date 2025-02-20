@@ -47,10 +47,6 @@ final class SourceServices {
         sourceFocus.focusSource(withTitle: title)
     }
 
-    func getActiveWindowTitle() -> String? {
-        sourceFocus.getActiveWindowTitle()
-    }
-
     // MARK: - State Observation
 
     func addObserver(
