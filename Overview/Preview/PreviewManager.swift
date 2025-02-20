@@ -41,7 +41,7 @@ final class PreviewManager: ObservableObject {
 
         do {
             logger.debug("Starting capture system initialization")
-            try await permissionManager.ensurePermission()
+            try await permissionManager.ensurePermissions()
             await updateAvailableSources()
             logger.debug("Capture system initialization completed")
             captureSystemInitialized = true

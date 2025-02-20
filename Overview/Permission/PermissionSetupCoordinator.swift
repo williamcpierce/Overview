@@ -17,11 +17,16 @@ final class PermissionSetupCoordinator: ObservableObject {
         case granted
     }
 
+    struct PermissionStatuses {
+        let screenRecording: Bool
+        let accessibility: Bool
+    }
+
     // Dependencies
     private let logger = AppLogger.interface
 
     // Actions
-    var onPermissionStatusChanged: ((Bool) -> Void)?
+    var onPermissionStatusChanged: ((PermissionStatuses) -> Void)?
 
     // Private State
     private var setupWindow: NSWindow?
@@ -30,6 +35,7 @@ final class PermissionSetupCoordinator: ObservableObject {
 
     // Published State
     @Published var screenRecordingPermission: PermissionStatus = .denied
+    @Published var accessibilityPermission: PermissionStatus = .denied
 
     func startSetup() async {
         NSApp.setActivationPolicy(.regular)
@@ -50,7 +56,7 @@ final class PermissionSetupCoordinator: ObservableObject {
         let hostingView = NSHostingView(rootView: permissionSetupView)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 460),
+            contentRect: NSRect(x: 0, y: 0, width: 580, height: 600),
             styleMask: [.titled],
             backing: .buffered,
             defer: false
@@ -77,7 +83,6 @@ final class PermissionSetupCoordinator: ObservableObject {
 
     func requestScreenRecordingPermission() {
         logger.debug("Requesting screen recording permission")
-
         startPermissionMonitoring()
 
         Task {
@@ -95,6 +100,20 @@ final class PermissionSetupCoordinator: ObservableObject {
         }
     }
 
+    func requestAccessibilityPermission() {
+        logger.debug("Requesting accessibility permission")
+        startPermissionMonitoring()
+
+        let trusted: Bool = AXIsProcessTrusted()
+        if trusted {
+            accessibilityPermission = .granted
+            logger.info("Accessibility permission already granted")
+        } else {
+            logger.info("Accessibility permission not yet granted")
+            accessibilityPermission = .denied
+        }
+    }
+
     func openScreenRecordingPreferences() {
         logger.debug("Opening screen recording preferences")
         guard
@@ -103,6 +122,19 @@ final class PermissionSetupCoordinator: ObservableObject {
                     "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
         else {
             logger.error("Failed to create screen recording preferences URL")
+            return
+        }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openAccessibilityPreferences() {
+        logger.debug("Opening accessibility preferences")
+        guard
+            let url = URL(
+                string:
+                    "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        else {
+            logger.error("Failed to create accessibility preferences URL")
             return
         }
         NSWorkspace.shared.open(url)
@@ -128,7 +160,7 @@ final class PermissionSetupCoordinator: ObservableObject {
         permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
             [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.checkScreenRecordingPermission()
+                await self?.checkPermissions()
             }
         }
     }
@@ -138,18 +170,33 @@ final class PermissionSetupCoordinator: ObservableObject {
         permissionCheckTimer = nil
     }
 
-    private func checkScreenRecordingPermission() async {
+    private func checkPermissions() async {
+        // Check screen recording permission
         do {
             _ = try await SCShareableContent.current
             screenRecordingPermission = .granted
-            stopPermissionMonitoring()
-            onPermissionStatusChanged?(true)  // Notify permission manager
             logger.info("Screen recording permission granted")
         } catch {
             screenRecordingPermission = .denied
-            onPermissionStatusChanged?(false)  // Notify permission manager
             logger.info("Screen recording permission still denied: \(error.localizedDescription)")
         }
-    }
 
+        // Check accessibility permission
+        let trusted: Bool = AXIsProcessTrusted()
+        accessibilityPermission = trusted ? .granted : .denied
+        logger.info("Accessibility permission status: \(trusted ? "granted" : "denied")")
+
+        // Notify permission manager of changes
+        onPermissionStatusChanged?(
+            PermissionStatuses(
+                screenRecording: screenRecordingPermission == .granted,
+                accessibility: accessibilityPermission == .granted
+            )
+        )
+
+        // Stop monitoring if both permissions are granted
+        if screenRecordingPermission == .granted && accessibilityPermission == .granted {
+            stopPermissionMonitoring()
+        }
+    }
 }
