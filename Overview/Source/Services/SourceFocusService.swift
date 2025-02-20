@@ -80,7 +80,7 @@ final class SourceFocusService {
             return false
         }
 
-        let focusedWindowID: CGWindowID = IDFinder.getWindowID(focusedWindow)
+        let focusedWindowID: CGWindowID = WindowIDUtility.extractWindowID(from: focusedWindow)
         return focusedWindowID == windowID
     }
 
@@ -92,7 +92,7 @@ final class SourceFocusService {
 
     private func findMatchingWindow(_ windows: [AXUIElement], targetID: CGWindowID) -> AXUIElement?
     {
-        windows.first { IDFinder.getWindowID($0) == targetID }
+        windows.first { WindowIDUtility.extractWindowID(from: $0) == targetID }
     }
 
     private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
@@ -117,23 +117,25 @@ final class SourceFocusService {
     }
 }
 
-// MARK: - Window ID Helper
+// MARK: - Window ID Utility
 
-private enum IDFinder {
-    static func getWindowID(_ window: AXUIElement) -> CGWindowID {
+private enum WindowIDUtility {
+    /// Extracts the window ID from an Accessibility UI Element
+    static func extractWindowID(from window: AXUIElement) -> CGWindowID {
         var windowID: CGWindowID = 0
 
-        // Private API to get window ID from AXUIElement
+        // Retrieve window ID from AXUIElement using ApplicationServices framework
         typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
             AXError
-        let handle: UnsafeMutableRawPointer? = dlopen(
+        let frameworkHandle: UnsafeMutableRawPointer? = dlopen(
             "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
             RTLD_NOW
         )
-        let sym: UnsafeMutableRawPointer? = dlsym(handle, "_AXUIElementGetWindow")
-        let fn: GetWindowFunc = unsafeBitCast(sym, to: GetWindowFunc.self)
-        _ = fn(window, &windowID)
-        dlclose(handle)
+        let windowSymbol: UnsafeMutableRawPointer? = dlsym(frameworkHandle, "_AXUIElementGetWindow")
+        let retrieveWindowIDFunction: GetWindowFunc = unsafeBitCast(
+            windowSymbol, to: GetWindowFunc.self)
+        _ = retrieveWindowIDFunction(window, &windowID)
+        dlclose(frameworkHandle)
 
         return windowID
     }

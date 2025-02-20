@@ -39,7 +39,6 @@ struct OverviewApp: App {
         }
     }
 
-
     private var menuContent: some View {
         Group {
             newWindowButton
@@ -51,7 +50,7 @@ struct OverviewApp: App {
             quitButton
         }
     }
-    
+
     private var newWindowButton: some View {
         Button("New Window") {
             newWindow(context: "menu bar")
@@ -94,9 +93,8 @@ struct OverviewApp: App {
         .keyboardShortcut("q")
     }
 
-
     private var helpMenu: some View {
-        
+
         Menu("Help") {
             Button {
                 openDiscord()
@@ -104,29 +102,29 @@ struct OverviewApp: App {
                 Image(systemName: "bubble.fill")
                 Text("Join Discord")
             }
-            
+
             Button {
                 openBugReport()
             } label: {
                 Image(systemName: "exclamationmark.triangle.fill")
                 Text("Report Bug")
             }
-            
+
             Button {
                 openFeatureRequest()
             } label: {
                 Image(systemName: "lightbulb.fill")
                 Text("Request Feature")
             }
-            
+
             Divider()
-            
+
             versionText
             updateButton
 
             Divider()
 
-            Button("Diagnostics Report...") {
+            Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }
             Button("Restart") {
@@ -134,7 +132,7 @@ struct OverviewApp: App {
             }.keyboardShortcut("r")
         }
     }
-    
+
     private func openDiscord() {
         if let url = URL(string: "https://discord.gg/ekKMnejQbA") {
             NSWorkspace.shared.open(url)
@@ -142,13 +140,16 @@ struct OverviewApp: App {
     }
 
     private func openBugReport() {
-        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug") {
+        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug")
+        {
             NSWorkspace.shared.open(url)
         }
     }
 
     private func openFeatureRequest() {
-        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=enhancement") {
+        if let url = URL(
+            string: "https://github.com/williamcpierce/Overview/issues/new?labels=enhancement")
+        {
             NSWorkspace.shared.open(url)
         }
     }
@@ -158,7 +159,7 @@ struct OverviewApp: App {
             do {
                 let report = try await DiagnosticService.shared.generateDiagnosticReport()
                 let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
-                
+
                 // Show success alert and reveal in Finder
                 NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
                 logger.info("Diagnostic report generated and saved successfully")
@@ -178,11 +179,11 @@ struct OverviewApp: App {
     @MainActor
     private func restartApp() {
         logger.debug("Initiating application restart")
-        
+
         let process = Process()
         process.executableURL = Bundle.main.executableURL
         process.arguments = []
-        
+
         do {
             try process.run()
             NSApplication.shared.terminate(nil)
@@ -190,7 +191,7 @@ struct OverviewApp: App {
             logger.logError(error, context: "Failed to restart application")
         }
     }
-    
+
     // MARK: - Commands
 
     private var commandGroup: some Commands {
