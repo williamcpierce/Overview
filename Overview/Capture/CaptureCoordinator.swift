@@ -14,19 +14,6 @@ import SwiftUI
 
 @MainActor
 final class CaptureCoordinator: ObservableObject {
-    // Dependencies
-    private var sourceManager: SourceManager
-    private var permissionManager: PermissionManager
-    private let captureEngine: CaptureEngine
-    private let captureServices: CaptureServices = CaptureServices.shared
-    private let focusService: SourceFocusService = SourceFocusService()
-    private let logger = AppLogger.capture
-
-    // Private State
-    private var hasPermission: Bool = false
-    private var activeFrameProcessingTask: Task<Void, Never>?
-    private var subscriptions = Set<AnyCancellable>()
-
     // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
     @Published private(set) var isCapturing: Bool = false
@@ -38,9 +25,21 @@ final class CaptureCoordinator: ObservableObject {
         didSet {
             sourceWindowTitle = selectedSource?.title
             sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            updateFocusTracking()
+            Task { await synchronizeFocusState() }
         }
     }
+
+    // Dependencies
+    private var sourceManager: SourceManager
+    private var permissionManager: PermissionManager
+    private let captureEngine: CaptureEngine
+    private let captureServices: CaptureServices = CaptureServices.shared
+    private let logger = AppLogger.capture
+
+    // Private State
+    private var hasPermission: Bool = false
+    private var activeFrameProcessingTask: Task<Void, Never>?
+    private var subscriptions = Set<AnyCancellable>()
 
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
@@ -61,7 +60,6 @@ final class CaptureCoordinator: ObservableObject {
 
     func requestPermission() async throws {
         guard !hasPermission else { return }
-
         logger.debug("Requesting screen recording permission")
         try await permissionManager.ensurePermission()
         hasPermission = true
@@ -70,14 +68,12 @@ final class CaptureCoordinator: ObservableObject {
 
     func startCapture() async throws {
         guard !isCapturing else { return }
-
         guard let source: SCWindow = selectedSource else {
             logger.error("Capture failed: No source window selected")
             throw CaptureError.noSourceSelected
         }
 
         logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
-
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
@@ -91,7 +87,6 @@ final class CaptureCoordinator: ObservableObject {
 
     func stopCapture() async {
         guard isCapturing else { return }
-
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
 
@@ -123,7 +118,7 @@ final class CaptureCoordinator: ObservableObject {
         sourceManager.focusSource(source)
     }
 
-    // MARK: - Private Methods
+    // MARK: - Frame Processing
 
     private func startFrameProcessing(stream: AsyncThrowingStream<CapturedFrame, Error>) async {
         activeFrameProcessingTask?.cancel()
@@ -150,9 +145,11 @@ final class CaptureCoordinator: ObservableObject {
         }
     }
 
+    // MARK: - State Synchronization
+
     private func setupSubscriptions() {
         sourceManager.$focusedProcessId
-            .sink { [weak self] _ in self?.updateFocusTracking() }
+            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
             .store(in: &subscriptions)
 
         sourceManager.$sourceTitles
@@ -160,25 +157,17 @@ final class CaptureCoordinator: ObservableObject {
             .store(in: &subscriptions)
     }
 
-    private func updateFocusTracking() {
-        guard let source: SCWindow = selectedSource,
-            let processID: pid_t = source.owningApplication?.processID
-        else {
-            focusService.stopFocusChecking()
+    private func synchronizeFocusState() async {
+        guard let selectedSource: SCWindow = selectedSource else {
             isSourceWindowFocused = false
-            isSourceAppFocused = false
             return
         }
 
-        focusService.startFocusChecking(
-            forWindowID: source.windowID,
-            processID: processID
-        ) { [weak self] isFocused in
-            self?.isSourceWindowFocused = isFocused
-        }
+        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
+        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
 
-        isSourceAppFocused =
-            source.owningApplication?.bundleIdentifier == sourceManager.focusedBundleId
+        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
+        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
@@ -187,20 +176,12 @@ final class CaptureCoordinator: ObservableObject {
         else { return }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        let newTitle = titles[sourceID]
-
-        guard sourceWindowTitle != newTitle else { return }
-
-        sourceWindowTitle = newTitle
+        sourceWindowTitle = titles[sourceID]
         sourceApplicationTitle = source.owningApplication?.applicationName
-
-        if newTitle != nil {
-            updateFocusTracking()
-        }
     }
 }
 
-// MARK: - Supporting Types
+// MARK - Support Types
 
 enum CaptureError: LocalizedError {
     case noSourceSelected

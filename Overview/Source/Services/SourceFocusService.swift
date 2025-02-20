@@ -13,46 +13,6 @@ final class SourceFocusService {
     // Dependencies
     private let logger = AppLogger.sources
 
-    // Constants
-    private let focusCheckInterval: TimeInterval = 0.03  // 30ms check interval
-
-    // Private State
-    private var focusCheckTimer: Timer?
-    private var onFocusChanged: ((Bool) -> Void)?
-
-    deinit {
-        stopFocusChecking()
-    }
-
-    // MARK: - Focus Monitoring
-
-    func startFocusChecking(
-        forWindowID windowID: CGWindowID,
-        processID: pid_t,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        stopFocusChecking()
-        onFocusChanged = onChange
-
-        focusCheckTimer = Timer.scheduledTimer(
-            withTimeInterval: focusCheckInterval,
-            repeats: true
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            let isFocused: Bool = self.isWindowFocused(windowID: windowID, processID: processID)
-            onChange(isFocused)
-        }
-
-        logger.debug("Started window focus monitoring: windowID=\(windowID)")
-    }
-
-    func stopFocusChecking() {
-        focusCheckTimer?.invalidate()
-        focusCheckTimer = nil
-        onFocusChanged = nil
-        logger.debug("Stopped window focus monitoring")
-    }
-
     // MARK: - Focus Operations
 
     func focusSource(source: SCWindow) {
