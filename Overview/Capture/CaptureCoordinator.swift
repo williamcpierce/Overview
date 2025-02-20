@@ -163,10 +163,9 @@ final class CaptureCoordinator: ObservableObject {
             return
         }
 
-        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
         let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
 
-        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
+        isSourceWindowFocused = sourceWindowTitle == sourceManager.focusedWindowTitle
         isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
     }
 

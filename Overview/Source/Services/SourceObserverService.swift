@@ -110,7 +110,7 @@ final class SourceObserverService {
         titleCheckTimer?.invalidate()
         logger.debug("Starting title check timer")
 
-        titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
+        titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
             [weak self] _ in
             Task { [weak self] in
                 guard let observers = self?.titleObservers else { return }
