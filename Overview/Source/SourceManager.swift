@@ -64,10 +64,6 @@ final class SourceManager: ObservableObject {
         return success
     }
 
-    func getActiveWindowTitle() -> String? {
-        return sourceServices.getActiveWindowTitle()
-    }
-
     func getAvailableSources() async throws -> [SCWindow] {
         try await permissionManager.ensurePermission()
         let availableSources = try await CaptureServices.shared.getAvailableSources()
