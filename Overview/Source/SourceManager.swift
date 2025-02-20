@@ -8,8 +8,6 @@
  filtering, and state observation across the application.
 */
 
-import AppKit
-import ApplicationServices
 import ScreenCaptureKit
 import SwiftUI
 

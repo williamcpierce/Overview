@@ -3,6 +3,8 @@
  Overview
 
  Created by William Pierce on 2/16/25.
+
+ Manages keyboard shortcut activation and window cycling functionality.
 */
 
 import Combine
@@ -25,13 +27,15 @@ final class ShortcutManager: ObservableObject {
         setupShortcuts()
     }
 
+    // MARK: - Shortcut Setup
+
     private func setupShortcuts() {
-        // Setup observers for all shortcuts
+        // Setup observers for all existing shortcuts
         shortcutStorage.shortcuts.forEach { shortcut in
             setupShortcutObserver(for: shortcut)
         }
 
-        // Listen for changes to add/remove observers
+        // Listen for changes to add/remove observers dynamically
         shortcutStorage.$shortcuts
             .dropFirst()
             .sink { [weak self] shortcuts in
@@ -50,6 +54,8 @@ final class ShortcutManager: ObservableObject {
             }
         }
     }
+
+    // MARK: - Window Activation
 
     private func activateSourceWindow(for shortcut: ShortcutItem) {
         let titles = shortcut.windowTitles
@@ -80,7 +86,7 @@ final class ShortcutManager: ObservableObject {
 
             if sourceManager.focusSource(withTitle: title) {
                 logger.info("Window focused via shortcut cycle: '\(title)'")
-                Task { await sourceManager.updateFocusedSource() }
+                Task { await sourceManager.updateFocusedSource() }  // TODO: Remove when source observer improves
                 return
             }
         }
