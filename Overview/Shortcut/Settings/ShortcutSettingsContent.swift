@@ -26,11 +26,6 @@ extension InfoPopoverContent {
                 text:
                     "When using shortcuts with multiple window titles, pressing the shortcut repeatedly will cycle through the windows in order. If one of the windows in the list is currently active, cycling will start from the next window in the sequence."
             ),
-            Section(
-                title: "How Activation Works",
-                text:
-                    "Overview activates applications rather than specific windows. It uses window titles to determine which application to bring to the front. Once an application is activated, macOS determines which window becomes active based on the application's window ordering."
-            ),
         ],
         isWarning: false
     )
@@ -47,11 +42,6 @@ extension InfoPopoverContent {
                 title: "Title Matching",
                 text:
                     "When activated, the shortcut cycles through windows in the order they are listed. If one of the windows is currently active, cycling starts from the next window in the list."
-            ),
-            Section(
-                title: "Application Activation",
-                text:
-                    "Note that shortcuts activate applications, not specific windows. Overview looks for window titles to determine which application to activate, but the application itself decides which window becomes active. This means that if an application has multiple windows open, the most recently used window may become active rather than the specific window whose title matched."
             ),
             Section(
                 title: "Example",
