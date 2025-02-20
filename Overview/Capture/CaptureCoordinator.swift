@@ -25,7 +25,7 @@ final class CaptureCoordinator: ObservableObject {
         didSet {
             sourceWindowTitle = selectedSource?.title
             sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            Task { await synchronizeFocusState() }
+            updateFocusTracking()
         }
     }
 
@@ -34,6 +34,7 @@ final class CaptureCoordinator: ObservableObject {
     private var permissionManager: PermissionManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
+    private let focusService = SourceFocusService()
     private let logger = AppLogger.capture
 
     // Private State
@@ -74,6 +75,7 @@ final class CaptureCoordinator: ObservableObject {
         }
 
         logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
+
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
@@ -149,7 +151,7 @@ final class CaptureCoordinator: ObservableObject {
 
     private func setupSubscriptions() {
         sourceManager.$focusedProcessId
-            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
+            .sink { [weak self] _ in self?.updateFocusTracking() }
             .store(in: &subscriptions)
 
         sourceManager.$sourceTitles
@@ -157,17 +159,24 @@ final class CaptureCoordinator: ObservableObject {
             .store(in: &subscriptions)
     }
 
-    private func synchronizeFocusState() async {
-        guard let selectedSource: SCWindow = selectedSource else {
+    private func updateFocusTracking() {
+        if let source: SCWindow = selectedSource,
+            let processID: pid_t = source.owningApplication?.processID
+        {
+            // Start tracking window focus using window ID
+            focusService.startFocusChecking(forWindowID: source.windowID, processID: processID) {
+                [weak self] isFocused in
+                self?.isSourceWindowFocused = isFocused
+            }
+
+            // Update app focus
+            isSourceAppFocused =
+                source.owningApplication?.bundleIdentifier == sourceManager.focusedBundleId
+        } else {
+            focusService.stopFocusChecking()
             isSourceWindowFocused = false
-            return
+            isSourceAppFocused = false
         }
-
-        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
-        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
-
-        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
-        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
@@ -176,8 +185,18 @@ final class CaptureCoordinator: ObservableObject {
         else { return }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceWindowTitle = titles[sourceID]
-        sourceApplicationTitle = source.owningApplication?.applicationName
+        let newTitle = titles[sourceID]
+
+        // Only update if title actually changed
+        if sourceWindowTitle != newTitle {
+            sourceWindowTitle = newTitle
+            sourceApplicationTitle = source.owningApplication?.applicationName
+
+            // Re-establish focus tracking with new title
+            if newTitle != nil {
+                updateFocusTracking()
+            }
+        }
     }
 }
 
