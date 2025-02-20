@@ -39,7 +39,7 @@ final class SourceFocusService {
             repeats: true
         ) { [weak self] _ in
             guard let self = self else { return }
-            let isFocused = self.isWindowFocused(windowID: windowID, processID: processID)
+            let isFocused: Bool = self.isWindowFocused(windowID: windowID, processID: processID)
             onChange(isFocused)
         }
 
@@ -63,7 +63,7 @@ final class SourceFocusService {
 
         logger.debug("Focusing source: '\(source.title ?? "untitled")', processID=\(processID)")
 
-        let axApp = AXUIElementCreateApplication(processID)
+        let axApp: AXUIElement = AXUIElementCreateApplication(processID)
         let windows: [AXUIElement] = getWindowList(for: axApp)
 
         guard
@@ -120,7 +120,7 @@ final class SourceFocusService {
             return false
         }
 
-        let focusedWindowID = IDFinder.getWindowID(focusedWindow)
+        let focusedWindowID: CGWindowID = IDFinder.getWindowID(focusedWindow)
         return focusedWindowID == windowID
     }
 
