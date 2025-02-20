@@ -10,50 +10,9 @@
 import ScreenCaptureKit
 
 final class SourceFocusService {
-    // Dependencies
     private let logger = AppLogger.sources
 
-    // Constants
-    private let focusCheckInterval: TimeInterval = 0.03  // 30ms check interval
-
-    // Private State
-    private var focusCheckTimer: Timer?
-    private var onFocusChanged: ((Bool) -> Void)?
-
-    deinit {
-        stopFocusChecking()
-    }
-
-    // MARK: - Focus Monitoring
-
-    func startFocusChecking(
-        forWindowID windowID: CGWindowID,
-        processID: pid_t,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        stopFocusChecking()
-        onFocusChanged = onChange
-
-        focusCheckTimer = Timer.scheduledTimer(
-            withTimeInterval: focusCheckInterval,
-            repeats: true
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            let isFocused: Bool = self.isWindowFocused(windowID: windowID, processID: processID)
-            onChange(isFocused)
-        }
-
-        logger.debug("Started window focus monitoring: windowID=\(windowID)")
-    }
-
-    func stopFocusChecking() {
-        focusCheckTimer?.invalidate()
-        focusCheckTimer = nil
-        onFocusChanged = nil
-        logger.debug("Stopped window focus monitoring")
-    }
-
-    // MARK: - Focus Operations
+    // MARK: - Public Methods
 
     func focusSource(source: SCWindow) {
         guard let processID: pid_t = source.owningApplication?.processID else {
@@ -63,118 +22,73 @@ final class SourceFocusService {
 
         logger.debug("Focusing source: '\(source.title ?? "untitled")', processID=\(processID)")
 
-        let axApp: AXUIElement = AXUIElementCreateApplication(processID)
-        let windows: [AXUIElement] = getWindowList(for: axApp)
+        let success: Bool = activateProcess(processID)
 
-        guard
-            let matchingWindow: AXUIElement = findMatchingWindow(windows, targetID: source.windowID)
-        else {
-            logger.error(
-                "Failed to find matching window for source: '\(source.title ?? "untitled")'")
-            return
+        if success {
+            logger.info("Source successfully focused: '\(source.title ?? "untitled")'")
+        } else {
+            logger.error("Source focus failed: processID=\(processID)")
         }
-
-        setWindowFocus(axApp: axApp, axWindow: matchingWindow)
-        logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
     }
 
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
 
-        let options = CGWindowListOption(arrayLiteral: .optionAll)
-        let windowList =
-            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
-
-        guard let (windowID, pid) = findWindowInfo(for: title, in: windowList) else {
-            logger.warning("No matching window found: '\(title)'")
+        guard let runningApp: NSRunningApplication = findApplication(forSourceTitle: title) else {
+            logger.warning("No application found for source window: '\(title)'")
             return false
         }
 
-        let axApp: AXUIElement = AXUIElementCreateApplication(pid)
-        let windows: [AXUIElement] = getWindowList(for: axApp)
+        NSApp.activate(ignoringOtherApps: true)
+        let success: Bool = runningApp.activate()
 
-        guard let matchingWindow: AXUIElement = findMatchingWindow(windows, targetID: windowID)
-        else {
-            logger.error("Failed to focus window: '\(title)'")
-            return false
+        if success {
+            logger.info("Title-based focus successful: '\(title)'")
+        } else {
+            logger.error("Title-based focus failed: '\(title)'")
         }
 
-        setWindowFocus(axApp: axApp, axWindow: matchingWindow)
-        logger.info("Title-based window focus successful: '\(title)'")
-        return true
+        return success
     }
 
     // MARK: - Private Methods
 
-    private func isWindowFocused(windowID: CGWindowID, processID: pid_t) -> Bool {
-        let axApp: AXUIElement = AXUIElementCreateApplication(processID)
-        var focusedWindowRef: CFTypeRef?
+    private func findApplication(forSourceTitle title: String) -> NSRunningApplication? {
+        let options = CGWindowListOption(arrayLiteral: .optionAll)
+        let sourceList =
+            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
 
-        AXUIElementCopyAttributeValue(
-            axApp,
-            kAXFocusedWindowAttribute as CFString,
-            &focusedWindowRef
-        )
+        logger.debug("Searching \(sourceList.count) source windows for title match: '\(title)'")
 
-        guard let focusedWindow = focusedWindowRef as! AXUIElement? else {
-            return false
+        guard
+            let sourceInfo = sourceList.first(where: { info in
+                guard let sourceTitle = info[kCGWindowName] as? String,
+                    !sourceTitle.isEmpty
+                else { return false }
+                return sourceTitle == title
+            }), let sourcePID = sourceInfo[kCGWindowOwnerPID] as? pid_t
+        else {
+            logger.warning("No matching source window found: '\(title)'")
+            return nil
         }
 
-        let focusedWindowID: CGWindowID = IDFinder.getWindowID(focusedWindow)
-        return focusedWindowID == windowID
+        let runningApp: NSRunningApplication? = NSWorkspace.shared.runningApplications.first {
+            app in
+            app.processIdentifier == sourcePID
+        }
+
+        if let app: NSRunningApplication = runningApp {
+            logger.debug("Found application: '\(app.localizedName ?? "unknown")', pid=\(sourcePID)")
+        }
+
+        return runningApp
     }
 
-    private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
-        var windowList: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
-        return windowList as? [AXUIElement] ?? []
-    }
-
-    private func findMatchingWindow(_ windows: [AXUIElement], targetID: CGWindowID) -> AXUIElement?
-    {
-        windows.first { IDFinder.getWindowID($0) == targetID }
-    }
-
-    private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
-        CGWindowID, pid_t
-    )? {
-        guard
-            let windowInfo = windowList.first(where: { info in
-                guard let windowTitle = info[kCGWindowName] as? String else { return false }
-                return windowTitle == title
-            }),
-            let windowID = windowInfo[kCGWindowNumber] as? CGWindowID,
-            let pid = windowInfo[kCGWindowOwnerPID] as? pid_t
-        else { return nil }
-
-        return (windowID, pid)
-    }
-
-    private func setWindowFocus(axApp: AXUIElement, axWindow: AXUIElement) {
-        AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
-        AXUIElementSetAttributeValue(axWindow, kAXMainAttribute as CFString, kCFBooleanTrue)
-        AXUIElementSetAttributeValue(axWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue)
-    }
-}
-
-// MARK: - Window ID Helper
-
-private enum IDFinder {
-    static func getWindowID(_ window: AXUIElement) -> CGWindowID {
-        var windowID: CGWindowID = 0
-
-        // Private API to get window ID from AXUIElement
-        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
-            AXError
-        let handle: UnsafeMutableRawPointer? = dlopen(
-            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
-            RTLD_NOW
-        )
-        let sym: UnsafeMutableRawPointer? = dlsym(handle, "_AXUIElementGetWindow")
-        let fn: GetWindowFunc = unsafeBitCast(sym, to: GetWindowFunc.self)
-        _ = fn(window, &windowID)
-        dlclose(handle)
-
-        return windowID
+    private func activateProcess(_ processID: pid_t) -> Bool {
+        guard let app = NSRunningApplication(processIdentifier: processID) else {
+            logger.error("Invalid process ID: \(processID)")
+            return false
+        }
+        return app.activate()
     }
 }
