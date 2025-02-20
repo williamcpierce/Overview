@@ -26,7 +26,6 @@ final class ShortcutManager: ObservableObject {
     }
 
     private func setupShortcuts() {
-        // Setup observers for all shortcuts
         shortcutStorage.shortcuts.forEach { shortcut in
             setupShortcutObserver(for: shortcut)
         }
@@ -58,18 +57,14 @@ final class ShortcutManager: ObservableObject {
             return
         }
 
-        // Get the current active window title
         let currentTitle = sourceManager.getActiveWindowTitle()
 
-        // Find the starting index based on the current window
         let startIndex: Int
         if let currentTitle = currentTitle,
             let currentIndex = titles.firstIndex(of: currentTitle)
         {
-            // Start from the next window in the cycle
             startIndex = (currentIndex + 1) % titles.count
         } else {
-            // Start from the beginning if current window is not in the list
             startIndex = 0
         }
 
