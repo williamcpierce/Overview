@@ -61,7 +61,7 @@ final class CaptureCoordinator: ObservableObject {
     func requestPermission() async throws {
         guard !hasPermission else { return }
         logger.debug("Requesting screen recording permission")
-        try await permissionManager.ensurePermission()
+        try await permissionManager.ensurePermissions()
         hasPermission = true
         logger.info("Screen recording permission granted")
     }

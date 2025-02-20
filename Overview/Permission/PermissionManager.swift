@@ -4,7 +4,7 @@
 
  Created by William Pierce on 2/15/25.
 
- Manages screen recording permission state and coordinates setup when needed.
+ Manages screen recording and accessibility permission state and coordinates setup when needed.
 */
 
 import CoreGraphics
@@ -21,18 +21,44 @@ final class PermissionManager: ObservableObject {
     private var isRequestingPermission: Bool = false
 
     // Published State
-    @Published private(set) var permissionStatus: PermissionStatus = .unknown {
+    @Published private(set) var screenRecordingStatus: PermissionStatus = .unknown {
         didSet {
-            if oldValue != permissionStatus {
-                logger.info("Permission status changed: \(permissionStatus)")
+            if oldValue != screenRecordingStatus {
+                logger.info("Screen recording permission status changed: \(screenRecordingStatus)")
             }
         }
     }
 
+    @Published private(set) var accessibilityStatus: PermissionStatus = .unknown {
+        didSet {
+            if oldValue != accessibilityStatus {
+                logger.info("Accessibility permission status changed: \(accessibilityStatus)")
+            }
+        }
+    }
+
+    // Computed properties for backward compatibility and convenience
+    var permissionStatus: PermissionStatus {
+        screenRecordingStatus
+    }
+
+    var hasRequiredPermissions: Bool {
+        screenRecordingStatus == .granted && accessibilityStatus == .granted
+    }
+
+    var hasScreenRecordingPermission: Bool {
+        CGPreflightScreenCaptureAccess()
+    }
+
+    var hasAccessibilityPermission: Bool {
+        AXIsProcessTrusted()
+    }
+
     init() {
         self.permissionSetupCoordinator = PermissionSetupCoordinator()
-        self.permissionSetupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
-            self?.permissionStatus = hasPermission ? .granted : .denied
+        self.permissionSetupCoordinator.onPermissionStatusChanged = { [weak self] permissions in
+            self?.screenRecordingStatus = permissions.screenRecording ? .granted : .denied
+            self?.accessibilityStatus = permissions.accessibility ? .granted : .denied
         }
         logger.debug("Initializing permission manager")
     }
@@ -47,8 +73,8 @@ final class PermissionManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    func ensurePermission() async throws {
-        if permissionStatus == .granted {
+    func ensurePermissions() async throws {
+        if screenRecordingStatus == .granted && accessibilityStatus == .granted {
             return
         }
 
@@ -60,15 +86,17 @@ final class PermissionManager: ObservableObject {
         isRequestingPermission = true
         defer { isRequestingPermission = false }
 
-        let hasAccess: Bool = CGPreflightScreenCaptureAccess()
+        let hasScreenAccess: Bool = CGPreflightScreenCaptureAccess()
+        let hasAccessibilityAccess: Bool = AXIsProcessTrusted()
 
-        if hasAccess {
-            permissionStatus = .granted
+        if hasScreenAccess && hasAccessibilityAccess {
+            screenRecordingStatus = .granted
+            accessibilityStatus = .granted
         } else {
             try await launchSetupFlow()
             updatePermissionStatus()
 
-            if permissionStatus != .granted {
+            if screenRecordingStatus != .granted || accessibilityStatus != .granted {
                 throw PermissionError.permissionDenied
             }
         }
@@ -78,13 +106,18 @@ final class PermissionManager: ObservableObject {
         Task {
             do {
                 _ = try await SCShareableContent.current
-                permissionStatus = .granted
+                screenRecordingStatus = .granted
                 logger.info("Screen recording permission granted")
             } catch {
-                permissionStatus = .denied
+                screenRecordingStatus = .denied
                 logger.info(
                     "Screen recording permission still denied: \(error.localizedDescription)")
             }
+
+            let hasAccessibilityAccess = AXIsProcessTrusted()
+            accessibilityStatus = hasAccessibilityAccess ? .granted : .denied
+            logger.info(
+                "Accessibility permission status: \(hasAccessibilityAccess ? "granted" : "denied")")
         }
     }
 
@@ -108,7 +141,7 @@ enum PermissionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Screen recording permission was denied"
+            return "Required permissions were denied"
         case .setupIncomplete:
             return "Setup process was not completed"
         }

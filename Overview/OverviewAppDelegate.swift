@@ -67,7 +67,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
         Task {
             do {
-                try await permissionManager.ensurePermission()
+                try await permissionManager.ensurePermissions()
                 windowManager.restoreWindowStates()
                 logger.info("Application initialization completed")
             } catch {
