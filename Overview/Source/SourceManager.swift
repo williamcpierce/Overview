@@ -64,6 +64,10 @@ final class SourceManager: ObservableObject {
         return success
     }
 
+    func getActiveWindowTitle() -> String? {
+        return sourceServices.getActiveWindowTitle()
+    }
+
     func getAvailableSources() async throws -> [SCWindow] {
         try await permissionManager.ensurePermission()
         let availableSources = try await CaptureServices.shared.getAvailableSources()
@@ -87,36 +91,6 @@ final class SourceManager: ObservableObject {
 
         logger.info("Retrieved \(filteredSources.count) filtered source windows")
         return filteredSources
-    }
-
-    func getActiveWindowTitle() -> String? {
-        guard !isOverviewActive else { return nil }
-
-        guard
-            let runningApps = NSWorkspace.shared.runningApplications.first(where: {
-                $0.processIdentifier == focusedProcessId
-            })
-        else {
-            logger.debug("No active application found")
-            return nil
-        }
-
-        let options = CGWindowListOption(arrayLiteral: .optionOnScreenOnly)
-        let windowList =
-            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
-
-        let activeWindowInfo = windowList.first { info in
-            guard let pid = info[kCGWindowOwnerPID] as? pid_t,
-                pid == runningApps.processIdentifier,
-                let layer = info[kCGWindowLayer] as? Int,
-                layer == 0,
-                let title = info[kCGWindowName] as? String,
-                !title.isEmpty
-            else { return false }
-            return true
-        }
-
-        return activeWindowInfo?[kCGWindowName] as? String
     }
 
     // MARK: - Private Methods
