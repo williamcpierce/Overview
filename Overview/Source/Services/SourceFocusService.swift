@@ -10,8 +10,13 @@
 import ScreenCaptureKit
 
 final class SourceFocusService {
+    // Dependencies
     private let logger = AppLogger.sources
-    private let sourceFocusCheckInterval: TimeInterval = 0.05  // 100ms interval for focus checks
+
+    // Constants
+    private let focusCheckInterval: TimeInterval = 0.03  // 30ms check interval
+
+    // Private State
     private var focusCheckTimer: Timer?
     private var onFocusChanged: ((Bool) -> Void)?
 
@@ -19,28 +24,36 @@ final class SourceFocusService {
         stopFocusChecking()
     }
 
-    // MARK: - Public Methods
+    // MARK: - Focus Monitoring
 
     func startFocusChecking(
-        forWindowID windowID: CGWindowID, processID: pid_t, onChange: @escaping (Bool) -> Void
+        forWindowID windowID: CGWindowID,
+        processID: pid_t,
+        onChange: @escaping (Bool) -> Void
     ) {
         stopFocusChecking()
         onFocusChanged = onChange
 
         focusCheckTimer = Timer.scheduledTimer(
-            withTimeInterval: sourceFocusCheckInterval, repeats: true
+            withTimeInterval: focusCheckInterval,
+            repeats: true
         ) { [weak self] _ in
             guard let self = self else { return }
             let isFocused = self.isWindowFocused(windowID: windowID, processID: processID)
             onChange(isFocused)
         }
+
+        logger.debug("Started window focus monitoring: windowID=\(windowID)")
     }
 
     func stopFocusChecking() {
         focusCheckTimer?.invalidate()
         focusCheckTimer = nil
         onFocusChanged = nil
+        logger.debug("Stopped window focus monitoring")
     }
+
+    // MARK: - Focus Operations
 
     func focusSource(source: SCWindow) {
         guard let processID: pid_t = source.owningApplication?.processID else {
@@ -50,100 +63,95 @@ final class SourceFocusService {
 
         logger.debug("Focusing source: '\(source.title ?? "untitled")', processID=\(processID)")
 
-        // Create AX UI elements for the application
         let axApp = AXUIElementCreateApplication(processID)
+        let windows: [AXUIElement] = getWindowList(for: axApp)
 
-        // Get the windows list from the application
-        var windowList: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
-
-        guard let windows = windowList as? [AXUIElement] else {
-            logger.error("Failed to get window list for process: \(processID)")
+        guard
+            let matchingWindow: AXUIElement = findMatchingWindow(windows, targetID: source.windowID)
+        else {
+            logger.error(
+                "Failed to find matching window for source: '\(source.title ?? "untitled")'")
             return
         }
 
-        // Find the matching window by its ID
-        for axWindow: AXUIElement in windows {
-            if IDFinder.getWindowID(axWindow) == source.windowID {
-                // Found matching window, set focus attributes
-                setWindowFocus(axApp: axApp, axWindow: axWindow)
-                logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
-                return
-            }
-        }
-
-        logger.error("Failed to find matching window for source: '\(source.title ?? "untitled")'")
+        setWindowFocus(axApp: axApp, axWindow: matchingWindow)
+        logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
     }
 
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
 
-        // Get list of all windows
         let options = CGWindowListOption(arrayLiteral: .optionAll)
-        let cgWindowList =
+        let windowList =
             CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
 
-        logger.debug("Searching \(cgWindowList.count) windows for title match: '\(title)'")
-
-        // Find window with matching title
-        guard
-            let windowInfo = cgWindowList.first(where: { info in
-                guard let windowTitle = info[kCGWindowName] as? String else { return false }
-                return windowTitle == title
-            }),
-            let windowID = windowInfo[kCGWindowNumber] as? CGWindowID,
-            let pid = windowInfo[kCGWindowOwnerPID] as? pid_t
-        else {
+        guard let (windowID, pid) = findWindowInfo(for: title, in: windowList) else {
             logger.warning("No matching window found: '\(title)'")
             return false
         }
 
-        // Create accessibility elements
         let axApp: AXUIElement = AXUIElementCreateApplication(pid)
-        var axWindowList: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &axWindowList)
+        let windows: [AXUIElement] = getWindowList(for: axApp)
 
-        guard let windows = axWindowList as? [AXUIElement] else {
-            logger.error("Failed to get window list for process: \(pid)")
+        guard let matchingWindow: AXUIElement = findMatchingWindow(windows, targetID: windowID)
+        else {
+            logger.error("Failed to focus window: '\(title)'")
             return false
         }
 
-        // Find the specific window by ID
-        for axWindow in windows {
-            if IDFinder.getWindowID(axWindow) == windowID {
-                setWindowFocus(axApp: axApp, axWindow: axWindow)
-                logger.info("Title-based window focus successful: '\(title)'")
-                return true
-            }
-        }
-
-        logger.error("Failed to focus window: '\(title)'")
-        return false
+        setWindowFocus(axApp: axApp, axWindow: matchingWindow)
+        logger.info("Title-based window focus successful: '\(title)'")
+        return true
     }
 
     // MARK: - Private Methods
 
-    func isWindowFocused(windowID: CGWindowID, processID: pid_t) -> Bool {
+    private func isWindowFocused(windowID: CGWindowID, processID: pid_t) -> Bool {
         let axApp: AXUIElement = AXUIElementCreateApplication(processID)
-
-        // Get focused window from application
         var focusedWindowRef: CFTypeRef?
+
         AXUIElementCopyAttributeValue(
-            axApp, kAXFocusedWindowAttribute as CFString, &focusedWindowRef)
+            axApp,
+            kAXFocusedWindowAttribute as CFString,
+            &focusedWindowRef
+        )
 
         guard let focusedWindow = focusedWindowRef as! AXUIElement? else {
             return false
         }
 
-        let focusedWindowID: CGWindowID = IDFinder.getWindowID(focusedWindow)
+        let focusedWindowID = IDFinder.getWindowID(focusedWindow)
         return focusedWindowID == windowID
     }
 
-    private func setWindowFocus(axApp: AXUIElement, axWindow: AXUIElement) {
-        // Set application as frontmost
-        AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+    private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
+        var windowList: CFTypeRef?
+        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
+        return windowList as? [AXUIElement] ?? []
+    }
 
-        // Set window as main and focused
+    private func findMatchingWindow(_ windows: [AXUIElement], targetID: CGWindowID) -> AXUIElement?
+    {
+        windows.first { IDFinder.getWindowID($0) == targetID }
+    }
+
+    private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
+        CGWindowID, pid_t
+    )? {
+        guard
+            let windowInfo = windowList.first(where: { info in
+                guard let windowTitle = info[kCGWindowName] as? String else { return false }
+                return windowTitle == title
+            }),
+            let windowID = windowInfo[kCGWindowNumber] as? CGWindowID,
+            let pid = windowInfo[kCGWindowOwnerPID] as? pid_t
+        else { return nil }
+
+        return (windowID, pid)
+    }
+
+    private func setWindowFocus(axApp: AXUIElement, axWindow: AXUIElement) {
+        AXUIElementSetAttributeValue(axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
         AXUIElementSetAttributeValue(axWindow, kAXMainAttribute as CFString, kCFBooleanTrue)
         AXUIElementSetAttributeValue(axWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue)
     }
@@ -159,7 +167,8 @@ private enum IDFinder {
         typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
             AXError
         let handle: UnsafeMutableRawPointer? = dlopen(
-            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices", RTLD_NOW
+            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
+            RTLD_NOW
         )
         let sym: UnsafeMutableRawPointer? = dlsym(handle, "_AXUIElementGetWindow")
         let fn: GetWindowFunc = unsafeBitCast(sym, to: GetWindowFunc.self)
