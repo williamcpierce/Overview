@@ -72,11 +72,13 @@
 			membershipExceptions = (
 				Services/SourceFilterService.swift,
 				Services/SourceFocusService.swift,
+				Services/SourceInfoService.swift,
 				Services/SourceObserverService.swift,
 				Settings/SourceSettingsContent.swift,
 				Settings/SourceSettingsKeys.swift,
 				Settings/SourceSettingsTab.swift,
 				SourceManager.swift,
+				Utility/WindowIDUtility.swift,
 				Views/SourceListView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;

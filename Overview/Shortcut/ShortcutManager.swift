@@ -64,12 +64,11 @@ final class ShortcutManager: ObservableObject {
             return
         }
 
-        // Get the current active window title
-        let currentTitle = sourceManager.focusedWindow.title
+        let currentTitle = sourceManager.focusedWindow?.title
 
         // Find the starting index based on the current window
         let startIndex: Int
-        if let currentIndex = titles.firstIndex(of: currentTitle) {
+        if let currentTitle = currentTitle, let currentIndex = titles.firstIndex(of: currentTitle) {
             startIndex = (currentIndex + 1) % titles.count
         } else {
             startIndex = 0

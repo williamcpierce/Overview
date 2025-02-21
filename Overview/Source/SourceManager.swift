@@ -11,15 +11,6 @@
 import ScreenCaptureKit
 import SwiftUI
 
-// MARK: - Focused Window Model
-struct FocusedWindow: Equatable {
-    let windowID: CGWindowID
-    let processID: pid_t
-    let bundleID: String
-    let title: String
-}
-
-// MARK: - Source Manager
 @MainActor
 final class SourceManager: ObservableObject {
     // Dependencies
@@ -29,6 +20,7 @@ final class SourceManager: ObservableObject {
     private let sourceFilter = SourceFilterService()
     private let sourceFocus = SourceFocusService()
     private let sourceObserver = SourceObserverService()
+    private let sourceInfo = SourceInfoService()
     private let logger = AppLogger.sources
 
     // Published State
@@ -167,27 +159,11 @@ final class SourceManager: ObservableObject {
     private func getActiveWindow(for app: NSRunningApplication) -> FocusedWindow? {
         let processID: pid_t = app.processIdentifier
         let bundleID: String = app.bundleIdentifier ?? ""
-        if let (windowID, title) = getWindowInfo(for: processID) {
+        if let (windowID, title) = sourceInfo.getWindowInfo(for: processID) {
             return FocusedWindow(
                 windowID: windowID, processID: processID, bundleID: bundleID, title: title)
         }
         return nil
-    }
-
-    private func getWindowInfo(for pid: pid_t) -> (CGWindowID, String)? {
-        let appElement = AXUIElementCreateApplication(pid)
-        var windowRef: CFTypeRef?
-        guard
-            AXUIElementCopyAttributeValue(
-                appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success
-        else { return nil }
-        let windowElement = unsafeBitCast(windowRef, to: AXUIElement.self)
-        var titleRef: CFTypeRef?
-        guard
-            AXUIElementCopyAttributeValue(windowElement, kAXTitleAttribute as CFString, &titleRef)
-                == .success, let title = titleRef as? String
-        else { return nil }
-        return (WindowIDUtility.extractWindowID(from: windowElement), title)
     }
 
     private func updateSourceTitles() async {
@@ -209,25 +185,11 @@ final class SourceManager: ObservableObject {
     }
 }
 
-// MARK: - Window ID Utility
+// MARK: - Focused Window Model
 
-enum WindowIDUtility {
-    /// Extracts the window ID from an Accessibility UI Element
-    static func extractWindowID(from window: AXUIElement) -> CGWindowID {
-        var windowID: CGWindowID = 0
-
-        // Retrieve window ID from AXUIElement using ApplicationServices framework
-        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
-            AXError
-        let frameworkHandle = dlopen(
-            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
-            RTLD_NOW
-        )
-        let windowSymbol = dlsym(frameworkHandle, "_AXUIElementGetWindow")
-        let retrieveWindowIDFunction = unsafeBitCast(windowSymbol, to: GetWindowFunc.self)
-        _ = retrieveWindowIDFunction(window, &windowID)
-        dlclose(frameworkHandle)
-
-        return windowID
-    }
+struct FocusedWindow: Equatable {
+    let windowID: CGWindowID
+    let processID: pid_t
+    let bundleID: String
+    let title: String
 }

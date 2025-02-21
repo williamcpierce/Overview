@@ -56,6 +56,7 @@ final class CaptureCoordinator: ObservableObject {
 
         // Update immediately when SourceManager's focusedWindow changes.
         sourceManager.$focusedWindow
+            .compactMap { $0 }  // Unwraps non-nil values
             .sink { [weak self] focusedWindow in
                 self?.synchronizeFocusState(with: focusedWindow)
             }
@@ -162,7 +163,12 @@ final class CaptureCoordinator: ObservableObject {
     @objc private func handleFocusDidChange() {
         // Immediately update the focus state based on the current SourceManager state.
         let focusedWindow = sourceManager.focusedWindow
-        synchronizeFocusState(with: focusedWindow)
+        if let focusedWindow = sourceManager.focusedWindow {
+            synchronizeFocusState(with: focusedWindow)
+        } else {
+            isSourceWindowFocused = false
+            isSourceAppFocused = false
+        }
     }
 
     private func synchronizeFocusState(with focusedWindow: FocusedWindow) {
