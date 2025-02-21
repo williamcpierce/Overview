@@ -8,7 +8,6 @@
  including extracting window IDs and fetching focused window details.
 */
 
-import Cocoa
 import ScreenCaptureKit
 
 final class SourceInfoService {

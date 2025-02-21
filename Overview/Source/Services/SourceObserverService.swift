@@ -7,7 +7,6 @@
  Provides source window state and title observation and notification management.
 */
 
-import Cocoa
 import ScreenCaptureKit
 
 final class SourceObserverService {
