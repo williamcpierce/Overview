@@ -119,6 +119,7 @@ final class SourceObserverService {
         if let observer = workspaceObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        titleCheckTimer?.invalidate()
     }
     
     private func triggerFocusObservers() {
