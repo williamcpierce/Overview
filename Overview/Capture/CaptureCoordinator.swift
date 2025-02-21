@@ -30,7 +30,12 @@ final class CaptureCoordinator: ObservableObject {
     }
 
     // Dependencies
-    private var sourceManager: SourceManager
+    @ObservedObject private var sourceManager: SourceManager {
+        didSet {
+            Task { await synchronizeFocusState() }
+        }
+    }
+    
     private var permissionManager: PermissionManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
@@ -53,7 +58,15 @@ final class CaptureCoordinator: ObservableObject {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
         self.captureEngine = captureEngine
-        setupSubscriptions()
+        
+        sourceManager.objectWillChange
+           .receive(on: RunLoop.main)
+           .sink { [weak self] _ in
+               Task { @MainActor [weak self] in
+                   await self?.synchronizeFocusState()
+               }
+           }
+           .store(in: &subscriptions)
     }
 
     // MARK: - Public Interface
@@ -117,16 +130,15 @@ final class CaptureCoordinator: ObservableObject {
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
         
         // Predictively update focus state
-        let selectedBundleId = source.owningApplication?.bundleIdentifier
         isSourceWindowFocused = true
         isSourceAppFocused = true
         
         // Actually focus the window
         sourceManager.focusSource(source)
         
-        // Schedule a verification check after a short delay
+        // Verify focus state after a short delay
         Task {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            try? await Task.sleep(nanoseconds: 1000_000_000) // 100ms
             await synchronizeFocusState()
         }
     }
@@ -160,22 +172,6 @@ final class CaptureCoordinator: ObservableObject {
 
     // MARK: - State Synchronization
 
-    private func setupSubscriptions() {
-        sourceManager.$focusedWindow
-            .dropFirst()  // Skip initial value
-            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)  // Coalesce rapid updates
-            .sink { [weak self] _ in
-                Task { await self?.synchronizeFocusState() }
-            }
-            .store(in: &subscriptions)
-
-        sourceManager.$sourceTitles
-            .sink { [weak self] titles in
-                self?.synchronizeSourceTitle(from: titles)
-            }
-            .store(in: &subscriptions)
-    }
-
     private func synchronizeFocusState() async {
         guard let selectedSource: SCWindow = selectedSource else {
             isSourceWindowFocused = false
@@ -186,10 +182,6 @@ final class CaptureCoordinator: ObservableObject {
         let focusedWindow = sourceManager.focusedWindow
         isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
         isSourceAppFocused = selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
-
-        if !isSourceWindowFocused {
-            logger.debug("Window focus state updated: focused=false")
-        }
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
