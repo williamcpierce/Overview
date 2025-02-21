@@ -3,6 +3,8 @@
  Overview
 
  Created by William Pierce on 2/16/25.
+
+ Manages keyboard shortcut activation and window cycling functionality.
 */
 
 import Combine
@@ -25,13 +27,15 @@ final class ShortcutManager: ObservableObject {
         setupShortcuts()
     }
 
+    // MARK: - Shortcut Setup
+
     private func setupShortcuts() {
-        // Setup observers for all shortcuts
+        // Setup observers for all existing shortcuts
         shortcutStorage.shortcuts.forEach { shortcut in
             setupShortcutObserver(for: shortcut)
         }
 
-        // Listen for changes to add/remove observers
+        // Listen for changes to add/remove observers dynamically
         shortcutStorage.$shortcuts
             .dropFirst()
             .sink { [weak self] shortcuts in
@@ -51,14 +55,36 @@ final class ShortcutManager: ObservableObject {
         }
     }
 
+    // MARK: - Window Activation
+
     private func activateSourceWindow(for shortcut: ShortcutItem) {
-        for title in shortcut.windowTitles {
-            let activated = sourceManager.focusSource(withTitle: title)
-            if activated {
-                logger.info("Window focused via shortcut: '\(title)'")
+        let titles = shortcut.windowTitles
+        guard !titles.isEmpty else {
+            logger.warning("Empty window title list for shortcut")
+            return
+        }
+
+        let currentTitle = sourceManager.focusedWindow?.title
+
+        // Find the starting index based on the current window
+        let startIndex: Int
+        if let currentTitle = currentTitle, let currentIndex = titles.firstIndex(of: currentTitle) {
+            startIndex = (currentIndex + 1) % titles.count
+        } else {
+            startIndex = 0
+        }
+
+        // Try to activate windows in order starting from the calculated index
+        for offset in 0..<titles.count {
+            let index = (startIndex + offset) % titles.count
+            let title = titles[index]
+
+            if sourceManager.focusSource(withTitle: title) {
+                logger.info("Window focused via shortcut cycle: '\(title)'")
                 return
             }
         }
-        logger.warning("Failed to focus any window for shortcut: \(shortcut.windowTitles)")
+
+        logger.warning("Failed to focus any window for shortcut: \(titles.joined(separator: ", "))")
     }
 }

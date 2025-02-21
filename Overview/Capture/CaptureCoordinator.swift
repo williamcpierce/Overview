@@ -23,9 +23,7 @@ final class CaptureCoordinator: ObservableObject {
     @Published private(set) var sourceApplicationTitle: String?
     @Published var selectedSource: SCWindow? {
         didSet {
-            sourceWindowTitle = selectedSource?.title
-            sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            Task { await synchronizeFocusState() }
+            synchronizeFocusState(with: sourceManager.focusedWindow)
         }
     }
 
@@ -61,7 +59,7 @@ final class CaptureCoordinator: ObservableObject {
     func requestPermission() async throws {
         guard !hasPermission else { return }
         logger.debug("Requesting screen recording permission")
-        try await permissionManager.ensurePermission()
+        try await permissionManager.ensurePermissions()
         hasPermission = true
         logger.info("Screen recording permission granted")
     }
@@ -148,8 +146,8 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: - State Synchronization
 
     private func setupSubscriptions() {
-        sourceManager.$focusedProcessId
-            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
+        sourceManager.$focusedWindow
+            .sink { [weak self] focusedWindow in self?.synchronizeFocusState(with: focusedWindow) }
             .store(in: &subscriptions)
 
         sourceManager.$sourceTitles
@@ -157,31 +155,45 @@ final class CaptureCoordinator: ObservableObject {
             .store(in: &subscriptions)
     }
 
-    private func synchronizeFocusState() async {
-        guard let selectedSource: SCWindow = selectedSource else {
+    private func synchronizeFocusState(with focusedWindow: FocusedWindow?) {
+        guard let selectedSource = selectedSource else {
             isSourceWindowFocused = false
+            isSourceAppFocused = false
             return
         }
 
-        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
-        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
+        let selectedBundleId = selectedSource.owningApplication?.bundleIdentifier
 
-        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
-        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
+        if let focusedWindow = focusedWindow {
+            isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
+            isSourceAppFocused = selectedBundleId == focusedWindow.bundleID
+        } else {
+            isSourceWindowFocused = false
+            isSourceAppFocused = false
+        }
+
+        // Update titles here to ensure they stay in sync with focus state
+        synchronizeSourceTitle(from: sourceManager.sourceTitles)
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
-        guard let source: SCWindow = selectedSource,
-            let processID: pid_t = source.owningApplication?.processID
-        else { return }
+        guard let source = selectedSource,
+            let processID = source.owningApplication?.processID
+        else {
+            sourceWindowTitle = nil
+            sourceApplicationTitle = nil
+            return
+        }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceWindowTitle = titles[sourceID]
+
+        // Prefer the title from sourceTitles if available, otherwise fall back to SCWindow title
+        sourceWindowTitle = titles[sourceID] ?? source.title
         sourceApplicationTitle = source.owningApplication?.applicationName
     }
 }
 
-// MARK - Support Types
+// MARK: - Support Types
 
 enum CaptureError: LocalizedError {
     case noSourceSelected

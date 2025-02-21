@@ -39,16 +39,15 @@ struct OverviewApp: App {
         }
     }
 
-    // MARK: - View Components
-
     private var menuContent: some View {
         Group {
             newWindowButton
             Divider()
             editModeButton
-            settingsButton
             Divider()
-            versionText
+            helpMenu
+            Divider()
+            settingsButton
             updateButton
             quitButton
         }
@@ -94,6 +93,101 @@ struct OverviewApp: App {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+
+    private var helpMenu: some View {
+
+        Menu("Help") {
+            Button {
+                openDiscord()
+            } label: {
+                Image(systemName: "bubble.fill")
+                Text("Join Discord")
+            }
+
+            Button {
+                openBugReport()
+            } label: {
+                Image(systemName: "exclamationmark.triangle.fill")
+                Text("Report Bug")
+            }
+
+            Button {
+                openFeatureRequest()
+            } label: {
+                Image(systemName: "lightbulb.fill")
+                Text("Request Feature")
+            }
+
+            Divider()
+
+            versionText
+            Button("Diagnostic Report...") {
+                generateDiagnosticReport()
+            }
+            Button("Restart") {
+                restartApp()
+            }.keyboardShortcut("r")
+        }
+    }
+
+    private func openDiscord() {
+        if let url = URL(string: "https://discord.gg/ekKMnejQbA") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func openBugReport() {
+        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug")
+        {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func openFeatureRequest() {
+        if let url = URL(
+            string: "https://github.com/williamcpierce/Overview/issues/new?labels=enhancement")
+        {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func generateDiagnosticReport() {
+        Task {
+            do {
+                let report = try await DiagnosticService.shared.generateDiagnosticReport()
+                let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
+
+                // Show success alert and reveal in Finder
+                NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
+                logger.info("Diagnostic report generated and saved successfully")
+            } catch {
+                logger.logError(error, context: "Failed to generate diagnostic report")
+                // Show error alert
+                let alert = NSAlert()
+                alert.messageText = "Failed to Generate Report"
+                alert.informativeText = "An error occurred while generating the diagnostic report."
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
+    }
+
+    @MainActor
+    private func restartApp() {
+        logger.debug("Initiating application restart")
+
+        let process = Process()
+        process.executableURL = Bundle.main.executableURL
+        process.arguments = []
+
+        do {
+            try process.run()
+            NSApplication.shared.terminate(nil)
+        } catch {
+            logger.logError(error, context: "Failed to restart application")
+        }
     }
 
     // MARK: - Commands
