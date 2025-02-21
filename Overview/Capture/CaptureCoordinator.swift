@@ -54,8 +54,8 @@ final class CaptureCoordinator: ObservableObject {
         self.permissionManager = permissionManager
         self.captureEngine = captureEngine
 
+        // Update immediately when SourceManager's focusedWindow changes.
         sourceManager.$focusedWindow
-            .receive(on: RunLoop.main)
             .sink { [weak self] focusedWindow in
                 self?.synchronizeFocusState(with: focusedWindow)
             }
@@ -158,6 +158,12 @@ final class CaptureCoordinator: ObservableObject {
     }
 
     // MARK: - State Synchronization
+
+    @objc private func handleFocusDidChange() {
+        // Immediately update the focus state based on the current SourceManager state.
+        let focusedWindow = sourceManager.focusedWindow
+        synchronizeFocusState(with: focusedWindow)
+    }
 
     private func synchronizeFocusState(with focusedWindow: FocusedWindow) {
         guard let selectedSource = selectedSource else {

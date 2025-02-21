@@ -20,8 +20,8 @@ final class SourceFocusService {
 
     // MARK: - Public Methods
 
-    func focusSource(source: SCWindow) {
-        guard let processID: pid_t = source.owningApplication?.processID else {
+    func focusSource(source: SCWindow, completion: (() -> Void)? = nil) {
+        guard let processID = source.owningApplication?.processID else {
             logger.warning("No process ID found for source: '\(source.title ?? "untitled")'")
             return
         }
@@ -30,27 +30,34 @@ final class SourceFocusService {
 
         if setWindowFocus(processID: processID, windowID: source.windowID) {
             logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
-            if let title: String = source.title {
+            if let title = source.title {
                 updateWindowCache(title: title, processID: processID, windowID: source.windowID)
             }
+            // Immediately trigger the completion callback.
+            completion?()
         } else {
             logger.error("Failed to focus source window: '\(source.title ?? "untitled")'")
         }
     }
 
-    func focusSource(withTitle title: String) -> Bool {
+    func focusSource(withTitle title: String, completion: (() -> Void)? = nil) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
 
         // Check cached window info first
         if let (pid, windowID) = getCachedWindowInfo(for: title) {
             if setWindowFocus(processID: pid, windowID: windowID) {
                 logger.info("Window focused using cached info: '\(title)'")
+                completion?()
                 return true
             }
         }
 
         // Fallback to searching window list
-        return searchAndFocusWindow(byTitle: title)
+        let success = searchAndFocusWindow(byTitle: title)
+        if success {
+            completion?()
+        }
+        return success
     }
 
     // MARK: - Private Methods

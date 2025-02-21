@@ -67,28 +67,41 @@ final class SourceManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Focuses the given source window.
     func focusSource(_ source: SCWindow) {
         logger.debug("Focusing source: \(source.title ?? "untitled")")
-        sourceFocus.focusSource(source: source)
+        sourceFocus.focusSource(source: source) { [weak self] in
+            guard let self = self else { return }
+
+            // Immediately update the focused window state
+            let processID = source.owningApplication?.processID ?? 0
+            let bundleID = source.owningApplication?.bundleIdentifier ?? ""
+            let newFocusedWindow = FocusedWindow(
+                windowID: source.windowID,
+                processID: processID,
+                bundleID: bundleID,
+                title: source.title ?? ""
+            )
+            self.focusedWindow = newFocusedWindow
+        }
     }
 
-    /// Focuses a source window by its title.
-    /// - Returns: `true` if successful; otherwise, `false`.
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Focusing source by title: \(title)")
-        let success = sourceFocus.focusSource(withTitle: title)
+        let success = sourceFocus.focusSource(withTitle: title) { [weak self] in
+            guard let self = self else { return }
+
+            // Immediately update the focused window state.
+            self.updateFocusedSource()
+        }
         if !success { logger.error("Failed to focus: \(title)") }
         return success
     }
 
-    /// Retrieves all available sources after ensuring proper permissions.
     func getAvailableSources() async throws -> [SCWindow] {
         try await permissionManager.ensurePermissions()
         return try await captureServices.getAvailableSources()
     }
 
-    /// Retrieves available sources and applies filtering based on settings.
     func getFilteredSources() async throws -> [SCWindow] {
         guard permissionManager.permissionStatus == .granted else {
             logger.debug("Permission not granted for source retrieval")
@@ -105,7 +118,6 @@ final class SourceManager: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// Sets up observation of window and application state changes.
     private func setupObservers() {
         sourceObserver.addObserver(
             id: observerId,
@@ -113,10 +125,8 @@ final class SourceManager: ObservableObject {
             onTitleChanged: updateSourceTitles
         )
         observeWorkspaceChanges()
-        logger.info("Observers configured")
     }
 
-    /// Observes workspace and frontmost application changes.
     private func observeWorkspaceChanges() {
         workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -141,7 +151,6 @@ final class SourceManager: ObservableObject {
         }
     }
 
-    /// Removes observers for workspace and state changes.
     private func removeObservers() {
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
@@ -152,7 +161,6 @@ final class SourceManager: ObservableObject {
         sourceObserver.removeObserver(id: observerId)
     }
 
-    /// Updates the focused source window based on the current active application.
     private func updateFocusedSource() {
         guard let activeApp = NSWorkspace.shared.frontmostApplication else {
             logger.debug("No active application")
@@ -178,7 +186,6 @@ final class SourceManager: ObservableObject {
         }
     }
 
-    /// Retrieves window information (ID and title) for the given process.
     private func getWindowInfo(for pid: pid_t) -> (CGWindowID, String)? {
         let appElement = AXUIElementCreateApplication(pid)
         var windowRef: CFTypeRef?
@@ -199,7 +206,6 @@ final class SourceManager: ObservableObject {
         return (WindowIDUtility.extractWindowID(from: windowElement), title)
     }
 
-    /// Asynchronously updates the titles for available source windows.
     private func updateSourceTitles() async {
         guard permissionManager.permissionStatus == .granted else {
             logger.debug("Permission not granted for updating titles")
