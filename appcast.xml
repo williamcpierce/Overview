@@ -3,15 +3,34 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.1.1-beta</title>
+            <pubDate>Fri, 21 Feb 2025 17:00:00 +0000</pubDate>
+            <sparkle:version>1.1.1</sparkle:version>
+            <sparkle:shortVersionString>v1.1.1-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.1.1-beta</h3>
+                <h4>Bug Fixes</h4>
+                <ul>
+                    <li>Partially ixed issue with focus across spaces and for full screen windows</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.1.1-beta/Overview.dmg"
+                sparkle:edSignature="7lM6cMEmwNs8MaTtAJp24Pnu1bbh5W8i8veFPr921TEkVUYCXfHfBbyG9IrMUvmLxgrtutIL3yjuLmXEErTGCg=="
+                length="2537471"
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.1.0-beta</title>
             <pubDate>Fri, 21 Feb 2025 08:24:00 +0000</pubDate>
             <sparkle:version>1.1.0</sparkle:version>
-            <sparkle:channel>alpha</sparkle:channel>
             <sparkle:shortVersionString>v1.1.0-beta</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
                 <h3>Changes in Overview v1.1.0-beta</h3>
-                <h4>Features:</h4>
+                <h4>Features</h4>
                 <ul>
                     <li>Window cycling shortcuts: Repeated presses of window activation keyboard shortcuts will activate the next window title in the list bound to that shortcut</li>
                     <li>Direct window activation: Windows are now activated directly, instead of just their owning application</li>
@@ -35,7 +54,7 @@
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
                 <h3>Changes in Overview v1.0.1-beta</h3>
-                <h4>Bug Fixes:</h4>
+                <h4>Bug Fixes</h4>
                 <ul>
                     <li>Fixed issue with multiple captures</li>
                 </ul>
@@ -55,7 +74,7 @@
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
                 <h3>Changes in Overview v1.0.0-beta</h3>
-                <h4>Features:</h4>
+                <h4>Features</h4>
                 <ul>
                     <li>Keyboard shortcut system replacing hotkeys, allowing multiple window titles per shortcut</li>
                     <li>Automatic update feature added, with beta channel option and menu bar item</li>
@@ -65,7 +84,7 @@
                     <li>Option added to show both application name and window title in overlay</li>
                     <li>Dock icon now shows while in permission setup or while settings window is open</li>
                 </ul>
-                <h4>Bug Fixes:</h4>
+                <h4>Bug Fixes</h4>
                 <ul>
                     <li>Multiple hotkey bugs resolved in switch to keyboard shortcuts</li>
                 </ul>
