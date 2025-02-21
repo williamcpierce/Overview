@@ -10,10 +10,10 @@
 import ScreenCaptureKit
 
 final class SourceFocusService {
-    // Dependencies
+    // MARK: - Dependencies
     private let logger = AppLogger.sources
 
-    // Cache for window focus operations
+    // MARK: - Cache for Window Focus
     private var windowFocusCache: [String: (pid_t, CGWindowID)] = [:]
     private var lastCacheUpdate = Date()
     private let cacheDuration: TimeInterval = 5.0  // Cache valid for 5 seconds
@@ -21,7 +21,7 @@ final class SourceFocusService {
     // MARK: - Public Methods
 
     func focusSource(source: SCWindow) {
-        guard let processID: pid_t = source.owningApplication?.processID else {
+        guard let processID = source.owningApplication?.processID else {
             logger.warning("No process ID found for source: '\(source.title ?? "untitled")'")
             return
         }
@@ -30,7 +30,7 @@ final class SourceFocusService {
 
         if setWindowFocus(processID: processID, windowID: source.windowID) {
             logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
-            if let title: String = source.title {
+            if let title = source.title {
                 updateWindowCache(title: title, processID: processID, windowID: source.windowID)
             }
         } else {
@@ -41,7 +41,6 @@ final class SourceFocusService {
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
 
-        // Check cache first if it's still valid
         if let (pid, windowID) = getCachedWindowInfo(for: title) {
             if setWindowFocus(processID: pid, windowID: windowID) {
                 logger.info("Window focused using cached info: '\(title)'")
@@ -49,28 +48,10 @@ final class SourceFocusService {
             }
         }
 
-        // Fall back to full window list search
-        let options = CGWindowListOption(arrayLiteral: .optionAll)
-        let windowList =
-            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
-
-        guard let (windowID, pid) = findWindowInfo(for: title, in: windowList) else {
-            logger.warning("No matching window found: '\(title)'")
-            return false
-        }
-
-        // Update cache and attempt focus
-        updateWindowCache(title: title, processID: pid, windowID: windowID)
-        return setWindowFocus(processID: pid, windowID: windowID)
+        return searchAndFocusWindow(byTitle: title)
     }
 
     // MARK: - Private Methods
-
-    private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
-        var windowList: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
-        return windowList as? [AXUIElement] ?? []
-    }
 
     private func getCachedWindowInfo(for title: String) -> (pid_t, CGWindowID)? {
         guard Date().timeIntervalSince(lastCacheUpdate) < cacheDuration else {
@@ -85,19 +66,30 @@ final class SourceFocusService {
         lastCacheUpdate = Date()
     }
 
-    private func findMatchingWindow(_ windows: [AXUIElement], targetID: CGWindowID) -> AXUIElement?
-    {
-        windows.first { WindowIDUtility.extractWindowID(from: $0) == targetID }
+    private func searchAndFocusWindow(byTitle title: String) -> Bool {
+        let options: CGWindowListOption = [.optionAll]
+        guard
+            let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
+                as? [[CFString: Any]]
+        else {
+            logger.warning("Unable to retrieve window list")
+            return false
+        }
+
+        guard let (windowID, pid) = findWindowInfo(for: title, in: windowList) else {
+            logger.warning("No matching window found: '\(title)'")
+            return false
+        }
+
+        updateWindowCache(title: title, processID: pid, windowID: windowID)
+        return setWindowFocus(processID: pid, windowID: windowID)
     }
 
     private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
         CGWindowID, pid_t
     )? {
         guard
-            let windowInfo = windowList.first(where: { info in
-                guard let windowTitle = info[kCGWindowName] as? String else { return false }
-                return windowTitle == title
-            }),
+            let windowInfo = windowList.first(where: { ($0[kCGWindowName] as? String) == title }),
             let windowID = windowInfo[kCGWindowNumber] as? CGWindowID,
             let pid = windowInfo[kCGWindowOwnerPID] as? pid_t
         else { return nil }
@@ -109,21 +101,26 @@ final class SourceFocusService {
         let axApp = AXUIElementCreateApplication(processID)
         let windows = getWindowList(for: axApp)
 
-        guard let matchingWindow = findMatchingWindow(windows, targetID: windowID) else {
+        guard
+            let matchingWindow = windows.first(where: {
+                WindowIDUtility.extractWindowID(from: $0) == windowID
+            })
+        else {
             return false
         }
 
-        // Batch set focus attributes
-        let attributeValues: [(AXUIElement, CFString, CFTypeRef)] = [
+        let attributes: [(AXUIElement, CFString, CFTypeRef)] = [
             (axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
             (matchingWindow, kAXMainAttribute as CFString, kCFBooleanTrue),
             (matchingWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue),
         ]
 
-        let success = attributeValues.allSatisfy { element, attribute, value in
-            AXUIElementSetAttributeValue(element, attribute, value) == .success
-        }
+        return attributes.allSatisfy { AXUIElementSetAttributeValue($0.0, $0.1, $0.2) == .success }
+    }
 
-        return success
+    private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
+        var windowList: CFTypeRef?
+        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
+        return windowList as? [AXUIElement] ?? []
     }
 }

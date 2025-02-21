@@ -11,6 +11,7 @@
 import ScreenCaptureKit
 import SwiftUI
 
+// MARK: - Focused Window Model
 struct FocusedWindow: Equatable {
     let windowID: CGWindowID
     let processID: pid_t
@@ -25,8 +26,8 @@ final class SourceManager: ObservableObject {
     // Dependencies
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var permissionManager: PermissionManager
-    private let sourceServices: SourceServices = SourceServices.shared
-    private let captureServices: CaptureServices = CaptureServices.shared
+    private let sourceServices = SourceServices.shared
+    private let captureServices = CaptureServices.shared
     private let logger = AppLogger.sources
 
     // Published State
@@ -43,7 +44,6 @@ final class SourceManager: ObservableObject {
     @AppStorage(SourceSettingsKeys.filterMode)
     private var filterMode = SourceSettingsKeys.defaults.filterMode
 
-    // Type Definitions
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
@@ -53,33 +53,24 @@ final class SourceManager: ObservableObject {
         self.settingsManager = settingsManager
         self.permissionManager = permissionManager
         setupObservers()
-        logger.debug("Source window manager initialization complete")
+        logger.debug("SourceManager initialized")
     }
 
     deinit {
-        if let observer = workspaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-        }
-        if let observer = frontmostAppObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
+        Task { await removeObservers() }
     }
 
     // MARK: - Public Methods
 
     func focusSource(_ source: SCWindow) {
-        logger.debug("Processing source window focus request: '\(source.title ?? "untitled")'")
+        logger.debug("Focusing source: \(source.title ?? "untitled")")
         sourceServices.focusSource(source)
     }
 
     func focusSource(withTitle title: String) -> Bool {
-        logger.debug("Processing title-based focus request: '\(title)'")
+        logger.debug("Focusing source by title: \(title)")
         let success = sourceServices.focusSource(withTitle: title)
-
-        if !success {
-            logger.error("Failed to focus source window: '\(title)'")
-        }
-
+        if !success { logger.error("Failed to focus: \(title)") }
         return success
     }
 
@@ -89,74 +80,50 @@ final class SourceManager: ObservableObject {
     }
 
     func getFilteredSources() async throws -> [SCWindow] {
-        if permissionManager.permissionStatus != .granted {
-            logger.debug("Skipping source retrieval: permission not granted")
+        guard permissionManager.permissionStatus == .granted else {
+            logger.debug("Permission not granted for source retrieval")
             return []
         }
 
-        logger.debug("Retrieving filtered window list")
-        let availableSources = try await captureServices.getAvailableSources()
-
-        let filteredSources = sourceServices.filterSources(
-            availableSources,
-            appFilterNames: settingsManager.filterAppNames,
+        logger.debug("Retrieving filtered sources")
+        let sources = try await captureServices.getAvailableSources()
+        return sourceServices.filterSources(
+            sources, appFilterNames: settingsManager.filterAppNames,
             isFilterBlocklist: filterMode == FilterMode.blocklist
         )
-
-        logger.info("Retrieved \(filteredSources.count) filtered source windows")
-        return filteredSources
     }
 
     // MARK: - Private Methods
 
     private func setupObservers() {
-        // Set up source observers
-        sourceServices.sourceObserver.addObserver(
-            id: observerId,
-            onFocusChanged: { [weak self] in
-                guard let self = self else { return }
-                Task { @MainActor in
-                    await self.updateFocusedSource()
-                }
-            },
-            onTitleChanged: { [weak self] in
-                guard let self = self else { return }
-                Task { @MainActor in
-                    await self.updateSourceTitles()
-                }
-            }
-        )
-
-        // Observe workspace notifications
-        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                await self.updateFocusedSource()
-            }
-        }
-
-        // Observe window focus changes
-        frontmostAppObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didBecomeKeyNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                await self.updateFocusedSource()
-            }
-        }
-
-        logger.info("Window observers configured successfully")
+        sourceServices.addObserver(
+            id: observerId, onFocusChanged: updateFocusedSource, onTitleChanged: updateSourceTitles)
+        observeWorkspaceChanges()
+        logger.info("Observers configured")
     }
 
-    private func updateFocusedSource() async {
+    private func observeWorkspaceChanges() {
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.updateFocusedSource() }
+
+        frontmostAppObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.updateFocusedSource() }
+    }
+
+    private func removeObservers() {
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        if let observer = frontmostAppObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    private func updateFocusedSource() {
         guard let activeApp = NSWorkspace.shared.frontmostApplication else {
-            logger.debug("No active application found")
+            logger.debug("No active application")
             focusedWindow = .empty
             return
         }
@@ -165,67 +132,43 @@ final class SourceManager: ObservableObject {
         let bundleID = activeApp.bundleIdentifier ?? ""
         isOverviewActive = bundleID == Bundle.main.bundleIdentifier
 
-        // Use a non-async method for window info retrieval
-        if let (windowID, title) = getWindowInfoSync(for: processID) {
+        if let (windowID, title) = getWindowInfo(for: processID) {
             let newFocusedWindow = FocusedWindow(
-                windowID: windowID,
-                processID: processID,
-                bundleID: bundleID,
-                title: title
-            )
-
-            // Only trigger updates if focus actually changed
+                windowID: windowID, processID: processID, bundleID: bundleID, title: title)
             if newFocusedWindow != focusedWindow {
                 focusedWindow = newFocusedWindow
-                objectWillChange.send()
-                logger.debug("Focus state updated: bundleId=\(bundleID), title=\(title)")
+                logger.debug("Focus updated: \(title)")
             }
         }
     }
 
-    private func getWindowInfoSync(for pid: pid_t) -> (CGWindowID, String)? {
-        // Create application element
+    private func getWindowInfo(for pid: pid_t) -> (CGWindowID, String)? {
         let appElement = AXUIElementCreateApplication(pid)
-
-        // Retrieve focused window
         var windowRef: CFTypeRef?
         guard
             AXUIElementCopyAttributeValue(
-                appElement,
-                kAXFocusedWindowAttribute as CFString,
-                &windowRef
-            ) == .success
+                appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success
         else {
             return nil
         }
 
-        let windowElement = windowRef as! AXUIElement
+        let windowElement = unsafeBitCast(windowRef, to: AXUIElement.self)
 
-        // Retrieve window title
         var titleRef: CFTypeRef?
         guard
-            AXUIElementCopyAttributeValue(
-                windowElement,
-                kAXTitleAttribute as CFString,
-                &titleRef
-            ) == .success,
+            AXUIElementCopyAttributeValue(windowElement, kAXTitleAttribute as CFString, &titleRef)
+                == .success,
             let title = titleRef as? String
-        else {
-            return nil
-        }
+        else { return nil }
 
-        // Retrieve window ID using the existing WindowIDUtility
-        let windowID = WindowIDUtility.extractWindowID(from: windowElement)
-
-        return (windowID, title)
+        return (WindowIDUtility.extractWindowID(from: windowElement), title)
     }
 
     private func updateSourceTitles() async {
-        if permissionManager.permissionStatus != .granted {
-            logger.debug("Skipping title update: permission not granted")
+        guard permissionManager.permissionStatus == .granted else {
+            logger.debug("Permission not granted for updating titles")
             return
         }
-
         do {
             let sources = try await captureServices.getAvailableSources()
             sourceTitles = Dictionary(
@@ -234,10 +177,9 @@ final class SourceManager: ObservableObject {
                         let title = source.title
                     else { return nil }
                     return (SourceID(processID: processID, windowID: source.windowID), title)
-                }
-            )
+                })
         } catch {
-            logger.logError(error, context: "Failed to update source window titles")
+            logger.logError(error, context: "Failed updating source titles")
         }
     }
 }
