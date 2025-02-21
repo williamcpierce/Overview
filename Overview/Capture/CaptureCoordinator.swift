@@ -25,17 +25,12 @@ final class CaptureCoordinator: ObservableObject {
         didSet {
             sourceWindowTitle = selectedSource?.title
             sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            Task { await synchronizeFocusState() }
         }
     }
 
     // Dependencies
-    @ObservedObject private var sourceManager: SourceManager {
-        didSet {
-            Task { await synchronizeFocusState() }
-        }
-    }
-    
+    @ObservedObject private var sourceManager: SourceManager
+
     private var permissionManager: PermissionManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
@@ -58,15 +53,13 @@ final class CaptureCoordinator: ObservableObject {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
         self.captureEngine = captureEngine
-        
-        sourceManager.objectWillChange
-           .receive(on: RunLoop.main)
-           .sink { [weak self] _ in
-               Task { @MainActor [weak self] in
-                   await self?.synchronizeFocusState()
-               }
-           }
-           .store(in: &subscriptions)
+
+        sourceManager.$focusedWindow
+            .receive(on: RunLoop.main)
+            .sink { [weak self] focusedWindow in
+                self?.synchronizeFocusState(with: focusedWindow)
+            }
+            .store(in: &subscriptions)
     }
 
     // MARK: - Public Interface
@@ -128,19 +121,13 @@ final class CaptureCoordinator: ObservableObject {
     func focusSource() {
         guard let source: SCWindow = selectedSource else { return }
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
-        
-        // Predictively update focus state
+
+        // Immediately update focus state before actual focus
         isSourceWindowFocused = true
         isSourceAppFocused = true
-        
-        // Actually focus the window
+
+        // Focus the window
         sourceManager.focusSource(source)
-        
-        // Verify focus state after a short delay
-        Task {
-            try? await Task.sleep(nanoseconds: 1000_000_000) // 100ms
-            await synchronizeFocusState()
-        }
     }
 
     // MARK: - Frame Processing
@@ -172,20 +159,19 @@ final class CaptureCoordinator: ObservableObject {
 
     // MARK: - State Synchronization
 
-    private func synchronizeFocusState() async {
-        guard let selectedSource: SCWindow = selectedSource else {
+    private func synchronizeFocusState(with focusedWindow: FocusedWindow) {
+        guard let selectedSource = selectedSource else {
             isSourceWindowFocused = false
             isSourceAppFocused = false
             return
         }
 
-        let focusedWindow = sourceManager.focusedWindow
-        
-        // Quick comparison using cached values
+        // Synchronize focus state without async overhead
         isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
-        isSourceAppFocused = selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
+        isSourceAppFocused =
+            selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
 
-        // Update titles if needed
+        // Update titles directly
         if sourceWindowTitle != selectedSource.title {
             sourceWindowTitle = selectedSource.title
         }
@@ -210,7 +196,7 @@ final class CaptureCoordinator: ObservableObject {
 enum CaptureError: LocalizedError {
     case noSourceSelected
     case permissionDenied
-    
+
     var errorDescription: String? {
         switch self {
         case .noSourceSelected:

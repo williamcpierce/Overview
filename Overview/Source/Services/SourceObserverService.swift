@@ -7,6 +7,7 @@
  Provides source window state observation and notification management.
 */
 
+import Cocoa
 import ScreenCaptureKit
 
 final class SourceObserverService {
@@ -15,10 +16,10 @@ final class SourceObserverService {
 
     // Private State
     private var focusObservers: [UUID: () async -> Void] = [:]
-    private var titleCheckTimer: Timer?
     private var titleObservers: [UUID: () async -> Void] = [:]
-    private var sourceObserver: NSObjectProtocol?
     private var workspaceObserver: NSObjectProtocol?
+    private var windowObserver: NSObjectProtocol?
+    private var appObserver: NSObjectProtocol?
 
     deinit {
         stopObserving()
@@ -36,6 +37,7 @@ final class SourceObserverService {
         focusObservers[id] = onFocusChanged
         titleObservers[id] = onTitleChanged
 
+        // Start observing only when first observer is added
         if focusObservers.count == 1 {
             startObserving()
         }
@@ -55,68 +57,56 @@ final class SourceObserverService {
 
     private func startObserving() {
         logger.info("Starting source window state observation")
-        setupWorkspaceObserver()
-        setupSourceObserver()
-        startTitleChecks()
+
+        // Observe application focus changes
+        appObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.triggerFocusObservers()
+        }
+
+        // Observe window focus changes
+        windowObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.triggerFocusObservers()
+        }
+
+        // Observe window focus loss
+        workspaceObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.triggerFocusObservers()
+        }
     }
 
     private func stopObserving() {
         logger.info("Stopping source window state observation")
 
-        if let observer = workspaceObserver {
+        if let observer = appObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
-        if let observer = sourceObserver {
+        if let observer = windowObserver {
             NotificationCenter.default.removeObserver(observer)
         }
-        titleCheckTimer?.invalidate()
-    }
-
-    private func setupWorkspaceObserver() {
-        logger.debug("Configuring workspace observer")
-
-        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { [weak self] in
-                guard let observers = self?.focusObservers else { return }
-                for callback in observers.values {
-                    await callback()
-                }
-            }
+        if let observer = workspaceObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
-    private func setupSourceObserver() {
-        logger.debug("Configuring source window observer")
+    private func triggerFocusObservers() {
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
 
-        sourceObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didBecomeKeyNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { [weak self] in
-                guard let observers = self?.focusObservers else { return }
-                for callback in observers.values {
-                    await callback()
-                }
-            }
-        }
-    }
-
-    private func startTitleChecks() {
-        titleCheckTimer?.invalidate()
-        logger.debug("Starting title check timer")
-
-        titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {
-            [weak self] _ in
-            Task { [weak self] in
-                guard let observers = self?.titleObservers else { return }
-                for callback in observers.values {
-                    await callback()
-                }
+            // Immediately trigger all focus observers
+            for callback in self.focusObservers.values {
+                await callback()
             }
         }
     }
