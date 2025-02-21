@@ -3,6 +3,30 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.1.0-beta</title>
+            <pubDate>Fri, 21 Feb 2025 08:24:00 +0000</pubDate>
+            <sparkle:version>1.1.0</sparkle:version>
+            <sparkle:shortVersionString>v1.1.0-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.1.0-beta</h3>
+                <h4>Features:</h4>
+                <ul>
+                    <li>Window cycling shortcuts: Repeated presses of window activation keyboard shortcuts will activate the next window title in the list bound to that shortcut</li>
+                    <li>Direct window activation: Windows are now activated directly, instead of just their owning application</li>
+                    <li>Diagnostic report: Added a menu option to generate a diagnostic report</li>
+                    <li>Help menu: Added a help menu with links to create issues/get support</li>
+                    <li>Accessibility permission management: Added accessibility permission management to the permission onboarding</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.1.0-beta/Overview.dmg"
+                sparkle:edSignature="3dRS6E707lUZWNSCW3cJXefzozlBzNFFY3r0DoPvWcDAPVdIBcLoiWwVupfSaw4eFWJld23yvROa9RD8V5bvDQ=="
+                length="2544691"
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.0.1-beta</title>
             <pubDate>Mon, 18 Feb 2025 19:42:00 +0000</pubDate>
             <sparkle:version>1.0.1</sparkle:version>
