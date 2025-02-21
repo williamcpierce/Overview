@@ -180,8 +180,18 @@ final class CaptureCoordinator: ObservableObject {
         }
 
         let focusedWindow = sourceManager.focusedWindow
+        
+        // Quick comparison using cached values
         isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
         isSourceAppFocused = selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
+
+        // Update titles if needed
+        if sourceWindowTitle != selectedSource.title {
+            sourceWindowTitle = selectedSource.title
+        }
+        if sourceApplicationTitle != selectedSource.owningApplication?.applicationName {
+            sourceApplicationTitle = selectedSource.owningApplication?.applicationName
+        }
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {

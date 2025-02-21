@@ -36,7 +36,8 @@ final class SourceManager: ObservableObject {
 
     // Private State
     private let observerId = UUID()
-    private var focusMonitorTimer: Timer?
+    private var workspaceObserver: NSObjectProtocol?
+    private var frontmostAppObserver: NSObjectProtocol?
 
     // Source Settings
     @AppStorage(SourceSettingsKeys.filterMode)
@@ -52,13 +53,15 @@ final class SourceManager: ObservableObject {
         self.settingsManager = settingsManager
         self.permissionManager = permissionManager
         setupObservers()
-        startFocusMonitoring()
         logger.debug("Source window manager initialization complete")
     }
     
     deinit {
-        Task { @MainActor in
-            stopFocusMonitoring()
+        if let observer = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
+        if let observer = frontmostAppObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
@@ -107,37 +110,42 @@ final class SourceManager: ObservableObject {
     // MARK: - Private Methods
 
     private func setupObservers() {
+        // Set up source observers
         sourceServices.sourceObserver.addObserver(
             id: observerId,
             onFocusChanged: { [weak self] in await self?.updateFocusedSource() },
             onTitleChanged: { [weak self] in await self?.updateSourceTitles() }
         )
 
-        logger.info("Window observers configured successfully")
-    }
-    
-    private func startFocusMonitoring() {
-        stopFocusMonitoring()
-        
-        // Create a timer that checks the focused window state every 0.5 seconds
-        focusMonitorTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { [weak self] in
+        // Observe workspace notifications
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
                 await self?.updateFocusedSource()
             }
         }
-        
-        // Initial update
-        Task { await updateFocusedSource() }
-    }
-    
-    private func stopFocusMonitoring() {
-        focusMonitorTimer?.invalidate()
-        focusMonitorTimer = nil
+
+        // Observe window focus changes
+        frontmostAppObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.updateFocusedSource()
+            }
+        }
+
+        logger.info("Window observers configured successfully")
     }
 
     private func updateFocusedSource() async {
         guard let activeApp = NSWorkspace.shared.frontmostApplication else {
             logger.debug("No active application found")
+            focusedWindow = .empty
             return
         }
 
@@ -145,8 +153,8 @@ final class SourceManager: ObservableObject {
         let bundleID = activeApp.bundleIdentifier ?? ""
         isOverviewActive = bundleID == Bundle.main.bundleIdentifier
 
-        // Get the focused window information
-        if let (windowID, title) = await getCurrentWindowInfo(for: processID) {
+        // Get window info efficiently
+        if let (windowID, title) = await getWindowInfo(for: processID) {
             let newFocusedWindow = FocusedWindow(
                 windowID: windowID,
                 processID: processID,
@@ -154,15 +162,16 @@ final class SourceManager: ObservableObject {
                 title: title
             )
             
-            // Only update if the focused window has changed
+            // Only trigger updates if focus actually changed
             if newFocusedWindow != focusedWindow {
                 focusedWindow = newFocusedWindow
+                objectWillChange.send()
                 logger.debug("Focus state updated: bundleId=\(bundleID), title=\(title)")
             }
         }
     }
     
-    private func getCurrentWindowInfo(for pid: pid_t) async -> (CGWindowID, String)? {
+    private func getWindowInfo(for pid: pid_t) async -> (CGWindowID, String)? {
         let appElement = AXUIElementCreateApplication(pid)
         var windowRef: CFTypeRef?
         
@@ -177,19 +186,18 @@ final class SourceManager: ObservableObject {
         
         let windowElement = windowRef as! AXUIElement
         
+        // Get window title
         var titleRef: CFTypeRef?
-        // Get the window title
         guard AXUIElementCopyAttributeValue(
             windowElement,
             kAXTitleAttribute as CFString,
             &titleRef
         ) == .success,
-        let title = titleRef as? String
-        else {
+        let title = titleRef as? String else {
             return nil
         }
-        
-        // Get the window ID
+
+        // Get window ID
         var windowID: CGWindowID = 0
         typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
         let frameworkHandle = dlopen(
