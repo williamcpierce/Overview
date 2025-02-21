@@ -34,6 +34,7 @@ Display source app names, window titles, and focus status at a glance
 
 -   macOS Ventura (13.0) or later
 -   Screen Recording permission (required for window capture)
+-   Accessibility permission (required for granular window activation)
 
 ## Installation
 
@@ -90,8 +91,8 @@ See setting menu tooltips for full details
         -   Location
         -   Title type (window, application, or both)
 -   Shortcuts
-    -   Custom keyboard shortcuts for window activation
-    -   Multiple window titles per shortcut
+    -   Keyboard shortcuts for window activation
+    -   Multiple window titles per shortcut for window cycling
 -   Sources
     -   Window source list filtering (blocklist/allowlist)
 -   Updates
@@ -101,7 +102,7 @@ See setting menu tooltips for full details
 
 ## Privacy & Security
 
-Overview requires Screen Recording permission to function, but:
+Overview requires Screen Recording and Accessibility permissions to function, but:
 
 -   Only captures window content for preview purposes
 -   Does not store or transmit window content
