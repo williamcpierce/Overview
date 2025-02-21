@@ -23,14 +23,12 @@ final class CaptureCoordinator: ObservableObject {
     @Published private(set) var sourceApplicationTitle: String?
     @Published var selectedSource: SCWindow? {
         didSet {
-            sourceWindowTitle = selectedSource?.title
-            sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
+            synchronizeFocusState(with: sourceManager.focusedWindow)
         }
     }
 
     // Dependencies
-    @ObservedObject private var sourceManager: SourceManager
-
+    private var sourceManager: SourceManager
     private var permissionManager: PermissionManager
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
@@ -53,14 +51,7 @@ final class CaptureCoordinator: ObservableObject {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
         self.captureEngine = captureEngine
-
-        // Update immediately when SourceManager's focusedWindow changes.
-        sourceManager.$focusedWindow
-            .compactMap { $0 }  // Unwraps non-nil values
-            .sink { [weak self] focusedWindow in
-                self?.synchronizeFocusState(with: focusedWindow)
-            }
-            .store(in: &subscriptions)
+        setupSubscriptions()
     }
 
     // MARK: - Public Interface
@@ -122,12 +113,6 @@ final class CaptureCoordinator: ObservableObject {
     func focusSource() {
         guard let source: SCWindow = selectedSource else { return }
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
-
-        // Immediately update focus state before actual focus
-        isSourceWindowFocused = true
-        isSourceAppFocused = true
-
-        // Focus the window
         sourceManager.focusSource(source)
     }
 
@@ -160,45 +145,50 @@ final class CaptureCoordinator: ObservableObject {
 
     // MARK: - State Synchronization
 
-    @objc private func handleFocusDidChange() {
-        // Immediately update the focus state based on the current SourceManager state.
-        let focusedWindow = sourceManager.focusedWindow
-        if let focusedWindow = sourceManager.focusedWindow {
-            synchronizeFocusState(with: focusedWindow)
-        } else {
-            isSourceWindowFocused = false
-            isSourceAppFocused = false
-        }
+    private func setupSubscriptions() {
+        sourceManager.$focusedWindow
+            .sink { [weak self] focusedWindow in self?.synchronizeFocusState(with: focusedWindow) }
+            .store(in: &subscriptions)
+
+        sourceManager.$sourceTitles
+            .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
+            .store(in: &subscriptions)
     }
 
-    private func synchronizeFocusState(with focusedWindow: FocusedWindow) {
+    private func synchronizeFocusState(with focusedWindow: FocusedWindow?) {
         guard let selectedSource = selectedSource else {
             isSourceWindowFocused = false
             isSourceAppFocused = false
             return
         }
 
-        // Synchronize focus state without async overhead
-        isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
-        isSourceAppFocused =
-            selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
+        let selectedBundleId = selectedSource.owningApplication?.bundleIdentifier
 
-        // Update titles directly
-        if sourceWindowTitle != selectedSource.title {
-            sourceWindowTitle = selectedSource.title
+        if let focusedWindow = focusedWindow {
+            isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
+            isSourceAppFocused = selectedBundleId == focusedWindow.bundleID
+        } else {
+            isSourceWindowFocused = false
+            isSourceAppFocused = false
         }
-        if sourceApplicationTitle != selectedSource.owningApplication?.applicationName {
-            sourceApplicationTitle = selectedSource.owningApplication?.applicationName
-        }
+
+        // Update titles here to ensure they stay in sync with focus state
+        synchronizeSourceTitle(from: sourceManager.sourceTitles)
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
-        guard let source: SCWindow = selectedSource,
-            let processID: pid_t = source.owningApplication?.processID
-        else { return }
+        guard let source = selectedSource,
+            let processID = source.owningApplication?.processID
+        else {
+            sourceWindowTitle = nil
+            sourceApplicationTitle = nil
+            return
+        }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceWindowTitle = titles[sourceID]
+
+        // Prefer the title from sourceTitles if available, otherwise fall back to SCWindow title
+        sourceWindowTitle = titles[sourceID] ?? source.title
         sourceApplicationTitle = source.owningApplication?.applicationName
     }
 }

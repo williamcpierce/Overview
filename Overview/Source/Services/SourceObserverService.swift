@@ -4,7 +4,7 @@
 
  Created by William Pierce on 12/15/24.
 
- Provides source window state observation and notification management.
+ Provides source window state and title observation and notification management.
 */
 
 import Cocoa
@@ -20,6 +20,7 @@ final class SourceObserverService {
     private var workspaceObserver: NSObjectProtocol?
     private var windowObserver: NSObjectProtocol?
     private var appObserver: NSObjectProtocol?
+    private var titleCheckTimer: Timer?
 
     deinit {
         stopObserving()
@@ -57,7 +58,11 @@ final class SourceObserverService {
 
     private func startObserving() {
         logger.info("Starting source window state observation")
+        setupFocusObservers()
+        startTitleChecks()
+    }
 
+    private func setupFocusObservers() {
         // Observe application focus changes
         appObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -86,9 +91,25 @@ final class SourceObserverService {
         }
     }
 
+    private func startTitleChecks() {
+        titleCheckTimer?.invalidate()
+
+        titleCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {
+            [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                // Trigger all title observers
+                for callback in self.titleObservers.values {
+                    await callback()
+                }
+            }
+        }
+        logger.debug("Title check timer started")
+    }
+
     private func stopObserving() {
         logger.info("Stopping source window state observation")
-
+        
         if let observer = appObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
@@ -99,12 +120,12 @@ final class SourceObserverService {
             NotificationCenter.default.removeObserver(observer)
         }
     }
-
+    
     private func triggerFocusObservers() {
         Task { @MainActor [weak self] in
             guard let self = self else { return }
 
-            // Immediately trigger all focus observers
+            // Trigger all focus observers
             for callback in self.focusObservers.values {
                 await callback()
             }
