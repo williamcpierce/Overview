@@ -46,7 +46,9 @@ struct OverviewApp: App {
             editModeButton
             Divider()
             helpMenu
+            Divider()
             settingsButton
+            updateButton
             quitButton
         }
     }
@@ -120,10 +122,6 @@ struct OverviewApp: App {
             Divider()
 
             versionText
-            updateButton
-
-            Divider()
-
             Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }

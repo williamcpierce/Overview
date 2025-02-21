@@ -15,6 +15,11 @@ import SwiftUI
 final class DiagnosticService {
     // Dependencies
     private let logger = AppLogger.interface
+    private let jsonEncoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return encoder
+    }()
 
     // Singleton
     static let shared = DiagnosticService()
@@ -26,54 +31,28 @@ final class DiagnosticService {
     func generateDiagnosticReport() async throws -> String {
         logger.info("Starting diagnostic report generation")
 
-        var yamlReport: [String] = []
-        yamlReport.append("# Overview Diagnostic Report")
-        yamlReport.append("generated_at: \(formatDate(Date()))")
+        let report = DiagnosticReport(
+            generatedAt: formatDate(Date()),
+            appInfo: try await getAppInfo(),
+            systemInfo: try await getSystemInfo(),
+            permissionStatus: try await getPermissionInfo(),
+            settings: try await getSettingsInfo(),
+            windowStatus: try await getWindowInfo()
+        )
 
-        // App Information
-        yamlReport.append("\napp_info:")
-        for line in (try await getAppInfo()).split(separator: "\n") {
-            yamlReport.append("  \(line)")
+        let jsonData = try jsonEncoder.encode(report)
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw DiagnosticError.encodingError
         }
 
-        // System Information
-        yamlReport.append("\nsystem_info:")
-        for line in (try await getSystemInfo()).split(separator: "\n") {
-            yamlReport.append("  \(line)")
-        }
-
-        // Permission Status
-        yamlReport.append("\npermission_status:")
-        for line in (try await getPermissionInfo()).split(separator: "\n") {
-            yamlReport.append("  \(line)")
-        }
-
-        // Settings (excluding sensitive data)
-        yamlReport.append("\nsettings:")
-        for line in (try await getSettingsInfo()).split(separator: "\n") {
-            yamlReport.append("  \(line)")
-        }
-
-        // Window Information
-        yamlReport.append("\nwindow_status:")
-        for line in (try await getWindowInfo()).split(separator: "\n") {
-            yamlReport.append("  \(line)")
-        }
-
-        let reportText = yamlReport.joined(separator: "\n")
         logger.info("Diagnostic report generation completed")
-
-        return reportText
+        return jsonString
     }
 
     func saveDiagnosticReport(_ report: String) async throws -> URL {
-        let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true)).yaml"
+        let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true)).json"
 
-        guard
-            let downloadsURL = FileManager.default.urls(
-                for: .downloadsDirectory, in: .userDomainMask
-            ).first
-        else {
+        guard let downloadsURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
             throw DiagnosticError.fileSystemError
         }
 
@@ -89,174 +68,128 @@ final class DiagnosticService {
         }
     }
 
-    // MARK: - Private Methods
+    // MARK: - Information Gathering
 
-    private func getAppInfo() async throws -> String {
-        var info: [String] = []
-
+    private func getAppInfo() async throws -> AppInfo {
         let bundle = Bundle.main
-        info.append(
-            "version: \(bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown")"
+        return AppInfo(
+            version: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
+            build: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
+            bundleId: bundle.bundleIdentifier ?? "unknown"
         )
-        info.append(
-            "build: \(bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown")"
-        )
-        info.append("bundle_id: \(bundle.bundleIdentifier ?? "unknown")")
-
-        return info.joined(separator: "\n")
     }
 
-    private func getSystemInfo() async throws -> String {
-        var info: [String] = []
-
+    private func getSystemInfo() async throws -> SystemInfo {
         let processInfo = ProcessInfo.processInfo
-        info.append("macos_version: \(processInfo.operatingSystemVersionString)")
-        info.append("cpu_cores: \(processInfo.processorCount)")
-        info.append("physical_memory: \(formatMemory(processInfo.physicalMemory))")
-        info.append("thermal_state: \(getThermalState(processInfo.thermalState))")
-        info.append("system_uptime: \(formatUptime(processInfo.systemUptime))")
-        info.append("app_memory_usage: \(formatMemory(UInt64(processInfo.physicalMemory)))")
-
-        // Metal capability check
-        if #available(macOS 13.0, *) {
-            let hasMetalSupport = MTLCreateSystemDefaultDevice() != nil
-            info.append("metal_support: \(hasMetalSupport)")
-        }
-
-        // Display information
         let screens = NSScreen.screens
-        info.append("display_count: \(screens.count)")
 
-        for (index, screen) in screens.enumerated() {
-            let size = screen.frame.size
-            let scale = screen.backingScaleFactor
-            info.append("display_\(index + 1):")
-            info.append("  resolution: \(Int(size.width))x\(Int(size.height))")
-            info.append("  scale_factor: \(scale)")
-            info.append("  refresh_rate: \(getRefreshRate(for: screen)) Hz")
-        }
-
-        // Additional hardware capabilities
-        if let gpuInfo = getGPUInfo() {
-            info.append("gpu_info:")
-            for line in gpuInfo.split(separator: "\n") {
-                info.append("  \(line)")
-            }
-        }
-
-        return info.joined(separator: "\n")
+        return SystemInfo(
+            macosVersion: processInfo.operatingSystemVersionString,
+            cpuCores: processInfo.processorCount,
+            physicalMemory: formatMemory(processInfo.physicalMemory),
+            thermalState: getThermalState(processInfo.thermalState),
+            systemUptime: formatUptime(processInfo.systemUptime),
+            appMemoryUsage: formatMemory(UInt64(processInfo.physicalMemory)),
+            metalSupport: MTLCreateSystemDefaultDevice() != nil,
+            displayCount: screens.count,
+            displays: screens.enumerated().map { index, screen in
+                DisplayInfo(
+                    id: index + 1,
+                    resolution: Resolution(
+                        width: Int(screen.frame.width),
+                        height: Int(screen.frame.height)
+                    ),
+                    scaleFactor: screen.backingScaleFactor,
+                    refreshRate: getRefreshRate(for: screen)
+                )
+            },
+            gpuInfo: getGPUInfo()
+        )
     }
 
-    private func getPermissionInfo() async throws -> String {
-        var info: [String] = []
-
-        let screenCaptureStatus = CGPreflightScreenCaptureAccess() ? "granted" : "denied"
-        info.append("screen_recording: \(screenCaptureStatus)")
-
-        return info.joined(separator: "\n")
+    private func getPermissionInfo() async throws -> PermissionInfo {
+        PermissionInfo(
+            screenRecording: CGPreflightScreenCaptureAccess() ? "granted" : "denied",
+            accessibility: AXIsProcessTrusted() ? "granted" : "denied"
+        )
     }
 
-    private func getSettingsInfo() async throws -> String {
-        var info: [String] = []
+    private func getSettingsInfo() async throws -> SettingsInfo {
         let defaults = UserDefaults.standard
-
-        // Performance Settings
-        info.append("performance:")
-        info.append(
-            "  frame_rate: \(defaults.double(forKey: PreviewSettingsKeys.captureFrameRate))")
-        info.append(
-            "  preview_opacity: \(Int(defaults.double(forKey: WindowSettingsKeys.previewOpacity) * 100))%"
+        
+        return SettingsInfo(
+            performance: PerformanceSettings(
+                frameRate: defaults.double(forKey: PreviewSettingsKeys.captureFrameRate),
+                previewOpacity: Int(defaults.double(forKey: WindowSettingsKeys.previewOpacity) * 100)
+            ),
+            windowBehavior: WindowBehaviorSettings(
+                missionControlIntegration: defaults.bool(forKey: WindowSettingsKeys.managedByMissionControl),
+                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
+                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
+                showOnAllDesktops: defaults.bool(forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
+            ),
+            overlay: OverlaySettings(
+                focusBorder: defaults.bool(forKey: OverlaySettingsKeys.focusBorderEnabled),
+                sourceTitle: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleEnabled),
+                titleLocation: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleLocation) ? "upper" : "lower"
+            ),
+            updates: UpdateSettings(
+                autoCheck: defaults.bool(forKey: "SUEnableAutomaticChecks"),
+                autoDownload: defaults.bool(forKey: "SUAutomaticallyUpdate"),
+                betaUpdates: defaults.bool(forKey: UpdateSettingsKeys.enableBetaUpdates)
+            )
         )
-
-        // Window Behavior
-        info.append("window_behavior:")
-        info.append(
-            "  mission_control_integration: \(defaults.bool(forKey: WindowSettingsKeys.managedByMissionControl))"
-        )
-        info.append(
-            "  create_on_launch: \(defaults.bool(forKey: WindowSettingsKeys.createOnLaunch))")
-        info.append(
-            "  close_with_source: \(defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop))")
-        info.append(
-            "  show_on_all_desktops: \(defaults.bool(forKey: WindowSettingsKeys.assignPreviewsToAllDesktops))"
-        )
-
-        // Overlay Settings
-        info.append("overlay:")
-        info.append(
-            "  focus_border: \(defaults.bool(forKey: OverlaySettingsKeys.focusBorderEnabled))")
-        info.append(
-            "  source_title: \(defaults.bool(forKey: OverlaySettingsKeys.sourceTitleEnabled))")
-        info.append(
-            "  title_location: \(defaults.bool(forKey: OverlaySettingsKeys.sourceTitleLocation) ? "upper" : "lower")"
-        )
-
-        // Update Settings
-        info.append("updates:")
-        info.append("  auto_check: \(defaults.bool(forKey: "SUEnableAutomaticChecks"))")
-        info.append("  auto_download: \(defaults.bool(forKey: "SUAutomaticallyUpdate"))")
-        info.append(
-            "  beta_updates: \(defaults.bool(forKey: UpdateSettingsKeys.enableBetaUpdates))")
-
-        return info.joined(separator: "\n")
     }
 
-    private func getWindowInfo() async throws -> String {
-        var info: [String] = []
-
-        // Window Statistics
+    private func getWindowInfo() async throws -> WindowStatus {
         let allWindows = NSApp.windows
-        let windowCount = allWindows.count
-        let visibleWindows = allWindows.filter { $0.isVisible }.count
-
-        info.append("statistics:")
-        info.append("  total_windows: \(windowCount)")
-        info.append("  visible_windows: \(visibleWindows)")
-
-        // Preview Windows
         let previewWindows = allWindows.filter {
             $0.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
         }
 
-        info.append("preview_windows:")
-        info.append("  active_count: \(previewWindows.count)")
-
-        for (index, window) in previewWindows.enumerated() {
-            info.append("  preview_window_\(index + 1):")
-            info.append("    size: \(Int(window.frame.width))x\(Int(window.frame.height))")
-            info.append("    screen: \(getScreenIndex(for: window))")
-            info.append("    visible: \(window.isVisible)")
-            info.append("    level: \(window.level.rawValue)")
-            info.append("    collects_input: \(window.acceptsMouseMovedEvents)")
-        }
-
-        return info.joined(separator: "\n")
+        return WindowStatus(
+            statistics: WindowStatistics(
+                totalWindows: allWindows.count,
+                visibleWindows: allWindows.filter { $0.isVisible }.count
+            ),
+            previewWindows: PreviewWindowInfo(
+                activeCount: previewWindows.count,
+                windows: previewWindows.enumerated().map { index, window in
+                    PreviewWindow(
+                        id: index + 1,
+                        size: Resolution(
+                            width: Int(window.frame.width),
+                            height: Int(window.frame.height)
+                        ),
+                        screen: getScreenIndex(for: window),
+                        visible: window.isVisible,
+                        level: window.level.rawValue,
+                        collectsInput: window.acceptsMouseMovedEvents
+                    )
+                }
+            )
+        )
     }
 
-    // MARK: - Additional Diagnostic Methods
+    // MARK: - Helper Methods
 
-    private func getGPUInfo() -> String? {
+    private func getGPUInfo() -> GPUInfo? {
         guard let device = MTLCreateSystemDefaultDevice() else { return nil }
-
-        var info: [String] = []
-        info.append("name: \(device.name)")
-        info.append(
-            "recommended_memory: \(formatMemory(UInt64(device.recommendedMaxWorkingSetSize)))")
-        info.append("unified_memory: \(device.hasUnifiedMemory)")
-
-        return info.joined(separator: "\n")
+        
+        return GPUInfo(
+            name: device.name,
+            recommendedMemory: formatMemory(UInt64(device.recommendedMaxWorkingSetSize)),
+            unifiedMemory: device.hasUnifiedMemory
+        )
     }
 
     private func getRefreshRate(for screen: NSScreen) -> Int {
         let deviceDescription = screen.deviceDescription
-        let refreshRate =
-            deviceDescription[NSDeviceDescriptionKey(rawValue: "NSScreenNumber")]
-            as? CGDirectDisplayID
+        let refreshRate = deviceDescription[NSDeviceDescriptionKey(rawValue: "NSScreenNumber")] as? CGDirectDisplayID
         var actualRate: Int32 = 0
 
         if let refreshRate = refreshRate,
-            let mode = CGDisplayCopyDisplayMode(refreshRate)
-        {
+           let mode = CGDisplayCopyDisplayMode(refreshRate) {
             actualRate = Int32(mode.refreshRate)
         }
 
@@ -295,15 +228,9 @@ final class DiagnosticService {
         }
     }
 
-    // MARK: - Helper Methods
-
     private func formatDate(_ date: Date, forFilename: Bool = false) -> String {
         let formatter = DateFormatter()
-        if forFilename {
-            formatter.dateFormat = "yyyy-MM-dd-HHmmss"
-        } else {
-            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        }
+        formatter.dateFormat = forFilename ? "yyyy-MM-dd-HHmmss" : "yyyy-MM-dd HH:mm:ss"
         return formatter.string(from: date)
     }
 
@@ -313,15 +240,126 @@ final class DiagnosticService {
     }
 }
 
-// MARK: - Support Types
+// MARK: - Report Models
+
+struct DiagnosticReport: Codable {
+    let generatedAt: String
+    let appInfo: AppInfo
+    let systemInfo: SystemInfo
+    let permissionStatus: PermissionInfo
+    let settings: SettingsInfo
+    let windowStatus: WindowStatus
+}
+
+struct AppInfo: Codable {
+    let version: String
+    let build: String
+    let bundleId: String
+}
+
+struct SystemInfo: Codable {
+    let macosVersion: String
+    let cpuCores: Int
+    let physicalMemory: String
+    let thermalState: String
+    let systemUptime: String
+    let appMemoryUsage: String
+    let metalSupport: Bool
+    let displayCount: Int
+    let displays: [DisplayInfo]
+    let gpuInfo: GPUInfo?
+}
+
+struct DisplayInfo: Codable {
+    let id: Int
+    let resolution: Resolution
+    let scaleFactor: Double
+    let refreshRate: Int
+}
+
+struct Resolution: Codable {
+    let width: Int
+    let height: Int
+}
+
+struct GPUInfo: Codable {
+    let name: String
+    let recommendedMemory: String
+    let unifiedMemory: Bool
+}
+
+struct PermissionInfo: Codable {
+    let screenRecording: String
+    let accessibility: String
+}
+
+struct SettingsInfo: Codable {
+    let performance: PerformanceSettings
+    let windowBehavior: WindowBehaviorSettings
+    let overlay: OverlaySettings
+    let updates: UpdateSettings
+}
+
+struct PerformanceSettings: Codable {
+    let frameRate: Double
+    let previewOpacity: Int
+}
+
+struct WindowBehaviorSettings: Codable {
+    let missionControlIntegration: Bool
+    let createOnLaunch: Bool
+    let closeWithSource: Bool
+    let showOnAllDesktops: Bool
+}
+
+struct OverlaySettings: Codable {
+    let focusBorder: Bool
+    let sourceTitle: Bool
+    let titleLocation: String
+}
+
+struct UpdateSettings: Codable {
+    let autoCheck: Bool
+    let autoDownload: Bool
+    let betaUpdates: Bool
+}
+
+struct WindowStatus: Codable {
+    let statistics: WindowStatistics
+    let previewWindows: PreviewWindowInfo
+}
+
+struct WindowStatistics: Codable {
+    let totalWindows: Int
+    let visibleWindows: Int
+}
+
+struct PreviewWindowInfo: Codable {
+    let activeCount: Int
+    let windows: [PreviewWindow]
+}
+
+struct PreviewWindow: Codable {
+    let id: Int
+    let size: Resolution
+    let screen: String
+    let visible: Bool
+    let level: Int
+    let collectsInput: Bool
+}
+
+// MARK: - Error Types
 
 enum DiagnosticError: LocalizedError {
     case fileSystemError
+    case encodingError
 
     var errorDescription: String? {
         switch self {
         case .fileSystemError:
             return "Failed to access file system for report generation"
+        case .encodingError:
+            return "Failed to encode diagnostic report to JSON"
         }
     }
 }
