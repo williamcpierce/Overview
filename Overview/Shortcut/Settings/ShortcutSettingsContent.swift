@@ -21,9 +21,15 @@ extension InfoPopoverContent {
                 text:
                     "Keyboard shortcuts are matched to windows by their exact title. If multiple windows share the same title, behavior may be unpredictable."
             ),
+            Section(
+                title: "Window Cycling",
+                text:
+                    "When using shortcuts with multiple window titles, pressing the shortcut repeatedly will cycle through the windows in order. If one of the windows in the list is currently active, cycling will start from the next window in the sequence."
+            ),
         ],
         isWarning: false
     )
+
     static let shortcutWindowTitles = InfoPopoverContent(
         title: "Multiple Window Titles",
         sections: [
@@ -35,12 +41,12 @@ extension InfoPopoverContent {
             Section(
                 title: "Title Matching",
                 text:
-                    "When activated, the shortcut will attempt to focus windows in the order they are listed."
+                    "When activated, the shortcut cycles through windows in the order they are listed. If one of the windows is currently active, cycling starts from the next window in the list."
             ),
             Section(
                 title: "Example",
                 text:
-                    "Input: \"Overview, Project Notes, Design\"\nThis will first try to focus the 'Overview' window, then 'Project Notes', then 'Design'."
+                    "Input: \"Overview, Project Notes, Design\"\nWith \"Project Notes\" active, pressing the shortcut will focus \"Design\", and pressing it again will focus \"Overview\"."
             ),
             Section(
                 title: "Formatting Tips",
