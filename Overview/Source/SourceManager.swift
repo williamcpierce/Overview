@@ -17,8 +17,6 @@ struct FocusedWindow: Equatable {
     let processID: pid_t
     let bundleID: String
     let title: String
-
-    static let empty = FocusedWindow(windowID: 0, processID: 0, bundleID: "", title: "")
 }
 
 // MARK: - Source Manager
@@ -34,7 +32,7 @@ final class SourceManager: ObservableObject {
     private let logger = AppLogger.sources
 
     // Published State
-    @Published private(set) var focusedWindow: FocusedWindow = .empty
+    @Published private(set) var focusedWindow: FocusedWindow? = nil
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
@@ -71,27 +69,19 @@ final class SourceManager: ObservableObject {
         logger.debug("Focusing source: \(source.title ?? "untitled")")
         sourceFocus.focusSource(source: source) { [weak self] in
             guard let self = self else { return }
-
-            // Immediately update the focused window state
-            let processID = source.owningApplication?.processID ?? 0
-            let bundleID = source.owningApplication?.bundleIdentifier ?? ""
-            let newFocusedWindow = FocusedWindow(
+            self.focusedWindow = FocusedWindow(
                 windowID: source.windowID,
-                processID: processID,
-                bundleID: bundleID,
+                processID: source.owningApplication?.processID ?? 0,
+                bundleID: source.owningApplication?.bundleIdentifier ?? "",
                 title: source.title ?? ""
             )
-            self.focusedWindow = newFocusedWindow
         }
     }
 
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Focusing source by title: \(title)")
         let success = sourceFocus.focusSource(withTitle: title) { [weak self] in
-            guard let self = self else { return }
-
-            // Immediately update the focused window state.
-            self.updateFocusedSource()
+            self?.updateFocusedSource()
         }
         if !success { logger.error("Failed to focus: \(title)") }
         return success
@@ -104,7 +94,7 @@ final class SourceManager: ObservableObject {
 
     func getFilteredSources() async throws -> [SCWindow] {
         guard permissionManager.permissionStatus == .granted else {
-            logger.debug("Permission not granted for source retrieval")
+            logger.warning("Permission not granted for source retrieval")
             return []
         }
         logger.debug("Retrieving filtered sources")
@@ -152,11 +142,8 @@ final class SourceManager: ObservableObject {
     }
 
     private func removeObservers() {
-        if let observer = workspaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-        }
-        if let observer = frontmostAppObserver {
-            NotificationCenter.default.removeObserver(observer)
+        [workspaceObserver, frontmostAppObserver].compactMap { $0 }.forEach {
+            NotificationCenter.default.removeObserver($0)
         }
         sourceObserver.removeObserver(id: observerId)
     }
@@ -164,26 +151,27 @@ final class SourceManager: ObservableObject {
     private func updateFocusedSource() {
         guard let activeApp = NSWorkspace.shared.frontmostApplication else {
             logger.debug("No active application")
-            focusedWindow = .empty
+            focusedWindow = nil
             return
         }
 
-        let processID = activeApp.processIdentifier
-        let bundleID = activeApp.bundleIdentifier ?? ""
-        isOverviewActive = bundleID == Bundle.main.bundleIdentifier
-
-        if let (windowID, title) = getWindowInfo(for: processID) {
-            let newFocusedWindow = FocusedWindow(
-                windowID: windowID,
-                processID: processID,
-                bundleID: bundleID,
-                title: title
-            )
+        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
+        if let newFocusedWindow = getActiveWindow(for: activeApp) {
             if newFocusedWindow != focusedWindow {
                 focusedWindow = newFocusedWindow
-                logger.debug("Focus updated: \(title)")
+                logger.debug("Focus updated: \(newFocusedWindow.title)")
             }
         }
+    }
+
+    private func getActiveWindow(for app: NSRunningApplication) -> FocusedWindow? {
+        let processID: pid_t = app.processIdentifier
+        let bundleID: String = app.bundleIdentifier ?? ""
+        if let (windowID, title) = getWindowInfo(for: processID) {
+            return FocusedWindow(
+                windowID: windowID, processID: processID, bundleID: bundleID, title: title)
+        }
+        return nil
     }
 
     private func getWindowInfo(for pid: pid_t) -> (CGWindowID, String)? {
@@ -193,32 +181,27 @@ final class SourceManager: ObservableObject {
             AXUIElementCopyAttributeValue(
                 appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success
         else { return nil }
-
         let windowElement = unsafeBitCast(windowRef, to: AXUIElement.self)
-
         var titleRef: CFTypeRef?
         guard
             AXUIElementCopyAttributeValue(windowElement, kAXTitleAttribute as CFString, &titleRef)
-                == .success,
-            let title = titleRef as? String
+                == .success, let title = titleRef as? String
         else { return nil }
-
         return (WindowIDUtility.extractWindowID(from: windowElement), title)
     }
 
     private func updateSourceTitles() async {
         guard permissionManager.permissionStatus == .granted else {
-            logger.debug("Permission not granted for updating titles")
+            logger.warning("Permission not granted for updating titles")
             return
         }
         do {
             let sources = try await captureServices.getAvailableSources()
             sourceTitles = Dictionary(
-                uniqueKeysWithValues: sources.compactMap { source in
-                    guard let processID = source.owningApplication?.processID,
-                        let title = source.title
+                uniqueKeysWithValues: sources.compactMap {
+                    guard let processID = $0.owningApplication?.processID, let title = $0.title
                     else { return nil }
-                    return (SourceID(processID: processID, windowID: source.windowID), title)
+                    return (SourceID(processID: processID, windowID: $0.windowID), title)
                 })
         } catch {
             logger.logError(error, context: "Failed updating source titles")
