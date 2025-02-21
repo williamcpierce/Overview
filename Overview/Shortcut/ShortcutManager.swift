@@ -64,18 +64,13 @@ final class ShortcutManager: ObservableObject {
             return
         }
 
-        // Get the current active window title
-        let currentTitle = sourceManager.focusedWindowTitle
+        let currentTitle = sourceManager.focusedWindow?.title
 
         // Find the starting index based on the current window
         let startIndex: Int
-        if let currentTitle = currentTitle,
-            let currentIndex = titles.firstIndex(of: currentTitle)
-        {
-            // Start from the next window in the cycle
+        if let currentTitle = currentTitle, let currentIndex = titles.firstIndex(of: currentTitle) {
             startIndex = (currentIndex + 1) % titles.count
         } else {
-            // Start from the beginning if current window is not in the list
             startIndex = 0
         }
 
@@ -86,7 +81,6 @@ final class ShortcutManager: ObservableObject {
 
             if sourceManager.focusSource(withTitle: title) {
                 logger.info("Window focused via shortcut cycle: '\(title)'")
-                Task { await sourceManager.updateFocusedSource() }  // TODO: Remove when source observer improves
                 return
             }
         }

@@ -16,152 +16,180 @@ final class SourceManager: ObservableObject {
     // Dependencies
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var permissionManager: PermissionManager
-    private let sourceServices: SourceServices = SourceServices.shared
-    private let captureServices: CaptureServices = CaptureServices.shared
+    private let captureServices = CaptureServices.shared
+    private let sourceFilter = SourceFilterService()
+    private let sourceFocus = SourceFocusService()
+    private let sourceObserver = SourceObserverService()
+    private let sourceInfo = SourceInfoService()
     private let logger = AppLogger.sources
 
     // Published State
-    @Published private(set) var focusedBundleId: String?
-    @Published private(set) var focusedProcessId: pid_t?
-    @Published private(set) var focusedWindowTitle: String?
+    @Published private(set) var focusedWindow: FocusedWindow? = nil
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
     // Private State
     private let observerId = UUID()
+    private var workspaceObserver: NSObjectProtocol?
+    private var frontmostAppObserver: NSObjectProtocol?
 
     // Source Settings
     @AppStorage(SourceSettingsKeys.filterMode)
     private var filterMode = SourceSettingsKeys.defaults.filterMode
 
-    // Type Definitions
+    // MARK: - Source Identifier
     struct SourceID: Hashable {
         let processID: pid_t
         let windowID: CGWindowID
     }
 
+    // MARK: - Initializer
     init(settingsManager: SettingsManager, permissionManager: PermissionManager) {
         self.settingsManager = settingsManager
         self.permissionManager = permissionManager
         setupObservers()
-        logger.debug("Source window manager initialization complete")
+        logger.debug("SourceManager initialized")
+    }
+
+    deinit {
+        Task { await removeObservers() }
     }
 
     // MARK: - Public Methods
 
     func focusSource(_ source: SCWindow) {
-        logger.debug("Processing source window focus request: '\(source.title ?? "untitled")'")
-        sourceServices.focusSource(source)
+        logger.debug("Focusing source: \(source.title ?? "untitled")")
+        sourceFocus.focusSource(source: source) { [weak self] in
+            guard let self = self else { return }
+            self.focusedWindow = FocusedWindow(
+                windowID: source.windowID,
+                processID: source.owningApplication?.processID ?? 0,
+                bundleID: source.owningApplication?.bundleIdentifier ?? "",
+                title: source.title ?? ""
+            )
+        }
     }
 
     func focusSource(withTitle title: String) -> Bool {
-        logger.debug("Processing title-based focus request: '\(title)'")
-        let success = sourceServices.focusSource(withTitle: title)
-
-        if !success {
-            logger.error("Failed to focus source window: '\(title)'")
+        logger.debug("Focusing source by title: \(title)")
+        let success = sourceFocus.focusSource(withTitle: title) { [weak self] in
+            self?.updateFocusedSource()
         }
-
+        if !success { logger.error("Failed to focus: \(title)") }
         return success
     }
 
     func getAvailableSources() async throws -> [SCWindow] {
         try await permissionManager.ensurePermissions()
-        let availableSources = try await CaptureServices.shared.getAvailableSources()
-        return availableSources
+        return try await captureServices.getAvailableSources()
     }
 
     func getFilteredSources() async throws -> [SCWindow] {
-        if permissionManager.permissionStatus != .granted {
-            logger.debug("Skipping source retrieval: permission not granted")
+        guard permissionManager.permissionStatus == .granted else {
+            logger.warning("Permission not granted for source retrieval")
             return []
         }
-
-        logger.debug("Retrieving filtered window list")
-        let availableSources = try await captureServices.getAvailableSources()
-
-        let filteredSources = sourceServices.filterSources(
-            availableSources,
+        logger.debug("Retrieving filtered sources")
+        let sources = try await captureServices.getAvailableSources()
+        return sourceFilter.filterSources(
+            sources,
             appFilterNames: settingsManager.filterAppNames,
             isFilterBlocklist: filterMode == FilterMode.blocklist
-        )
-
-        logger.info("Retrieved \(filteredSources.count) filtered source windows")
-        return filteredSources
-    }
-
-    // TODO: Make private
-    func updateFocusedSource() async {
-        guard let activeApp = NSWorkspace.shared.frontmostApplication else {
-            logger.debug("No active application found")
-            return
-        }
-
-        focusedProcessId = activeApp.processIdentifier
-        focusedBundleId = activeApp.bundleIdentifier
-        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
-        focusedWindowTitle = getAXWindowTitle(for: activeApp.processIdentifier)
-
-        logger.debug(
-            "Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown"), title=\(focusedWindowTitle ?? "unknown")"
         )
     }
 
     // MARK: - Private Methods
 
     private func setupObservers() {
-        sourceServices.sourceObserver.addObserver(
+        sourceObserver.addObserver(
             id: observerId,
-            onFocusChanged: { [weak self] in await self?.updateFocusedSource() },
-            onTitleChanged: { [weak self] in await self?.updateSourceTitles() }
+            onFocusChanged: updateFocusedSource,
+            onTitleChanged: updateSourceTitles
         )
-
-        logger.info("Window observers configured successfully")
+        observeWorkspaceChanges()
     }
 
-    // Uses Accessibility API to get the real window title
-    private func getAXWindowTitle(for pid: pid_t) -> String? {
-        let appElement = AXUIElementCreateApplication(pid)
-        var window: CFTypeRef?
-
-        // Get the focused window
-        guard
-            AXUIElementCopyAttributeValue(
-                appElement, kAXFocusedWindowAttribute as CFString, &window) == .success,
-            let windowElement = window
-        else {
-            return nil
+    private func observeWorkspaceChanges() {
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.updateFocusedSource()
+            }
         }
 
-        var title: CFTypeRef?
-        // Get the window title
-        if AXUIElementCopyAttributeValue(
-            windowElement as! AXUIElement, kAXTitleAttribute as CFString, &title) == .success
-        {
-            return title as? String
+        frontmostAppObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.updateFocusedSource()
+            }
+        }
+    }
+
+    private func removeObservers() {
+        [workspaceObserver, frontmostAppObserver].compactMap { $0 }.forEach {
+            NotificationCenter.default.removeObserver($0)
+        }
+        sourceObserver.removeObserver(id: observerId)
+    }
+
+    private func updateFocusedSource() {
+        guard let activeApp = NSWorkspace.shared.frontmostApplication else {
+            logger.debug("No active application")
+            focusedWindow = nil
+            return
         }
 
+        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
+        if let newFocusedWindow = getActiveWindow(for: activeApp) {
+            if newFocusedWindow != focusedWindow {
+                focusedWindow = newFocusedWindow
+                logger.debug("Focus updated: \(newFocusedWindow.title)")
+            }
+        }
+    }
+
+    private func getActiveWindow(for app: NSRunningApplication) -> FocusedWindow? {
+        let processID: pid_t = app.processIdentifier
+        let bundleID: String = app.bundleIdentifier ?? ""
+        if let (windowID, title) = sourceInfo.getWindowInfo(for: processID) {
+            return FocusedWindow(
+                windowID: windowID, processID: processID, bundleID: bundleID, title: title)
+        }
         return nil
     }
 
     private func updateSourceTitles() async {
-        if permissionManager.permissionStatus != .granted {
-            logger.debug("Skipping title update: permission not granted")
+        guard permissionManager.permissionStatus == .granted else {
+            logger.warning("Permission not granted for updating titles")
             return
         }
-
         do {
             let sources = try await captureServices.getAvailableSources()
             sourceTitles = Dictionary(
-                uniqueKeysWithValues: sources.compactMap { source in
-                    guard let processID = source.owningApplication?.processID,
-                        let title = source.title
+                uniqueKeysWithValues: sources.compactMap {
+                    guard let processID = $0.owningApplication?.processID, let title = $0.title
                     else { return nil }
-                    return (SourceID(processID: processID, windowID: source.windowID), title)
-                }
-            )
+                    return (SourceID(processID: processID, windowID: $0.windowID), title)
+                })
         } catch {
-            logger.logError(error, context: "Failed to update source window titles")
+            logger.logError(error, context: "Failed updating source titles")
         }
     }
+}
+
+// MARK: - Focused Window Model
+
+struct FocusedWindow: Equatable {
+    let windowID: CGWindowID
+    let processID: pid_t
+    let bundleID: String
+    let title: String
 }
