@@ -7,11 +7,13 @@
  Manages source window focus operations and application activation.
 */
 
+import ApplicationServices
 import ScreenCaptureKit
 
 final class SourceFocusService {
     // Dependencies
     private let logger = AppLogger.sources
+    private let workspace = NSWorkspace.shared
 
     // Private State
     private var windowFocusCache: [String: (pid_t, CGWindowID)] = [:]
@@ -28,15 +30,16 @@ final class SourceFocusService {
 
         logger.debug("Focusing source: '\(source.title ?? "untitled")', processID=\(processID)")
 
-        if setWindowFocus(processID: processID, windowID: source.windowID) {
-            logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
-            if let title = source.title {
-                updateWindowCache(title: title, processID: processID, windowID: source.windowID)
+        Task { @MainActor in
+            if await setWindowFocus(processID: processID, windowID: source.windowID) {
+                logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
+                if let title = source.title {
+                    updateWindowCache(title: title, processID: processID, windowID: source.windowID)
+                }
+                completion?()
+            } else {
+                logger.error("Failed to focus source window: '\(source.title ?? "untitled")'")
             }
-            // Immediately trigger the completion callback.
-            completion?()
-        } else {
-            logger.error("Failed to focus source window: '\(source.title ?? "untitled")'")
         }
     }
 
@@ -45,11 +48,13 @@ final class SourceFocusService {
 
         // Check cached window info first
         if let (pid, windowID) = getCachedWindowInfo(for: title) {
-            if setWindowFocus(processID: pid, windowID: windowID) {
-                logger.info("Window focused using cached info: '\(title)'")
-                completion?()
-                return true
+            Task { @MainActor in
+                if await setWindowFocus(processID: pid, windowID: windowID) {
+                    logger.info("Window focused using cached info: '\(title)'")
+                    completion?()
+                }
             }
+            return true
         }
 
         // Fallback to searching window list
@@ -76,7 +81,7 @@ final class SourceFocusService {
     }
 
     private func searchAndFocusWindow(byTitle title: String) -> Bool {
-        let options: CGWindowListOption = [.optionAll]
+        let options: CGWindowListOption = [.optionAll, .excludeDesktopElements]
         guard
             let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
                 as? [[CFString: Any]]
@@ -91,7 +96,11 @@ final class SourceFocusService {
         }
 
         updateWindowCache(title: title, processID: pid, windowID: windowID)
-        return setWindowFocus(processID: pid, windowID: windowID)
+
+        Task { @MainActor in
+            _ = await setWindowFocus(processID: pid, windowID: windowID)
+        }
+        return true
     }
 
     private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
@@ -106,7 +115,20 @@ final class SourceFocusService {
         return (windowID, pid)
     }
 
-    private func setWindowFocus(processID: pid_t, windowID: CGWindowID) -> Bool {
+    private func setWindowFocus(processID: pid_t, windowID: CGWindowID) async -> Bool {
+        // First activate the application
+        guard let runningApp = NSRunningApplication(processIdentifier: processID) else {
+            logger.error("Could not find running application for pid: \(processID)")
+            return false
+        }
+
+        // Activate the application first
+        guard await activateApplication(runningApp) else {
+            logger.error("Failed to activate application: \(runningApp.localizedName ?? "unknown")")
+            return false
+        }
+
+        // Get the AX element for the application
         let axApp = AXUIElementCreateApplication(processID)
         let windows = getWindowList(for: axApp)
 
@@ -115,16 +137,110 @@ final class SourceFocusService {
                 WindowIDUtility.extractWindowID(from: $0) == windowID
             })
         else {
+            logger.error("Could not find matching window in AX hierarchy")
+            return false
+        }
+
+        // Check if window is full screen
+        var value: AnyObject?
+        let fullScreenAttr = "AXFullScreen" as CFString
+        AXUIElementCopyAttributeValue(matchingWindow, fullScreenAttr, &value)
+        let isFullScreen = (value as? Bool) ?? false
+
+        if isFullScreen {
+            logger.debug("Handling full screen window focus")
+            return await handleFullScreenWindowFocus(matchingWindow, axApp)
+        } else {
+            return await handleRegularWindowFocus(matchingWindow, axApp)
+        }
+    }
+
+    private func activateApplication(_ app: NSRunningApplication) async -> Bool {
+        // If app is already active, return true
+        if app.isActive {
+            return true
+        }
+
+        // Attempt to activate the application
+        let activated: Bool = app.activate(options: [.activateIgnoringOtherApps])
+
+        if activated {
+            // Wait briefly for activation to complete
+            try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 seconds
+            return true
+        }
+
+        return false
+    }
+
+    private func handleFullScreenWindowFocus(_ window: AXUIElement, _ app: AXUIElement) async
+        -> Bool
+    {
+        // For full screen windows, we need to:
+        // 1. Ensure the window is still full screen
+        // 2. Set it as the main and focused window
+        let attributes: [(AXUIElement, CFString, CFTypeRef)] = [
+            (app, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
+            (window, kAXMainAttribute as CFString, kCFBooleanTrue),
+            (window, kAXFocusedAttribute as CFString, kCFBooleanTrue),
+        ]
+
+        // Apply all attributes and ensure they succeed
+        let success: Bool = attributes.allSatisfy { element, attribute, value in
+            AXUIElementSetAttributeValue(element, attribute, value) == .success
+        }
+
+        if success {
+            // Wait briefly to ensure focus changes are applied
+            try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 seconds
+        }
+
+        return success
+    }
+
+    private func handleRegularWindowFocus(_ window: AXUIElement, _ app: AXUIElement) async -> Bool {
+        // For regular windows, we:
+        // 1. Raise the window to front
+        // 2. Set it as main and focused
+        var position = CGPoint.zero
+        var size = CGSize.zero
+
+        // Get current position and size
+        var positionValue: AnyObject?
+        var sizeValue: AnyObject?
+
+        AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionValue)
+        if let positionAXValue = positionValue as! AXValue? {
+            AXValueGetValue(positionAXValue, .cgPoint, &position)
+        }
+
+        AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue)
+        if let sizeAXValue = sizeValue as! AXValue? {
+            AXValueGetValue(sizeAXValue, .cgSize, &size)
+        }
+
+        // Create new position value slightly offset (forces window to front)
+        guard let newPosition = AXValueCreate(.cgPoint, &position) else {
             return false
         }
 
         let attributes: [(AXUIElement, CFString, CFTypeRef)] = [
-            (axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
-            (matchingWindow, kAXMainAttribute as CFString, kCFBooleanTrue),
-            (matchingWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue),
+            (app, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
+            (window, kAXPositionAttribute as CFString, newPosition),
+            (window, kAXMainAttribute as CFString, kCFBooleanTrue),
+            (window, kAXFocusedAttribute as CFString, kCFBooleanTrue),
         ]
 
-        return attributes.allSatisfy { AXUIElementSetAttributeValue($0.0, $0.1, $0.2) == .success }
+        let success: Bool = attributes.allSatisfy { element, attribute, value in
+            AXUIElementSetAttributeValue(element, attribute, value) == .success
+        }
+
+        if success {
+            // Wait briefly to ensure focus changes are applied
+            try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 seconds
+        }
+
+        return success
     }
 
     private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
