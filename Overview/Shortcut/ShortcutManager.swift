@@ -20,6 +20,12 @@ final class ShortcutManager: ObservableObject {
 
     // Private State
     private var cancellables = Set<AnyCancellable>()
+    private var lastActivationTime: TimeInterval = 0
+    private let activationThrottle: TimeInterval = 0.1  // 100ms throttle
+    
+    // Window cycling state
+    private var cyclingShortcut: ShortcutItem?
+    private var cyclingIndex: Int = 0
 
     init(sourceManager: SourceManager) {
         self.sourceManager = sourceManager
@@ -50,47 +56,73 @@ final class ShortcutManager: ObservableObject {
         KeyboardShortcuts.onKeyDown(for: shortcut.shortcutName) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
-                self.activateSourceWindow(for: shortcut)
+                self.handleShortcutActivation(shortcut)
             }
         }
     }
 
     // MARK: - Window Activation
 
-    private func activateSourceWindow(for shortcut: ShortcutItem) {
+    private func handleShortcutActivation(_ shortcut: ShortcutItem) {
+        let currentTime = Date().timeIntervalSince1970
+        let timeSinceLastActivation = currentTime - lastActivationTime
+        
+        // Check if we're continuing a cycle or starting a new one
+        if timeSinceLastActivation > activationThrottle || cyclingShortcut?.id != shortcut.id {
+            // Start new cycle
+            startNewCycle(shortcut)
+        } else {
+            // Continue existing cycle
+            continueCycle()
+        }
+        
+        lastActivationTime = currentTime
+    }
+    
+    private func startNewCycle(_ shortcut: ShortcutItem) {
         let titles = shortcut.windowTitles
         guard !titles.isEmpty else {
             logger.warning("Empty window title list for shortcut")
             return
         }
 
-        // Get the current active window title
-        let currentTitle = sourceManager.focusedWindowTitle
-
-        // Find the starting index based on the current window
-        let startIndex: Int
-        if let currentTitle = currentTitle,
-            let currentIndex = titles.firstIndex(of: currentTitle)
-        {
-            // Start from the next window in the cycle
-            startIndex = (currentIndex + 1) % titles.count
+        // Set up new cycle
+        cyclingShortcut = shortcut
+        
+        // Find starting index
+        let currentTitle = sourceManager.focusedWindow.title
+        if let currentIndex = titles.firstIndex(of: currentTitle) {
+            cyclingIndex = (currentIndex + 1) % titles.count
         } else {
-            // Start from the beginning if current window is not in the list
-            startIndex = 0
+            cyclingIndex = 0
         }
-
-        // Try to activate windows in order starting from the calculated index
-        for offset in 0..<titles.count {
-            let index = (startIndex + offset) % titles.count
-            let title = titles[index]
-
-            if sourceManager.focusSource(withTitle: title) {
-                logger.info("Window focused via shortcut cycle: '\(title)'")
-                Task { await sourceManager.updateFocusedSource() }  // TODO: Remove when source observer improves
-                return
+        
+        // Activate first window in cycle
+        activateWindow(at: cyclingIndex)
+    }
+    
+    private func continueCycle() {
+        guard let shortcut = cyclingShortcut else { return }
+        
+        // Move to next window in cycle
+        cyclingIndex = (cyclingIndex + 1) % shortcut.windowTitles.count
+        activateWindow(at: cyclingIndex)
+    }
+    
+    private func activateWindow(at index: Int) {
+        guard let shortcut = cyclingShortcut else { return }
+        let title = shortcut.windowTitles[index]
+        
+        if sourceManager.focusSource(withTitle: title) {
+            logger.info("Window focused via shortcut cycle: '\(title)'")
+        } else {
+            // If window focus fails, try next window
+            cyclingIndex = (cyclingIndex + 1) % shortcut.windowTitles.count
+            if cyclingIndex != index {  // Prevent infinite loop
+                activateWindow(at: cyclingIndex)
+            } else {
+                logger.warning("Failed to focus any window for shortcut: \(shortcut.windowTitles.joined(separator: ", "))")
             }
         }
-
-        logger.warning("Failed to focus any window for shortcut: \(titles.joined(separator: ", "))")
     }
 }

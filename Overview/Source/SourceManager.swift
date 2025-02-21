@@ -11,6 +11,15 @@
 import ScreenCaptureKit
 import SwiftUI
 
+struct FocusedWindow: Equatable {
+    let windowID: CGWindowID
+    let processID: pid_t
+    let bundleID: String
+    let title: String
+    
+    static let empty = FocusedWindow(windowID: 0, processID: 0, bundleID: "", title: "")
+}
+
 @MainActor
 final class SourceManager: ObservableObject {
     // Dependencies
@@ -21,14 +30,13 @@ final class SourceManager: ObservableObject {
     private let logger = AppLogger.sources
 
     // Published State
-    @Published private(set) var focusedBundleId: String?
-    @Published private(set) var focusedProcessId: pid_t?
-    @Published private(set) var focusedWindowTitle: String?
+    @Published private(set) var focusedWindow: FocusedWindow = .empty
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
 
     // Private State
     private let observerId = UUID()
+    private var focusMonitorTimer: Timer?
 
     // Source Settings
     @AppStorage(SourceSettingsKeys.filterMode)
@@ -44,7 +52,14 @@ final class SourceManager: ObservableObject {
         self.settingsManager = settingsManager
         self.permissionManager = permissionManager
         setupObservers()
+        startFocusMonitoring()
         logger.debug("Source window manager initialization complete")
+    }
+    
+    deinit {
+        Task { @MainActor in
+            stopFocusMonitoring()
+        }
     }
 
     // MARK: - Public Methods
@@ -67,8 +82,7 @@ final class SourceManager: ObservableObject {
 
     func getAvailableSources() async throws -> [SCWindow] {
         try await permissionManager.ensurePermissions()
-        let availableSources = try await CaptureServices.shared.getAvailableSources()
-        return availableSources
+        return try await captureServices.getAvailableSources()
     }
 
     func getFilteredSources() async throws -> [SCWindow] {
@@ -90,23 +104,6 @@ final class SourceManager: ObservableObject {
         return filteredSources
     }
 
-    // TODO: Make private
-    func updateFocusedSource() async {
-        guard let activeApp = NSWorkspace.shared.frontmostApplication else {
-            logger.debug("No active application found")
-            return
-        }
-
-        focusedProcessId = activeApp.processIdentifier
-        focusedBundleId = activeApp.bundleIdentifier
-        isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
-        focusedWindowTitle = getAXWindowTitle(for: activeApp.processIdentifier)
-
-        logger.debug(
-            "Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown"), title=\(focusedWindowTitle ?? "unknown")"
-        )
-    }
-
     // MARK: - Private Methods
 
     private func setupObservers() {
@@ -118,30 +115,99 @@ final class SourceManager: ObservableObject {
 
         logger.info("Window observers configured successfully")
     }
+    
+    private func startFocusMonitoring() {
+        stopFocusMonitoring()
+        
+        // Create a timer that checks the focused window state every 0.5 seconds
+        focusMonitorTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            Task { [weak self] in
+                await self?.updateFocusedSource()
+            }
+        }
+        
+        // Initial update
+        Task { await updateFocusedSource() }
+    }
+    
+    private func stopFocusMonitoring() {
+        focusMonitorTimer?.invalidate()
+        focusMonitorTimer = nil
+    }
 
-    // Uses Accessibility API to get the real window title
-    private func getAXWindowTitle(for pid: pid_t) -> String? {
+    private func updateFocusedSource() async {
+        guard let activeApp = NSWorkspace.shared.frontmostApplication else {
+            logger.debug("No active application found")
+            return
+        }
+
+        let processID = activeApp.processIdentifier
+        let bundleID = activeApp.bundleIdentifier ?? ""
+        isOverviewActive = bundleID == Bundle.main.bundleIdentifier
+
+        // Get the focused window information
+        if let (windowID, title) = await getCurrentWindowInfo(for: processID) {
+            let newFocusedWindow = FocusedWindow(
+                windowID: windowID,
+                processID: processID,
+                bundleID: bundleID,
+                title: title
+            )
+            
+            // Only update if the focused window has changed
+            if newFocusedWindow != focusedWindow {
+                focusedWindow = newFocusedWindow
+                logger.debug("Focus state updated: bundleId=\(bundleID), title=\(title)")
+            }
+        }
+    }
+    
+    private func getCurrentWindowInfo(for pid: pid_t) async -> (CGWindowID, String)? {
         let appElement = AXUIElementCreateApplication(pid)
-        var window: CFTypeRef?
-
+        var windowRef: CFTypeRef?
+        
         // Get the focused window
-        guard
-            AXUIElementCopyAttributeValue(
-                appElement, kAXFocusedWindowAttribute as CFString, &window) == .success,
-            let windowElement = window
+        guard AXUIElementCopyAttributeValue(
+            appElement,
+            kAXFocusedWindowAttribute as CFString,
+            &windowRef
+        ) == .success else {
+            return nil
+        }
+        
+        let windowElement = windowRef as! AXUIElement
+        
+        var titleRef: CFTypeRef?
+        // Get the window title
+        guard AXUIElementCopyAttributeValue(
+            windowElement,
+            kAXTitleAttribute as CFString,
+            &titleRef
+        ) == .success,
+        let title = titleRef as? String
         else {
             return nil
         }
-
-        var title: CFTypeRef?
-        // Get the window title
-        if AXUIElementCopyAttributeValue(
-            windowElement as! AXUIElement, kAXTitleAttribute as CFString, &title) == .success
-        {
-            return title as? String
+        
+        // Get the window ID
+        var windowID: CGWindowID = 0
+        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+        let frameworkHandle = dlopen(
+            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
+            RTLD_NOW
+        )
+        defer { dlclose(frameworkHandle) }
+        
+        guard let windowSymbol = dlsym(frameworkHandle, "_AXUIElementGetWindow") else {
+            return nil
         }
-
-        return nil
+        
+        let retrieveWindowIDFunction = unsafeBitCast(windowSymbol, to: GetWindowFunc.self)
+        guard retrieveWindowIDFunction(windowElement, &windowID) == .success else {
+            return nil
+        }
+        
+        return (windowID, title)
     }
 
     private func updateSourceTitles() async {

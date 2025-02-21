@@ -115,7 +115,20 @@ final class CaptureCoordinator: ObservableObject {
     func focusSource() {
         guard let source: SCWindow = selectedSource else { return }
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
+        
+        // Predictively update focus state
+        let selectedBundleId = source.owningApplication?.bundleIdentifier
+        isSourceWindowFocused = true
+        isSourceAppFocused = true
+        
+        // Actually focus the window
         sourceManager.focusSource(source)
+        
+        // Schedule a verification check after a short delay
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            await synchronizeFocusState()
+        }
     }
 
     // MARK: - Frame Processing
@@ -148,25 +161,35 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: - State Synchronization
 
     private func setupSubscriptions() {
-        sourceManager.$focusedProcessId
-            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
+        sourceManager.$focusedWindow
+            .dropFirst()  // Skip initial value
+            .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)  // Coalesce rapid updates
+            .sink { [weak self] _ in
+                Task { await self?.synchronizeFocusState() }
+            }
             .store(in: &subscriptions)
 
         sourceManager.$sourceTitles
-            .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
+            .sink { [weak self] titles in
+                self?.synchronizeSourceTitle(from: titles)
+            }
             .store(in: &subscriptions)
     }
 
     private func synchronizeFocusState() async {
         guard let selectedSource: SCWindow = selectedSource else {
             isSourceWindowFocused = false
+            isSourceAppFocused = false
             return
         }
 
-        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
+        let focusedWindow = sourceManager.focusedWindow
+        isSourceWindowFocused = selectedSource.windowID == focusedWindow.windowID
+        isSourceAppFocused = selectedSource.owningApplication?.bundleIdentifier == focusedWindow.bundleID
 
-        isSourceWindowFocused = sourceWindowTitle == sourceManager.focusedWindowTitle
-        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
+        if !isSourceWindowFocused {
+            logger.debug("Window focus state updated: focused=false")
+        }
     }
 
     private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
@@ -180,12 +203,12 @@ final class CaptureCoordinator: ObservableObject {
     }
 }
 
-// MARK - Support Types
+// MARK: - Support Types
 
 enum CaptureError: LocalizedError {
     case noSourceSelected
     case permissionDenied
-
+    
     var errorDescription: String? {
         switch self {
         case .noSourceSelected:
