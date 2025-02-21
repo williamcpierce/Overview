@@ -6,6 +6,7 @@
             <title>v1.1.0-beta</title>
             <pubDate>Fri, 21 Feb 2025 08:24:00 +0000</pubDate>
             <sparkle:version>1.1.0</sparkle:version>
+            <sparkle:channel>alpha</sparkle:channel>
             <sparkle:shortVersionString>v1.1.0-beta</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
