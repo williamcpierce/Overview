@@ -165,8 +165,8 @@ final class SourceManager: ObservableObject {
         let bundleID = activeApp.bundleIdentifier ?? ""
         isOverviewActive = bundleID == Bundle.main.bundleIdentifier
 
-        // Get window info efficiently
-        if let (windowID, title) = await getWindowInfo(for: processID) {
+        // Use a non-async method for window info retrieval
+        if let (windowID, title) = getWindowInfoSync(for: processID) {
             let newFocusedWindow = FocusedWindow(
                 windowID: windowID,
                 processID: processID,
@@ -183,11 +183,12 @@ final class SourceManager: ObservableObject {
         }
     }
 
-    private func getWindowInfo(for pid: pid_t) async -> (CGWindowID, String)? {
+    private func getWindowInfoSync(for pid: pid_t) -> (CGWindowID, String)? {
+        // Create application element
         let appElement = AXUIElementCreateApplication(pid)
-        var windowRef: CFTypeRef?
 
-        // Get the focused window
+        // Retrieve focused window
+        var windowRef: CFTypeRef?
         guard
             AXUIElementCopyAttributeValue(
                 appElement,
@@ -200,7 +201,7 @@ final class SourceManager: ObservableObject {
 
         let windowElement = windowRef as! AXUIElement
 
-        // Get window title
+        // Retrieve window title
         var titleRef: CFTypeRef?
         guard
             AXUIElementCopyAttributeValue(
@@ -213,24 +214,8 @@ final class SourceManager: ObservableObject {
             return nil
         }
 
-        // Get window ID
-        var windowID: CGWindowID = 0
-        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
-            AXError
-        let frameworkHandle = dlopen(
-            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
-            RTLD_NOW
-        )
-        defer { dlclose(frameworkHandle) }
-
-        guard let windowSymbol = dlsym(frameworkHandle, "_AXUIElementGetWindow") else {
-            return nil
-        }
-
-        let retrieveWindowIDFunction = unsafeBitCast(windowSymbol, to: GetWindowFunc.self)
-        guard retrieveWindowIDFunction(windowElement, &windowID) == .success else {
-            return nil
-        }
+        // Retrieve window ID using the existing WindowIDUtility
+        let windowID = WindowIDUtility.extractWindowID(from: windowElement)
 
         return (windowID, title)
     }
@@ -254,5 +239,29 @@ final class SourceManager: ObservableObject {
         } catch {
             logger.logError(error, context: "Failed to update source window titles")
         }
+    }
+}
+
+// MARK: - Window ID Utility
+
+enum WindowIDUtility {
+    /// Extracts the window ID from an Accessibility UI Element
+    static func extractWindowID(from window: AXUIElement) -> CGWindowID {
+        var windowID: CGWindowID = 0
+
+        // Retrieve window ID from AXUIElement using ApplicationServices framework
+        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
+            AXError
+        let frameworkHandle: UnsafeMutableRawPointer? = dlopen(
+            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
+            RTLD_NOW
+        )
+        let windowSymbol: UnsafeMutableRawPointer? = dlsym(frameworkHandle, "_AXUIElementGetWindow")
+        let retrieveWindowIDFunction: GetWindowFunc = unsafeBitCast(
+            windowSymbol, to: GetWindowFunc.self)
+        _ = retrieveWindowIDFunction(window, &windowID)
+        dlclose(frameworkHandle)
+
+        return windowID
     }
 }

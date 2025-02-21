@@ -127,27 +127,3 @@ final class SourceFocusService {
         return success
     }
 }
-
-// MARK: - Window ID Utility
-
-private enum WindowIDUtility {
-    /// Extracts the window ID from an Accessibility UI Element
-    static func extractWindowID(from window: AXUIElement) -> CGWindowID {
-        var windowID: CGWindowID = 0
-
-        // Retrieve window ID from AXUIElement using ApplicationServices framework
-        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
-            AXError
-        let frameworkHandle: UnsafeMutableRawPointer? = dlopen(
-            "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
-            RTLD_NOW
-        )
-        let windowSymbol: UnsafeMutableRawPointer? = dlsym(frameworkHandle, "_AXUIElementGetWindow")
-        let retrieveWindowIDFunction: GetWindowFunc = unsafeBitCast(
-            windowSymbol, to: GetWindowFunc.self)
-        _ = retrieveWindowIDFunction(window, &windowID)
-        dlclose(frameworkHandle)
-
-        return windowID
-    }
-}
