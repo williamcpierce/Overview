@@ -107,6 +107,12 @@ final class SourceFocusService {
     }
 
     private func setWindowFocus(processID: pid_t, windowID: CGWindowID) -> Bool {
+        guard let app = NSRunningApplication(processIdentifier: processID) else {
+            return false
+        }
+        // Activate the application (this may trigger a space switch)
+        app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+
         let axApp = AXUIElementCreateApplication(processID)
         let windows = getWindowList(for: axApp)
 
