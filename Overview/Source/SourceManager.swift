@@ -16,7 +16,7 @@ struct FocusedWindow: Equatable {
     let processID: pid_t
     let bundleID: String
     let title: String
-    
+
     static let empty = FocusedWindow(windowID: 0, processID: 0, bundleID: "", title: "")
 }
 
@@ -55,7 +55,7 @@ final class SourceManager: ObservableObject {
         setupObservers()
         logger.debug("Source window manager initialization complete")
     }
-    
+
     deinit {
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
@@ -113,8 +113,18 @@ final class SourceManager: ObservableObject {
         // Set up source observers
         sourceServices.sourceObserver.addObserver(
             id: observerId,
-            onFocusChanged: { [weak self] in await self?.updateFocusedSource() },
-            onTitleChanged: { [weak self] in await self?.updateSourceTitles() }
+            onFocusChanged: { [weak self] in
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.updateFocusedSource()
+                }
+            },
+            onTitleChanged: { [weak self] in
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.updateSourceTitles()
+                }
+            }
         )
 
         // Observe workspace notifications
@@ -123,8 +133,9 @@ final class SourceManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            guard let self = self else { return }
             Task { @MainActor in
-                await self?.updateFocusedSource()
+                await self.updateFocusedSource()
             }
         }
 
@@ -134,8 +145,9 @@ final class SourceManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            guard let self = self else { return }
             Task { @MainActor in
-                await self?.updateFocusedSource()
+                await self.updateFocusedSource()
             }
         }
 
@@ -161,7 +173,7 @@ final class SourceManager: ObservableObject {
                 bundleID: bundleID,
                 title: title
             )
-            
+
             // Only trigger updates if focus actually changed
             if newFocusedWindow != focusedWindow {
                 focusedWindow = newFocusedWindow
@@ -170,51 +182,56 @@ final class SourceManager: ObservableObject {
             }
         }
     }
-    
+
     private func getWindowInfo(for pid: pid_t) async -> (CGWindowID, String)? {
         let appElement = AXUIElementCreateApplication(pid)
         var windowRef: CFTypeRef?
-        
+
         // Get the focused window
-        guard AXUIElementCopyAttributeValue(
-            appElement,
-            kAXFocusedWindowAttribute as CFString,
-            &windowRef
-        ) == .success else {
+        guard
+            AXUIElementCopyAttributeValue(
+                appElement,
+                kAXFocusedWindowAttribute as CFString,
+                &windowRef
+            ) == .success
+        else {
             return nil
         }
-        
+
         let windowElement = windowRef as! AXUIElement
-        
+
         // Get window title
         var titleRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(
-            windowElement,
-            kAXTitleAttribute as CFString,
-            &titleRef
-        ) == .success,
-        let title = titleRef as? String else {
+        guard
+            AXUIElementCopyAttributeValue(
+                windowElement,
+                kAXTitleAttribute as CFString,
+                &titleRef
+            ) == .success,
+            let title = titleRef as? String
+        else {
             return nil
         }
 
         // Get window ID
         var windowID: CGWindowID = 0
-        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+        typealias GetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) ->
+            AXError
         let frameworkHandle = dlopen(
             "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices",
             RTLD_NOW
         )
         defer { dlclose(frameworkHandle) }
-        
+
         guard let windowSymbol = dlsym(frameworkHandle, "_AXUIElementGetWindow") else {
             return nil
         }
-        
+
         let retrieveWindowIDFunction = unsafeBitCast(windowSymbol, to: GetWindowFunc.self)
         guard retrieveWindowIDFunction(windowElement, &windowID) == .success else {
             return nil
         }
-        
+
         return (windowID, title)
     }
 
