@@ -10,18 +10,18 @@
 import ScreenCaptureKit
 
 final class SourceFocusService {
-    // MARK: - Dependencies
+    // Dependencies
     private let logger = AppLogger.sources
 
-    // MARK: - Cache for Window Focus
+    // Private State
     private var windowFocusCache: [String: (pid_t, CGWindowID)] = [:]
     private var lastCacheUpdate = Date()
-    private let cacheDuration: TimeInterval = 5.0  // Cache valid for 5 seconds
+    private let cacheDuration: TimeInterval = 5.0
 
     // MARK: - Public Methods
 
     func focusSource(source: SCWindow) {
-        guard let processID = source.owningApplication?.processID else {
+        guard let processID: pid_t = source.owningApplication?.processID else {
             logger.warning("No process ID found for source: '\(source.title ?? "untitled")'")
             return
         }
@@ -30,7 +30,7 @@ final class SourceFocusService {
 
         if setWindowFocus(processID: processID, windowID: source.windowID) {
             logger.info("Source window successfully focused: '\(source.title ?? "untitled")'")
-            if let title = source.title {
+            if let title: String = source.title {
                 updateWindowCache(title: title, processID: processID, windowID: source.windowID)
             }
         } else {
@@ -41,6 +41,7 @@ final class SourceFocusService {
     func focusSource(withTitle title: String) -> Bool {
         logger.debug("Processing title-based focus request: '\(title)'")
 
+        // Check cached window info first
         if let (pid, windowID) = getCachedWindowInfo(for: title) {
             if setWindowFocus(processID: pid, windowID: windowID) {
                 logger.info("Window focused using cached info: '\(title)'")
@@ -48,6 +49,7 @@ final class SourceFocusService {
             }
         }
 
+        // Fallback to searching window list
         return searchAndFocusWindow(byTitle: title)
     }
 

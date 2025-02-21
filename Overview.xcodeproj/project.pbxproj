@@ -77,7 +77,6 @@
 				Settings/SourceSettingsKeys.swift,
 				Settings/SourceSettingsTab.swift,
 				SourceManager.swift,
-				SourceServices.swift,
 				Views/SourceListView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
