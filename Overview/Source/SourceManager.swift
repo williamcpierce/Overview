@@ -22,20 +22,18 @@ final class SourceManager: ObservableObject {
     private let sourceObserver: SourceObserverService
     private let sourceInfo: SourceInfoService
     private let logger = AppLogger.sources
-    private let axService: SourceAXService
 
     // Published State
     @Published private(set) var focusedWindow: FocusedWindow? = nil
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
     var persistentAXElements: [AXUIElement] {
-        axService.axElements
+        sourceObserver.axElements
     }
 
     // Private State
     private let observerId = UUID()
-    private var workspaceObserver: NSObjectProtocol?
-    private var frontmostAppObserver: NSObjectProtocol?
+    private var focusCheckTimer: Timer?
 
     // Source Settings
     @AppStorage(SourceSettingsKeys.filterMode)
@@ -54,25 +52,26 @@ final class SourceManager: ObservableObject {
         self.sourceFilter = SourceFilterService()
         self.sourceObserver = SourceObserverService()
         self.sourceInfo = SourceInfoService()
-        self.axService = SourceAXService()
 
         // Initialize sourceFocus after all other properties
         self.sourceFocus = SourceFocusService(sourceManager: self)
 
-        setupObservers()
+        setupSourceTitleObserver()
+        startFocusChecks()
         initializeAXTracking()
         logger.debug("SourceManager initialized")
     }
 
     deinit {
         Task { await removeObservers() }
+        focusCheckTimer?.invalidate()
     }
 
     // MARK: - Public Methods
 
     func initializeAXTracking() {
         logger.info("Initializing AXUIElement tracking")
-        axService.updateElementsForCurrentSpace()
+        sourceObserver.updateElementsForCurrentSpace()
         logger.info(
             "Initial AXUIElement tracking complete - \(persistentAXElements.count) elements collected"
         )
@@ -121,43 +120,27 @@ final class SourceManager: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func setupObservers() {
-        sourceObserver.addObserver(
-            id: observerId,
-            onFocusChanged: updateFocusedSource,
-            onTitleChanged: updateSourceTitles
-        )
-        observeWorkspaceChanges()
+    private func startFocusChecks() {
+        focusCheckTimer?.invalidate()
+        
+        focusCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.updateFocusedSource()
+            }
+        }
+        
+        logger.debug("Started periodic focus checks")
     }
 
-    private func observeWorkspaceChanges() {
-        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.updateFocusedSource()
-            }
-        }
-
-        frontmostAppObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didBecomeKeyNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            Task { @MainActor in
-                self.updateFocusedSource()
-            }
-        }
+    private func setupSourceTitleObserver() {
+        sourceObserver.addObserver(
+            id: observerId,
+            onFocusChanged: {},  // Empty since we're using timer now
+            onTitleChanged: updateSourceTitles
+        )
     }
 
     private func removeObservers() {
-        [workspaceObserver, frontmostAppObserver].compactMap { $0 }.forEach {
-            NotificationCenter.default.removeObserver($0)
-        }
         sourceObserver.removeObserver(id: observerId)
     }
 
