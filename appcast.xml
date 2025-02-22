@@ -3,6 +3,32 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.1.2-beta</title>
+            <pubDate>Sat, 22 Feb 2025 03:00:00 +0000</pubDate>
+            <sparkle:version>1.1.2</sparkle:version>
+            <sparkle:shortVersionString>v1.1.2-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.1.2-beta</h3>
+                <h4>Features</h4>
+                <ul>
+                    <li>Basic window cycling: Re-implemented simpler window cycling shortcuts, with partial functionality</li>
+                </ul>
+                <h4>Bug Fixes</h4>
+                <ul>
+                    <li>Reverted: Window cycling shortcuts from v1.1.0-beta</li>
+                    <li>Reverted: Direct window activation from v1.1.0-beta</li>
+                    <li>Reverted: Accessibility permission management from v1.1.0-beta</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.1.1-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.1.1-beta</title>
             <pubDate>Fri, 21 Feb 2025 17:00:00 +0000</pubDate>
             <sparkle:version>1.1.1</sparkle:version>
@@ -24,7 +50,7 @@
         </item>
         <item>
             <title>v1.1.0-beta</title>
-            <pubDate>Fri, 21 Feb 2025 08:24:00 +0000</pubDate>
+            <pubDate>Fri, 21 Feb 2025 09:00:00 +0000</pubDate>
             <sparkle:version>1.1.0</sparkle:version>
             <sparkle:shortVersionString>v1.1.0-beta</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
@@ -48,7 +74,7 @@
         </item>
         <item>
             <title>v1.0.1-beta</title>
-            <pubDate>Mon, 18 Feb 2025 19:42:00 +0000</pubDate>
+            <pubDate>Mon, 18 Feb 2025 20:00:00 +0000</pubDate>
             <sparkle:version>1.0.1</sparkle:version>
             <sparkle:shortVersionString>v1.0.1-beta</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>

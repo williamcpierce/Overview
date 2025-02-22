@@ -460,7 +460,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.1.1;
+				CURRENT_PROJECT_VERSION = 1.1.2;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -475,7 +475,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.1.1-beta";
+				MARKETING_VERSION = "v1.1.2-beta";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -493,7 +493,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.1.1;
+				CURRENT_PROJECT_VERSION = 1.1.2;
 				DEVELOPMENT_ASSET_PATHS = "\"Overview/Preview Content\"";
 				DEVELOPMENT_TEAM = TUFL6SPMRK;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -508,7 +508,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = "v1.1.1-beta";
+				MARKETING_VERSION = "v1.1.2-beta";
 				PRODUCT_BUNDLE_IDENTIFIER = io.williampierce.Overview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
