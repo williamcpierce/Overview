@@ -34,6 +34,15 @@ final class SourceAXService {
         }
     }
 
+    // MARK: - Public Methods
+
+    @MainActor
+    func updateElementsForCurrentSpace() {
+        logger.debug("Starting AXUIElement update for current space")
+        let currentElements: [AXUIElement] = getCurrentSpaceElements()
+        logger.info("Element update complete: total=\(axElements.count)")
+    }
+
     // MARK: - Space Change Tracking
 
     private func setupSpaceObserver() {
@@ -42,103 +51,92 @@ final class SourceAXService {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleSpaceChange()
+            Task { @MainActor [weak self] in
+                await self?.handleSpaceChange()
+            }
         }
-
-        logger.info("Space change observer configured")
     }
 
-    private func handleSpaceChange() {
-        logger.debug("Active space changed, updating AXUIElement collection")
-        Task { @MainActor in
-            updateElementsForCurrentSpace()
-        }
+    private func handleSpaceChange() async {
+        logger.debug("Active space changed, refreshing elements")
+        await updateElementsForCurrentSpace()
     }
 
     // MARK: - Element Management
 
-    @MainActor
-    func updateElementsForCurrentSpace() {
-        logger.info("Updating AXUIElements for current space")
-        let currentElements = getCurrentSpaceElements()
-        logger.debug("Found \(currentElements.count) elements in current space")
-        //        processNewElements(currentElements)
-        logger.info("Total persisted elements: \(axElements.count)")
-    }
-
-    // In SourceAXService.swift
     private func getCurrentSpaceElements() -> [AXUIElement] {
         var elementMapping: [(element: AXUIElement, windowId: CGWindowID)] = []
+        let windowMapping = getWindowMapping()
 
-        // Get all window info first
+        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
+            if let windows: [AXUIElement] = getApplicationWindows(for: app) {
+                for window: AXUIElement in windows {
+                    if let (title, windowId) = matchWindowIdentifiers(
+                        window: window,
+                        pid: app.processIdentifier,
+                        windowMapping: windowMapping
+                    ) {
+                        elementMapping.append((window, windowId))
+                        logger.debug(
+                            "Matched window: pid=\(app.processIdentifier), title='\(title)'")
+                    }
+                }
+            }
+        }
+
+        processNewElements(elementMapping)
+        return elementMapping.map { $0.element }
+    }
+
+    private func getWindowMapping() -> [String: CGWindowID] {
         let windowListOptions = CGWindowListOption(arrayLiteral: .optionOnScreenOnly)
         guard
             let windowList = CGWindowListCopyWindowInfo(windowListOptions, kCGNullWindowID)
                 as? [[CFString: Any]]
         else {
-            logger.warning("Failed to get window list")
-            return []
+            logger.warning("Failed to retrieve window list")
+            return [:]
         }
 
-        // Create a mapping of pid+title to window ID
-        var windowMapping: [String: CGWindowID] = [:]
-        for window in windowList {
+        return windowList.reduce(into: [:]) { mapping, window in
             guard let windowId = window[kCGWindowNumber] as? CGWindowID,
                 let pid = window[kCGWindowOwnerPID] as? pid_t,
                 let title = window[kCGWindowName] as? String
-            else { continue }
+            else { return }
 
-            let key = "\(pid):\(title)"
-            windowMapping[key] = windowId
-            logger.debug(
-                "Found window in CGWindowList: pid=\(pid), title='\(title)', windowId=\(windowId)")
+            mapping["\(pid):\(title)"] = windowId
         }
+    }
 
-        let apps = NSWorkspace.shared.runningApplications
-        logger.debug("Scanning \(apps.count) running applications")
+    private func getApplicationWindows(for app: NSRunningApplication) -> [AXUIElement]? {
+        let appElement: AXUIElement = AXUIElementCreateApplication(app.processIdentifier)
+        var windowsRef: CFTypeRef?
 
-        for app in apps {
-            guard app.activationPolicy == .regular else { continue }
-
-            let pid = app.processIdentifier
-            let appElement = AXUIElementCreateApplication(pid)
-            var windowsRef: CFTypeRef?
-            let result = AXUIElementCopyAttributeValue(
+        guard
+            AXUIElementCopyAttributeValue(
                 appElement,
                 kAXWindowsAttribute as CFString,
                 &windowsRef
-            )
+            ) == .success
+        else { return nil }
 
-            if result == .success,
-                let windows = windowsRef as? [AXUIElement]
-            {
-                // For each AX window, get its title and find matching CGWindowID
-                for window in windows {
-                    var titleRef: CFTypeRef?
-                    if AXUIElementCopyAttributeValue(
-                        window, kAXTitleAttribute as CFString, &titleRef) == .success,
-                        let title = titleRef as? String
-                    {
-                        let key = "\(pid):\(title)"
-                        if let windowId = windowMapping[key] {
-                            elementMapping.append((window, windowId))
-                            logger.debug(
-                                "Matched AXUIElement with window: pid=\(pid), title='\(title)', windowId=\(windowId)"
-                            )
-                        }
-                    }
-                }
+        return windowsRef as? [AXUIElement]
+    }
 
-                logger.debug(
-                    "Found \(windows.count) windows for app: \(app.localizedName ?? "unknown") (pid: \(pid))"
-                )
-            }
-        }
+    private func matchWindowIdentifiers(
+        window: AXUIElement,
+        pid: pid_t,
+        windowMapping: [String: CGWindowID]
+    ) -> (title: String, windowId: CGWindowID)? {
+        var titleRef: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef)
+                == .success,
+            let title = titleRef as? String,
+            let windowId: CGWindowID = windowMapping["\(pid):\(title)"]
+        else { return nil }
 
-        // Process the elements we found with their known window IDs
-        processNewElements(elementMapping)
-
-        return elementMapping.map { $0.element }
+        return (title, windowId)
     }
 
     private func processNewElements(_ elements: [(element: AXUIElement, windowId: CGWindowID)]) {
@@ -149,25 +147,22 @@ final class SourceAXService {
             AXUIElementGetPid(element, &pid)
 
             let identifier = AXUIElementIdentifier(pid: pid, windowId: windowId)
-
             if !knownElements.contains(identifier) {
                 knownElements.insert(identifier)
                 axElements.append(element)
                 addedCount += 1
-                logger.debug("Added new AXUIElement: pid=\(pid), windowId=\(windowId)")
-            } else {
-                logger.debug("Skipping duplicate element: pid=\(pid), windowId=\(windowId)")
             }
         }
 
-        logger.info("Added \(addedCount) new elements in this update")
-        logger.debug(
-            "Current elements: \(knownElements.map { "pid=\($0.pid), windowId=\($0.windowId)" }.joined(separator: ", "))"
-        )
+        if addedCount > 0 {
+            logger.info("Added \(addedCount) new elements")
+        }
     }
+}
 
-    private struct AXUIElementIdentifier: Hashable {
-        let pid: pid_t
-        let windowId: CGWindowID
-    }
+// MARK: - Support Types
+
+private struct AXUIElementIdentifier: Hashable {
+    let pid: pid_t
+    let windowId: CGWindowID
 }

@@ -40,7 +40,6 @@ final class SourceFocusService {
             if let title = source.title {
                 updateWindowCache(title: title, processID: processID, windowID: source.windowID)
             }
-            // Immediately trigger the completion callback.
             completion?()
         } else {
             logger.error("Failed to focus source window: '\(source.title ?? "untitled")'")
@@ -104,8 +103,7 @@ final class SourceFocusService {
     private func findWindowInfo(for title: String, in windowList: [[CFString: Any]]) -> (
         CGWindowID, pid_t
     )? {
-        guard
-            let windowInfo = windowList.first(where: { ($0[kCGWindowName] as? String) == title }),
+        guard let windowInfo = windowList.first(where: { ($0[kCGWindowName] as? String) == title }),
             let windowID = windowInfo[kCGWindowNumber] as? CGWindowID,
             let pid = windowInfo[kCGWindowOwnerPID] as? pid_t
         else { return nil }
@@ -125,46 +123,22 @@ final class SourceFocusService {
         }
 
         logger.debug("Attempting to focus window: processID=\(processID), windowID=\(windowID)")
-        logger.debug(
-            "Total persisted AXUIElements available: \(sourceManager.persistentAXElements.count)")
 
         // Activate the application (this may trigger a space switch)
         app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
 
         let axApp = AXUIElementCreateApplication(processID)
 
-        // Log window IDs for debugging
-        sourceManager.persistentAXElements.forEach { element in
-            let elementWindowId = WindowIDUtility.extractWindowID(from: element)
-            var pid: pid_t = 0
-            AXUIElementGetPid(element, &pid)
-            logger.debug("Persisted element: pid=\(pid), windowId=\(elementWindowId)")
-
-        }
-
-        // Find the matching window from our persistent array
         guard
             let matchingWindow = sourceManager.persistentAXElements.first(where: {
                 WindowIDUtility.extractWindowID(from: $0) == windowID
             })
         else {
-            logger.warning(
-                "No matching window found in persistent elements: processID=\(processID), windowID=\(windowID)"
-            )
+            logger.warning("No matching window found in persistent elements")
             return false
         }
 
-        logger.debug("Found matching window in persistent elements")
-
-        let attributes: [(AXUIElement, CFString, CFTypeRef)] = [
-            (axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
-            (matchingWindow, kAXMainAttribute as CFString, kCFBooleanTrue),
-            (matchingWindow, kAXFocusedAttribute as CFString, kCFBooleanTrue),
-        ]
-
-        let success: Bool = attributes.allSatisfy {
-            AXUIElementSetAttributeValue($0.0, $0.1, $0.2) == .success
-        }
+        let success = setWindowAttributes(axApp: axApp, window: matchingWindow)
 
         if success {
             logger.info(
@@ -178,9 +152,13 @@ final class SourceFocusService {
         return success
     }
 
-    private func getWindowList(for axApp: AXUIElement) -> [AXUIElement] {
-        var windowList: CFTypeRef?
-        AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowList)
-        return windowList as? [AXUIElement] ?? []
+    private func setWindowAttributes(axApp: AXUIElement, window: AXUIElement) -> Bool {
+        let attributes: [(AXUIElement, CFString, CFTypeRef)] = [
+            (axApp, kAXFrontmostAttribute as CFString, kCFBooleanTrue),
+            (window, kAXMainAttribute as CFString, kCFBooleanTrue),
+            (window, kAXFocusedAttribute as CFString, kCFBooleanTrue),
+        ]
+
+        return attributes.allSatisfy { AXUIElementSetAttributeValue($0.0, $0.1, $0.2) == .success }
     }
 }
