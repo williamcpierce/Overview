@@ -125,7 +125,7 @@ final class SourceFocusService {
         logger.debug("Attempting to focus window: processID=\(processID), windowID=\(windowID)")
 
         // Activate the application (this may trigger a space switch)
-        app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+//        app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
 
         let axApp = AXUIElementCreateApplication(processID)
 
