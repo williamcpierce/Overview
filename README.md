@@ -34,7 +34,6 @@ Display source app names, window titles, and focus status at a glance
 
 -   macOS Ventura (13.0) or later
 -   Screen Recording permission (required for window capture)
--   Accessibility permission (required for granular window activation)
 
 ## Installation
 
@@ -102,7 +101,7 @@ See setting menu tooltips for full details
 
 ## Privacy & Security
 
-Overview requires Screen Recording and Accessibility permissions to function, but:
+Overview requires Screen Recording permission to function, but:
 
 -   Only captures window content for preview purposes
 -   Does not store or transmit window content
