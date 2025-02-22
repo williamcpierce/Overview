@@ -38,6 +38,13 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
+		C82E2F422D69689C00EA56EC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DiagnosticService.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
 		C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -160,6 +167,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C828A4032D0A948D0023E7F1 /* Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C828A4062D0A94A20023E7F1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Logging; sourceTree = "<group>"; };
+		C82E2F3F2D69688100EA56EC /* Diagnostic */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C82E2F422D69689C00EA56EC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Diagnostic; sourceTree = "<group>"; };
 		C8323A2B2D081388001B91A6 /* Shortcut */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shortcut; sourceTree = "<group>"; };
 		C8544FAE2D6139570064AC74 /* Permission */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8544FB12D6139600064AC74 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Permission; sourceTree = "<group>"; };
 		C868D7E22D082CCB00EF1F4C /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Source; sourceTree = "<group>"; };
@@ -217,6 +225,7 @@
 				C868D7E22D082CCB00EF1F4C /* Source */,
 				C8A838892D0421EF002EC00B /* Capture */,
 				C8544FAE2D6139570064AC74 /* Permission */,
+				C82E2F3F2D69688100EA56EC /* Diagnostic */,
 				C8A837D72D0405B7002EC00B /* Settings */,
 				C88D5D6C2D58714B00F0990C /* Update */,
 				C828A4032D0A948D0023E7F1 /* Logging */,
