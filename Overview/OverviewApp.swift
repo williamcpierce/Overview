@@ -16,6 +16,8 @@ struct OverviewApp: App {
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
     private let logger = AppLogger.interface
 
+    @StateObject private var disabledState = DisabledStateManager.shared
+
     init() {
         SettingsMigrationUtility.migrateSettingsIfNeeded()
     }
@@ -24,8 +26,15 @@ struct OverviewApp: App {
         MenuBarExtra {
             menuContent
         } label: {
-            Image(systemName: "square.2.layers.3d.top.filled")
+            Group {
+                if disabledState.isDisabled {
+                    Image(systemName: "square.2.layers.3d")
+                } else {
+                    Image(systemName: "square.2.layers.3d.top.filled")
+                }
+            }
         }
+        .menuBarExtraStyle(.automatic)  // or .window, as you prefer
 
         Settings {
             SettingsView(
@@ -41,6 +50,9 @@ struct OverviewApp: App {
 
     private var menuContent: some View {
         Group {
+            Button(disabledState.isDisabled ? "Enable App" : "Disable App") {
+                toggleDisabled()
+            }
             newWindowButton
             editModeButton
             Divider()
@@ -102,7 +114,6 @@ struct OverviewApp: App {
     }
 
     private var helpMenu: some View {
-
         Menu("Help") {
             Button {
                 openDiscord()
@@ -138,6 +149,44 @@ struct OverviewApp: App {
             Button("Restart") {
                 restartApp()
             }.keyboardShortcut("r")
+        }
+    }
+
+    // MARK: - Private Methods
+
+    private func getAppVersion() -> String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+
+    private func newWindow(context: String) {
+        Task { @MainActor in
+            do {
+                try appDelegate.windowManager.createPreviewWindow()
+            } catch {
+                logger.logError(error, context: "Failed to create window from \(context)")
+            }
+        }
+    }
+
+    private func toggleEditMode() {
+        Task { @MainActor in
+            appDelegate.previewManager.editModeEnabled.toggle()
+        }
+    }
+
+    private func toggleDisabled() {
+        disabledState.isDisabled.toggle()
+    }
+
+    private func openSettings() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        if #available(macOS 14.0, *) {
+            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
+            openSettings()
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
     }
 
@@ -226,38 +275,14 @@ struct OverviewApp: App {
             }
         }
     }
+}
 
-    // MARK: - Private Methods
+// MARK: - DisabledStateManager
 
-    private func getAppVersion() -> String? {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-    }
+final class DisabledStateManager: ObservableObject {
+    static let shared = DisabledStateManager()
 
-    private func newWindow(context: String) {
-        Task { @MainActor in
-            do {
-                try appDelegate.windowManager.createPreviewWindow()
-            } catch {
-                logger.logError(error, context: "Failed to create window from \(context)")
-            }
-        }
-    }
+    @Published var isDisabled: Bool = false
 
-    private func toggleEditMode() {
-        Task { @MainActor in
-            appDelegate.previewManager.editModeEnabled.toggle()
-        }
-    }
-
-    private func openSettings() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        if #available(macOS 14.0, *) {
-            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
-            openSettings()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        }
-    }
+    private init() {}
 }
