@@ -51,14 +51,86 @@ final class ShortcutManager: ObservableObject {
         }
     }
 
-    private func activateSourceWindow(for shortcut: ShortcutItem) {
-        for title in shortcut.windowTitles {
-            let activated = sourceManager.focusSource(withTitle: title)
-            if activated {
-                logger.info("Window focused via shortcut: '\(title)'")
-                return
+    private func findCurrentlyFocusedTitle(in titles: [String]) -> String? {
+        guard let focusedProcessId = sourceManager.focusedProcessId else {
+            logger.debug("No focused process ID found")
+            return nil
+        }
+
+        logger.debug("Checking for focused window in process: \(focusedProcessId)")
+
+        // Check if any source title in the focused process matches our shortcut titles
+        for (sourceId, title) in sourceManager.sourceTitles
+        where sourceId.processID == focusedProcessId {
+            if titles.contains(title) {
+                logger.debug("Found matching focused title: '\(title)'")
+                return title
             }
         }
-        logger.warning("Failed to focus any window for shortcut: \(shortcut.windowTitles)")
+
+        return nil
+    }
+
+    private func getNextTitle(after currentTitle: String, in titles: [String]) -> String {
+        guard let currentIndex = titles.firstIndex(of: currentTitle) else {
+            logger.warning("Current title not found in list: '\(currentTitle)'")
+            return titles[0]
+        }
+
+        let nextIndex: Int = (currentIndex + 1) % titles.count
+        let nextTitle: String = titles[nextIndex]
+        logger.debug("Next title in cycle: '\(nextTitle)'")
+        return nextTitle
+    }
+
+    private func activateSourceWindow(for shortcut: ShortcutItem) {
+        let titles = shortcut.windowTitles
+        guard !titles.isEmpty else {
+            logger.warning("No window titles specified for shortcut")
+            return
+        }
+
+        // Find the currently focused window title if it's in our list
+        if let currentTitle = findCurrentlyFocusedTitle(in: titles) {
+            logger.debug("Currently focused title: '\(currentTitle)'")
+
+            // Try to focus windows starting after the current one
+            let nextTitle = getNextTitle(after: currentTitle, in: titles)
+            let remainingTitles = titles.suffix(from: (titles.firstIndex(of: nextTitle) ?? 0))
+
+            for title in remainingTitles {
+                if focusWindow(withTitle: title) {
+                    return
+                }
+            }
+
+            // If we haven't found a window yet, wrap around to the beginning
+            for title in titles.prefix(upTo: (titles.firstIndex(of: currentTitle) ?? 0)) {
+                if focusWindow(withTitle: title) {
+                    return
+                }
+            }
+
+            logger.warning("No other focusable windows found in cycle")
+        } else {
+            // If current window isn't in the list, start from the beginning
+            logger.debug("Current window not in shortcut list, starting from beginning")
+            for title in titles {
+                if focusWindow(withTitle: title) {
+                    return
+                }
+            }
+            logger.warning("Failed to focus any window for shortcut: \(titles)")
+        }
+    }
+
+    private func focusWindow(withTitle title: String) -> Bool {
+        let activated = sourceManager.focusSource(withTitle: title)
+        if activated {
+            logger.info("Window focused via shortcut: '\(title)'")
+            return true
+        }
+        logger.debug("Failed to focus window: '\(title)'")
+        return false
     }
 }
