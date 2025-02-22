@@ -17,16 +17,20 @@ final class SourceManager: ObservableObject {
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var permissionManager: PermissionManager
     private let captureServices = CaptureServices.shared
-    private let sourceFilter = SourceFilterService()
-    private let sourceFocus = SourceFocusService()
-    private let sourceObserver = SourceObserverService()
-    private let sourceInfo = SourceInfoService()
+    private let sourceFilter: SourceFilterService
+    private var sourceFocus: SourceFocusService!
+    private let sourceObserver: SourceObserverService
+    private let sourceInfo: SourceInfoService
     private let logger = AppLogger.sources
+    private let axService: SourceAXService
 
     // Published State
     @Published private(set) var focusedWindow: FocusedWindow? = nil
     @Published private(set) var isOverviewActive: Bool = true
     @Published private(set) var sourceTitles: [SourceID: String] = [:]
+    var persistentAXElements: [AXUIElement] {
+        axService.axElements
+    }
 
     // Private State
     private let observerId = UUID()
@@ -47,7 +51,16 @@ final class SourceManager: ObservableObject {
     init(settingsManager: SettingsManager, permissionManager: PermissionManager) {
         self.settingsManager = settingsManager
         self.permissionManager = permissionManager
+        self.sourceFilter = SourceFilterService()
+        self.sourceObserver = SourceObserverService()
+        self.sourceInfo = SourceInfoService()
+        self.axService = SourceAXService()
+
+        // Initialize sourceFocus after all other properties
+        self.sourceFocus = SourceFocusService(sourceManager: self)
+
         setupObservers()
+        initializeAXTracking()
         logger.debug("SourceManager initialized")
     }
 
@@ -56,6 +69,14 @@ final class SourceManager: ObservableObject {
     }
 
     // MARK: - Public Methods
+
+    func initializeAXTracking() {
+        logger.info("Initializing AXUIElement tracking")
+        axService.updateElementsForCurrentSpace()
+        logger.info(
+            "Initial AXUIElement tracking complete - \(persistentAXElements.count) elements collected"
+        )
+    }
 
     func focusSource(_ source: SCWindow) {
         logger.debug("Focusing source: \(source.title ?? "untitled")")

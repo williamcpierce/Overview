@@ -70,6 +70,7 @@
 		C868D7E32D082CD200EF1F4C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Services/SourceAXService.swift,
 				Services/SourceFilterService.swift,
 				Services/SourceFocusService.swift,
 				Services/SourceInfoService.swift,
