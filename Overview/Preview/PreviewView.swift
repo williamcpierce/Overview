@@ -15,6 +15,8 @@ struct PreviewView: View {
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
     @ObservedObject private var permissionManager: PermissionManager
+    @ObservedObject private var disabledStateManager: DisabledStateManager = DisabledStateManager
+        .shared
     @StateObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
     let onClose: () -> Void
@@ -100,6 +102,9 @@ struct PreviewView: View {
         .onChange(of: captureFrameRate) { _ in
             updatePreviewFrameRate()
         }
+        .onChange(of: disabledStateManager.isDisabled) { _ in
+            updatePreviewVisibility()
+        }
     }
 
     // MARK: - View Components
@@ -182,6 +187,11 @@ struct PreviewView: View {
     }
 
     private func updatePreviewVisibility() {
+        if disabledStateManager.isDisabled {
+            isPreviewVisible = false
+            return
+        }
+
         let alwaysShown =
             isSelectionViewVisible || previewManager.editModeEnabled
             || sourceManager.isOverviewActive

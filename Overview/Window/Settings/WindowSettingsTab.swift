@@ -30,6 +30,8 @@ struct WindowSettingsTab: View {
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
     private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
         .assignPreviewsToAllDesktops
+    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
+    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
 
     var body: some View {
         Form {
@@ -115,6 +117,7 @@ struct WindowSettingsTab: View {
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
                     Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    Toggle("Save windows positions on quit", isOn: $savePositionsOnClose)
                 }
             }
         }
