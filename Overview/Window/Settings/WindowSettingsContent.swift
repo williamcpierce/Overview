@@ -46,7 +46,11 @@ extension InfoPopoverContent {
             ),
             Section(
                 title: "Show Windows on All Desktops",
-                text: "Show preview windows on all desktops"
+                text: "Show preview windows on all desktops, including over fullscreen windows"
+            ),
+            Section(
+                title: "Save Windows Positions on Quit",
+                text: "Saves the position and size of each Overview window on app quit, to be restored on app launch"
             ),
         ],
         isWarning: false
