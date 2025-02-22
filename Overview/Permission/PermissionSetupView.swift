@@ -23,7 +23,7 @@ struct PermissionSetupView: View {
             navigationButtons
         }
         .padding(24)
-        .frame(height: 600)
+        .frame(height: 460)
         .background(.background)
     }
 
@@ -50,16 +50,6 @@ struct PermissionSetupView: View {
                 action: coordinator.openScreenRecordingPreferences,
                 requestPermission: coordinator.requestScreenRecordingPermission
             )
-
-            PermissionRow(
-                icon: "hammer.circle",
-                title: "Accessibility",
-                description:
-                    "This permission is needed to switch between windows and manage window focus",
-                state: coordinator.accessibilityPermission,
-                action: coordinator.openAccessibilityPreferences,
-                requestPermission: coordinator.requestAccessibilityPermission
-            )
         }
     }
 
@@ -69,10 +59,7 @@ struct PermissionSetupView: View {
                 coordinator.completeSetup()
             }
             .buttonStyle(.borderedProminent)
-            .disabled(
-                coordinator.screenRecordingPermission != .granted
-                    || coordinator.accessibilityPermission != .granted
-            )
+            .disabled(coordinator.screenRecordingPermission != .granted)
         }
     }
 }

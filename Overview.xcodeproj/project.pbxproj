@@ -31,13 +31,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C81085D42D645F390038FEF8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				DiagnosticService.swift,
-			);
-			target = C87695812CBA082D00FBCA6C /* Overview */;
-		};
 		C828A4062D0A94A20023E7F1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -72,13 +65,12 @@
 			membershipExceptions = (
 				Services/SourceFilterService.swift,
 				Services/SourceFocusService.swift,
-				Services/SourceInfoService.swift,
 				Services/SourceObserverService.swift,
 				Settings/SourceSettingsContent.swift,
 				Settings/SourceSettingsKeys.swift,
 				Settings/SourceSettingsTab.swift,
 				SourceManager.swift,
-				Utility/WindowIDUtility.swift,
+				SourceServices.swift,
 				Views/SourceListView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
@@ -167,7 +159,6 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C81085D22D645F390038FEF8 /* Diagnostic */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C81085D42D645F390038FEF8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Diagnostic; sourceTree = "<group>"; };
 		C828A4032D0A948D0023E7F1 /* Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C828A4062D0A94A20023E7F1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Logging; sourceTree = "<group>"; };
 		C8323A2B2D081388001B91A6 /* Shortcut */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8323A2C2D081393001B91A6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shortcut; sourceTree = "<group>"; };
 		C8544FAE2D6139570064AC74 /* Permission */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8544FB12D6139600064AC74 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Permission; sourceTree = "<group>"; };
@@ -228,7 +219,6 @@
 				C8544FAE2D6139570064AC74 /* Permission */,
 				C8A837D72D0405B7002EC00B /* Settings */,
 				C88D5D6C2D58714B00F0990C /* Update */,
-				C81085D22D645F390038FEF8 /* Diagnostic */,
 				C828A4032D0A948D0023E7F1 /* Logging */,
 				C87695892CBA082F00FBCA6C /* Assets.xcassets */,
 				C876958E2CBA082F00FBCA6C /* Overview.entitlements */,
