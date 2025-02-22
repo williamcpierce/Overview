@@ -4,8 +4,8 @@
 
  Created by William Pierce on 2/22/25.
 
- Manages AXUIElement tracking across spaces and provides persistent storage
- of window references.
+ Manages AXUIElement tracking across spaces using a timer-based approach
+ and provides persistent storage of window references.
 */
 
 import AppKit
@@ -17,21 +17,19 @@ final class SourceAXService {
     private let logger = AppLogger.sources
 
     // Private State
-    private var spaceChangeObserver: NSObjectProtocol?
+    private var elementCheckTimer: Timer?
     private var knownElements: Set<AXUIElementIdentifier> = []
 
     // Published State
     private(set) var axElements: [AXUIElement] = []
 
     init() {
-        setupSpaceObserver()
+        startElementChecks()
         logger.debug("AXUIElement tracking service initialized")
     }
 
     deinit {
-        if let observer = spaceChangeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-        }
+        elementCheckTimer?.invalidate()
     }
 
     // MARK: - Public Methods
@@ -40,26 +38,21 @@ final class SourceAXService {
     func updateElementsForCurrentSpace() {
         logger.debug("Starting AXUIElement update for current space")
         let currentElements: [AXUIElement] = getCurrentSpaceElements()
-        logger.info("Element update complete: total=\(axElements.count)")
+        logger.info("Element update complete: total=\(currentElements.count)")
     }
 
-    // MARK: - Space Change Tracking
+    // MARK: - Element Checks
 
-    private func setupSpaceObserver() {
-        spaceChangeObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+    private func startElementChecks() {
+        elementCheckTimer?.invalidate()
+        
+        elementCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.handleSpaceChange()
+                self?.updateElementsForCurrentSpace()
             }
         }
-    }
-
-    private func handleSpaceChange() async {
-        logger.debug("Active space changed, refreshing elements")
-        await updateElementsForCurrentSpace()
+        
+        logger.debug("Started periodic element checks")
     }
 
     // MARK: - Element Management
