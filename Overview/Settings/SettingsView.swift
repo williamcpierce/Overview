@@ -32,7 +32,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             PreviewSettingsTab()
-                .tabItem { Label("Previews", systemImage: "rectangle.dashed.badge.record") }
+                .tabItem { Label("Preview", systemImage: "rectangle.dashed.badge.record") }
 
             WindowSettingsTab()
                 .tabItem { Label("Windows", systemImage: "macwindow") }

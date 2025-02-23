@@ -29,14 +29,14 @@ extension InfoPopoverContent {
         title: "Automatic Preview Hiding",
         sections: [
             Section(
-                title: "Hide Inactive App Previews",
+                title: "Hide Previews for Inactive Source Applications",
                 text:
                     "When enabled, all preview windows will automatically hide except those belonging to the currently active application.\nThis is useful if you only use Overview with multiple instances of the same application (i.e. EVE Online) and would like previews hidden while using other applications."
             ),
             Section(
-                title: "Hide Active Window Preview",
+                title: "Hide Preview for Focused Source Window",
                 text:
-                    "Automatically hides the preview window when its source window becomes active.\nIn conjunction with this setting, two previews can be placed on top of one another, and used to switch back and forth between two applications while only ever seeing the preview of the inactive one."
+                    "Automatically hides the preview window when its source window is focused.\nIn conjunction with this setting, two previews can be placed on top of one another, and used to switch back and forth between two applications while only ever seeing the preview of the inactive one."
             ),
         ],
         isWarning: false
