@@ -66,6 +66,7 @@ struct ShortcutSettingsTab: View {
     }
 
     // MARK: - Actions
+
     private func addShortcut() {
         let titles = newWindowTitles.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
