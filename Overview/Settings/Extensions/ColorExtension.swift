@@ -11,24 +11,44 @@ import SwiftUI
 
 extension Color: @retroactive RawRepresentable {
     public init?(rawValue: String) {
-        guard let data = Data(base64Encoded: rawValue),
-            let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: data)
-        else {
+        guard !rawValue.isEmpty else {
             self = .gray
-            /// Fallback color
             return
         }
 
-        self.init(nsColor)
+        guard let data = Data(base64Encoded: rawValue) else {
+            AppLogger.settings.warning("Failed to decode base64 color data")
+            self = .gray
+            return
+        }
+
+        do {
+            guard
+                let nsColor = try NSKeyedUnarchiver.unarchivedObject(
+                    ofClass: NSColor.self, from: data)
+            else {
+                AppLogger.settings.warning("Failed to unarchive NSColor")
+                self = .gray
+                return
+            }
+
+            self.init(nsColor)
+        } catch {
+            AppLogger.settings.logError(error, context: "Failed to decode color from UserDefaults")
+            self = .gray
+        }
     }
 
     public var rawValue: String {
         let nsColor = NSColor(self)
         do {
-            let data: Data = try NSKeyedArchiver.archivedData(
-                withRootObject: nsColor, requiringSecureCoding: false)
+            let data = try NSKeyedArchiver.archivedData(
+                withRootObject: nsColor,
+                requiringSecureCoding: false
+            )
             return data.base64EncodedString()
         } catch {
+            AppLogger.settings.logError(error, context: "Failed to encode color for UserDefaults")
             return ""
         }
     }
