@@ -18,17 +18,17 @@ For development updates, please join our Discord:
 
 Real-time window previews with configurable frame rates and automatic hiding
 
-### Quick App Switching
+### Quick Application Switching
 
-Switch to source applications through preview clicks or keyboard shortcuts
+Switch applications through preview clicks or keyboard shortcuts
 
 ### Preview Customization
 
-Customize preview window appearance, visibility, and saving/restoration
+Customize preview window appearance, visibility, and saving/restoration options
 
-### Glanceable Overlays
+### Glanceable Info Overlays
 
-Display source app names, window titles, and focus status
+Display source app names, window titles, and focus status at a glance
 
 ## System Requirements
 
@@ -135,12 +135,11 @@ See [FUNDING.md](https://github.com/williamcpierce/Overview/blob/main/FUNDING.md
 -   Swift 5.0
 -   macOS 13.0+ deployment target
 
-### Key Technologies
+### Frameworks and Libraries
 
--   SwiftUI for user interface components
+-   SwiftUI for user interface
 -   ScreenCaptureKit for window capture
--   Combine for reactive state management
--   KeyboardShortcuts for global shortcut handling
+-   KeyboardShortcuts for shortcut handling
 -   Sparkle for automatic updates
 
 ### Coding Standards
