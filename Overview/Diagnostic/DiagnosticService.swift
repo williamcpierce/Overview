@@ -58,20 +58,25 @@ final class DiagnosticService {
         let logFilename = "\(filename)-logs.txt"
 
         guard
-            let downloadsURL = FileManager.default.urls(
-                for: .downloadsDirectory, in: .userDomainMask
+            let documentsURL = FileManager.default.urls(
+                for: .documentDirectory, in: .userDomainMask
             ).first
         else {
             throw DiagnosticError.fileSystemError
         }
 
-        // Save diagnostic report
-        let reportURL = downloadsURL.appendingPathComponent(reportFilename)
+        let overviewDirURL = documentsURL.appendingPathComponent("Overview")
+        try FileManager.default.createDirectory(
+            at: overviewDirURL,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+
+        let reportURL = overviewDirURL.appendingPathComponent(reportFilename)
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-        // Save log file
-        let logURL = downloadsURL.appendingPathComponent(logFilename)
+        let logURL = overviewDirURL.appendingPathComponent(logFilename)
         try await saveLogFile(to: logURL)
         logger.info("Log file saved: \(logFilename)")
 
@@ -83,7 +88,6 @@ final class DiagnosticService {
             throw DiagnosticError.logStoreAccessError
         }
 
-        // Get the earliest available entries
         let startTime = Date.distantPast
         let position = store.position(date: startTime)
 
