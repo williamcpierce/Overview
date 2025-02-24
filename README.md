@@ -1,6 +1,6 @@
 # Overview: Window Previews on macOS
 
-Overview is a macOS app that creates floating live previews of other application windows, and enables quick switching between them.
+Create live window previews for any application, and activate them efficiently with built-in task-switching
 
 ![Example Screenshot](https://downloads.williampierce.io/Banner.jpg)
 
@@ -14,21 +14,13 @@ For development updates, please join our Discord:
 
 ## Features
 
-### Live Window Previews
+**Live Window Previews:** Real-time window previews with configurable frame rates and automatic hiding
 
-Real-time window previews with configurable frame rates and automatic hiding
+**Quick Application Switching:** Switch applications through preview clicks or keyboard shortcuts
 
-### Quick Application Switching
+**Preview Customization:** Customize preview window appearance, visibility, and saving/restoration options
 
-Switch applications through preview clicks or keyboard shortcuts
-
-### Preview Customization
-
-Customize preview window appearance, visibility, and saving/restoration options
-
-### Glanceable Info Overlays
-
-Display source app names, window titles, and focus status at a glance
+**Glanceable Info Overlays:** Display source app names, window titles, and focus status at a glance
 
 ## System Requirements
 
