@@ -158,12 +158,11 @@ struct OverviewApp: App {
                 let report = try await DiagnosticService.shared.generateDiagnosticReport()
                 let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
 
-                // Show success alert and reveal in Finder
                 NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
                 logger.info("Diagnostic report generated and saved successfully")
             } catch {
                 logger.logError(error, context: "Failed to generate diagnostic report")
-                // Show error alert
+
                 let alert = NSAlert()
                 alert.messageText = "Failed to Generate Report"
                 alert.informativeText = "An error occurred while generating the diagnostic report."
