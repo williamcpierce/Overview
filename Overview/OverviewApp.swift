@@ -42,13 +42,12 @@ struct OverviewApp: App {
     private var menuContent: some View {
         Group {
             newWindowButton
-            Divider()
             editModeButton
             Divider()
+            settingsButton
+            supportButton
             helpMenu
             Divider()
-            settingsButton
-            updateButton
             quitButton
         }
     }
@@ -88,6 +87,13 @@ struct OverviewApp: App {
         }
     }
 
+    private var supportButton: some View {
+        Button("Support Overview") {
+            openProjectSupport()
+        }
+    }
+
+    
     private var quitButton: some View {
         Button("Quit Overview") {
             NSApplication.shared.terminate(nil)
@@ -122,6 +128,10 @@ struct OverviewApp: App {
             Divider()
 
             versionText
+            updateButton
+            
+            Divider()
+            
             Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }
@@ -146,7 +156,15 @@ struct OverviewApp: App {
 
     private func openFeatureRequest() {
         if let url = URL(
-            string: "https://github.com/williamcpierce/Overview/issues/new?labels=enhancement")
+            string: "https://github.com/williamcpierce/Overview/discussions/categories/ideas")
+        {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    private func openProjectSupport() {
+        if let url = URL(
+            string: "https://williampierce.io/overview/#support")
         {
             NSWorkspace.shared.open(url)
         }
