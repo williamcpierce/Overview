@@ -1,5 +1,5 @@
 /*
- Permission/PermissionSetupCoordinator.swift
+ Onboarding/OnboardingCoordinator.swift
  Overview
 
  Created by William Pierce on 2/10/25.
@@ -9,12 +9,16 @@ import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
-final class PermissionSetupCoordinator: ObservableObject {
+final class OnboardingCoordinator: ObservableObject {
     // Permission state tracking
     enum PermissionStatus: Equatable {
         case unknown
         case denied
         case granted
+    }
+
+    struct PermissionStatuses {
+        let screenRecording: Bool
     }
 
     // Dependencies
@@ -24,39 +28,38 @@ final class PermissionSetupCoordinator: ObservableObject {
     var onPermissionStatusChanged: ((Bool) -> Void)?
 
     // Private State
-    private var setupWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
     private var continuationHandler: CheckedContinuation<Void, Never>?
     private var permissionCheckTimer: Timer?
 
     // Published State
     @Published var screenRecordingPermission: PermissionStatus = .denied
 
-    func startSetup() async {
+    func startOnboarding() async {
         NSApp.setActivationPolicy(.regular)
 
         await withCheckedContinuation { continuation in
             continuationHandler = continuation
-            createSetupWindow()
+            createOnboardingWindow()
         }
 
         stopPermissionMonitoring()
         NSApp.setActivationPolicy(.accessory)
     }
 
-    private func createSetupWindow() {
-        guard setupWindow == nil else { return }
+    private func createOnboardingWindow() {
+        guard onboardingWindow == nil else { return }
 
-        let permissionSetupView = PermissionSetupView(coordinator: self)
-        let hostingView = NSHostingView(rootView: permissionSetupView)
+        let onboardingView = OnboardingView(coordinator: self).cornerRadius(8)
+        let hostingView = NSHostingView(rootView: onboardingView)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 580, height: 460),
-            styleMask: [.titled],
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 320),
+            styleMask: [.fullSizeContentView],
             backing: .buffered,
             defer: false
         )
 
-        window.title = "Overview Permission Setup"
         window.backgroundColor = .clear
         window.isOpaque = false
         window.hasShadow = true
@@ -65,19 +68,18 @@ final class PermissionSetupCoordinator: ObservableObject {
         window.center()
         window.isReleasedWhenClosed = false
 
-        self.setupWindow = window
+        self.onboardingWindow = window
 
         DispatchQueue.main.async { [weak self] in
-            self?.setupWindow?.makeKeyAndOrderFront(nil)
+            self?.onboardingWindow?.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
 
-        logger.debug("Setup window created")
+        logger.debug("Onboarding window created")
     }
 
     func requestScreenRecordingPermission() {
         logger.debug("Requesting screen recording permission")
-
         startPermissionMonitoring()
 
         Task {
@@ -108,16 +110,30 @@ final class PermissionSetupCoordinator: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
-    func completeSetup() {
-        logger.info("Completing setup flow")
+    func completeOnboarding() {
+        logger.info("Completing onboarding flow")
         stopPermissionMonitoring()
 
-        setupWindow?.close()
-        setupWindow = nil
+        onboardingWindow?.close()
+        onboardingWindow = nil
 
-        // Always resume continuation when completing setup
         continuationHandler?.resume(returning: ())
         continuationHandler = nil
+    }
+
+    func restartApp() {
+        logger.debug("Initiating application restart")
+
+        let process = Process()
+        process.executableURL = Bundle.main.executableURL
+        process.arguments = []
+
+        do {
+            try process.run()
+            NSApplication.shared.terminate(nil)
+        } catch {
+            logger.logError(error, context: "Failed to restart application")
+        }
     }
 
     // MARK: - Permission Monitoring
@@ -128,7 +144,7 @@ final class PermissionSetupCoordinator: ObservableObject {
         permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
             [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.checkScreenRecordingPermission()
+                await self?.checkPermissions()
             }
         }
     }
@@ -138,18 +154,23 @@ final class PermissionSetupCoordinator: ObservableObject {
         permissionCheckTimer = nil
     }
 
-    private func checkScreenRecordingPermission() async {
+    private func checkPermissions() async {
         do {
             _ = try await SCShareableContent.current
             screenRecordingPermission = .granted
-            stopPermissionMonitoring()
-            onPermissionStatusChanged?(true)  // Notify permission manager
             logger.info("Screen recording permission granted")
         } catch {
             screenRecordingPermission = .denied
-            onPermissionStatusChanged?(false)  // Notify permission manager
             logger.info("Screen recording permission still denied: \(error.localizedDescription)")
         }
-    }
 
+        // Notify permission manager of changes
+        onPermissionStatusChanged?(
+            screenRecordingPermission == .granted
+        )
+
+        if screenRecordingPermission == .granted {
+            stopPermissionMonitoring()
+        }
+    }
 }
