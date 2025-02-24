@@ -8,6 +8,7 @@
 */
 
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import ScreenCaptureKit
 import SwiftUI
@@ -38,7 +39,8 @@ final class DiagnosticService {
             systemInfo: try await getSystemInfo(),
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
-            windowStatus: try await getWindowInfo()
+            windowStatus: try await getWindowInfo(),
+            shortcuts: try await getShortcutsInfo()
         )
 
         let jsonData = try jsonEncoder.encode(report)
@@ -175,7 +177,6 @@ final class DiagnosticService {
                 focusBorder: FocusBorderSettings(
                     enabled: defaults.bool(forKey: OverlaySettingsKeys.focusBorderEnabled),
                     width: Int(defaults.double(forKey: OverlaySettingsKeys.focusBorderWidth))
-                    // color: defaults.string(forKey: OverlaySettingsKeys.focusBorderColor) ?? ""
                 ),
                 sourceTitle: SourceTitleSettings(
                     enabled: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleEnabled),
@@ -229,6 +230,20 @@ final class DiagnosticService {
                     )
                 }
             )
+        )
+    }
+
+    private func getShortcutsInfo() async throws -> ShortcutsInfo {
+        let shortcutItems = ShortcutStorage.shared.shortcuts
+        return ShortcutsInfo(
+            shortcuts: shortcutItems.map { shortcut in
+                ShortcutDiagnostic(
+                    id: shortcut.id.uuidString,
+                    windowTitles: shortcut.windowTitles,
+                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
+                        .description ?? "unset"
+                )
+            }
         )
     }
 
@@ -313,6 +328,7 @@ struct DiagnosticReport: Codable {
     let permissionStatus: PermissionInfo
     let settings: SettingsInfo
     let windowStatus: WindowStatus
+    let shortcuts: ShortcutsInfo
 }
 
 struct AppInfo: Codable {
@@ -390,7 +406,6 @@ struct OverlaySettings: Codable {
 struct FocusBorderSettings: Codable {
     let enabled: Bool
     let width: Int
-    //    let color: String
 }
 
 struct SourceTitleSettings: Codable {
@@ -434,6 +449,16 @@ struct PreviewWindow: Codable {
     let visible: Bool
     let level: Int
     let collectsInput: Bool
+}
+
+struct ShortcutsInfo: Codable {
+    let shortcuts: [ShortcutDiagnostic]
+}
+
+struct ShortcutDiagnostic: Codable {
+    let id: String
+    let windowTitles: [String]
+    let keyboardShortcut: String
 }
 
 // MARK: - Error Types
