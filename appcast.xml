@@ -3,6 +3,33 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.1.3-beta</title>
+            <pubDate>Mon, 24 Feb 2025 06:00:00 +0000</pubDate>
+            <sparkle:version>1.1.3</sparkle:version>
+            <sparkle:shortVersionString>v1.1.3-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.1.3-beta</h3>
+                <h4>Features</h4>
+                <ul>
+                    <li>Added setting to control window position saving on quit</li>
+                    <li>Added automatic log export to diagnostic report generator</li>
+                    <li>Minor settings and menu reorganization</li>
+                    <li>Improved onboarding experience</li>
+                </ul>
+                <h4>Bug Fixes</h4>
+                <ul>
+                    <li>Improved error handling for focus border color setting</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.1.3-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.1.2-beta</title>
             <pubDate>Sat, 22 Feb 2025 03:00:00 +0000</pubDate>
             <sparkle:version>1.1.2</sparkle:version>

@@ -32,6 +32,8 @@ final class WindowManager {
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
+    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
+    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
 
     init(
         previewManager: PreviewManager,
@@ -73,6 +75,12 @@ final class WindowManager {
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
             logger.info("Window closed successfully")
+        }
+    }
+
+    func saveWindowStatesOnQuit() {
+        if savePositionsOnClose {
+            saveWindowStates()
         }
     }
 

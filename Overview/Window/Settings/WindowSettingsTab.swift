@@ -10,7 +10,8 @@ import SwiftUI
 struct WindowSettingsTab: View {
     // Private State
     @State private var showingAppearanceInfo: Bool = false
-    @State private var showingBehaviorInfo: Bool = false
+    @State private var showingVisibilityInfo: Bool = false
+    @State private var showingManagementInfo: Bool = false
 
     // Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
@@ -30,6 +31,8 @@ struct WindowSettingsTab: View {
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
     private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
         .assignPreviewsToAllDesktops
+    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
+    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
 
     var body: some View {
         Form {
@@ -97,24 +100,42 @@ struct WindowSettingsTab: View {
                 }
             }
 
-            // MARK: - Behavior Section
+            // MARK: - Visibility Section
 
             Section {
                 HStack {
-                    Text("Behavior")
+                    Text("Visibility")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
-                        content: .windowBehavior,
-                        isPresented: $showingBehaviorInfo
+                        content: .windowVisibility,
+                        isPresented: $showingVisibilityInfo
                     )
                 }
                 .padding(.bottom, 4)
                 VStack {
                     Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
+                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                }
+            }
+
+            // MARK: - Management Section
+
+            Section {
+                HStack {
+                    Text("Management")
+                        .font(.headline)
+                    Spacer()
+                    InfoPopover(
+                        content: .windowManagement,
+                        isPresented: $showingManagementInfo
+                    )
+                }
+                .padding(.bottom, 4)
+                VStack {
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    Toggle("Save window positions on quit", isOn: $savePositionsOnClose)
                 }
             }
         }

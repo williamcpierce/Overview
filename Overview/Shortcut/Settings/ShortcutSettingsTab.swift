@@ -46,7 +46,7 @@ struct ShortcutSettingsTab: View {
                 }
 
                 HStack {
-                    TextField("Window Titles", text: $newWindowTitles)
+                    TextField("Window title(s)", text: $newWindowTitles)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
                     Spacer()
@@ -66,6 +66,7 @@ struct ShortcutSettingsTab: View {
     }
 
     // MARK: - Actions
+
     private func addShortcut() {
         let titles = newWindowTitles.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }

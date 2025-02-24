@@ -32,13 +32,16 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             PreviewSettingsTab()
-                .tabItem { Label("Previews", systemImage: "rectangle.dashed.badge.record") }
+                .tabItem { Label("Previews", systemImage: "record.circle") }
+                .scrollDisabled(true)
 
             WindowSettingsTab()
                 .tabItem { Label("Windows", systemImage: "macwindow") }
+                .scrollDisabled(true)
 
             OverlaySettingsTab()
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
+                .scrollDisabled(true)
 
             ShortcutSettingsTab()
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
@@ -50,6 +53,7 @@ struct SettingsView: View {
 
             UpdateSettingsTab(updateManager: updateManager)
                 .tabItem { Label("Updates", systemImage: "arrow.clockwise.circle.fill") }
+                .scrollDisabled(true)
         }
         .background(.ultraThickMaterial)
         .safeAreaInset(edge: .bottom) {
