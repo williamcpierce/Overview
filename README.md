@@ -20,15 +20,15 @@ Real-time window previews with configurable frame rates and automatic hiding
 
 ### Quick App Switching
 
-Switch to source applications through preview clicks or keyboard shortcut bindings
+Switch to source applications through preview clicks or keyboard shortcuts
 
 ### Preview Customization
 
-Customize preview window opacity, shadows, dimensions, and behavior
+Customize preview window appearance, visibility, and saving/restoration
 
-### Optional Overlays
+### Glanceable Overlays
 
-Display source app names, window titles, and focus status at a glance
+Display source app names, window titles, and focus status
 
 ## System Requirements
 
@@ -63,41 +63,46 @@ Display source app names, window titles, and focus status at a glance
 
 ### Settings
 
-See setting menu tooltips for full details
+See setting menu info panels for full details
 
--   Previews
-    -   Frame rate configuration
-    -   Automatic hiding options
-        -   Hide inactive app previews
-        -   Hide active window preview
+-   Preview
+    -   Frame Rate
+    -   Automatic Hiding
+        -   Hide previews for inactive source applications
+        -   Hide preview for focused source window
 -   Windows
-    -   Appearance customization
+    -   Appearance
         -   Opacity
         -   Shadows
         -   Default dimensions
-    -   Behavior settings
-        -   Show in Mission Control
+    -   Visibility
+        -   Show windows in Mission Control
+        -   Show windows on all desktops (including fullscreen)
+    -   Management
         -   Create window on launch
-        -   Close with preview source
-        -   Show windows on all desktops
+        -   Close window with preview source
+        -   Save window positions on quit
 -   Overlays
-    -   Window focus indicators
+    -   Window Focus
         -   Border width
         -   Border color
-    -   Source title display
+    -   Source Title
         -   Font size
         -   Background opacity
         -   Location
-        -   Title type (window, application, or both)
+        -   Type (window, application, or both)
 -   Shortcuts
-    -   Keyboard shortcuts for window activation
-    -   Multiple window titles per shortcut for window cycling
+    -   Window Activation
+        -   Keyboard shortcuts for focusing windows
+        -   Multiple window titles per shortcut for window cycling
 -   Sources
-    -   Window source list filtering (blocklist/allowlist)
+    -   Source App Filter
+        -   Window source list filtering
+        -   Filter mode (blocklist/allowlist)
 -   Updates
-    -   Automatic update checking
-    -   Automatic update downloads
-    -   Beta update channel
+    -   Automatically check for updates
+    -   Automatically download updates
+    -   Enable beta updates
 
 ## Privacy & Security
 
