@@ -118,7 +118,7 @@ struct WindowSettingsTab: View {
                     Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
                 }
             }
-            
+
             // MARK: - Management Section
 
             Section {

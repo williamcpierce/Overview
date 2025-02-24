@@ -318,7 +318,8 @@ final class DiagnosticService {
     }
 
     private func formatMemory(_ bytes: UInt64) -> String {
-        let gigabytes = Double(bytes) / 1_073_741_824  // 1024^3
+        let gigabytes = Double(bytes) / 1_073_741_824
+        /// 1024^3
         return String(format: "%.1f", gigabytes)
     }
 }

@@ -61,7 +61,6 @@ struct SettingsMigrationUtility {
             return
         }
 
-        // Try each old bundle ID in order until we find one with settings
         for bundleId: String in oldBundleIds {
             if tryMigrateSettings(from: bundleId, to: newDefaults) {
                 break

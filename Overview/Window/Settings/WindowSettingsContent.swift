@@ -57,7 +57,8 @@ extension InfoPopoverContent {
             ),
             Section(
                 title: "Save Window Positions on Quit",
-                text: "Saves the position and size of each Overview window on app quit, to be restored on app launch"
+                text:
+                    "Saves the position and size of each Overview window on app quit, to be restored on app launch"
             ),
         ],
         isWarning: false
