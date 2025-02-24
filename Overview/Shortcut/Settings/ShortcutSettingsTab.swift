@@ -46,7 +46,7 @@ struct ShortcutSettingsTab: View {
                 }
 
                 HStack {
-                    TextField("Window Titles", text: $newWindowTitles)
+                    TextField("Window title(s)", text: $newWindowTitles)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
                     Spacer()

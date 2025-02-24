@@ -65,7 +65,7 @@ Display source app names, window titles, and focus status
 
 See setting menu info panels for full details
 
--   Preview
+-   Previews
     -   Frame Rate
     -   Automatic Hiding
         -   Hide previews for inactive source applications

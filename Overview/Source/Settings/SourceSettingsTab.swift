@@ -27,7 +27,7 @@ struct SourceSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Source App Filter")
+                    Text("Source Application Filter")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -61,14 +61,14 @@ struct SourceSettingsTab: View {
                     }
                 }
 
-                Picker("Filter Mode", selection: $filterMode) {
+                Picker("Filter mode", selection: $filterMode) {
                     Text("Blocklist").tag(FilterMode.blocklist)
                     Text("Allowlist").tag(FilterMode.allowlist)
                 }
                 .pickerStyle(.segmented)
 
                 HStack {
-                    TextField("App Name", text: $newAppName)
+                    TextField("App name", text: $newAppName)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
                     Button("Add") {
