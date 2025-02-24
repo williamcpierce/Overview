@@ -42,13 +42,12 @@ struct OverviewApp: App {
     private var menuContent: some View {
         Group {
             newWindowButton
-            Divider()
             editModeButton
             Divider()
+            settingsButton
+            supportButton
             helpMenu
             Divider()
-            settingsButton
-            updateButton
             quitButton
         }
     }
@@ -88,6 +87,13 @@ struct OverviewApp: App {
         }
     }
 
+    private var supportButton: some View {
+        Button("Support Overview") {
+            openProjectSupport()
+        }
+    }
+
+    
     private var quitButton: some View {
         Button("Quit Overview") {
             NSApplication.shared.terminate(nil)
@@ -122,6 +128,10 @@ struct OverviewApp: App {
             Divider()
 
             versionText
+            updateButton
+            
+            Divider()
+            
             Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }
@@ -146,7 +156,15 @@ struct OverviewApp: App {
 
     private func openFeatureRequest() {
         if let url = URL(
-            string: "https://github.com/williamcpierce/Overview/issues/new?labels=enhancement")
+            string: "https://github.com/williamcpierce/Overview/discussions/categories/ideas")
+        {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    private func openProjectSupport() {
+        if let url = URL(
+            string: "https://williampierce.io/overview/#support")
         {
             NSWorkspace.shared.open(url)
         }
@@ -158,12 +176,11 @@ struct OverviewApp: App {
                 let report = try await DiagnosticService.shared.generateDiagnosticReport()
                 let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
 
-                // Show success alert and reveal in Finder
                 NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
                 logger.info("Diagnostic report generated and saved successfully")
             } catch {
                 logger.logError(error, context: "Failed to generate diagnostic report")
-                // Show error alert
+
                 let alert = NSAlert()
                 alert.messageText = "Failed to Generate Report"
                 alert.informativeText = "An error occurred while generating the diagnostic report."

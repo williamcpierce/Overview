@@ -66,12 +66,12 @@ struct PreviewSettingsTab: View {
 
                 VStack {
                     Toggle(
-                        "Hide inactive app previews",
+                        "Hide previews for inactive source applications",
                         isOn: $hideInactiveApplications
                     )
 
                     Toggle(
-                        "Hide active window preview",
+                        "Hide preview for focused source window",
                         isOn: $hideActiveWindow
                     )
                 }

@@ -26,12 +26,10 @@ final class ShortcutManager: ObservableObject {
     }
 
     private func setupShortcuts() {
-        // Setup observers for all shortcuts
         shortcutStorage.shortcuts.forEach { shortcut in
             setupShortcutObserver(for: shortcut)
         }
 
-        // Listen for changes to add/remove observers
         shortcutStorage.$shortcuts
             .dropFirst()
             .sink { [weak self] shortcuts in
@@ -59,7 +57,6 @@ final class ShortcutManager: ObservableObject {
 
         logger.debug("Checking for focused window in process: \(focusedProcessId)")
 
-        // Check if any source title in the focused process matches our shortcut titles
         for (sourceId, title) in sourceManager.sourceTitles
         where sourceId.processID == focusedProcessId {
             if titles.contains(title) {
@@ -90,11 +87,11 @@ final class ShortcutManager: ObservableObject {
             return
         }
 
-        // Find the currently focused window title if it's in our list
+        /// Find the currently focused window title if it's in our list
         if let currentTitle = findCurrentlyFocusedTitle(in: titles) {
             logger.debug("Currently focused title: '\(currentTitle)'")
 
-            // Try to focus windows starting after the current one
+            /// Try to focus windows starting after the current one
             let nextTitle = getNextTitle(after: currentTitle, in: titles)
             let remainingTitles = titles.suffix(from: (titles.firstIndex(of: nextTitle) ?? 0))
 
@@ -104,7 +101,7 @@ final class ShortcutManager: ObservableObject {
                 }
             }
 
-            // If we haven't found a window yet, wrap around to the beginning
+            /// If we haven't found a window yet, wrap around to the beginning
             for title in titles.prefix(upTo: (titles.firstIndex(of: currentTitle) ?? 0)) {
                 if focusWindow(withTitle: title) {
                     return
@@ -113,7 +110,6 @@ final class ShortcutManager: ObservableObject {
 
             logger.warning("No other focusable windows found in cycle")
         } else {
-            // If current window isn't in the list, start from the beginning
             logger.debug("Current window not in shortcut list, starting from beginning")
             for title in titles {
                 if focusWindow(withTitle: title) {

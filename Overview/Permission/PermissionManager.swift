@@ -15,7 +15,7 @@ import SwiftUI
 final class PermissionManager: ObservableObject {
     // Dependencies
     private let logger = AppLogger.capture
-    private let permissionSetupCoordinator: PermissionSetupCoordinator
+    private let onboardingCoordinator: OnboardingCoordinator
 
     // Private State
     private var isRequestingPermission: Bool = false
@@ -30,8 +30,8 @@ final class PermissionManager: ObservableObject {
     }
 
     init() {
-        self.permissionSetupCoordinator = PermissionSetupCoordinator()
-        self.permissionSetupCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
+        self.onboardingCoordinator = OnboardingCoordinator()
+        self.onboardingCoordinator.onPermissionStatusChanged = { [weak self] hasPermission in
             self?.permissionStatus = hasPermission ? .granted : .denied
         }
         logger.debug("Initializing permission manager")
@@ -65,7 +65,7 @@ final class PermissionManager: ObservableObject {
         if hasAccess {
             permissionStatus = .granted
         } else {
-            try await launchSetupFlow()
+            try await launchOnboardingFlow()
             updatePermissionStatus()
 
             if permissionStatus != .granted {
@@ -90,9 +90,9 @@ final class PermissionManager: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func launchSetupFlow() async throws {
+    private func launchOnboardingFlow() async throws {
         logger.info("Launching setup flow")
-        await permissionSetupCoordinator.startSetup()
+        await onboardingCoordinator.startOnboarding()
 
         try? await Task.sleep(nanoseconds: 500_000_000)
         updatePermissionStatus()
