@@ -28,13 +28,24 @@ extension InfoPopoverContent {
         isWarning: false
     )
 
-    static let windowBehavior = InfoPopoverContent(
-        title: "Window Behavior",
+    static let windowVisibility = InfoPopoverContent(
+        title: "Window Visibility",
         sections: [
             Section(
                 title: "Show Windows in Mission Control",
                 text: "Show preview windows in Mission Control"
             ),
+            Section(
+                title: "Show Windows on All Desktops",
+                text: "Show preview windows on all desktops, including over fullscreen windows"
+            ),
+        ],
+        isWarning: false
+    )
+
+    static let windowManagement = InfoPopoverContent(
+        title: "Window Management",
+        sections: [
             Section(
                 title: "Create Window on Launch",
                 text:
@@ -45,8 +56,8 @@ extension InfoPopoverContent {
                 text: "Closes preview window when source window closes"
             ),
             Section(
-                title: "Show Windows on All Desktops",
-                text: "Show preview windows on all desktops"
+                title: "Save Window Positions on Quit",
+                text: "Saves the position and size of each Overview window on app quit, to be restored on app launch"
             ),
         ],
         isWarning: false

@@ -16,6 +16,7 @@ enum WindowSettingsKeys {
     static let createOnLaunch: String = "windowCreateOnLaunch"
     static let closeOnCaptureStop: String = "closeOnCaptureStop"
     static let assignPreviewsToAllDesktops: String = "desktopAssignmentBehavior"
+    static let savePositionsOnClose: String = "savePositionsOnClose"
 
     static let defaults = Defaults()
 
@@ -28,5 +29,6 @@ enum WindowSettingsKeys {
         let createOnLaunch: Bool = true
         let closeOnCaptureStop: Bool = false
         let assignPreviewsToAllDesktops: Bool = false
+        let savePositionsOnClose: Bool = true
     }
 }
