@@ -12,7 +12,7 @@ extension InfoPopoverContent {
         title: "Window Layouts",
         sections: [
             Section(
-                title: "Overview",
+                title: "Summary",
                 text: "Layouts allow you to save and restore different window arrangements"
             ),
             Section(

@@ -59,13 +59,13 @@ See setting menu info panels for full details
 
 -   General
     -   Capture Frame Rate
-    -   Automatic Hiding
+    -   Automatic Preview Hiding
         -   Hide previews for inactive source applications
         -   Hide preview for focused source window
-    -   Focus Overlay
+    -   Source Focus Overlay
         -   Border width
         -   Border color
-    -   Title Overlay
+    -   Source Title Overlay
         -   Font size
         -   Background opacity
         -   Location

@@ -9,12 +9,12 @@
 
 extension InfoPopoverContent {
     static let windowFocus = InfoPopoverContent(
-        title: "Focus Overlay",
+        title: "Source Focus Overlay",
         sections: [
             Section(
-                title: "Overview",
+                title: "Summary",
                 text:
-                    "Displays a customizable border around preview windows when their source window is active"
+                    "Displays a customizable border around preview windows when their source is active"
             ),
             Section(
                 title: "Border Width",
@@ -29,10 +29,10 @@ extension InfoPopoverContent {
     )
 
     static let sourceTitle = InfoPopoverContent(
-        title: "Title Overlay",
+        title: "Source Title Overlay",
         sections: [
             Section(
-                title: "Overview",
+                title: "Summary",
                 text: "Shows the title of the source window on the preview"
             ),
             Section(
@@ -42,17 +42,17 @@ extension InfoPopoverContent {
             Section(
                 title: "Opacity",
                 text:
-                    "Control title backdrop visibility. Higher opacity values improve text legibility but obstruct preview content."
+                    "Control source title backdrop visibility. Higher opacity values improve text legibility but obstruct preview content."
             ),
             Section(
                 title: "Location",
                 text:
-                    "Control title location on previews."
+                    "Control source title location on previews."
             ),
             Section(
                 title: "Title Type",
                 text:
-                    "Choose whether to display the title of the window, the name of the application, or both."
+                    "Choose whether to display the title of the source window, the name of the source application, or both."
             ),
         ],
         isWarning: false

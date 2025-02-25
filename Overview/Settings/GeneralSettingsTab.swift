@@ -54,7 +54,7 @@ struct GeneralSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Capture Frame Rate")
+                    Text("Preview Frame Rate")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -77,7 +77,7 @@ struct GeneralSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Automatic Hiding")
+                    Text("Automatic Preview Hiding")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -104,7 +104,7 @@ struct GeneralSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Focus Overlay")
+                    Text("Source Focus Overlay")
                         .font(.headline)
                     InfoPopover(
                         content: .windowFocus,
@@ -140,7 +140,7 @@ struct GeneralSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Title Overlay")
+                    Text("Source Title Overlay")
                         .font(.headline)
                     InfoPopover(
                         content: .sourceTitle,
