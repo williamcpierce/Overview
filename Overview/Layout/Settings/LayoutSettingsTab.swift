@@ -49,7 +49,7 @@ struct LayoutSettingsTab: View {
 
                     Button("Create") {
                         if !newLayoutName.isEmpty {
-                            _ = windowManager.saveCurrentLayoutAsLayout(name: newLayoutName)
+                            _ = windowManager.saveCurrentLayout(name: newLayoutName)
                             newLayoutName = ""
                         }
                     }

@@ -232,7 +232,7 @@ struct OverviewApp: App {
     private func newWindow(context: String) {
         Task { @MainActor in
             do {
-                try appDelegate.windowManager.createPreviewWindow()
+                try appDelegate.windowManager.createWindow()
             } catch {
                 logger.logError(error, context: "Failed to create window from \(context)")
             }

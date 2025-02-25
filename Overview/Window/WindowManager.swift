@@ -50,7 +50,7 @@ final class WindowManager: ObservableObject {
         logger.debug("Window manager initialized")
     }
 
-    func createPreviewWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil) throws {
         do {
             let defaultSize = CGSize(width: defaultWidth, height: defaultHeight)
             let window = try windowServices.createWindow(
@@ -81,13 +81,13 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func handleWindowStatesOnQuit() {
+    func handleWindowsOnQuit() {
         if saveWindowsOnQuit {
             windowServices.saveWindowStates()
         }
     }
 
-    func restoreWindowStates() {
+    func restoreWindows() {
         if layoutManager.shouldApplyLayoutOnLaunch(),
             let launchLayout = layoutManager.getLaunchLayout()
         {
@@ -106,7 +106,7 @@ final class WindowManager: ObservableObject {
             windowServices.restoreWindows { [weak self] frame in
                 guard let self = self else { return }
                 do {
-                    try createPreviewWindow(at: frame)
+                    try createWindow(at: frame)
                     restoredCount += 1
                     logger.debug("Restored window \(restoredCount)")
                 } catch {
@@ -128,7 +128,7 @@ final class WindowManager: ObservableObject {
         windowServices.windowStorage.restoreSpecificWindows(layout.windows) { [weak self] frame in
             guard let self = self else { return }
             do {
-                try createPreviewWindow(at: frame)
+                try createWindow(at: frame)
             } catch {
                 logger.logError(
                     error, context: "Failed to create window from layout '\(layout.name)'")
@@ -136,7 +136,7 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func saveCurrentLayoutAsLayout(name: String) -> Layout {
+    func saveCurrentLayout(name: String) -> Layout {
         let layout = layoutManager.createLayout(name: name)
         return layout
     }
@@ -145,7 +145,7 @@ final class WindowManager: ObservableObject {
 
     private func createDefaultWindow() {
         do {
-            try createPreviewWindow()
+            try createWindow()
         } catch {
             logger.logError(error, context: "Failed to create default window")
         }

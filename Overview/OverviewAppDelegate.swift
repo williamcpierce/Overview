@@ -72,7 +72,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await permissionManager.ensurePermission()
-                windowManager.restoreWindowStates()
+                windowManager.restoreWindows()
                 logger.info("Application initialization completed")
             } catch {
                 logger.logError(error, context: "Failed to ensure permissions during launch")
@@ -82,7 +82,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         logger.debug("Application preparing to terminate")
-        windowManager.handleWindowStatesOnQuit()
+        windowManager.handleWindowsOnQuit()
     }
 
     // MARK: - Private Methods
