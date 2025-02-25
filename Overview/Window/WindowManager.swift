@@ -35,6 +35,8 @@ final class WindowManager: ObservableObject {
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
     @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
     private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
+    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
+    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
 
     init(
         previewManager: PreviewManager,
@@ -90,14 +92,16 @@ final class WindowManager: ObservableObject {
 
         var restoredCount: Int = 0
 
-        windowServices.windowStorage.restoreWindows { [weak self] frame in
-            guard let self = self else { return }
-            do {
-                try createWindow(at: frame)
-                restoredCount += 1
-                logger.debug("Restored window \(restoredCount)")
-            } catch {
-                logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
+        if restoreWindowsOnLaunch {
+            windowServices.windowStorage.restoreWindows { [weak self] frame in
+                guard let self = self else { return }
+                do {
+                    try createWindow(at: frame)
+                    restoredCount += 1
+                    logger.debug("Restored window \(restoredCount)")
+                } catch {
+                    logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
+                }
             }
         }
 

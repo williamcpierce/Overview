@@ -79,6 +79,9 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.saveWindowsOnQuit,
             forKey: WindowSettingsKeys.saveWindowsOnQuit)
+        UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.restoreWindowsOnLaunch,
+            forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
 
         /// Reset Overlay settings
         UserDefaults.standard.set(

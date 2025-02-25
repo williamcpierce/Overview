@@ -65,6 +65,11 @@ extension InfoPopoverContent {
                 text:
                     "Saves the position and size of each preview window on when Overview is quit"
             ),
+            Section(
+                title: "Restore Window Positions on Launch",
+                text:
+                    "Restores the last saved window positions and sizes when Overview is launched"
+            ),
         ],
         isWarning: false
     )
