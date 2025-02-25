@@ -162,7 +162,6 @@
 			membershipExceptions = (
 				Settings/OverlaySettingsContent.swift,
 				Settings/OverlaySettingsKeys.swift,
-				Settings/OverlaySettingsTab.swift,
 				Views/CloseButtonOverlay.swift,
 				Views/EditIndicatorOverlay.swift,
 				Views/FocusBorderOverlay.swift,

@@ -67,6 +67,5 @@ struct UpdateSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width:384)
     }
 }

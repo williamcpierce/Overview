@@ -46,10 +46,6 @@ struct SettingsView: View {
                 .tabItem { Label("Windows", systemImage: "macwindow") }
                 .scrollDisabled(true)
 
-            OverlaySettingsTab()
-                .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
-                .scrollDisabled(true)
-
             LayoutSettingsTab(windowManager: windowManager, layoutManager: layoutManager)
                 .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
@@ -75,7 +71,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 430)
+        .frame(width: 384)
         .fixedSize()
 
         // MARK: - Settings Window Level

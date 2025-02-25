@@ -73,7 +73,6 @@ struct LayoutSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 384)
         .onAppear {
             launchLayoutId = layoutManager.launchLayoutId
         }

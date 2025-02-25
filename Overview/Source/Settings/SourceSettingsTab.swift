@@ -79,7 +79,6 @@ struct SourceSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width:384)
     }
 
     // MARK: - Actions
