@@ -9,12 +9,12 @@
 
 extension InfoPopoverContent {
     static let frameRate = InfoPopoverContent(
-        title: "Preview Frame Rate",
+        title: "Capture Frame Rate",
         sections: [
             Section(
                 title: "Performance Impact",
                 text:
-                    "Increasing preview frame rates can increase CPU usage proportionally.\nValues above 10 FPS may impact system performance significantly.\n\nNote that preview frame rate is automatically throttled for windows without any content changes. This may mean that with a high FPS setting, performance can be fine for some applications, but degrade significantly in games or while scrolling."
+                    "Increasing capture frame rates can increase CPU usage proportionally.\nValues above 10 FPS may impact system performance significantly.\n\nNote that capture frame rate is automatically throttled for windows without any content changes. This may mean that with a high FPS setting, performance can be fine for some applications, but degrade significantly in games or while scrolling."
             ),
             Section(
                 title: "Recommended Settings",

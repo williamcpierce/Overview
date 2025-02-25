@@ -1,5 +1,5 @@
 /*
- Preview/Settings/PreviewSettingsTab.swift
+ Settings/GeneralSettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct PreviewSettingsTab: View {
+struct GeneralSettingsTab: View {
     // Dependencies
     private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
     private let logger = AppLogger.settings
@@ -54,7 +54,7 @@ struct PreviewSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Frame Rate")
+                    Text("Capture Frame Rate")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -99,12 +99,12 @@ struct PreviewSettingsTab: View {
                     )
                 }
             }
-            
+
             // MARK: - Focus Border Section
 
             Section {
                 HStack {
-                    Text("Window Focus Overlay")
+                    Text("Focus Overlay")
                         .font(.headline)
                     InfoPopover(
                         content: .windowFocus,
@@ -140,7 +140,7 @@ struct PreviewSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Source Title Overlay")
+                    Text("Title Overlay")
                         .font(.headline)
                     InfoPopover(
                         content: .sourceTitle,
@@ -150,7 +150,7 @@ struct PreviewSettingsTab: View {
                     Toggle("", isOn: $sourceTitleEnabled)
                 }
                 .padding(.bottom, 4)
-                
+
                 if sourceTitleEnabled {
                     HStack {
                         Text("Font size")
@@ -164,7 +164,7 @@ struct PreviewSettingsTab: View {
                         Text("pt")
                             .foregroundColor(.secondary)
                     }
-                    
+
                     HStack {
                         Text("Opacity")
                         OpacitySlider(value: $sourceTitleBackgroundOpacity)
@@ -178,17 +178,17 @@ struct PreviewSettingsTab: View {
                             Text("Bottom").tag(false)
                         }
                         .pickerStyle(.segmented)
-                        
+
                     }
                     HStack {
                         Picker("Type", selection: $sourceTitleType) {
                             Text("Window Title").tag(TitleType.windowTitle)
                             Text("Application Name").tag(TitleType.appName)
                             Text("Both").tag(TitleType.fullTitle)
-                            
+
                         }
                         .pickerStyle(.menu)
-                        
+
                     }
                 }
             }

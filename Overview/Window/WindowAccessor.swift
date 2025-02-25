@@ -32,6 +32,8 @@ struct WindowAccessor: NSViewRepresentable {
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
     private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
         .assignPreviewsToAllDesktops
+    @AppStorage(WindowSettingsKeys.syncAspectRatio)
+    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
 
     // MARK: - NSViewRepresentable
 
@@ -79,11 +81,13 @@ struct WindowAccessor: NSViewRepresentable {
         window.level = newLevel
         window.hasShadow = shadowEnabled
 
-        aspectService.synchronizeAspectRatio(
-            for: window,
-            aspectRatio: aspectRatio,
-            isCapturing: captureCoordinator.isCapturing
-        )
+        if syncAspectRatio {
+            aspectService.synchronizeAspectRatio(
+                for: window,
+                aspectRatio: aspectRatio,
+                isCapturing: captureCoordinator.isCapturing
+            )
+        }
 
         configService.updateMissionControl(window, isManaged: managedByMissionControl)
 

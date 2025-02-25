@@ -9,7 +9,7 @@
 
 extension InfoPopoverContent {
     static let windowFocus = InfoPopoverContent(
-        title: "Window Focus Overlay",
+        title: "Focus Overlay",
         sections: [
             Section(
                 title: "Overview",
@@ -29,7 +29,7 @@ extension InfoPopoverContent {
     )
 
     static let sourceTitle = InfoPopoverContent(
-        title: "Source Title Overlay",
+        title: "Title Overlay",
         sections: [
             Section(
                 title: "Overview",

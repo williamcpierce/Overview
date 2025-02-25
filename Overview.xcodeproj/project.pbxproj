@@ -98,6 +98,7 @@
 				Components/ResetSettingsButton.swift,
 				Components/WiggleModifier.swift,
 				Extensions/ColorExtension.swift,
+				GeneralSettingsTab.swift,
 				SettingsManager.swift,
 				SettingsMigrationUtility.swift,
 				SettingsView.swift,
@@ -111,7 +112,6 @@
 				PreviewView.swift,
 				Settings/PreviewSettingsContent.swift,
 				Settings/PreviewSettingsKeys.swift,
-				Settings/PreviewSettingsTab.swift,
 				Views/PreviewCapture.swift,
 				Views/PreviewSelection.swift,
 			);

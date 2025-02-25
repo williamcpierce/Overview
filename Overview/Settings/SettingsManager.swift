@@ -59,6 +59,9 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.defaultHeight,
             forKey: WindowSettingsKeys.defaultHeight)
         UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.syncAspectRatio,
+            forKey: WindowSettingsKeys.syncAspectRatio)
+        UserDefaults.standard.set(
             WindowSettingsKeys.defaults.managedByMissionControl,
             forKey: WindowSettingsKeys.managedByMissionControl)
         UserDefaults.standard.set(
@@ -76,6 +79,9 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.saveWindowsOnQuit,
             forKey: WindowSettingsKeys.saveWindowsOnQuit)
+        UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.restoreWindowsOnLaunch,
+            forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
 
         /// Reset Overlay settings
         UserDefaults.standard.set(
