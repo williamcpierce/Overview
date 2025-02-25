@@ -1,5 +1,5 @@
 /*
- Window/Settings/ProfileSettingsTab.swift
+ Window/Settings/LayoutSettingsTab.swift
  Overview
 
  Created by William Pierce on 2/24/25.
@@ -7,22 +7,22 @@
 
 import SwiftUI
 
-struct ProfileSettingsTab: View {
+struct LayoutSettingsTab: View {
     // Dependencies
-    @ObservedObject private var profileManager = ProfileManager.shared
+    @ObservedObject private var layoutManager = LayoutManager.shared
     @StateObject private var windowManager: WindowManager
     private let logger = AppLogger.settings
 
     // Private State
-    @State private var showingProfileInfo: Bool = false
-    @State private var newProfileName: String = ""
+    @State private var showingLayoutInfo: Bool = false
+    @State private var newLayoutName: String = ""
     @State private var showingApplyAlert: Bool = false
     @State private var showingUpdateAlert: Bool = false
     @State private var showingDeleteAlert: Bool = false
-    @State private var profileToModify: Profile? = nil
+    @State private var layoutToModify: Layout? = nil
 
-    // Selected profile dropdown state
-    @State private var launchProfileId: UUID? = nil
+    // Selected layout dropdown state
+    @State private var launchLayoutId: UUID? = nil
 
     init(windowManager: WindowManager) {
         self._windowManager = StateObject(wrappedValue: windowManager)
@@ -32,115 +32,115 @@ struct ProfileSettingsTab: View {
         Form {
             Section {
                 HStack {
-                    Text("Window Layout Profiles")
+                    Text("Window Layouts")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
-                        content: .windowProfiles,
-                        isPresented: $showingProfileInfo
+                        content: .windowLayouts,
+                        isPresented: $showingLayoutInfo
                     )
                 }
                 .padding(.bottom, 4)
 
-                profileListView
+                layoutListView
 
                 HStack {
-                    TextField("Profile name", text: $newProfileName)
+                    TextField("Layout name", text: $newLayoutName)
                         .textFieldStyle(.roundedBorder)
 
                     Button("Add") {
-                        if !newProfileName.isEmpty {
-                            _ = windowManager.saveCurrentLayoutAsProfile(name: newProfileName)
-                            newProfileName = ""
+                        if !newLayoutName.isEmpty {
+                            _ = windowManager.saveCurrentLayoutAsLayout(name: newLayoutName)
+                            newLayoutName = ""
                         }
                     }
-                    .disabled(newProfileName.isEmpty)
+                    .disabled(newLayoutName.isEmpty)
                 }
 
-                // Simplified dropdown for apply profile on launch
+                // Simplified dropdown for apply layout on launch
                 HStack {
-                    Text("Apply profile on launch")
+                    Text("Apply layout on launch")
                     Spacer()
-                    Picker("", selection: $launchProfileId) {
+                    Picker("", selection: $launchLayoutId) {
                         Text("None").tag(nil as UUID?)
-                        ForEach(profileManager.profiles) { profile in
-                            Text(profile.name).tag(profile.id as UUID?)
+                        ForEach(layoutManager.layouts) { layout in
+                            Text(layout.name).tag(layout.id as UUID?)
                         }
                     }
                     .frame(width: 120)
-                    .onChange(of: launchProfileId) { newValue in
-                        profileManager.setLaunchProfile(id: newValue)
+                    .onChange(of: launchLayoutId) { newValue in
+                        layoutManager.setLaunchLayout(id: newValue)
                     }
                 }
             }
         }
         .formStyle(.grouped)
         .onAppear {
-            // Initialize the selected profile when the view appears
-            launchProfileId = profileManager.launchProfileId
+            // Initialize the selected layout when the view appears
+            launchLayoutId = layoutManager.launchLayoutId
         }
-        .alert("Apply Profile", isPresented: $showingApplyAlert) {
+        .alert("Apply Layout", isPresented: $showingApplyAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Apply") {
-                if let profile = profileToModify {
-                    windowManager.applyProfile(profile)
+                if let layout = layoutToModify {
+                    windowManager.applyLayout(layout)
                 }
-                profileToModify = nil
+                layoutToModify = nil
             }
         } message: {
-            if let profile = profileToModify {
-                Text("Apply profile '\(profile.name)'? This will close all current windows.")
+            if let layout = layoutToModify {
+                Text("Apply layout '\(layout.name)'? This will close all current windows.")
             } else {
-                Text("Select a profile to apply")
+                Text("Select a layout to apply")
             }
         }
-        .alert("Update Profile", isPresented: $showingUpdateAlert) {
+        .alert("Update Layout", isPresented: $showingUpdateAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Update") {
-                if let profile = profileToModify {
-                    profileManager.updateProfile(id: profile.id)
+                if let layout = layoutToModify {
+                    layoutManager.updateLayout(id: layout.id)
                 }
-                profileToModify = nil
+                layoutToModify = nil
             }
         } message: {
-            if let profile = profileToModify {
-                Text("Update profile '\(profile.name)' with current window layout?")
+            if let layout = layoutToModify {
+                Text("Update layout '\(layout.name)' with current window layout?")
             } else {
-                Text("Select a profile to update")
+                Text("Select a layout to update")
             }
         }
-        .alert("Delete Profile", isPresented: $showingDeleteAlert) {
+        .alert("Delete Layout", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                if let profile = profileToModify {
-                    profileManager.deleteProfile(id: profile.id)
+                if let layout = layoutToModify {
+                    layoutManager.deleteLayout(id: layout.id)
                 }
-                profileToModify = nil
+                layoutToModify = nil
             }
         } message: {
-            if let profile = profileToModify {
-                Text("Delete profile '\(profile.name)'? This cannot be undone.")
+            if let layout = layoutToModify {
+                Text("Delete layout '\(layout.name)'? This cannot be undone.")
             } else {
-                Text("Select a profile to delete")
+                Text("Select a layout to delete")
             }
         }
     }
 
-    private var profileListView: some View {
+    private var layoutListView: some View {
         VStack {
             List {
-                if profileManager.profiles.isEmpty {
-                    Text("No profiles saved")
+                if layoutManager.layouts.isEmpty {
+                    Text("No layouts saved")
                         .foregroundColor(.secondary)
                 } else {
-                    ForEach(profileManager.profiles) { profile in
+                    ForEach(layoutManager.layouts) { layout in
                         HStack {
                             VStack(alignment: .leading) {
                                 HStack {
-                                    Text(profile.name)
+                                    Text(layout.name)
                                 }
 
-                                Text("\(profile.windows.count) windows")
+                                Text("\(layout.windows.count) windows")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -148,34 +148,34 @@ struct ProfileSettingsTab: View {
                             Spacer()
 
                             Button {
-                                profileToModify = profile
+                                layoutToModify = layout
                                 showingApplyAlert = true
                             } label: {
                                 Image(systemName: "checkmark.arrow.trianglehead.counterclockwise")
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
-                            .help("Apply profile")
+                            .help("Apply layout")
 
                             Button {
-                                profileToModify = profile
+                                layoutToModify = layout
                                 showingUpdateAlert = true
                             } label: {
                                 Image(systemName: "arrow.triangle.2.circlepath")
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
-                            .help("Update profile")
+                            .help("Update layout")
 
                             Button {
-                                profileToModify = profile
+                                layoutToModify = layout
                                 showingDeleteAlert = true
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
-                            .help("Delete profile")
+                            .help("Delete layout")
                         }
                     }
                 }

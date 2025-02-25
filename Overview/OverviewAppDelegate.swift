@@ -16,7 +16,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let logger = AppLogger.interface
     let updateManager: UpdateManager
     let permissionManager: PermissionManager
-    let profileManager: ProfileManager!
+    let layoutManager: LayoutManager!
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
@@ -26,11 +26,11 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     override init() {
         updateManager = UpdateManager()
         permissionManager = PermissionManager()
-        profileManager = ProfileManager()
+        layoutManager = LayoutManager()
 
         settingsManager = SettingsManager(
             updateManager: updateManager,
-            profileManager: profileManager
+            layoutManager: layoutManager
         )
         sourceManager = SourceManager(
             settingsManager: settingsManager,
@@ -50,7 +50,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
-            profileManager: profileManager
+            layoutManager: layoutManager
         )
 
         setupObservers()

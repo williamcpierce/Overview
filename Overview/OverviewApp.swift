@@ -33,7 +33,7 @@ struct OverviewApp: App {
                 settingsManager: appDelegate.settingsManager,
                 updateManager: appDelegate.updateManager,
                 windowManager: appDelegate.windowManager,
-                profileManager: appDelegate.profileManager
+                layoutManager: appDelegate.layoutManager
             )
         }
         .commands {
@@ -46,7 +46,7 @@ struct OverviewApp: App {
             newWindowButton
             Divider()
             editModeButton
-            profilesMenu
+            layoutsMenu
             Divider()
             settingsButton
             supportButton
@@ -104,31 +104,31 @@ struct OverviewApp: App {
         .keyboardShortcut("q")
     }
 
-    var profilesMenu: some View {
-        Menu("Apply Profile") {
-            profilesMenuContent
+    var layoutsMenu: some View {
+        Menu("Apply Layout") {
+            layoutsMenuContent
         }
     }
 
-    private var profilesMenuContent: some View {
-        ProfileMenuContent(
-            profileManager: appDelegate.profileManager, windowManager: appDelegate.windowManager)
+    private var layoutsMenuContent: some View {
+        LayoutMenuContent(
+            layoutManager: appDelegate.layoutManager, windowManager: appDelegate.windowManager)
     }
 
-    private struct ProfileMenuContent: View {
-        @ObservedObject var profileManager: ProfileManager
+    private struct LayoutMenuContent: View {
+        @ObservedObject var layoutManager: LayoutManager
         @ObservedObject var windowManager: WindowManager
 
         var body: some View {
-            if profileManager.profiles.isEmpty {
-                Text("No profiles saved")
+            if layoutManager.layouts.isEmpty {
+                Text("No layouts saved")
                     .foregroundColor(.secondary)
             } else {
-                ForEach(profileManager.profiles) { profile in
+                ForEach(layoutManager.layouts) { layout in
                     Button {
-                        windowManager.applyProfile(profile)
+                        windowManager.applyLayout(layout)
                     } label: {
-                        Text(profile.name)
+                        Text(layout.name)
                     }
                 }
             }

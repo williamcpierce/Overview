@@ -18,7 +18,7 @@ struct SettingsView: View {
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var updateManager: UpdateManager
     @ObservedObject var windowManager: WindowManager
-    @ObservedObject var profileManager: ProfileManager
+    @ObservedObject var layoutManager: LayoutManager
     private let logger = AppLogger.settings
 
     init(
@@ -26,14 +26,14 @@ struct SettingsView: View {
         settingsManager: SettingsManager,
         updateManager: UpdateManager,
         windowManager: WindowManager,
-        profileManager: ProfileManager
+        layoutManager: LayoutManager
 
     ) {
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
         self.updateManager = updateManager
         self.windowManager = windowManager
-        self.profileManager = profileManager
+        self.layoutManager = layoutManager
     }
 
     var body: some View {
@@ -50,8 +50,8 @@ struct SettingsView: View {
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
                 .scrollDisabled(true)
 
-            ProfileSettingsTab(windowManager: windowManager, profileManager: profileManager)
-                .tabItem { Label("Profiles", systemImage: "rectangle.3.offgrid.fill") }
+            LayoutSettingsTab(windowManager: windowManager, layoutManager: layoutManager)
+                .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
             ShortcutSettingsTab()

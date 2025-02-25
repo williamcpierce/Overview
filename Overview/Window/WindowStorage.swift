@@ -135,14 +135,14 @@ final class WindowStorage {
         do {
             try validateWindowStates(states)
 
-            logger.debug("Beginning profile window restoration: count=\(states.count)")
+            logger.debug("Beginning layout window restoration: count=\(states.count)")
             states.forEach { state in
                 handler(state.frame)
             }
 
-            logger.info("Successfully restored \(states.count) windows from profile")
+            logger.info("Successfully restored \(states.count) windows from layout")
         } catch {
-            logger.logError(error, context: "Profile window restoration failed")
+            logger.logError(error, context: "Layout window restoration failed")
         }
     }
 

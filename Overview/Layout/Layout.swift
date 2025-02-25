@@ -1,15 +1,15 @@
 /*
- Profile/Profile.swift
+ Layout/Layout.swift
  Overview
 
  Created by William Pierce on 2/24/25.
 
- Defines data structures for window arrangement profiles.
+ Defines data structures for window arrangement layouts.
 */
 
 import Foundation
 
-struct Profile: Codable, Identifiable, Equatable {
+struct Layout: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
     var windows: [WindowStorage.WindowState]

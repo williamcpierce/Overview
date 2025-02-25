@@ -14,7 +14,7 @@ final class WindowManager: ObservableObject {
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
-    private var profileManager: ProfileManager
+    private var layoutManager: LayoutManager
     private var permissionManager: PermissionManager
     private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
@@ -40,12 +40,12 @@ final class WindowManager: ObservableObject {
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
-        profileManager: ProfileManager
+        layoutManager: LayoutManager
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
-        self.profileManager = profileManager
+        self.layoutManager = layoutManager
         self.sessionWindowCounter = 0
         logger.debug("Window manager initialized")
     }
@@ -88,10 +88,10 @@ final class WindowManager: ObservableObject {
     }
 
     func restoreWindowStates() {
-        if profileManager.shouldApplyProfileOnLaunch(),
-            let activeProfile = profileManager.getActiveProfile()
+        if layoutManager.shouldApplyLayoutOnLaunch(),
+            let activeLayout = layoutManager.getActiveLayout()
         {
-            applyProfile(activeProfile)
+            applyLayout(activeLayout)
             return
         }
 
@@ -120,25 +120,25 @@ final class WindowManager: ObservableObject {
         handleRestoreCompletion(restoredCount)
     }
 
-    func applyProfile(_ profile: Profile) {
-        logger.info("Applying window profile: '\(profile.name)'")
+    func applyLayout(_ layout: Layout) {
+        logger.info("Applying window layout: '\(layout.name)'")
 
         closeAllWindows()
 
-        windowServices.windowStorage.restoreSpecificWindows(profile.windows) { [weak self] frame in
+        windowServices.windowStorage.restoreSpecificWindows(layout.windows) { [weak self] frame in
             guard let self = self else { return }
             do {
                 try createPreviewWindow(at: frame)
             } catch {
                 logger.logError(
-                    error, context: "Failed to create window from profile '\(profile.name)'")
+                    error, context: "Failed to create window from layout '\(layout.name)'")
             }
         }
     }
 
-    func saveCurrentLayoutAsProfile(name: String) -> Profile {
-        let profile = profileManager.createProfile(name: name)
-        return profile
+    func saveCurrentLayoutAsLayout(name: String) -> Layout {
+        let layout = layoutManager.createLayout(name: name)
+        return layout
     }
 
     // MARK: - Private Methods

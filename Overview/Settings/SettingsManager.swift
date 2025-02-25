@@ -14,7 +14,7 @@ import SwiftUI
 final class SettingsManager: ObservableObject {
     // Dependencies
     private let updateManager: UpdateManager
-    private let profileManager: ProfileManager
+    private let layoutManager: LayoutManager
     private let logger = AppLogger.settings
 
     // Published State
@@ -24,9 +24,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(updateManager: UpdateManager, profileManager: ProfileManager) {
+    init(updateManager: UpdateManager, layoutManager: LayoutManager) {
         self.updateManager = updateManager
-        self.profileManager = profileManager
+        self.layoutManager = layoutManager
 
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
             as? [String]
@@ -103,14 +103,14 @@ final class SettingsManager: ObservableObject {
             OverlaySettingsKeys.defaults.sourceTitleType,
             forKey: OverlaySettingsKeys.sourceTitleType)
 
-        /// Reset Profile settings
-        UserDefaults.standard.removeObject(forKey: ProfileSettingsKeys.profiles)
-        UserDefaults.standard.removeObject(forKey: ProfileSettingsKeys.launchProfileId)
+        /// Reset Layout settings
+        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.layouts)
+        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
         UserDefaults.standard.set(
-            ProfileSettingsKeys.defaults.applyProfileOnLaunch,
-            forKey: ProfileSettingsKeys.applyProfileOnLaunch)
-        profileManager.profiles = []
-        profileManager.setLaunchProfile(id: nil)
+            LayoutSettingsKeys.defaults.applyLayoutOnLaunch,
+            forKey: LayoutSettingsKeys.applyLayoutOnLaunch)
+        layoutManager.layouts = []
+        layoutManager.setLaunchLayout(id: nil)
 
         /// Reset Preview settings
         UserDefaults.standard.set(

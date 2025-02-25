@@ -1,5 +1,5 @@
 /*
- Window/Layout/LayoutManager.swift
+ Layout/LayoutManager.swift
  Overview
 
  Created by William Pierce on 2/24/25.
@@ -23,10 +23,7 @@ final class LayoutManager: ObservableObject {
     @AppStorage(LayoutSettingsKeys.applyLayoutOnLaunch)
     private var applyLayoutOnLaunch = LayoutSettingsKeys.defaults.applyLayoutOnLaunch
 
-    // Singleton
-    static let shared = LayoutManager()
-
-    private init(
+    init(
         windowStorage: WindowStorage = WindowStorage.shared,
         defaults: UserDefaults = .standard
     ) {

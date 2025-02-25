@@ -1,15 +1,15 @@
 /*
- Window/Profile/Profile.swift
+ Window/Layout/Layout.swift
  Overview
 
  Created by William Pierce on 2/24/25.
 
- Defines data structures for window arrangement profiles.
+ Defines data structures for window arrangement layouts.
 */
 
 import Foundation
 
-struct Profile: Codable, Identifiable, Equatable {
+struct Layout: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
     var windows: [WindowStorage.WindowState]
@@ -37,14 +37,14 @@ struct Profile: Codable, Identifiable, Equatable {
     }
 }
 
-enum ProfileSettingsKeys {
-    static let profiles: String = "storedProfiles"
-    static let launchProfileId: String = "launchProfileId"
-    static let applyProfileOnLaunch: String = "applyProfileOnLaunch"
+enum LayoutSettingsKeys {
+    static let layouts: String = "storedLayouts"
+    static let launchLayoutId: String = "launchLayoutId"
+    static let applyLayoutOnLaunch: String = "applyLayoutOnLaunch"
 
     static let defaults = Defaults()
 
     struct Defaults {
-        let applyProfileOnLaunch: Bool = false
+        let applyLayoutOnLaunch: Bool = false
     }
 }
