@@ -355,7 +355,10 @@ struct PreviewView: View {
             || sourceManager.isOverviewActive
 
         if alwaysShown {
-            isPreviewVisible = true
+            Task {
+                try await Task.sleep(nanoseconds: 50_000_000)
+                isPreviewVisible = true
+            }
             return
         }
 
@@ -364,8 +367,10 @@ struct PreviewView: View {
 
         let shouldHideForActiveWindow =
             hideActiveWindow && captureCoordinator.isSourceWindowFocused
-
-        isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
+        Task {
+            try await Task.sleep(nanoseconds: 50_000_000)
+            isPreviewVisible = !shouldHideForInactiveApps && !shouldHideForActiveWindow
+        }
     }
 
     private func updatePreviewFrameRate() {
