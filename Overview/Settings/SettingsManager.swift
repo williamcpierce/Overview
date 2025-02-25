@@ -106,9 +106,6 @@ final class SettingsManager: ObservableObject {
         /// Reset Layout settings
         UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.layouts)
         UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
-        UserDefaults.standard.set(
-            LayoutSettingsKeys.defaults.applyLayoutOnLaunch,
-            forKey: LayoutSettingsKeys.applyLayoutOnLaunch)
         layoutManager.layouts = []
         layoutManager.setLaunchLayout(id: nil)
 

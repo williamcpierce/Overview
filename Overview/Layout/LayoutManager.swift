@@ -20,9 +20,6 @@ final class LayoutManager: ObservableObject {
     @Published var layouts: [Layout] = []
     @Published var launchLayoutId: UUID? = nil
 
-    @AppStorage(LayoutSettingsKeys.applyLayoutOnLaunch)
-    private var applyLayoutOnLaunch = LayoutSettingsKeys.defaults.applyLayoutOnLaunch
-
     init(
         windowStorage: WindowStorage = WindowStorage.shared,
         defaults: UserDefaults = .standard
@@ -44,13 +41,13 @@ final class LayoutManager: ObservableObject {
     // MARK: - Layout Management
 
     func createLayout(name: String) -> Layout {
-        let currentWindowStates = windowStorage.collectCurrentWindowStates()
-        let layout = Layout(name: name, windows: currentWindowStates)
+        let currentWindows = windowStorage.collectWindows()
+        let layout = Layout(name: name, windows: currentWindows)
 
         layouts.append(layout)
         saveLayouts()
 
-        logger.info("Created new layout '\(name)' with \(currentWindowStates.count) windows")
+        logger.info("Created new layout '\(name)' with \(currentWindows.count) windows")
         return layout
     }
 
@@ -65,10 +62,10 @@ final class LayoutManager: ObservableObject {
         if let name = name {
             layout.update(name: name)
         } else {
-            let currentWindowStates = windowStorage.collectCurrentWindowStates()
-            layout.update(windows: currentWindowStates)
+            let currentWindows = windowStorage.collectWindows()
+            layout.update(windows: currentWindows)
             logger.info(
-                "Updated layout '\(layout.name)' with \(currentWindowStates.count) windows")
+                "Updated layout '\(layout.name)' with \(currentWindows.count) windows")
         }
 
         layouts[index] = layout
@@ -122,7 +119,7 @@ final class LayoutManager: ObservableObject {
     }
 
     func shouldApplyLayoutOnLaunch() -> Bool {
-        return applyLayoutOnLaunch && launchLayoutId != nil && getLaunchLayout() != nil
+        return launchLayoutId != nil && getLaunchLayout() != nil
     }
 
     // MARK: - Private Storage Methods

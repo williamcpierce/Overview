@@ -81,13 +81,7 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func handleWindowsOnQuit() {
-        if saveWindowsOnQuit {
-            windowServices.saveWindowStates()
-        }
-    }
-
-    func restoreWindows() {
+    func handleWindowsOnLaunch() {
         if layoutManager.shouldApplyLayoutOnLaunch(),
             let launchLayout = layoutManager.getLaunchLayout()
         {
@@ -95,29 +89,31 @@ final class WindowManager: ObservableObject {
             return
         }
 
-        /// Fallback to standard window restoration
         var restoredCount: Int = 0
 
-        do {
-            guard windowServices.validateStoredState() else {
-                throw WindowManagerError.windowRestoreValidationFailed
+        windowServices.windowStorage.restoreWindows { [weak self] frame in
+            guard let self = self else { return }
+            do {
+                try createWindow(at: frame)
+                restoredCount += 1
+                logger.debug("Restored window \(restoredCount)")
+            } catch {
+                logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
             }
-
-            windowServices.restoreWindows { [weak self] frame in
-                guard let self = self else { return }
-                do {
-                    try createWindow(at: frame)
-                    restoredCount += 1
-                    logger.debug("Restored window \(restoredCount)")
-                } catch {
-                    logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
-                }
-            }
-        } catch {
-            logger.logError(error, context: "Window state restoration failed")
         }
 
         handleRestoreCompletion(restoredCount)
+    }
+
+    func handleWindowsOnQuit() {
+        if saveWindowsOnQuit {
+            windowServices.windowStorage.storeWindows()
+        }
+    }
+
+    func saveLayout(name: String) -> Layout {
+        let layout = layoutManager.createLayout(name: name)
+        return layout
     }
 
     func applyLayout(_ layout: Layout) {
@@ -125,7 +121,7 @@ final class WindowManager: ObservableObject {
 
         closeAllWindows()
 
-        windowServices.windowStorage.restoreSpecificWindows(layout.windows) { [weak self] frame in
+        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
             guard let self = self else { return }
             do {
                 try createWindow(at: frame)
@@ -134,11 +130,6 @@ final class WindowManager: ObservableObject {
                     error, context: "Failed to create window from layout '\(layout.name)'")
             }
         }
-    }
-
-    func saveCurrentLayout(name: String) -> Layout {
-        let layout = layoutManager.createLayout(name: name)
-        return layout
     }
 
     // MARK: - Private Methods
@@ -215,8 +206,6 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
 enum WindowManagerError: LocalizedError {
     case windowCreationFailed
     case invalidScreenConfiguration
-    case windowRestoreValidationFailed
-    case windowValidationFailed
 
     var errorDescription: String? {
         switch self {
@@ -224,10 +213,6 @@ enum WindowManagerError: LocalizedError {
             return "Failed to create window with valid configuration"
         case .invalidScreenConfiguration:
             return "No valid screen configuration available"
-        case .windowRestoreValidationFailed:
-            return "Window restore state validation failed"
-        case .windowValidationFailed:
-            return "Window state validation failed"
         }
     }
 }

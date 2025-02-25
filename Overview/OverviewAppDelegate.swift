@@ -72,7 +72,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await permissionManager.ensurePermission()
-                windowManager.restoreWindows()
+                windowManager.handleWindowsOnLaunch()
                 logger.info("Application initialization completed")
             } catch {
                 logger.logError(error, context: "Failed to ensure permissions during launch")

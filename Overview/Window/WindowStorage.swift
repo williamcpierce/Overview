@@ -54,7 +54,6 @@ final class WindowStorage {
         }
 
         func validate() throws {
-            /// Validate dimensions
             guard width > Constants.Validation.minDimension,
                 height > Constants.Validation.minDimension
             else {
@@ -63,7 +62,6 @@ final class WindowStorage {
                 )
             }
 
-            /// Validate position
             guard abs(x) <= Constants.Validation.maxPosition,
                 abs(y) <= Constants.Validation.maxPosition
             else {
@@ -76,129 +74,100 @@ final class WindowStorage {
 
     // MARK: - Public Methods
 
-    func saveWindowStates() {
+    func storeWindows() {
         do {
-            let states = collectWindowStates()
-            try validateWindowStates(states)
-            try persistWindowStates(states)
-            logger.info("Successfully saved \(states.count) window states")
+            let windows = collectWindows()
+            try validateWindows(windows)
+            try saveWindows(windows)
+            logger.info("Successfully saved \(windows.count) windows")
         } catch {
-            logger.logError(error, context: "Failed to save window states")
+            logger.logError(error, context: "Failed to save windows")
+        }
+    }
+
+    func collectWindows() -> [WindowState] {
+        NSApplication.shared.windows.compactMap { window in
+            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
+            else {
+                return nil
+            }
+            return WindowState(frame: window.frame)
         }
     }
 
     func restoreWindows(using createWindow: (NSRect) -> Void) {
         do {
-            let states = try loadValidatedStates()
+            let windows = try loadWindows()
 
-            logger.debug("Beginning window restoration: count=\(states.count)")
-            states.forEach { state in
-                createWindow(state.frame)
+            logger.debug("Beginning window restoration: count=\(windows.count)")
+            windows.forEach { window in
+                createWindow(window.frame)
             }
 
-            logger.info("Successfully restored \(states.count) windows")
+            logger.info("Successfully restored \(windows.count) windows")
         } catch {
             logger.logError(error, context: "Window restoration failed")
         }
     }
 
-    func getStoredWindowCount() -> Int {
+    func applyWindows(_ windows: [WindowState], using handler: (NSRect) -> Void) {
         do {
-            return try loadValidatedStates().count
-        } catch {
-            logger.debug("Failed to get stored window count: \(error.localizedDescription)")
-            return 0
-        }
-    }
+            try validateWindows(windows)
 
-    func validateStoredState() -> Bool {
-        do {
-            _ = try loadValidatedStates()
-            return true
-        } catch {
-            logger.error("Stored state validation failed: \(error.localizedDescription)")
-            return false
-        }
-    }
-
-    func collectCurrentWindowStates() -> [WindowState] {
-        NSApplication.shared.windows.compactMap { window in
-            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
-            else {
-                return nil
-            }
-            return WindowState(frame: window.frame)
-        }
-    }
-
-    func restoreSpecificWindows(_ states: [WindowState], using handler: (NSRect) -> Void) {
-        do {
-            try validateWindowStates(states)
-
-            logger.debug("Beginning layout window restoration: count=\(states.count)")
-            states.forEach { state in
-                handler(state.frame)
+            logger.debug("Beginning window application: count=\(windows.count)")
+            windows.forEach { window in
+                handler(window.frame)
             }
 
-            logger.info("Successfully restored \(states.count) windows from layout")
+            logger.info("Successfully applied \(windows.count) windows")
         } catch {
-            logger.logError(error, context: "Layout window restoration failed")
+            logger.logError(error, context: "Window application failed")
         }
     }
 
     // MARK: - Private Methods
 
-    private func collectWindowStates() -> [WindowState] {
-        NSApplication.shared.windows.compactMap { window in
-            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
-            else {
-                return nil
-            }
-            return WindowState(frame: window.frame)
-        }
-    }
-
-    private func validateWindowStates(_ states: [WindowState]) throws {
-        guard states.count <= Constants.Validation.maxWindowCount else {
-            throw WindowStorageError.validationFailed(
-                "Too many windows: \(states.count)"
-            )
-        }
-
-        try states.forEach { state in
-            try state.validate()
-        }
-
-        logger.debug("Window states validated: count=\(states.count)")
-    }
-
-    private func persistWindowStates(_ states: [WindowState]) throws {
+    private func saveWindows(_ windows: [WindowState]) throws {
         do {
-            let data = try JSONEncoder().encode(states)
+            let data = try JSONEncoder().encode(windows)
             defaults.set(data, forKey: Constants.storageKey)
-            logger.debug("Window states persisted to storage")
+            logger.debug("Windows persisted to storage")
         } catch {
-            logger.error("State encoding failed: \(error.localizedDescription)")
+            logger.error("Window state encoding failed: \(error.localizedDescription)")
             throw WindowStorageError.encodingFailed
         }
     }
 
-    private func loadValidatedStates() throws -> [WindowState] {
+    private func loadWindows() throws -> [WindowState] {
         guard let data = defaults.data(forKey: Constants.storageKey) else {
-            logger.debug("No stored window states found")
+            logger.debug("No stored windows found")
             throw WindowStorageError.noDataFound
         }
 
         do {
-            let states = try JSONDecoder().decode([WindowState].self, from: data)
-            try validateWindowStates(states)
-            return states
+            let windows = try JSONDecoder().decode([WindowState].self, from: data)
+            try validateWindows(windows)
+            return windows
         } catch let error as WindowStorageError {
             throw error
         } catch {
-            logger.error("State decoding failed: \(error.localizedDescription)")
+            logger.error("Window state decoding failed: \(error.localizedDescription)")
             throw WindowStorageError.decodingFailed
         }
+    }
+
+    private func validateWindows(_ windows: [WindowState]) throws {
+        guard windows.count <= Constants.Validation.maxWindowCount else {
+            throw WindowStorageError.validationFailed(
+                "Too many windows: \(windows.count)"
+            )
+        }
+
+        try windows.forEach { window in
+            try window.validate()
+        }
+
+        logger.debug("Windows validated: count=\(windows.count)")
     }
 }
 

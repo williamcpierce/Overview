@@ -46,16 +46,4 @@ final class WindowServices {
         let window = try windowConfiguration.createWindow(with: windowFrame)
         return window
     }
-
-    func saveWindowStates() {
-        windowStorage.saveWindowStates()
-    }
-
-    func restoreWindows(using handler: (NSRect) -> Void) {
-        windowStorage.restoreWindows(using: handler)
-    }
-
-    func validateStoredState() -> Bool {
-        windowStorage.validateStoredState()
-    }
 }
