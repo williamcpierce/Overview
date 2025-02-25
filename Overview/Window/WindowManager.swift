@@ -81,7 +81,7 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func saveWindowStatesOnQuit() {
+    func handleWindowStatesOnQuit() {
         if saveWindowsOnQuit {
             windowServices.saveWindowStates()
         }

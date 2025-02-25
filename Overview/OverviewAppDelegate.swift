@@ -82,7 +82,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         logger.debug("Application preparing to terminate")
-        windowManager.saveWindowStatesOnQuit()
+        windowManager.handleWindowStatesOnQuit()
     }
 
     // MARK: - Private Methods
