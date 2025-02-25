@@ -9,7 +9,7 @@ import Foundation
 
 enum ProfileSettingsKeys {
     static let profiles: String = "storedProfiles"
-    static let activeProfileId: String = "activeProfileId"
+    static let launchProfileId: String = "launchProfileId"
     static let applyProfileOnLaunch: String = "applyProfileOnLaunch"
 
     static let defaults = Defaults()

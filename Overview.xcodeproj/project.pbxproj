@@ -34,11 +34,11 @@
 		C800AF792D6D3AA3001A6E31 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Profile.swift,
 				ProfileManager.swift,
 				Settings/ProfileSettingsContent.swift,
 				Settings/ProfileSettingsKeys.swift,
 				Settings/ProfileSettingsTab.swift,
-				WindowProfile.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

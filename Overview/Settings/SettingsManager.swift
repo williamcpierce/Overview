@@ -74,8 +74,8 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
             forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
         UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.savePositionsOnClose,
-            forKey: WindowSettingsKeys.savePositionsOnClose)
+            WindowSettingsKeys.defaults.saveWindowsOnQuit,
+            forKey: WindowSettingsKeys.saveWindowsOnQuit)
 
         /// Reset Overlay settings
         UserDefaults.standard.set(
@@ -105,12 +105,12 @@ final class SettingsManager: ObservableObject {
 
         /// Reset Profile settings
         UserDefaults.standard.removeObject(forKey: ProfileSettingsKeys.profiles)
-        UserDefaults.standard.removeObject(forKey: ProfileSettingsKeys.activeProfileId)
+        UserDefaults.standard.removeObject(forKey: ProfileSettingsKeys.launchProfileId)
         UserDefaults.standard.set(
             ProfileSettingsKeys.defaults.applyProfileOnLaunch,
             forKey: ProfileSettingsKeys.applyProfileOnLaunch)
         profileManager.profiles = []
-        profileManager.setActiveProfile(id: nil)
+        profileManager.setLaunchProfile(id: nil)
 
         /// Reset Preview settings
         UserDefaults.standard.set(

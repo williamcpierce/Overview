@@ -1,5 +1,5 @@
 /*
- Profile/Settings/ProfileSettingsTab.swift
+ Window/Settings/ProfileSettingsTab.swift
  Overview
 
  Created by William Pierce on 2/24/25.
@@ -9,21 +9,22 @@ import SwiftUI
 
 struct ProfileSettingsTab: View {
     // Dependencies
-    @ObservedObject private var profileManager: ProfileManager
+    @ObservedObject private var profileManager = ProfileManager.shared
     @StateObject private var windowManager: WindowManager
     private let logger = AppLogger.settings
 
     // Private State
     @State private var showingProfileInfo: Bool = false
+    @State private var newProfileName: String = ""
     @State private var showingApplyAlert: Bool = false
     @State private var showingUpdateAlert: Bool = false
     @State private var showingDeleteAlert: Bool = false
     @State private var profileToModify: Profile? = nil
-    @State private var newProfileName: String = ""
+
+    // Selected profile dropdown state
     @State private var launchProfileId: UUID? = nil
 
-    init(windowManager: WindowManager, profileManager: ProfileManager) {
-        self.profileManager = profileManager
+    init(windowManager: WindowManager) {
         self._windowManager = StateObject(wrappedValue: windowManager)
     }
 
@@ -47,7 +48,7 @@ struct ProfileSettingsTab: View {
                     TextField("Profile name", text: $newProfileName)
                         .textFieldStyle(.roundedBorder)
 
-                    Button("Create") {
+                    Button("Add") {
                         if !newProfileName.isEmpty {
                             _ = windowManager.saveCurrentLayoutAsProfile(name: newProfileName)
                             newProfileName = ""
@@ -56,6 +57,7 @@ struct ProfileSettingsTab: View {
                     .disabled(newProfileName.isEmpty)
                 }
 
+                // Simplified dropdown for apply profile on launch
                 HStack {
                     Text("Apply profile on launch")
                     Spacer()
@@ -65,7 +67,7 @@ struct ProfileSettingsTab: View {
                             Text(profile.name).tag(profile.id as UUID?)
                         }
                     }
-                    .frame(width: 160)
+                    .frame(width: 120)
                     .onChange(of: launchProfileId) { newValue in
                         profileManager.setLaunchProfile(id: newValue)
                     }
@@ -73,8 +75,8 @@ struct ProfileSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 384)
         .onAppear {
+            // Initialize the selected profile when the view appears
             launchProfileId = profileManager.launchProfileId
         }
         .alert("Apply Profile", isPresented: $showingApplyAlert) {
@@ -112,10 +114,6 @@ struct ProfileSettingsTab: View {
             Button("Delete", role: .destructive) {
                 if let profile = profileToModify {
                     profileManager.deleteProfile(id: profile.id)
-
-                    if launchProfileId == profile.id {
-                        launchProfileId = nil
-                    }
                 }
                 profileToModify = nil
             }
@@ -140,9 +138,8 @@ struct ProfileSettingsTab: View {
                             VStack(alignment: .leading) {
                                 HStack {
                                     Text(profile.name)
-                                        .lineLimit(1)
-                                        .help("Profile name")
                                 }
+
                                 Text("\(profile.windows.count) windows")
                                     .font(.caption)
                                     .foregroundColor(.secondary)

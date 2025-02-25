@@ -1,5 +1,5 @@
 /*
- Profile/ProfileManager.swift
+ Window/Profile/ProfileManager.swift
  Overview
 
  Created by William Pierce on 2/24/25.
@@ -23,7 +23,10 @@ final class ProfileManager: ObservableObject {
     @AppStorage(ProfileSettingsKeys.applyProfileOnLaunch)
     private var applyProfileOnLaunch = ProfileSettingsKeys.defaults.applyProfileOnLaunch
 
-    init(
+    // Singleton
+    static let shared = ProfileManager()
+
+    private init(
         windowStorage: WindowStorage = WindowStorage.shared,
         defaults: UserDefaults = .standard
     ) {

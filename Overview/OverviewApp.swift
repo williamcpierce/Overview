@@ -105,7 +105,7 @@ struct OverviewApp: App {
     }
 
     var profilesMenu: some View {
-        Menu("Activate Profile") {
+        Menu("Apply Profile") {
             profilesMenuContent
         }
     }

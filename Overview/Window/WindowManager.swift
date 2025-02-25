@@ -33,8 +33,8 @@ final class WindowManager: ObservableObject {
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
-    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
+    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
+    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
 
     init(
         previewManager: PreviewManager,
@@ -82,13 +82,9 @@ final class WindowManager: ObservableObject {
     }
 
     func saveWindowStatesOnQuit() {
-        if savePositionsOnClose {
-            saveWindowStates()
+        if saveWindowsOnQuit {
+            windowServices.saveWindowStates()
         }
-    }
-
-    func saveWindowStates() {
-        windowServices.saveWindowStates()
     }
 
     func restoreWindowStates() {
@@ -100,7 +96,7 @@ final class WindowManager: ObservableObject {
         }
 
         /// Fallback to standard window restoration
-        var restoredCount = 0
+        var restoredCount: Int = 0
 
         do {
             guard windowServices.validateStoredState() else {
@@ -124,7 +120,7 @@ final class WindowManager: ObservableObject {
         handleRestoreCompletion(restoredCount)
     }
 
-    func applyProfile(_ profile: WindowProfile) {
+    func applyProfile(_ profile: Profile) {
         logger.info("Applying window profile: '\(profile.name)'")
 
         closeAllWindows()
@@ -140,25 +136,9 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func saveCurrentLayoutAsProfile(name: String) -> WindowProfile {
+    func saveCurrentLayoutAsProfile(name: String) -> Profile {
         let profile = profileManager.createProfile(name: name)
         return profile
-    }
-
-    private func closeAllWindows() {
-        let windowsToClose = activeWindows
-        for window in windowsToClose {
-            closeWindow(window)
-        }
-    }
-
-    private func handleRestoreCompletion(_ restoredCount: Int) {
-        if restoredCount == 0 && createOnLaunch {
-            logger.info("No windows restored, creating default window")
-            createDefaultWindow()
-        } else {
-            logger.info("Successfully restored \(restoredCount) windows")
-        }
     }
 
     // MARK: - Private Methods
@@ -195,6 +175,22 @@ final class WindowManager: ObservableObject {
             }
         )
         window.contentView = NSHostingView(rootView: contentView)
+    }
+
+    private func closeAllWindows() {
+        let windowsToClose = activeWindows
+        for window in windowsToClose {
+            closeWindow(window)
+        }
+    }
+
+    private func handleRestoreCompletion(_ restoredCount: Int) {
+        if restoredCount == 0 && createOnLaunch {
+            logger.info("No windows restored, creating default window")
+            createDefaultWindow()
+        } else {
+            logger.info("Successfully restored \(restoredCount) windows")
+        }
     }
 }
 

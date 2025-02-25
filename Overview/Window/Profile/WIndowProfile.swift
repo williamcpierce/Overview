@@ -1,5 +1,5 @@
 /*
- Profile/WindowProfile.swift
+ Window/Profile/Profile.swift
  Overview
 
  Created by William Pierce on 2/24/25.
@@ -9,7 +9,7 @@
 
 import Foundation
 
-struct WindowProfile: Codable, Identifiable, Equatable {
+struct Profile: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
     var windows: [WindowStorage.WindowState]
@@ -34,5 +34,17 @@ struct WindowProfile: Codable, Identifiable, Equatable {
         }
 
         self.updatedAt = Date()
+    }
+}
+
+enum ProfileSettingsKeys {
+    static let profiles: String = "storedProfiles"
+    static let launchProfileId: String = "launchProfileId"
+    static let applyProfileOnLaunch: String = "applyProfileOnLaunch"
+
+    static let defaults = Defaults()
+
+    struct Defaults {
+        let applyProfileOnLaunch: Bool = false
     }
 }
