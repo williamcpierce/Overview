@@ -89,9 +89,9 @@ final class WindowManager: ObservableObject {
 
     func restoreWindowStates() {
         if layoutManager.shouldApplyLayoutOnLaunch(),
-            let activeLayout = layoutManager.getActiveLayout()
+            let launchLayout = layoutManager.getLaunchLayout()
         {
-            applyLayout(activeLayout)
+            applyLayout(launchLayout)
             return
         }
 

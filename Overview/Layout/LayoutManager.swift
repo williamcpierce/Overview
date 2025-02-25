@@ -105,7 +105,7 @@ final class LayoutManager: ObservableObject {
         }
     }
 
-    func getActiveLayout() -> Layout? {
+    func getLaunchLayout() -> Layout? {
         guard let launchLayoutId = launchLayoutId else {
             return nil
         }
@@ -122,7 +122,7 @@ final class LayoutManager: ObservableObject {
     }
 
     func shouldApplyLayoutOnLaunch() -> Bool {
-        return applyLayoutOnLaunch && launchLayoutId != nil && getActiveLayout() != nil
+        return applyLayoutOnLaunch && launchLayoutId != nil && getLaunchLayout() != nil
     }
 
     // MARK: - Private Storage Methods
