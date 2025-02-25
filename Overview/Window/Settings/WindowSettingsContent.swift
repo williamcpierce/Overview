@@ -52,9 +52,9 @@ extension InfoPopoverContent {
         title: "Window Management",
         sections: [
             Section(
-                title: "Create Window on Launch",
+                title: "Always Create Window on Launch",
                 text:
-                    "Opens a preview window at startup if none were restored from a previous session"
+                    "Creates a preview window at on launch if none were restored from a previous session"
             ),
             Section(
                 title: "Close Window with Preview Source",
@@ -63,7 +63,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Save Window Positions on Quit",
                 text:
-                    "Saves the position and size of each Overview window on app quit, to be restored on app launch"
+                    "Saves the position and size of each preview window on when Overview is quit"
             ),
         ],
         isWarning: false

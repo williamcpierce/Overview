@@ -104,11 +104,11 @@ struct WindowSettingsTab: View {
                 Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
             }
 
-            // MARK: - Visibility Section
+            // MARK: - System Visibility Section
 
             Section {
                 HStack {
-                    Text("Visibility")
+                    Text("System Visibility")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -123,7 +123,7 @@ struct WindowSettingsTab: View {
                 }
             }
 
-            // MARK: - Management Section
+            // MARK: - Window Management Section
 
             Section {
                 HStack {
@@ -137,7 +137,7 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Create window on launch", isOn: $createOnLaunch)
+                    Toggle("Always create window on launch", isOn: $createOnLaunch)
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
                     Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
                 }
