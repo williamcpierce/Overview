@@ -68,7 +68,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Restore Window Positions on Launch",
                 text:
-                    "Restores the last saved window positions and sizes when Overview is launched"
+                    "Restores the last saved preview window positions and sizes when Overview is launched"
             ),
         ],
         isWarning: false
