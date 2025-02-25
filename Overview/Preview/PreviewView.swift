@@ -209,8 +209,11 @@ struct PreviewView: View {
             logger.info("Initializing capture system")
             await previewManager.initializeCaptureSystem(captureCoordinator)
             
-            // Try to bind to the initial title if provided
+            // Try to bind to the initial title if provided, but wait for sources to load first
             if let title = initialBoundTitle {
+                logger.info("Will attempt to bind to initial title: '\(title)' after sources load")
+                // We need to wait for sources to load before trying to bind
+                await previewManager.updateAvailableSources()
                 bindToTitle(title)
             }
         }
@@ -228,10 +231,23 @@ struct PreviewView: View {
     private func bindToTitle(_ title: String) {
         logger.info("Attempting to bind window to title: '\(title)'")
         
+        // Debug log available sources
+        logger.debug("Available sources count: \(previewManager.availableSources.count)")
+        for source in previewManager.availableSources {
+            logger.debug("Available source: '\(source.title ?? "untitled")' from \(source.owningApplication?.applicationName ?? "unknown")")
+        }
+        
         // Check if this source is currently available
-        if let source = previewManager.availableSources.first(where: { $0.title == title }) {
+        if let source = previewManager.availableSources.first(where: {
+            guard let sourceTitle = $0.title else { return false }
+            let matches = sourceTitle == title
+            if matches {
+                logger.debug("Found matching source: '\(sourceTitle)'")
+            }
+            return matches
+        }) {
             // Source is available, start capture
-            logger.info("Found source for binding: '\(title)'")
+            logger.info("Found source for binding: '\(title)', starting capture")
             previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
         } else {
             // Source not available, enter waiting mode
@@ -241,8 +257,29 @@ struct PreviewView: View {
             
             // We'll check for the source when availableSources changes
             Task {
+                // Force refresh the source list
+                logger.debug("Forcing source list refresh to find: '\(title)'")
                 await previewManager.updateAvailableSources()
                 checkForWaitingTitle()
+                
+                // Set up a timer to periodically check for the source
+                setupWaitingTimer()
+            }
+        }
+    }
+    
+    private func setupWaitingTimer() {
+        // Create a timer to periodically check for the waiting source
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            // Check if we're still waiting for a title
+            if !self.isTitleWaiting {
+                timer.invalidate()
+                return
+            }
+            
+            Task {
+                await self.previewManager.updateAvailableSources()
+                self.checkForWaitingTitle()
             }
         }
     }
@@ -250,11 +287,24 @@ struct PreviewView: View {
     private func checkForWaitingTitle() {
         guard isTitleWaiting, let title = waitingForTitle else { return }
         
-        if let source = previewManager.availableSources.first(where: { $0.title == title }) {
+        logger.debug("Checking for waiting title: '\(title)' among \(previewManager.availableSources.count) sources")
+        
+        // Debug - list all available sources
+        for source in previewManager.availableSources {
+            logger.debug("Available source: '\(source.title ?? "untitled")' from \(source.owningApplication?.applicationName ?? "unknown")")
+        }
+        
+        if let source = previewManager.availableSources.first(where: {
+            guard let sourceTitle = $0.title else { return false }
+            return sourceTitle == title
+        }) {
             logger.info("Found source for waiting title: '\(title)'")
+            // Use the preview manager to start capture with our source
             previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
             isTitleWaiting = false
             waitingForTitle = nil
+        } else {
+            logger.debug("Source for waiting title '\(title)' not found yet")
         }
     }
 
