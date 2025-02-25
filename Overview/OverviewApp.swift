@@ -207,7 +207,8 @@ struct OverviewApp: App {
     }
 
     private func openBugReport() {
-        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug") {
+        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug")
+        {
             NSWorkspace.shared.open(url)
         }
     }
@@ -237,7 +238,7 @@ struct OverviewApp: App {
             }
         }
     }
-    
+
     private func toggleEditMode() {
         Task { @MainActor in
             appDelegate.previewManager.editModeEnabled.toggle()
