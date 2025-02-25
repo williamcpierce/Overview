@@ -12,15 +12,17 @@ struct WindowState: Codable, Equatable {
     let y: Double
     let width: Double
     let height: Double
+    let boundWindowTitle: String?
 
     var frame: NSRect {
         NSRect(x: x, y: y, width: width, height: height)
     }
 
-    init(frame: NSRect) {
+    init(frame: NSRect, boundWindowTitle: String? = nil) {
         self.x = frame.origin.x
         self.y = frame.origin.y
         self.width = frame.width
         self.height = frame.height
+        self.boundWindowTitle = boundWindowTitle
     }
 }

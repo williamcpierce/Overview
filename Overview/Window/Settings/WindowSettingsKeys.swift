@@ -20,6 +20,7 @@ enum WindowSettingsKeys {
     static let saveWindowsOnQuit: String = "savePositionsOnClose"
     static let restoreWindowsOnLaunch: String = "restoreWindowsOnLaunch"
     static let storedWindows: String = "StoredWindowPositions"
+    static let bindWindowsToTitles: String = "bindWindowsToTitles"
 
     static let defaults = Defaults()
 
@@ -35,5 +36,6 @@ enum WindowSettingsKeys {
         let assignPreviewsToAllDesktops: Bool = false
         let saveWindowsOnQuit: Bool = true
         let restoreWindowsOnLaunch: Bool = true
+        let bindWindowsToTitles: Bool = true
     }
 }
