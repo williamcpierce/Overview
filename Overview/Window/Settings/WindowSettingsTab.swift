@@ -22,6 +22,8 @@ struct WindowSettingsTab: View {
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
     @AppStorage(WindowSettingsKeys.defaultHeight)
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.syncAspectRatio)
+    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
     @AppStorage(WindowSettingsKeys.managedByMissionControl)
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
     @AppStorage(WindowSettingsKeys.createOnLaunch)
@@ -98,6 +100,8 @@ struct WindowSettingsTab: View {
                             .foregroundColor(.secondary)
                     }
                 }
+
+                Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
             }
 
             // MARK: - Visibility Section

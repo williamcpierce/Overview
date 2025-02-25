@@ -22,7 +22,12 @@ extension InfoPopoverContent {
             Section(
                 title: "Default Dimensions",
                 text:
-                    "Sets initial dimensions for new windows. Windows can be resized while in Edit Mode."
+                    "Sets initial dimensions for new preview windows. Windows can be resized while in Edit Mode."
+            ),
+            Section(
+                title: "Synchronize Aspect Ratio",
+                text:
+                    "Synchronize the preview window aspect ratio to the source window aspect ratio"
             ),
         ],
         isWarning: false

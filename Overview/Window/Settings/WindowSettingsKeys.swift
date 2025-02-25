@@ -11,6 +11,7 @@ enum WindowSettingsKeys {
     static let previewOpacity: String = "windowOpacity"
     static let defaultWidth: String = "defaultWindowWidth"
     static let defaultHeight: String = "defaultWindowHeight"
+    static let syncAspectRatio: String = "syncAspectRatio"
     static let managedByMissionControl: String = "managedByMissionControl"
     static let shadowEnabled: String = "windowShadowEnabled"
     static let createOnLaunch: String = "windowCreateOnLaunch"
@@ -25,6 +26,7 @@ enum WindowSettingsKeys {
         let previewOpacity: Double = 0.95
         let defaultWidth: Double = 288
         let defaultHeight: Double = 162
+        let syncAspectRatio: Bool = true
         let managedByMissionControl: Bool = true
         let shadowEnabled: Bool = true
         let createOnLaunch: Bool = true
