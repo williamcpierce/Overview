@@ -16,9 +16,9 @@ final class WindowStorageService {
 
     // MARK: - Public Methods
 
-    func storeWindows() {
+    func storeWindows(_ windowStates: [WindowState]? = nil) {
         do {
-            let windows = collectWindows()
+            let windows = windowStates ?? collectWindows()
             try saveWindows(windows)
             logger.info("Successfully saved \(windows.count) windows")
         } catch {
@@ -26,21 +26,23 @@ final class WindowStorageService {
         }
     }
 
-    func collectWindows() -> [WindowState] {
+    func collectWindows(titleProvider: ((NSWindow) -> String?)? = nil) -> [WindowState] {
         NSApplication.shared.windows.compactMap { window in
             guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
             else {
                 return nil
             }
-            return WindowState(frame: window.frame)
+            
+            let boundWindowTitle = titleProvider?(window)
+            return WindowState(frame: window.frame, boundWindowTitle: boundWindowTitle)
         }
     }
 
-    func restoreWindows(using createWindow: (NSRect) -> Void) {
+    func restoreWindows(using handler: (NSRect, String?) -> Void) {
         do {
             let windows = try loadWindows()
             windows.forEach { window in
-                createWindow(window.frame)
+                handler(window.frame, window.boundWindowTitle)
             }
             logger.info("Successfully restored \(windows.count) windows")
         } catch {
@@ -68,7 +70,7 @@ final class WindowStorageService {
         }
     }
 
-    private func loadWindows() throws -> [WindowState] {
+    func loadWindows() throws -> [WindowState] {
         guard let data = UserDefaults.standard.data(forKey: WindowSettingsKeys.storedWindows) else {
             logger.debug("No stored windows found")
             throw WindowStorageError.noDataFound

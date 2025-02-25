@@ -37,6 +37,8 @@ struct WindowSettingsTab: View {
     private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
     @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
     private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+    @AppStorage(WindowSettingsKeys.bindWindowsToTitles)
+    private var bindWindowsToTitles = WindowSettingsKeys.defaults.bindWindowsToTitles
 
     var body: some View {
         Form {
@@ -143,6 +145,8 @@ struct WindowSettingsTab: View {
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
                     Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
                     Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
+                    Toggle("Bind windows to source titles", isOn: $bindWindowsToTitles)
+                        .help("Restored windows will automatically capture their previous source when available")
                 }
             }
         }
