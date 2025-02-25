@@ -27,8 +27,9 @@ struct PreviewView: View {
 
     // Private State
     @State private var isSelectionViewVisible: Bool = true
-    @State private var isPreviewVisible: Bool = true
+    @State private var isPreviewVisible: Bool = false
     @State private var previewAspectRatio: CGFloat = 0
+    @State private var isInitialBindingInProgress: Bool = false
 
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
@@ -207,6 +208,14 @@ struct PreviewView: View {
     private func setupCapture() {
         Task {
             logger.info("Initializing capture system")
+            
+            // Set the binding flag if we have an initial title
+            if let title = initialBoundTitle, !title.isEmpty {
+                isInitialBindingInProgress = true
+                // Make sure the visibility is updated immediately
+                updatePreviewVisibility()
+            }
+            
             await previewManager.initializeCaptureSystem(captureCoordinator)
             
             // Try to bind to the initial title if provided, but wait for sources to load first
@@ -215,6 +224,9 @@ struct PreviewView: View {
                 // We need to wait for sources to load before trying to bind
                 await previewManager.updateAvailableSources()
                 bindToTitle(title)
+            } else {
+                isInitialBindingInProgress = false
+                updatePreviewVisibility()
             }
         }
     }
@@ -249,6 +261,7 @@ struct PreviewView: View {
             // Source is available, start capture
             logger.info("Found source for binding: '\(title)', starting capture")
             previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
+            isInitialBindingInProgress = false // Clear binding state when we find the source
         } else {
             // Source not available, enter waiting mode
             logger.info("Source not available, entering waiting mode for: '\(title)'")
@@ -270,7 +283,7 @@ struct PreviewView: View {
     
     private func setupWaitingTimer() {
         // Create a timer to periodically check for the waiting source
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { timer in
             // Check if we're still waiting for a title
             if !self.isTitleWaiting {
                 timer.invalidate()
@@ -303,6 +316,7 @@ struct PreviewView: View {
             previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
             isTitleWaiting = false
             waitingForTitle = nil
+            isInitialBindingInProgress = false // Clear binding state when we find the source
         } else {
             logger.debug("Source for waiting title '\(title)' not found yet")
         }
@@ -324,11 +338,18 @@ struct PreviewView: View {
         }
 
         isSelectionViewVisible = !captureCoordinator.isCapturing
+        isInitialBindingInProgress = false // Clear binding state when capture state changes
         updatePreviewVisibility()
         logger.debug("View state updated: selection=\(isSelectionViewVisible)")
     }
 
     private func updatePreviewVisibility() {
+        // If in initial binding state, hide the preview entirely
+        if isInitialBindingInProgress {
+            isPreviewVisible = false
+            return
+        }
+        
         let alwaysShown =
             isSelectionViewVisible || previewManager.editModeEnabled
             || sourceManager.isOverviewActive
