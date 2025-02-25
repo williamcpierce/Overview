@@ -38,8 +38,8 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            PreviewSettingsTab()
-                .tabItem { Label("Previews", systemImage: "record.circle") }
+            GeneralSettingsTab()
+                .tabItem { Label("General", systemImage: "gear") }
                 .scrollDisabled(true)
 
             WindowSettingsTab()
