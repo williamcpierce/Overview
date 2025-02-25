@@ -18,6 +18,12 @@ struct PreviewView: View {
     @StateObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
     let onClose: () -> Void
+    
+    // Title binding
+    let initialBoundTitle: String?
+    let onTitleChange: ((String?) -> Void)?
+    @State private var isTitleWaiting: Bool = false
+    @State private var waitingForTitle: String?
 
     // Private State
     @State private var isSelectionViewVisible: Bool = true
@@ -40,11 +46,15 @@ struct PreviewView: View {
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
+        initialBoundTitle: String? = nil,
+        onTitleChange: ((String?) -> Void)? = nil,
         onClose: @escaping () -> Void
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.initialBoundTitle = initialBoundTitle
+        self.onTitleChange = onTitleChange
         self.onClose = onClose
         self._captureCoordinator = StateObject(
             wrappedValue: CaptureCoordinator(
@@ -68,6 +78,7 @@ struct PreviewView: View {
                         onClose: onClose
                     )
                 )
+                .overlay(waitingModeOverlay)
                 .opacity(isPreviewVisible ? 1 : 0)
         }
         .frame(minWidth: 100, minHeight: 50)
@@ -100,6 +111,27 @@ struct PreviewView: View {
         .onChange(of: captureFrameRate) { _ in
             updatePreviewFrameRate()
         }
+        .onChange(of: captureCoordinator.sourceWindowTitle) { newTitle in
+            onTitleChange?(newTitle)
+            
+            // If we're waiting for a title and it matches
+            if isTitleWaiting,
+               let waitingTitle = waitingForTitle,
+               let newTitle = newTitle,
+               newTitle == waitingTitle {
+                logger.info("Found waiting title: '\(waitingTitle)'")
+                isTitleWaiting = false
+                waitingForTitle = nil
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .bindWindowToTitle)) { notification in
+            guard let window = notification.object as? NSWindow,
+                  window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil,
+                  let title = notification.userInfo?["title"] as? String
+            else { return }
+            
+            bindToTitle(title)
+        }
     }
 
     // MARK: - View Components
@@ -129,6 +161,31 @@ struct PreviewView: View {
             onClose: onClose
         )
     }
+    
+    private var waitingModeOverlay: some View {
+        Group {
+            if isTitleWaiting, let title = waitingForTitle {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 8) {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Waiting for window: '\(title)'")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(10)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(8)
+                        Spacer()
+                    }
+                    Spacer()
+                }
+            }
+        }
+    }
 
     private var previewBackgroundLayer: some View {
         Rectangle()
@@ -151,6 +208,11 @@ struct PreviewView: View {
         Task {
             logger.info("Initializing capture system")
             await previewManager.initializeCaptureSystem(captureCoordinator)
+            
+            // Try to bind to the initial title if provided
+            if let title = initialBoundTitle {
+                bindToTitle(title)
+            }
         }
     }
 
@@ -158,6 +220,41 @@ struct PreviewView: View {
         Task {
             logger.info("Stopping capture system")
             await captureCoordinator.stopCapture()
+        }
+    }
+    
+    // MARK: - Title Binding
+    
+    private func bindToTitle(_ title: String) {
+        logger.info("Attempting to bind window to title: '\(title)'")
+        
+        // Check if this source is currently available
+        if let source = previewManager.availableSources.first(where: { $0.title == title }) {
+            // Source is available, start capture
+            logger.info("Found source for binding: '\(title)'")
+            previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
+        } else {
+            // Source not available, enter waiting mode
+            logger.info("Source not available, entering waiting mode for: '\(title)'")
+            isTitleWaiting = true
+            waitingForTitle = title
+            
+            // We'll check for the source when availableSources changes
+            Task {
+                await previewManager.updateAvailableSources()
+                checkForWaitingTitle()
+            }
+        }
+    }
+    
+    private func checkForWaitingTitle() {
+        guard isTitleWaiting, let title = waitingForTitle else { return }
+        
+        if let source = previewManager.availableSources.first(where: { $0.title == title }) {
+            logger.info("Found source for waiting title: '\(title)'")
+            previewManager.startSourcePreview(captureCoordinator: captureCoordinator, source: source)
+            isTitleWaiting = false
+            waitingForTitle = nil
         }
     }
 

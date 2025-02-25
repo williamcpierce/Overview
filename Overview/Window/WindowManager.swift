@@ -22,6 +22,7 @@ final class WindowManager: ObservableObject {
     // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var windowTitleBindings: [NSWindow: String] = [:]
     private var sessionWindowCounter: Int
 
     // Window Settings
@@ -37,6 +38,8 @@ final class WindowManager: ObservableObject {
     private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
     @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
     private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+    @AppStorage(WindowSettingsKeys.bindWindowsToTitles)
+    private var bindWindowsToTitles = WindowSettingsKeys.defaults.bindWindowsToTitles
 
     init(
         previewManager: PreviewManager,
@@ -52,7 +55,7 @@ final class WindowManager: ObservableObject {
         logger.debug("Window manager initialized")
     }
 
-    func createWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil, boundTitle: String? = nil) throws {
         do {
             let defaultSize = CGSize(width: defaultWidth, height: defaultHeight)
             let window = try windowServices.createWindow(
@@ -62,11 +65,21 @@ final class WindowManager: ObservableObject {
 
             configureWindow(window)
 
+            // Store title binding if provided
+            if let boundTitle = boundTitle, !boundTitle.isEmpty {
+                windowTitleBindings[window] = boundTitle
+            }
+
             activeWindows.insert(window)
             sessionWindowCounter += 1
 
             window.orderFront(self)
             logger.info("Created new preview window: id=\(sessionWindowCounter)")
+
+            // If there's a bound title, set it in the PreviewView
+            if let boundTitle = boundTitle, !boundTitle.isEmpty {
+                setupWindowBinding(window, title: boundTitle)
+            }
         } catch {
             logger.logError(error, context: "Failed to create preview window")
             throw WindowManagerError.windowCreationFailed
@@ -78,6 +91,7 @@ final class WindowManager: ObservableObject {
             window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
+            windowTitleBindings.removeValue(forKey: window)
             logger.debug("Window closed successfully")
         }
     }
@@ -93,10 +107,14 @@ final class WindowManager: ObservableObject {
         var restoredCount: Int = 0
 
         if restoreWindowsOnLaunch {
-            windowServices.windowStorage.restoreWindows { [weak self] frame in
+            windowServices.windowStorage.restoreWindows { [weak self] frame, boundTitle in
                 guard let self = self else { return }
                 do {
-                    try createWindow(at: frame)
+                    if bindWindowsToTitles {
+                        try createWindow(at: frame, boundTitle: boundTitle)
+                    } else {
+                        try createWindow(at: frame)
+                    }
                     restoredCount += 1
                     logger.debug("Restored window \(restoredCount)")
                 } catch {
@@ -110,7 +128,11 @@ final class WindowManager: ObservableObject {
 
     func handleWindowsOnQuit() {
         if saveWindowsOnQuit {
-            windowServices.windowStorage.storeWindows()
+            let windowStates = activeWindows.compactMap { window in
+                let boundTitle = windowTitleBindings[window] ?? getCapturedWindowTitle(window)
+                return WindowState(frame: window.frame, boundWindowTitle: boundTitle)
+            }
+            windowServices.windowStorage.storeWindows(windowStates)
         }
     }
 
@@ -132,6 +154,16 @@ final class WindowManager: ObservableObject {
             }
         }
         logger.info("Applied window layout: '\(layout.name)'")
+    }
+
+    func updateWindowTitleBinding(_ window: NSWindow, title: String?) {
+        if let title = title, !title.isEmpty {
+            windowTitleBindings[window] = title
+            logger.debug("Updated window title binding: '\(title)'")
+        } else {
+            windowTitleBindings.removeValue(forKey: window)
+            logger.debug("Removed window title binding")
+        }
     }
 
     // MARK: - Private Methods
@@ -162,12 +194,42 @@ final class WindowManager: ObservableObject {
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
+            initialBoundTitle: windowTitleBindings[window],
+            onTitleChange: { [weak self, weak window] title in
+                guard let window = window else { return }
+                self?.updateWindowTitleBinding(window, title: title)
+            },
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)
             }
         )
         window.contentView = NSHostingView(rootView: contentView)
+    }
+
+    private func setupWindowBinding(_ window: NSWindow, title: String) {
+        guard let hostingView = window.contentView as? NSHostingView<PreviewView> else {
+            logger.warning("Failed to bind window to title: can't access PreviewView")
+            return
+        }
+
+        // We need to post a notification that the PreviewView can observe
+        NotificationCenter.default.post(
+            name: .bindWindowToTitle,
+            object: window,
+            userInfo: ["title": title]
+        )
+
+        logger.info("Set up window binding to title: '\(title)'")
+    }
+
+    private func getCapturedWindowTitle(_ window: NSWindow) -> String? {
+        // This is called when saving window states
+        // We're looking for the currently captured source title
+        // We'll use the bound title if it exists, otherwise try to get the current title
+
+        // The title binding would be updated during capture via the onTitleChange callback
+        return windowTitleBindings[window]
     }
 
     private func closeAllWindows() {
@@ -201,6 +263,12 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
         guard let window = notification.object as? NSWindow else { return }
         windowManager?.closeWindow(window)
     }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let bindWindowToTitle = Notification.Name("bindWindowToTitle")
 }
 
 // MARK: - Supporting Types

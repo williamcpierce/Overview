@@ -70,6 +70,11 @@ extension InfoPopoverContent {
                 text:
                     "Restores the last saved preview window positions and sizes when Overview is launched"
             ),
+            Section(
+                title: "Bind Windows to Source Titles",
+                text:
+                    "When enabled, windows remember which source they were capturing. When restored, they automatically start capturing that source again if it's available, or wait for it to become available."
+            ),
         ],
         isWarning: false
     )
