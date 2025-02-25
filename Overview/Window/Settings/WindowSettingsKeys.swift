@@ -17,6 +17,7 @@ enum WindowSettingsKeys {
     static let closeOnCaptureStop: String = "closeOnCaptureStop"
     static let assignPreviewsToAllDesktops: String = "desktopAssignmentBehavior"
     static let saveWindowsOnQuit: String = "savePositionsOnClose"
+    static let storedWindows: String = "StoredWindowPositions"
 
     static let defaults = Defaults()
 

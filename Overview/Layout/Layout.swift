@@ -3,8 +3,6 @@
  Overview
 
  Created by William Pierce on 2/24/25.
-
- Defines data structures for window arrangement layouts.
 */
 
 import Foundation
@@ -12,11 +10,11 @@ import Foundation
 struct Layout: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
-    var windows: [WindowStorage.WindowState]
+    var windows: [WindowState]
     var createdAt: Date
     var updatedAt: Date
 
-    init(id: UUID = UUID(), name: String, windows: [WindowStorage.WindowState]) {
+    init(id: UUID = UUID(), name: String, windows: [WindowState]) {
         self.id = id
         self.name = name
         self.windows = windows
@@ -24,7 +22,7 @@ struct Layout: Codable, Identifiable, Equatable {
         self.updatedAt = Date()
     }
 
-    mutating func update(name: String? = nil, windows: [WindowStorage.WindowState]? = nil) {
+    mutating func update(name: String? = nil, windows: [WindowState]? = nil) {
         if let name = name {
             self.name = name
         }

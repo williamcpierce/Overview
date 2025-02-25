@@ -12,24 +12,18 @@ import SwiftUI
 @MainActor
 final class LayoutManager: ObservableObject {
     // Dependencies
-    private let windowStorage: WindowStorage
+    private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
-    private let defaults: UserDefaults
 
     // Published State
     @Published var layouts: [Layout] = []
     @Published var launchLayoutId: UUID? = nil
 
-    init(
-        windowStorage: WindowStorage = WindowStorage.shared,
-        defaults: UserDefaults = .standard
-    ) {
-        self.windowStorage = windowStorage
-        self.defaults = defaults
-
+    init() {
         self.layouts = loadLayouts()
 
-        if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId),
+        if let launchLayoutIdString = UserDefaults.standard.string(
+            forKey: LayoutSettingsKeys.launchLayoutId),
             let launchLayoutId = UUID(uuidString: launchLayoutIdString)
         {
             self.launchLayoutId = launchLayoutId
@@ -41,7 +35,7 @@ final class LayoutManager: ObservableObject {
     // MARK: - Layout Management
 
     func createLayout(name: String) -> Layout {
-        let currentWindows = windowStorage.collectWindows()
+        let currentWindows = windowServices.windowStorage.collectWindows()
         let layout = Layout(name: name, windows: currentWindows)
 
         layouts.append(layout)
@@ -62,7 +56,7 @@ final class LayoutManager: ObservableObject {
         if let name = name {
             layout.update(name: name)
         } else {
-            let currentWindows = windowStorage.collectWindows()
+            let currentWindows = windowServices.windowStorage.collectWindows()
             layout.update(windows: currentWindows)
             logger.info(
                 "Updated layout '\(layout.name)' with \(currentWindows.count) windows")
@@ -83,7 +77,7 @@ final class LayoutManager: ObservableObject {
 
         if launchLayoutId == id {
             launchLayoutId = nil
-            defaults.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
+            UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
         }
 
         saveLayouts()
@@ -94,10 +88,10 @@ final class LayoutManager: ObservableObject {
         launchLayoutId = id
 
         if let id = id {
-            defaults.set(id.uuidString, forKey: LayoutSettingsKeys.launchLayoutId)
+            UserDefaults.standard.set(id.uuidString, forKey: LayoutSettingsKeys.launchLayoutId)
             logger.info("Set launch layout: \(id)")
         } else {
-            defaults.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
+            UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
             logger.info("Cleared launch layout")
         }
     }
@@ -110,7 +104,7 @@ final class LayoutManager: ObservableObject {
         return layouts.first(where: { $0.id == launchLayoutId })
     }
 
-    func applyLayout(_ layout: Layout, using handler: (WindowStorage.WindowState) -> Void) {
+    func applyLayout(_ layout: Layout, using handler: (WindowState) -> Void) {
         logger.info("Applying layout '\(layout.name)' with \(layout.windows.count) windows")
 
         layout.windows.forEach { windowState in
@@ -127,7 +121,7 @@ final class LayoutManager: ObservableObject {
     private func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
-            defaults.set(encodedLayouts, forKey: LayoutSettingsKeys.layouts)
+            UserDefaults.standard.set(encodedLayouts, forKey: LayoutSettingsKeys.layouts)
             logger.debug("Saved \(layouts.count) layouts to user defaults")
         } catch {
             logger.logError(error, context: "Failed to encode layouts")
@@ -135,7 +129,7 @@ final class LayoutManager: ObservableObject {
     }
 
     private func loadLayouts() -> [Layout] {
-        guard let data = defaults.data(forKey: LayoutSettingsKeys.layouts) else {
+        guard let data = UserDefaults.standard.data(forKey: LayoutSettingsKeys.layouts) else {
             logger.debug("No saved layouts found")
             return []
         }

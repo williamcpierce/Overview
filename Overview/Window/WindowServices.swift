@@ -15,7 +15,7 @@ final class WindowServices {
     let windowAspect: WindowAspectService
     let windowConfiguration: WindowConfigurationService
     let windowPosition: WindowPositionService
-    let windowStorage: WindowStorage
+    let windowStorage: WindowStorageService
     private let logger = AppLogger.interface
 
     // Singleton
@@ -25,7 +25,7 @@ final class WindowServices {
         self.windowAspect = WindowAspectService()
         self.windowConfiguration = WindowConfigurationService()
         self.windowPosition = WindowPositionService()
-        self.windowStorage = WindowStorage.shared
+        self.windowStorage = WindowStorageService()
         logger.debug("Initializing window services")
     }
 
