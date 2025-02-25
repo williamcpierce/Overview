@@ -17,31 +17,38 @@ struct SettingsView: View {
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var updateManager: UpdateManager
+    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var layoutManager: LayoutManager
     private let logger = AppLogger.settings
 
     init(
         sourceManager: SourceManager,
         settingsManager: SettingsManager,
-        updateManager: UpdateManager
+        updateManager: UpdateManager,
+        windowManager: WindowManager,
+        layoutManager: LayoutManager
+
     ) {
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
         self.updateManager = updateManager
+        self.windowManager = windowManager
+        self.layoutManager = layoutManager
     }
 
     var body: some View {
         TabView {
-            PreviewSettingsTab()
-                .tabItem { Label("Previews", systemImage: "record.circle") }
+            GeneralSettingsTab()
+                .tabItem { Label("General", systemImage: "gear") }
                 .scrollDisabled(true)
 
             WindowSettingsTab()
                 .tabItem { Label("Windows", systemImage: "macwindow") }
                 .scrollDisabled(true)
 
-            OverlaySettingsTab()
-                .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
-                .scrollDisabled(true)
+            LayoutSettingsTab(windowManager: windowManager, layoutManager: layoutManager)
+                .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
+                .frame(minHeight: 288, maxHeight: 504)
 
             ShortcutSettingsTab()
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }

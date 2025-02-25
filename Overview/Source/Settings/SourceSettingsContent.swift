@@ -12,7 +12,7 @@ extension InfoPopoverContent {
         title: "Source App Filter",
         sections: [
             Section(
-                title: "Overview",
+                title: "Summary",
                 text: "Filter which applications appear in the window picker."
             ),
             Section(

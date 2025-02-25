@@ -14,20 +14,23 @@ import SwiftUI
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
+    let updateManager: UpdateManager
+    let permissionManager: PermissionManager
+    let layoutManager: LayoutManager!
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let shortcutManager: ShortcutManager
-    let updateManager: UpdateManager
-    let permissionManager: PermissionManager
     var windowManager: WindowManager!
 
     override init() {
         updateManager = UpdateManager()
         permissionManager = PermissionManager()
+        layoutManager = LayoutManager()
 
         settingsManager = SettingsManager(
-            updateManager: updateManager
+            updateManager: updateManager,
+            layoutManager: layoutManager
         )
         sourceManager = SourceManager(
             settingsManager: settingsManager,
@@ -46,7 +49,8 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         windowManager = WindowManager(
             previewManager: previewManager,
             sourceManager: sourceManager,
-            permissionManager: permissionManager
+            permissionManager: permissionManager,
+            layoutManager: layoutManager
         )
 
         setupObservers()
@@ -68,7 +72,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await permissionManager.ensurePermission()
-                windowManager.restoreWindowStates()
+                windowManager.handleWindowsOnLaunch()
                 logger.info("Application initialization completed")
             } catch {
                 logger.logError(error, context: "Failed to ensure permissions during launch")
@@ -78,7 +82,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         logger.debug("Application preparing to terminate")
-        windowManager.saveWindowStatesOnQuit()
+        windowManager.handleWindowsOnQuit()
     }
 
     // MARK: - Private Methods

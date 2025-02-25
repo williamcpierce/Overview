@@ -57,32 +57,39 @@ For development updates, please join our Discord:
 
 See setting menu info panels for full details
 
--   Previews
-    -   Frame Rate
-    -   Automatic Hiding
+-   General
+    -   Capture Frame Rate
+    -   Automatic Preview Hiding
         -   Hide previews for inactive source applications
         -   Hide preview for focused source window
+    -   Source Focus Overlay
+        -   Border width
+        -   Border color
+    -   Source Title Overlay
+        -   Font size
+        -   Background opacity
+        -   Location
+        -   Type (window, application, or both)
 -   Windows
     -   Appearance
         -   Opacity
         -   Shadows
         -   Default dimensions
-    -   Visibility
+        -   Synchronize aspect ratio
+    -   System Visibility
         -   Show windows in Mission Control
         -   Show windows on all desktops (including fullscreen)
     -   Management
         -   Create window on launch
         -   Close window with preview source
         -   Save window positions on quit
--   Overlays
-    -   Window Focus
-        -   Border width
-        -   Border color
-    -   Source Title
-        -   Font size
-        -   Background opacity
-        -   Location
-        -   Type (window, application, or both)
+        -   Restore window positions on launch
+-   Layouts
+    -   Window Layouts
+        - Create layouts to save window arrangements
+        - Apply layouts to restore window configurations
+        - Update existing layouts
+        - Apply layout on launch
 -   Shortcuts
     -   Window Activation
         -   Keyboard shortcuts for focusing windows

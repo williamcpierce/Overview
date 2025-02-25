@@ -31,7 +31,9 @@ struct OverviewApp: App {
             SettingsView(
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
-                updateManager: appDelegate.updateManager
+                updateManager: appDelegate.updateManager,
+                windowManager: appDelegate.windowManager,
+                layoutManager: appDelegate.layoutManager
             )
         }
         .commands {
@@ -39,10 +41,14 @@ struct OverviewApp: App {
         }
     }
 
+    // MARK: - Menu Components
+
     private var menuContent: some View {
         Group {
             newWindowButton
+            Divider()
             editModeButton
+            layoutMenu
             Divider()
             settingsButton
             supportButton
@@ -73,27 +79,12 @@ struct OverviewApp: App {
         .keyboardShortcut(",")
     }
 
-    private var versionText: some View {
-        Group {
-            if let version: String = getAppVersion() {
-                Text("Version \(version)")
-            }
-        }
-    }
-
-    private var updateButton: some View {
-        Button("Check for Updates...") {
-            appDelegate.updateManager.checkForUpdates()
-        }
-    }
-
     private var supportButton: some View {
         Button("Support Overview") {
             openProjectSupport()
         }
     }
 
-    
     private var quitButton: some View {
         Button("Quit Overview") {
             NSApplication.shared.terminate(nil)
@@ -101,8 +92,38 @@ struct OverviewApp: App {
         .keyboardShortcut("q")
     }
 
-    private var helpMenu: some View {
+    // MARK: - Layout Menu
 
+    private var layoutMenu: some View {
+        Menu("Apply Layout") {
+            LayoutMenuContent(
+                layoutManager: appDelegate.layoutManager, windowManager: appDelegate.windowManager)
+        }
+    }
+
+    private struct LayoutMenuContent: View {
+        @ObservedObject var layoutManager: LayoutManager
+        @ObservedObject var windowManager: WindowManager
+
+        var body: some View {
+            if layoutManager.layouts.isEmpty {
+                Text("No layouts saved")
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(layoutManager.layouts) { layout in
+                    Button {
+                        windowManager.applyLayout(layout)
+                    } label: {
+                        Text(layout.name)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Help Menu
+
+    private var helpMenu: some View {
         Menu("Help") {
             Button {
                 openDiscord()
@@ -129,9 +150,9 @@ struct OverviewApp: App {
 
             versionText
             updateButton
-            
+
             Divider()
-            
+
             Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }
@@ -140,6 +161,44 @@ struct OverviewApp: App {
             }.keyboardShortcut("r")
         }
     }
+
+    // MARK: - Version and Update Components
+
+    private var versionText: some View {
+        Group {
+            if let version: String = getAppVersion() {
+                Text("Version \(version)")
+            }
+        }
+    }
+
+    private var updateButton: some View {
+        Button("Check for Updates...") {
+            appDelegate.updateManager.checkForUpdates()
+        }
+    }
+
+    // MARK: - Command Group
+
+    private var commandGroup: some Commands {
+        Group {
+            CommandGroup(before: .newItem) {
+                Button("New Window") {
+                    newWindow(context: "file menu")
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+
+            CommandMenu("Edit") {
+                Button("Toggle Edit Mode") {
+                    toggleEditMode()
+                }
+                .keyboardShortcut("e", modifiers: .command)
+            }
+        }
+    }
+
+    // MARK: - External Resource Actions
 
     private func openDiscord() {
         if let url = URL(string: "https://discord.gg/ekKMnejQbA") {
@@ -161,14 +220,48 @@ struct OverviewApp: App {
             NSWorkspace.shared.open(url)
         }
     }
-    
+
     private func openProjectSupport() {
-        if let url = URL(
-            string: "https://williampierce.io/overview/#support")
-        {
+        if let url = URL(string: "https://williampierce.io/overview/#support") {
             NSWorkspace.shared.open(url)
         }
     }
+
+    // MARK: - Utility Methods
+
+    private func newWindow(context: String) {
+        Task { @MainActor in
+            do {
+                try appDelegate.windowManager.createWindow()
+            } catch {
+                logger.logError(error, context: "Failed to create window from \(context)")
+            }
+        }
+    }
+
+    private func toggleEditMode() {
+        Task { @MainActor in
+            appDelegate.previewManager.editModeEnabled.toggle()
+        }
+    }
+
+    private func openSettings() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        if #available(macOS 14.0, *) {
+            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
+            openSettings()
+        } else {
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
+    }
+
+    private func getAppVersion() -> String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+
+    // MARK: - Diagnostic and Maintenance Methods
 
     private func generateDiagnosticReport() {
         Task {
@@ -204,60 +297,6 @@ struct OverviewApp: App {
             NSApplication.shared.terminate(nil)
         } catch {
             logger.logError(error, context: "Failed to restart application")
-        }
-    }
-
-    // MARK: - Commands
-
-    private var commandGroup: some Commands {
-        Group {
-            CommandGroup(before: .newItem) {
-                Button("New Window") {
-                    newWindow(context: "file menu")
-                }
-                .keyboardShortcut("n", modifiers: .command)
-            }
-
-            CommandMenu("Edit") {
-                Button("Toggle Edit Mode") {
-                    toggleEditMode()
-                }
-                .keyboardShortcut("e", modifiers: .command)
-            }
-        }
-    }
-
-    // MARK: - Private Methods
-
-    private func getAppVersion() -> String? {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-    }
-
-    private func newWindow(context: String) {
-        Task { @MainActor in
-            do {
-                try appDelegate.windowManager.createPreviewWindow()
-            } catch {
-                logger.logError(error, context: "Failed to create window from \(context)")
-            }
-        }
-    }
-
-    private func toggleEditMode() {
-        Task { @MainActor in
-            appDelegate.previewManager.editModeEnabled.toggle()
-        }
-    }
-
-    private func openSettings() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        if #available(macOS 14.0, *) {
-            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
-            openSettings()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
     }
 }

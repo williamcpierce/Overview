@@ -30,7 +30,6 @@ enum OverlaySettingsKeys {
         let sourceTitleFontSize: Double = 12.0
         let sourceTitleBackgroundOpacity: Double = 0.4
         let sourceTitleType: String = TitleType.windowTitle
-
     }
 }
 

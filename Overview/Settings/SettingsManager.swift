@@ -14,6 +14,7 @@ import SwiftUI
 final class SettingsManager: ObservableObject {
     // Dependencies
     private let updateManager: UpdateManager
+    private let layoutManager: LayoutManager
     private let logger = AppLogger.settings
 
     // Published State
@@ -23,8 +24,9 @@ final class SettingsManager: ObservableObject {
         }
     }
 
-    init(updateManager: UpdateManager) {
+    init(updateManager: UpdateManager, layoutManager: LayoutManager) {
         self.updateManager = updateManager
+        self.layoutManager = layoutManager
 
         if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
             as? [String]
@@ -40,13 +42,13 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
-        // Reset Keyboard Shortcut settings
+        /// Reset Keyboard Shortcut settings
         ShortcutStorage.shared.resetToDefaults()
 
         let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
         UserDefaults.standard.removePersistentDomain(forName: domain)
 
-        // Reset Window settings
+        /// Reset Window settings
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.previewOpacity,
             forKey: WindowSettingsKeys.previewOpacity)
@@ -56,6 +58,9 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.defaultHeight,
             forKey: WindowSettingsKeys.defaultHeight)
+        UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.syncAspectRatio,
+            forKey: WindowSettingsKeys.syncAspectRatio)
         UserDefaults.standard.set(
             WindowSettingsKeys.defaults.managedByMissionControl,
             forKey: WindowSettingsKeys.managedByMissionControl)
@@ -72,10 +77,13 @@ final class SettingsManager: ObservableObject {
             WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
             forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
         UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.savePositionsOnClose,
-            forKey: WindowSettingsKeys.savePositionsOnClose)
+            WindowSettingsKeys.defaults.saveWindowsOnQuit,
+            forKey: WindowSettingsKeys.saveWindowsOnQuit)
+        UserDefaults.standard.set(
+            WindowSettingsKeys.defaults.restoreWindowsOnLaunch,
+            forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
 
-        // Reset Overlay settings
+        /// Reset Overlay settings
         UserDefaults.standard.set(
             OverlaySettingsKeys.defaults.focusBorderEnabled,
             forKey: OverlaySettingsKeys.focusBorderEnabled)
@@ -101,7 +109,13 @@ final class SettingsManager: ObservableObject {
             OverlaySettingsKeys.defaults.sourceTitleType,
             forKey: OverlaySettingsKeys.sourceTitleType)
 
-        // Reset Preview settings
+        /// Reset Layout settings
+        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.layouts)
+        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
+        layoutManager.layouts = []
+        layoutManager.setLaunchLayout(id: nil)
+
+        /// Reset Preview settings
         UserDefaults.standard.set(
             PreviewSettingsKeys.defaults.hideInactiveApplications,
             forKey: PreviewSettingsKeys.hideInactiveApplications)
@@ -112,14 +126,14 @@ final class SettingsManager: ObservableObject {
             PreviewSettingsKeys.defaults.captureFrameRate,
             forKey: PreviewSettingsKeys.captureFrameRate)
 
-        // Reset Update settings
+        /// Reset Update settings
         updateManager.updater.automaticallyChecksForUpdates = true
         updateManager.updater.automaticallyDownloadsUpdates = false
         UserDefaults.standard.set(
             UpdateSettingsKeys.defaults.enableBetaUpdates,
             forKey: UpdateSettingsKeys.enableBetaUpdates)
 
-        // Reset Filter settings
+        /// Reset Source settings
         filterAppNames = SourceSettingsKeys.defaults.appNames
         UserDefaults.standard.set(
             SourceSettingsKeys.defaults.filterMode,
