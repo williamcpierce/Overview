@@ -10,8 +10,7 @@ import SwiftUI
 struct WindowSettingsTab: View {
     // Private State
     @State private var showingAppearanceInfo: Bool = false
-    @State private var showingVisibilityInfo: Bool = false
-    @State private var showingManagementInfo: Bool = false
+    @State private var showingAdvancedSettings: Bool = false
 
     // Window Settings
     @AppStorage(WindowSettingsKeys.previewOpacity)
@@ -40,7 +39,6 @@ struct WindowSettingsTab: View {
 
     var body: some View {
         Form {
-
             // MARK: - Appearance Section
 
             Section {
@@ -104,48 +102,102 @@ struct WindowSettingsTab: View {
                 }
 
                 Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
+                
+                
             }
-
-            // MARK: - System Visibility Section
-
-            Section {
-                HStack {
-                    Text("System Visibility")
-                        .font(.headline)
-                    Spacer()
-                    InfoPopover(
-                        content: .windowVisibility,
-                        isPresented: $showingVisibilityInfo
+            HStack {
+                Spacer()
+                Button("Advanced Settings...") {
+                    showingAdvancedSettings = true
+                }
+                .sheet(isPresented: $showingAdvancedSettings) {
+                    AdvancedWindowSettingsView(
+                        managedByMissionControl: $managedByMissionControl,
+                        assignPreviewsToAllDesktops: $assignPreviewsToAllDesktops,
+                        createOnLaunch: $createOnLaunch,
+                        closeOnCaptureStop: $closeOnCaptureStop,
+                        saveWindowsOnQuit: $saveWindowsOnQuit,
+                        restoreWindowsOnLaunch: $restoreWindowsOnLaunch
                     )
-                }
-                .padding(.bottom, 4)
-                VStack {
-                    Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
-                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    .frame(width: 324, height: 372)
+                    .presentationDetents([.height(372)])
+                    .scrollDisabled(true)
                 }
             }
-
-            // MARK: - Window Management Section
-
-            Section {
-                HStack {
-                    Text("Management")
-                        .font(.headline)
-                    Spacer()
-                    InfoPopover(
-                        content: .windowManagement,
-                        isPresented: $showingManagementInfo
-                    )
-                }
-                .padding(.bottom, 4)
-                VStack {
-                    Toggle("Always create window on launch", isOn: $createOnLaunch)
-                    Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
-                    Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
-                }
-            }
+            .padding(.top, 4)
         }
         .formStyle(.grouped)
+    }
+}
+
+struct AdvancedWindowSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    // Private State
+    @State private var showingVisibilityInfo: Bool = false
+    @State private var showingManagementInfo: Bool = false
+    
+    // Window Settings Bindings
+    @Binding var managedByMissionControl: Bool
+    @Binding var assignPreviewsToAllDesktops: Bool
+    @Binding var createOnLaunch: Bool
+    @Binding var closeOnCaptureStop: Bool
+    @Binding var saveWindowsOnQuit: Bool
+    @Binding var restoreWindowsOnLaunch: Bool
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                // MARK: - System Visibility Section
+                
+                Section {
+                    HStack {
+                        Text("System Visibility")
+                            .font(.headline)
+                        Spacer()
+                        InfoPopover(
+                            content: .windowVisibility,
+                            isPresented: $showingVisibilityInfo
+                        )
+                    }
+                    .padding(.bottom, 4)
+                    VStack {
+                        Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
+                        Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    }
+                }
+                
+                // MARK: - Window Management Section
+                
+                Section {
+                    HStack {
+                        Text("Management")
+                            .font(.headline)
+                        Spacer()
+                        InfoPopover(
+                            content: .windowManagement,
+                            isPresented: $showingManagementInfo
+                        )
+                    }
+                    .padding(.bottom, 4)
+                    VStack {
+                        Toggle("Always create window on launch", isOn: $createOnLaunch)
+                        Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
+                        Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
+                        Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Advanced Window Settings")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .frame(minWidth: 324, idealHeight: 372)
+        }
     }
 }

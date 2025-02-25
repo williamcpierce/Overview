@@ -15,8 +15,7 @@ struct GeneralSettingsTab: View {
     // Private State
     @State private var showingFrameRateInfo: Bool = false
     @State private var showingAutoHidingInfo: Bool = false
-    @State private var showingWindowFocusInfo: Bool = false
-    @State private var showingSourceTitleInfo: Bool = false
+    @State private var showingOverlaySettings: Bool = false
 
     // Preview Settings
     @AppStorage(PreviewSettingsKeys.captureFrameRate)
@@ -99,100 +98,156 @@ struct GeneralSettingsTab: View {
                     )
                 }
             }
-
-            // MARK: - Focus Border Section
-
-            Section {
-                HStack {
-                    Text("Source Focus Overlay")
-                        .font(.headline)
-                    InfoPopover(
-                        content: .windowFocus,
-                        isPresented: $showingWindowFocusInfo
-                    )
-                    Spacer()
-                    Toggle("", isOn: $focusBorderEnabled)
+            HStack {
+                Spacer()
+                Button("Overlay Settings...") {
+                    showingOverlaySettings = true
                 }
-                .padding(.bottom, 4)
-
-                if focusBorderEnabled {
-                    HStack {
-                        Text("Border width")
-                        Spacer()
-                        TextField(
-                            "", value: $focusBorderWidth, formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("px")
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack {
-                        Text("Border color")
-                        Spacer()
-                        ColorPicker("", selection: $focusBorderColor)
-                    }
+                .sheet(isPresented: $showingOverlaySettings) {
+                    OverlaySettingsView(
+                        focusBorderEnabled: $focusBorderEnabled,
+                        focusBorderWidth: $focusBorderWidth,
+                        focusBorderColor: $focusBorderColor,
+                        sourceTitleEnabled: $sourceTitleEnabled,
+                        sourceTitleFontSize: $sourceTitleFontSize,
+                        sourceTitleBackgroundOpacity: $sourceTitleBackgroundOpacity,
+                        sourceTitleLocation: $sourceTitleLocation,
+                        sourceTitleType: $sourceTitleType
+                    )
+                    .frame(width: 360, height: 432)
+                    .presentationDetents([.height(432)])
+                    .scrollDisabled(true)
                 }
             }
-
-            // MARK: - Source Title Section
-
-            Section {
-                HStack {
-                    Text("Source Title Overlay")
-                        .font(.headline)
-                    InfoPopover(
-                        content: .sourceTitle,
-                        isPresented: $showingSourceTitleInfo
-                    )
-                    Spacer()
-                    Toggle("", isOn: $sourceTitleEnabled)
-                }
-                .padding(.bottom, 4)
-
-                if sourceTitleEnabled {
-                    HStack {
-                        Text("Font size")
-                        Spacer()
-                        TextField(
-                            "", value: $sourceTitleFontSize,
-                            formatter: NumberFormatter()
-                        )
-                        .frame(width: 60)
-                        .textFieldStyle(.roundedBorder)
-                        Text("pt")
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack {
-                        Text("Opacity")
-                        OpacitySlider(value: $sourceTitleBackgroundOpacity)
-                        Text("\(Int(sourceTitleBackgroundOpacity * 100))%")
-                            .foregroundColor(.secondary)
-                            .frame(width: 40)
-                    }
-                    HStack {
-                        Picker("Location", selection: $sourceTitleLocation) {
-                            Text("Top").tag(true)
-                            Text("Bottom").tag(false)
-                        }
-                        .pickerStyle(.segmented)
-
-                    }
-                    HStack {
-                        Picker("Type", selection: $sourceTitleType) {
-                            Text("Window Title").tag(TitleType.windowTitle)
-                            Text("Application Name").tag(TitleType.appName)
-                            Text("Both").tag(TitleType.fullTitle)
-
-                        }
-                        .pickerStyle(.menu)
-
-                    }
-                }
-            }
+            .padding(.top, 4)
         }
         .formStyle(.grouped)
+    }
+}
+
+struct OverlaySettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    // Private State
+    @State private var showingWindowFocusInfo: Bool = false
+    @State private var showingSourceTitleInfo: Bool = false
+    
+    // Focus Border Settings Bindings
+    @Binding var focusBorderEnabled: Bool
+    @Binding var focusBorderWidth: Double
+    @Binding var focusBorderColor: Color
+    
+    // Source Title Settings Bindings
+    @Binding var sourceTitleEnabled: Bool
+    @Binding var sourceTitleFontSize: Double
+    @Binding var sourceTitleBackgroundOpacity: Double
+    @Binding var sourceTitleLocation: Bool
+    @Binding var sourceTitleType: String
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                // MARK: - Focus Border Section
+                
+                Section {
+                    HStack {
+                        Text("Source Focus")
+                            .font(.headline)
+                        InfoPopover(
+                            content: .windowFocus,
+                            isPresented: $showingWindowFocusInfo
+                        )
+                        Spacer()
+                        Toggle("", isOn: $focusBorderEnabled)
+                    }
+                    .padding(.bottom, 4)
+                    
+                    if focusBorderEnabled {
+                        HStack {
+                            Text("Border width")
+                            Spacer()
+                            TextField(
+                                "", value: $focusBorderWidth, formatter: NumberFormatter()
+                            )
+                            .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
+                            Text("px")
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        HStack {
+                            Text("Border color")
+                            Spacer()
+                            ColorPicker("", selection: $focusBorderColor)
+                        }
+                    }
+                }
+                
+                // MARK: - Source Title Section
+                
+                Section {
+                    HStack {
+                        Text("Source Title")
+                            .font(.headline)
+                        InfoPopover(
+                            content: .sourceTitle,
+                            isPresented: $showingSourceTitleInfo
+                        )
+                        Spacer()
+                        Toggle("", isOn: $sourceTitleEnabled)
+                    }
+                    .padding(.bottom, 4)
+                    
+                    if sourceTitleEnabled {
+                        HStack {
+                            Text("Font size")
+                            Spacer()
+                            TextField(
+                                "", value: $sourceTitleFontSize,
+                                formatter: NumberFormatter()
+                            )
+                            .frame(width: 60)
+                            .textFieldStyle(.roundedBorder)
+                            Text("pt")
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        HStack {
+                            Text("Opacity")
+                            OpacitySlider(value: $sourceTitleBackgroundOpacity)
+                            Text("\(Int(sourceTitleBackgroundOpacity * 100))%")
+                                .foregroundColor(.secondary)
+                                .frame(width: 40)
+                        }
+                        HStack {
+                            Picker("Location", selection: $sourceTitleLocation) {
+                                Text("Top").tag(true)
+                                Text("Bottom").tag(false)
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        
+                        HStack {
+                            Picker("Type", selection: $sourceTitleType) {
+                                Text("Window Title").tag(TitleType.windowTitle)
+                                Text("Application Name").tag(TitleType.appName)
+                                Text("Both").tag(TitleType.fullTitle)
+                            }
+                            .pickerStyle(.menu)
+                        }
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Overlay Settings")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .frame(minWidth: 360, idealHeight: 432)
+        }
     }
 }
