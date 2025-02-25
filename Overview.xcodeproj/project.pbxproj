@@ -137,6 +137,7 @@
 				Services/WindowAspectService.swift,
 				Services/WindowConfigurationService.swift,
 				Services/WindowPositionService.swift,
+				Services/WindowStorageService.swift,
 				Settings/WindowSettingsContent.swift,
 				Settings/WindowSettingsKeys.swift,
 				Settings/WindowSettingsTab.swift,
@@ -145,7 +146,6 @@
 				WindowManager.swift,
 				WindowServices.swift,
 				WindowState.swift,
-				WindowStorage.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
