@@ -62,7 +62,7 @@ final class PreviewManager: ObservableObject {
         Task {
             do {
                 try await captureCoordinator.startCapture()
-                logger.info("Preview started successfully")
+                logger.info("Preview started successfully for: '\(selectedSource.title ?? "Untitled")'")
             } catch {
                 logger.logError(error, context: "Preview initialization failed")
             }

@@ -63,23 +63,19 @@ final class WindowManager: ObservableObject {
                 windowCount: sessionWindowCounter,
                 providedFrame: frame)
 
-            configureWindow(window)
-
             // Store title binding if provided
             if let boundTitle = boundTitle, !boundTitle.isEmpty {
                 windowTitleBindings[window] = boundTitle
+                logger.info("Creating window with bound title: '\(boundTitle)'")
             }
 
+            configureWindow(window)
+            
             activeWindows.insert(window)
             sessionWindowCounter += 1
 
             window.orderFront(self)
             logger.info("Created new preview window: id=\(sessionWindowCounter)")
-
-            // If there's a bound title, set it in the PreviewView
-            if let boundTitle = boundTitle, !boundTitle.isEmpty {
-                setupWindowBinding(window, title: boundTitle)
-            }
         } catch {
             logger.logError(error, context: "Failed to create preview window")
             throw WindowManagerError.windowCreationFailed
@@ -155,7 +151,7 @@ final class WindowManager: ObservableObject {
         }
         logger.info("Applied window layout: '\(layout.name)'")
     }
-
+    
     func updateWindowTitleBinding(_ window: NSWindow, title: String?) {
         if let title = title, !title.isEmpty {
             windowTitleBindings[window] = title
@@ -206,28 +202,14 @@ final class WindowManager: ObservableObject {
         )
         window.contentView = NSHostingView(rootView: contentView)
     }
-
-    private func setupWindowBinding(_ window: NSWindow, title: String) {
-        guard let hostingView = window.contentView as? NSHostingView<PreviewView> else {
-            logger.warning("Failed to bind window to title: can't access PreviewView")
-            return
-        }
-
-        // We need to post a notification that the PreviewView can observe
-        NotificationCenter.default.post(
-            name: .bindWindowToTitle,
-            object: window,
-            userInfo: ["title": title]
-        )
-
-        logger.info("Set up window binding to title: '\(title)'")
-    }
-
+    
+    // This function is removed as we handle binding directly in PreviewView initialization
+    
     private func getCapturedWindowTitle(_ window: NSWindow) -> String? {
         // This is called when saving window states
         // We're looking for the currently captured source title
         // We'll use the bound title if it exists, otherwise try to get the current title
-
+        
         // The title binding would be updated during capture via the onTitleChange callback
         return windowTitleBindings[window]
     }
