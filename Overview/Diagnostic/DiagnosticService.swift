@@ -175,7 +175,7 @@ final class DiagnosticService {
                 closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
                 showOnAllDesktops: defaults.bool(
                     forKey: WindowSettingsKeys.assignPreviewsToAllDesktops),
-                savePositionsOnClose: defaults.bool(forKey: WindowSettingsKeys.savePositionsOnClose)
+                saveWindowsOnQuit: defaults.bool(forKey: WindowSettingsKeys.saveWindowsOnQuit)
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
@@ -400,7 +400,7 @@ struct WindowSettings: Codable {
     let createOnLaunch: Bool
     let closeWithSource: Bool
     let showOnAllDesktops: Bool
-    let savePositionsOnClose: Bool
+    let saveWindowsOnQuit: Bool
 }
 
 struct OverlaySettings: Codable {

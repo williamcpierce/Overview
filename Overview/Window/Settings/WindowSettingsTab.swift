@@ -31,8 +31,8 @@ struct WindowSettingsTab: View {
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
     private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
         .assignPreviewsToAllDesktops
-    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
-    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
+    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
+    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
 
     var body: some View {
         Form {
@@ -135,7 +135,7 @@ struct WindowSettingsTab: View {
                 VStack {
                     Toggle("Create window on launch", isOn: $createOnLaunch)
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Save window positions on quit", isOn: $savePositionsOnClose)
+                    Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
                 }
             }
         }
