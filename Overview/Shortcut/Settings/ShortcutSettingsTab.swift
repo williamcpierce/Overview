@@ -93,7 +93,7 @@ struct ShortcutRow: View {
                         .help(title)
                 }
             }
-            .frame(width: 180, alignment: .leading)
+            .frame(width: 140, alignment: .leading)
 
             Spacer()
 
