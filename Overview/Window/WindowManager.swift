@@ -73,11 +73,10 @@ final class WindowManager: ObservableObject {
 
     func closeWindow(_ window: NSWindow) {
         Task {
-            logger.debug("Initiating window closure")
             window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
-            logger.info("Window closed successfully")
+            logger.debug("Window closed successfully")
         }
     }
 
@@ -117,8 +116,6 @@ final class WindowManager: ObservableObject {
     }
 
     func applyLayout(_ layout: Layout) {
-        logger.info("Applying window layout: '\(layout.name)'")
-
         closeAllWindows()
 
         windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
@@ -130,6 +127,7 @@ final class WindowManager: ObservableObject {
                     error, context: "Failed to create window from layout '\(layout.name)'")
             }
         }
+        logger.info("Applied window layout: '\(layout.name)'")
     }
 
     // MARK: - Private Methods

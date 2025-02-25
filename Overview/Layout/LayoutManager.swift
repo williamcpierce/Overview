@@ -32,7 +32,7 @@ final class LayoutManager: ObservableObject {
         logger.debug("Layout manager initialized with \(layouts.count) layouts")
     }
 
-    // MARK: - Layout Management
+    // MARK: - Public Methods
 
     func createLayout(name: String) -> Layout {
         let currentWindows = windowServices.windowStorage.collectWindows()
@@ -116,7 +116,7 @@ final class LayoutManager: ObservableObject {
         return launchLayoutId != nil && getLaunchLayout() != nil
     }
 
-    // MARK: - Private Storage Methods
+    // MARK: - Private Methods
 
     private func saveLayouts() {
         do {
