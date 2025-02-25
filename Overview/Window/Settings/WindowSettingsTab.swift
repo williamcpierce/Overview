@@ -140,5 +140,6 @@ struct WindowSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .frame(width:384)
     }
 }

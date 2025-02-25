@@ -31,7 +31,9 @@ struct OverviewApp: App {
             SettingsView(
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
-                updateManager: appDelegate.updateManager
+                updateManager: appDelegate.updateManager,
+                windowManager: appDelegate.windowManager,
+                profileManager: appDelegate.profileManager
             )
         }
         .commands {
@@ -42,7 +44,9 @@ struct OverviewApp: App {
     private var menuContent: some View {
         Group {
             newWindowButton
+            Divider()
             editModeButton
+            profilesMenu
             Divider()
             settingsButton
             supportButton
@@ -93,12 +97,42 @@ struct OverviewApp: App {
         }
     }
 
-    
     private var quitButton: some View {
         Button("Quit Overview") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+
+    var profilesMenu: some View {
+        Menu("Activate Profile") {
+            profilesMenuContent
+        }
+    }
+
+    private var profilesMenuContent: some View {
+        ProfileMenuContent(
+            profileManager: appDelegate.profileManager, windowManager: appDelegate.windowManager)
+    }
+
+    private struct ProfileMenuContent: View {
+        @ObservedObject var profileManager: ProfileManager
+        @ObservedObject var windowManager: WindowManager
+
+        var body: some View {
+            if profileManager.profiles.isEmpty {
+                Text("No profiles saved")
+                    .foregroundColor(.secondary)
+            } else {
+                ForEach(profileManager.profiles) { profile in
+                    Button {
+                        windowManager.applyProfile(profile)
+                    } label: {
+                        Text(profile.name)
+                    }
+                }
+            }
+        }
     }
 
     private var helpMenu: some View {
@@ -129,9 +163,9 @@ struct OverviewApp: App {
 
             versionText
             updateButton
-            
+
             Divider()
-            
+
             Button("Diagnostic Report...") {
                 generateDiagnosticReport()
             }
@@ -161,7 +195,7 @@ struct OverviewApp: App {
             NSWorkspace.shared.open(url)
         }
     }
-    
+
     private func openProjectSupport() {
         if let url = URL(
             string: "https://williampierce.io/overview/#support")

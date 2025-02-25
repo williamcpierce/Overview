@@ -63,6 +63,7 @@ struct ShortcutSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .frame(width:384)
     }
 
     // MARK: - Actions
@@ -93,7 +94,7 @@ struct ShortcutRow: View {
                         .help(title)
                 }
             }
-            .frame(width: 140, alignment: .leading)
+            .frame(width: 180, alignment: .leading)
 
             Spacer()
 

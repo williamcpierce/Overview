@@ -17,16 +17,23 @@ struct SettingsView: View {
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var updateManager: UpdateManager
+    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var profileManager: ProfileManager
     private let logger = AppLogger.settings
 
     init(
         sourceManager: SourceManager,
         settingsManager: SettingsManager,
-        updateManager: UpdateManager
+        updateManager: UpdateManager,
+        windowManager: WindowManager,
+        profileManager: ProfileManager
+
     ) {
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
         self.updateManager = updateManager
+        self.windowManager = windowManager
+        self.profileManager = profileManager
     }
 
     var body: some View {
@@ -42,6 +49,10 @@ struct SettingsView: View {
             OverlaySettingsTab()
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
                 .scrollDisabled(true)
+
+            ProfileSettingsTab(windowManager: windowManager, profileManager: profileManager)
+                .tabItem { Label("Profiles", systemImage: "rectangle.3.offgrid.fill") }
+                .frame(minHeight: 288, maxHeight: 504)
 
             ShortcutSettingsTab()
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
@@ -64,7 +75,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 384)
+        .frame(width: 430)
         .fixedSize()
 
         // MARK: - Settings Window Level

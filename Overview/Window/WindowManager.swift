@@ -10,10 +10,11 @@
 import SwiftUI
 
 @MainActor
-final class WindowManager {
+final class WindowManager: ObservableObject {
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
+    private var profileManager: ProfileManager
     private var permissionManager: PermissionManager
     private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
@@ -38,11 +39,13 @@ final class WindowManager {
     init(
         previewManager: PreviewManager,
         sourceManager: SourceManager,
-        permissionManager: PermissionManager
+        permissionManager: PermissionManager,
+        profileManager: ProfileManager
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.profileManager = profileManager
         self.sessionWindowCounter = 0
         logger.debug("Window manager initialized")
     }
@@ -89,6 +92,14 @@ final class WindowManager {
     }
 
     func restoreWindowStates() {
+        if profileManager.shouldApplyProfileOnLaunch(),
+            let activeProfile = profileManager.getActiveProfile()
+        {
+            applyProfile(activeProfile)
+            return
+        }
+
+        /// Fallback to standard window restoration
         var restoredCount = 0
 
         do {
@@ -111,6 +122,34 @@ final class WindowManager {
         }
 
         handleRestoreCompletion(restoredCount)
+    }
+
+    func applyProfile(_ profile: WindowProfile) {
+        logger.info("Applying window profile: '\(profile.name)'")
+
+        closeAllWindows()
+
+        windowServices.windowStorage.restoreSpecificWindows(profile.windows) { [weak self] frame in
+            guard let self = self else { return }
+            do {
+                try createPreviewWindow(at: frame)
+            } catch {
+                logger.logError(
+                    error, context: "Failed to create window from profile '\(profile.name)'")
+            }
+        }
+    }
+
+    func saveCurrentLayoutAsProfile(name: String) -> WindowProfile {
+        let profile = profileManager.createProfile(name: name)
+        return profile
+    }
+
+    private func closeAllWindows() {
+        let windowsToClose = activeWindows
+        for window in windowsToClose {
+            closeWindow(window)
+        }
     }
 
     private func handleRestoreCompletion(_ restoredCount: Int) {

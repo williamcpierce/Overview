@@ -14,20 +14,23 @@ import SwiftUI
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
+    let updateManager: UpdateManager
+    let permissionManager: PermissionManager
+    let profileManager: ProfileManager!
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let shortcutManager: ShortcutManager
-    let updateManager: UpdateManager
-    let permissionManager: PermissionManager
     var windowManager: WindowManager!
 
     override init() {
         updateManager = UpdateManager()
         permissionManager = PermissionManager()
+        profileManager = ProfileManager()
 
         settingsManager = SettingsManager(
-            updateManager: updateManager
+            updateManager: updateManager,
+            profileManager: profileManager
         )
         sourceManager = SourceManager(
             settingsManager: settingsManager,
@@ -46,7 +49,8 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         windowManager = WindowManager(
             previewManager: previewManager,
             sourceManager: sourceManager,
-            permissionManager: permissionManager
+            permissionManager: permissionManager,
+            profileManager: profileManager
         )
 
         setupObservers()

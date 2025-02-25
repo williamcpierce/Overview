@@ -121,6 +121,31 @@ final class WindowStorage {
         }
     }
 
+    func collectCurrentWindowStates() -> [WindowState] {
+        NSApplication.shared.windows.compactMap { window in
+            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
+            else {
+                return nil
+            }
+            return WindowState(frame: window.frame)
+        }
+    }
+
+    func restoreSpecificWindows(_ states: [WindowState], using handler: (NSRect) -> Void) {
+        do {
+            try validateWindowStates(states)
+
+            logger.debug("Beginning profile window restoration: count=\(states.count)")
+            states.forEach { state in
+                handler(state.frame)
+            }
+
+            logger.info("Successfully restored \(states.count) windows from profile")
+        } catch {
+            logger.logError(error, context: "Profile window restoration failed")
+        }
+    }
+
     // MARK: - Private Methods
 
     private func collectWindowStates() -> [WindowState] {
