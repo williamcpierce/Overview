@@ -40,7 +40,7 @@ struct OverlaySettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Window Focus")
+                    Text("Source Focus")
                         .font(.headline)
                     InfoPopover(
                         content: .windowFocus,

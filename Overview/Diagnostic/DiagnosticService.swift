@@ -40,7 +40,9 @@ final class DiagnosticService {
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
             windowStatus: try await getWindowInfo(),
-            shortcuts: try await getShortcutsInfo()
+            shortcuts: try await getShortcutsInfo(),
+            storedWindows: try await getStoredWindowsInfo(),
+            layouts: try await getLayoutsInfo()
         )
 
         let jsonData = try jsonEncoder.encode(report)
@@ -55,7 +57,7 @@ final class DiagnosticService {
     func saveDiagnosticReport(_ report: String) async throws -> URL {
         let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true))"
         let reportFilename = "\(filename).json"
-        let logFilename = "\(filename)-logs.txt"
+//        let logFilename = "\(filename)-logs.txt"
 
         guard
             let documentsURL = FileManager.default.urls(
@@ -76,9 +78,9 @@ final class DiagnosticService {
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-        let logURL = overviewDirURL.appendingPathComponent(logFilename)
-        try await saveLogFile(to: logURL)
-        logger.info("Log file saved: \(logFilename)")
+//        let logURL = overviewDirURL.appendingPathComponent(logFilename)
+//        try await saveLogFile(to: logURL)
+//        logger.info("Log file saved: \(logFilename)")
 
         return reportURL
     }
@@ -169,13 +171,16 @@ final class DiagnosticService {
                 defaultWidth: Int(defaults.double(forKey: WindowSettingsKeys.defaultWidth)),
                 defaultHeight: Int(defaults.double(forKey: WindowSettingsKeys.defaultHeight)),
                 shadows: defaults.bool(forKey: WindowSettingsKeys.shadowEnabled),
+                syncAspectRatio: defaults.bool(forKey: WindowSettingsKeys.syncAspectRatio),
                 missionControlIntegration: defaults.bool(
                     forKey: WindowSettingsKeys.managedByMissionControl),
-                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
-                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
                 showOnAllDesktops: defaults.bool(
                     forKey: WindowSettingsKeys.assignPreviewsToAllDesktops),
-                savePositionsOnClose: defaults.bool(forKey: WindowSettingsKeys.savePositionsOnClose)
+                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
+                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
+                saveWindowsOnQuit: defaults.bool(forKey: WindowSettingsKeys.saveWindowsOnQuit),
+                restoreWindowsOnLaunch: defaults.bool(
+                    forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
@@ -193,6 +198,9 @@ final class DiagnosticService {
                     type: defaults.string(forKey: OverlaySettingsKeys.sourceTitleType)
                         ?? TitleType.windowTitle
                 )
+            ),
+            layout: LayoutSettings(
+                closeWindowsOnApply: defaults.bool(forKey: LayoutSettingsKeys.closeWindowsOnApply)
             ),
             source: SourceSettings(
                 filterMode: defaults.bool(forKey: SourceSettingsKeys.filterMode)
@@ -249,6 +257,77 @@ final class DiagnosticService {
                 )
             }
         )
+    }
+
+    private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
+        let defaults = UserDefaults.standard
+
+        guard let data = defaults.data(forKey: WindowSettingsKeys.storedWindows) else {
+            return StoredWindowsInfo(count: 0, windows: [])
+        }
+
+        do {
+            let windowStates = try JSONDecoder().decode([WindowState].self, from: data)
+            return StoredWindowsInfo(
+                count: windowStates.count,
+                windows: windowStates.map { state in
+                    StoredWindowDiagnostic(
+                        x: Int(state.x),
+                        y: Int(state.y),
+                        width: Int(state.width),
+                        height: Int(state.height)
+                    )
+                }
+            )
+        } catch {
+            logger.logError(error, context: "Failed to decode stored window states")
+            return StoredWindowsInfo(count: 0, windows: [])
+        }
+    }
+
+    private func getLayoutsInfo() async throws -> LayoutsInfo {
+        let defaults = UserDefaults.standard
+
+        guard let data = defaults.data(forKey: LayoutSettingsKeys.layouts) else {
+            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
+        }
+
+        do {
+            let layouts = try JSONDecoder().decode([Layout].self, from: data)
+
+            // Get launch layout ID
+            var launchLayoutId: String? = nil
+            if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId)
+            {
+                launchLayoutId = launchLayoutIdString
+            }
+
+            return LayoutsInfo(
+                count: layouts.count,
+                layouts: layouts.map { layout in
+                    LayoutDiagnostic(
+                        id: layout.id.uuidString,
+                        name: layout.name,
+                        windowCount: layout.windows.count,
+                        createdAt: formatDate(layout.createdAt),
+                        updatedAt: formatDate(layout.updatedAt),
+                        isLaunchLayout: layout.id.uuidString == launchLayoutId,
+                        windows: layout.windows.map { window in
+                            StoredWindowDiagnostic(
+                                x: Int(window.x),
+                                y: Int(window.y),
+                                width: Int(window.width),
+                                height: Int(window.height)
+                            )
+                        }
+                    )
+                },
+                launchLayoutId: launchLayoutId
+            )
+        } catch {
+            logger.logError(error, context: "Failed to decode layouts")
+            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
+        }
     }
 
     // MARK: - Helper Methods
@@ -334,6 +413,8 @@ struct DiagnosticReport: Codable {
     let settings: SettingsInfo
     let windowStatus: WindowStatus
     let shortcuts: ShortcutsInfo
+    let storedWindows: StoredWindowsInfo
+    let layouts: LayoutsInfo
 }
 
 struct AppInfo: Codable {
@@ -381,6 +462,7 @@ struct SettingsInfo: Codable {
     let preview: PreviewSettings
     let window: WindowSettings
     let overlay: OverlaySettings
+    let layout: LayoutSettings
     let source: SourceSettings
     let updates: UpdateSettings
 }
@@ -396,11 +478,13 @@ struct WindowSettings: Codable {
     let defaultWidth: Int
     let defaultHeight: Int
     let shadows: Bool
+    let syncAspectRatio: Bool
     let missionControlIntegration: Bool
+    let showOnAllDesktops: Bool
     let createOnLaunch: Bool
     let closeWithSource: Bool
-    let showOnAllDesktops: Bool
-    let savePositionsOnClose: Bool
+    let saveWindowsOnQuit: Bool
+    let restoreWindowsOnLaunch: Bool
 }
 
 struct OverlaySettings: Codable {
@@ -421,6 +505,9 @@ struct SourceTitleSettings: Codable {
     let type: String
 }
 
+struct LayoutSettings: Codable {
+    let closeWindowsOnApply: Bool
+}
 struct SourceSettings: Codable {
     let filterMode: String
     let filterAppNames: [String]
@@ -464,6 +551,34 @@ struct ShortcutDiagnostic: Codable {
     let id: String
     let windowTitles: [String]
     let keyboardShortcut: String
+}
+
+struct StoredWindowsInfo: Codable {
+    let count: Int
+    let windows: [StoredWindowDiagnostic]
+}
+
+struct StoredWindowDiagnostic: Codable {
+    let x: Int
+    let y: Int
+    let width: Int
+    let height: Int
+}
+
+struct LayoutsInfo: Codable {
+    let count: Int
+    let layouts: [LayoutDiagnostic]
+    let launchLayoutId: String?
+}
+
+struct LayoutDiagnostic: Codable {
+    let id: String
+    let name: String
+    let windowCount: Int
+    let createdAt: String
+    let updatedAt: String
+    let isLaunchLayout: Bool
+    let windows: [StoredWindowDiagnostic]
 }
 
 // MARK: - Error Types

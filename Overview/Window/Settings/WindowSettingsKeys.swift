@@ -11,12 +11,18 @@ enum WindowSettingsKeys {
     static let previewOpacity: String = "windowOpacity"
     static let defaultWidth: String = "defaultWindowWidth"
     static let defaultHeight: String = "defaultWindowHeight"
-    static let managedByMissionControl: String = "managedByMissionControl"
     static let shadowEnabled: String = "windowShadowEnabled"
+    static let syncAspectRatio: String = "syncAspectRatio"
+
+    static let managedByMissionControl: String = "managedByMissionControl"
+    static let assignPreviewsToAllDesktops: String = "desktopAssignmentBehavior"
+
     static let createOnLaunch: String = "windowCreateOnLaunch"
     static let closeOnCaptureStop: String = "closeOnCaptureStop"
-    static let assignPreviewsToAllDesktops: String = "desktopAssignmentBehavior"
-    static let savePositionsOnClose: String = "savePositionsOnClose"
+    static let saveWindowsOnQuit: String = "savePositionsOnClose"
+    static let restoreWindowsOnLaunch: String = "restoreWindowsOnLaunch"
+
+    static let storedWindows: String = "StoredWindowPositions"
 
     static let defaults = Defaults()
 
@@ -24,11 +30,15 @@ enum WindowSettingsKeys {
         let previewOpacity: Double = 0.95
         let defaultWidth: Double = 288
         let defaultHeight: Double = 162
-        let managedByMissionControl: Bool = true
         let shadowEnabled: Bool = true
+        let syncAspectRatio: Bool = true
+
+        let managedByMissionControl: Bool = true
+        let assignPreviewsToAllDesktops: Bool = false
+
         let createOnLaunch: Bool = true
         let closeOnCaptureStop: Bool = false
-        let assignPreviewsToAllDesktops: Bool = false
-        let savePositionsOnClose: Bool = true
+        let saveWindowsOnQuit: Bool = true
+        let restoreWindowsOnLaunch: Bool = true
     }
 }

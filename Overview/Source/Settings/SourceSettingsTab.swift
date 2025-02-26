@@ -61,14 +61,8 @@ struct SourceSettingsTab: View {
                     }
                 }
 
-                Picker("Filter mode", selection: $filterMode) {
-                    Text("Blocklist").tag(FilterMode.blocklist)
-                    Text("Allowlist").tag(FilterMode.allowlist)
-                }
-                .pickerStyle(.segmented)
-
                 HStack {
-                    TextField("App name", text: $newAppName)
+                    TextField("Application name", text: $newAppName)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
                     Button("Add") {
@@ -77,6 +71,11 @@ struct SourceSettingsTab: View {
                     .disabled(newAppName.isEmpty)
                 }
             }
+            Picker("Filter mode", selection: $filterMode) {
+                Text("Blocklist").tag(FilterMode.blocklist)
+                Text("Allowlist").tag(FilterMode.allowlist)
+            }
+            .pickerStyle(.segmented)
         }
         .formStyle(.grouped)
     }

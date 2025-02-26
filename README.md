@@ -22,6 +22,8 @@ For development updates, please join our Discord:
 
 **Glanceable Info Overlays:** Display source app names, window titles, and focus status at a glance
 
+**Saved Preview Layouts:** Save and restore collections of preconfigured preview windows
+
 ## System Requirements
 
 -   macOS Ventura (13.0) or later
@@ -65,17 +67,19 @@ See setting menu info panels for full details
 -   Windows
     -   Appearance
         -   Opacity
-        -   Shadows
         -   Default dimensions
-    -   Visibility
+        -   Shadows
+        -   Synchronize aspect ratio
+    -   System Visibility
         -   Show windows in Mission Control
         -   Show windows on all desktops (including fullscreen)
     -   Management
-        -   Create window on launch
+        -   Always create window on launch
         -   Close window with preview source
         -   Save window positions on quit
--   Overlays
-    -   Window Focus
+        -   Restore window positions on launch
+- Overlays
+    -   Source Focus
         -   Border width
         -   Border color
     -   Source Title
@@ -83,14 +87,21 @@ See setting menu info panels for full details
         -   Background opacity
         -   Location
         -   Type (window, application, or both)
+-   Layouts
+    -   Window Layouts
+        - Create layouts to save window arrangements
+        - Apply layouts to restore window configurations
+        - Update existing layouts
+    - Apply layout on launch
+    - Close all windows when applying layouts
 -   Shortcuts
-    -   Window Activation
-        -   Keyboard shortcuts for focusing windows
-        -   Multiple window titles per shortcut for window cycling
+    -   Source Activation
+        -   Keyboard shortcuts for focusing source windows
+        -   Multiple source window titles per shortcut for cycling
 -   Sources
-    -   Source App Filter
-        -   Window source list filtering
-        -   Filter mode (blocklist/allowlist)
+    -   Source Application Filter
+        -   Source list filtering
+    -   Filter mode (blocklist/allowlist)
 -   Updates
     -   Automatically check for updates
     -   Automatically download updates

@@ -16,13 +16,18 @@ extension InfoPopoverContent {
                 text: "Controls preview window transparency"
             ),
             Section(
+                title: "Default Dimensions",
+                text:
+                    "Sets initial dimensions for new preview windows. Windows can be resized while in Edit Mode."
+            ),
+            Section(
                 title: "Shadows",
                 text: "Adds shadows to preview windows"
             ),
             Section(
-                title: "Default Dimensions",
+                title: "Synchronize Aspect Ratio",
                 text:
-                    "Sets initial dimensions for new windows. Windows can be resized while in Edit Mode."
+                    "Synchronize the preview window aspect ratio to the source window aspect ratio"
             ),
         ],
         isWarning: false
@@ -47,9 +52,9 @@ extension InfoPopoverContent {
         title: "Window Management",
         sections: [
             Section(
-                title: "Create Window on Launch",
+                title: "Always Create Window on Launch",
                 text:
-                    "Opens a preview window at startup if none were restored from a previous session"
+                    "Creates a preview window at on launch if none were restored from a previous session"
             ),
             Section(
                 title: "Close Window with Preview Source",
@@ -58,7 +63,12 @@ extension InfoPopoverContent {
             Section(
                 title: "Save Window Positions on Quit",
                 text:
-                    "Saves the position and size of each Overview window on app quit, to be restored on app launch"
+                    "Saves the position and size of each preview window when Overview is quit"
+            ),
+            Section(
+                title: "Restore Window Positions on Launch",
+                text:
+                    "Restores the last saved preview window positions and sizes when Overview is launched"
             ),
         ],
         isWarning: false

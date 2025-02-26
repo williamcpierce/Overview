@@ -10,10 +10,11 @@
 import SwiftUI
 
 @MainActor
-final class WindowManager {
+final class WindowManager: ObservableObject {
     // Dependencies
     private var previewManager: PreviewManager
     private var sourceManager: SourceManager
+    private var layoutManager: LayoutManager
     private var permissionManager: PermissionManager
     private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
@@ -24,30 +25,38 @@ final class WindowManager {
     private var sessionWindowCounter: Int
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.defaultWidth)
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
     @AppStorage(WindowSettingsKeys.defaultHeight)
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
-    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
+    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
+    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
+    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
+    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+
+    // Layout Settings
+    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
+    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
 
     init(
         previewManager: PreviewManager,
         sourceManager: SourceManager,
-        permissionManager: PermissionManager
+        permissionManager: PermissionManager,
+        layoutManager: LayoutManager
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.layoutManager = layoutManager
         self.sessionWindowCounter = 0
         logger.debug("Window manager initialized")
     }
 
-    func createPreviewWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil) throws {
         do {
             let defaultSize = CGSize(width: defaultWidth, height: defaultHeight)
             let window = try windowServices.createWindow(
@@ -70,63 +79,72 @@ final class WindowManager {
 
     func closeWindow(_ window: NSWindow) {
         Task {
-            logger.debug("Initiating window closure")
             window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
-            logger.info("Window closed successfully")
+            logger.debug("Window closed successfully")
         }
     }
 
-    func saveWindowStatesOnQuit() {
-        if savePositionsOnClose {
-            saveWindowStates()
+    func handleWindowsOnLaunch() {
+        if layoutManager.shouldApplyLayoutOnLaunch(),
+            let launchLayout = layoutManager.getLaunchLayout()
+        {
+            applyLayout(launchLayout)
+            return
         }
-    }
 
-    func saveWindowStates() {
-        windowServices.saveWindowStates()
-    }
+        var restoredCount: Int = 0
 
-    func restoreWindowStates() {
-        var restoredCount = 0
-
-        do {
-            guard windowServices.validateStoredState() else {
-                throw WindowManagerError.windowRestoreValidationFailed
-            }
-
-            windowServices.restoreWindows { [weak self] frame in
+        if restoreWindowsOnLaunch {
+            windowServices.windowStorage.restoreWindows { [weak self] frame in
                 guard let self = self else { return }
                 do {
-                    try createPreviewWindow(at: frame)
+                    try createWindow(at: frame)
                     restoredCount += 1
                     logger.debug("Restored window \(restoredCount)")
                 } catch {
                     logger.logError(error, context: "Failed to restore window \(restoredCount + 1)")
                 }
             }
-        } catch {
-            logger.logError(error, context: "Window state restoration failed")
         }
 
         handleRestoreCompletion(restoredCount)
     }
 
-    private func handleRestoreCompletion(_ restoredCount: Int) {
-        if restoredCount == 0 && createOnLaunch {
-            logger.info("No windows restored, creating default window")
-            createDefaultWindow()
-        } else {
-            logger.info("Successfully restored \(restoredCount) windows")
+    func handleWindowsOnQuit() {
+        if saveWindowsOnQuit {
+            windowServices.windowStorage.storeWindows()
         }
+    }
+
+    func saveLayout(name: String) -> Layout? {
+        let layout = layoutManager.createLayout(name: name)
+        return layout
+    }
+
+    func applyLayout(_ layout: Layout) {
+        if closeWindowsOnApply {
+            closeAllWindows()
+        }
+
+        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
+            guard let self = self else { return }
+            do {
+                try createWindow(at: frame)
+            } catch {
+                logger.logError(
+                    error, context: "Failed to create window from layout '\(layout.name)'")
+            }
+        }
+        logger.info("Applied window layout: '\(layout.name)'")
     }
 
     // MARK: - Private Methods
 
     private func createDefaultWindow() {
         do {
-            try createPreviewWindow()
+            try createWindow()
         } catch {
             logger.logError(error, context: "Failed to create default window")
         }
@@ -157,6 +175,22 @@ final class WindowManager {
         )
         window.contentView = NSHostingView(rootView: contentView)
     }
+
+    private func closeAllWindows() {
+        let windowsToClose = activeWindows
+        for window in windowsToClose {
+            closeWindow(window)
+        }
+    }
+
+    private func handleRestoreCompletion(_ restoredCount: Int) {
+        if restoredCount == 0 && createOnLaunch {
+            logger.info("No windows restored, creating default window")
+            createDefaultWindow()
+        } else {
+            logger.info("Successfully restored \(restoredCount) windows")
+        }
+    }
 }
 
 // MARK: - Window Delegate
@@ -180,8 +214,6 @@ private final class WindowDelegate: NSObject, NSWindowDelegate {
 enum WindowManagerError: LocalizedError {
     case windowCreationFailed
     case invalidScreenConfiguration
-    case windowRestoreValidationFailed
-    case windowValidationFailed
 
     var errorDescription: String? {
         switch self {
@@ -189,10 +221,6 @@ enum WindowManagerError: LocalizedError {
             return "Failed to create window with valid configuration"
         case .invalidScreenConfiguration:
             return "No valid screen configuration available"
-        case .windowRestoreValidationFailed:
-            return "Window restore state validation failed"
-        case .windowValidationFailed:
-            return "Window state validation failed"
         }
     }
 }

@@ -22,6 +22,8 @@ struct WindowSettingsTab: View {
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
     @AppStorage(WindowSettingsKeys.defaultHeight)
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.syncAspectRatio)
+    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
     @AppStorage(WindowSettingsKeys.managedByMissionControl)
     private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
     @AppStorage(WindowSettingsKeys.createOnLaunch)
@@ -31,8 +33,10 @@ struct WindowSettingsTab: View {
     @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
     private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
         .assignPreviewsToAllDesktops
-    @AppStorage(WindowSettingsKeys.savePositionsOnClose)
-    private var savePositionsOnClose = WindowSettingsKeys.defaults.savePositionsOnClose
+    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
+    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
+    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
+    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
 
     var body: some View {
         Form {
@@ -59,8 +63,6 @@ struct WindowSettingsTab: View {
                         .frame(width: 40)
                 }
 
-                Toggle("Shadows", isOn: $shadowEnabled)
-
                 VStack {
                     HStack {
                         Text("Default width")
@@ -70,7 +72,7 @@ struct WindowSettingsTab: View {
                             value: Binding(
                                 get: { defaultWidth },
                                 set: { newValue in
-                                    defaultWidth = max(newValue, 160)
+                                    defaultWidth = max(newValue, 80)
                                 }
                             ), formatter: NumberFormatter()
                         )
@@ -88,7 +90,7 @@ struct WindowSettingsTab: View {
                             value: Binding(
                                 get: { defaultHeight },
                                 set: { newValue in
-                                    defaultHeight = max(newValue, 80)
+                                    defaultHeight = max(newValue, 40)
                                 }
                             ), formatter: NumberFormatter()
                         )
@@ -98,13 +100,17 @@ struct WindowSettingsTab: View {
                             .foregroundColor(.secondary)
                     }
                 }
+
+                Toggle("Shadows", isOn: $shadowEnabled)
+
+                Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
             }
 
-            // MARK: - Visibility Section
+            // MARK: - System Visibility Section
 
             Section {
                 HStack {
-                    Text("Visibility")
+                    Text("System Visibility")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -119,7 +125,7 @@ struct WindowSettingsTab: View {
                 }
             }
 
-            // MARK: - Management Section
+            // MARK: - Window Management Section
 
             Section {
                 HStack {
@@ -133,9 +139,10 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Create window on launch", isOn: $createOnLaunch)
+                    Toggle("Always create window on launch", isOn: $createOnLaunch)
                     Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Save window positions on quit", isOn: $savePositionsOnClose)
+                    Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
+                    Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
                 }
             }
         }

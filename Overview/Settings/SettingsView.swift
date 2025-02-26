@@ -17,16 +17,23 @@ struct SettingsView: View {
     @ObservedObject var sourceManager: SourceManager
     @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var updateManager: UpdateManager
+    @ObservedObject var windowManager: WindowManager
+    @ObservedObject var layoutManager: LayoutManager
     private let logger = AppLogger.settings
 
     init(
         sourceManager: SourceManager,
         settingsManager: SettingsManager,
-        updateManager: UpdateManager
+        updateManager: UpdateManager,
+        windowManager: WindowManager,
+        layoutManager: LayoutManager
+
     ) {
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
         self.updateManager = updateManager
+        self.windowManager = windowManager
+        self.layoutManager = layoutManager
     }
 
     var body: some View {
@@ -43,12 +50,16 @@ struct SettingsView: View {
                 .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
                 .scrollDisabled(true)
 
+            LayoutSettingsTab(windowManager: windowManager, layoutManager: layoutManager)
+                .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
+                .frame(minHeight: 288, maxHeight: 504)
+
             ShortcutSettingsTab()
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
             SourceSettingsTab(settingsManager: settingsManager)
-                .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
+                .tabItem { Label("Sources", systemImage: "inset.filled.rectangle.badge.record") }
                 .frame(minHeight: 288, maxHeight: 504)
 
             UpdateSettingsTab(updateManager: updateManager)
@@ -64,7 +75,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 384)
+        .frame(width: 432)
         .fixedSize()
 
         // MARK: - Settings Window Level
