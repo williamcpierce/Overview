@@ -4,7 +4,7 @@
 
  Created by William Pierce on 2/24/25.
 
- Manages window layout layout storage, retrieval, and application.
+ Manages window layout storage, retrieval, and application.
 */
 
 import SwiftUI
@@ -73,8 +73,7 @@ final class LayoutManager: ObservableObject {
         } else {
             let currentWindows = windowServices.windowStorage.collectWindows()
             layout.update(windows: currentWindows)
-            logger.info(
-                "Updated layout '\(layout.name)' with \(currentWindows.count) windows")
+            logger.info("Updated layout '\(layout.name)' with \(currentWindows.count) windows")
         }
 
         layouts[index] = layout

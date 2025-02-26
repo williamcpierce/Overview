@@ -3,6 +3,8 @@
  Overview
 
  Created by William Pierce on 2/24/25.
+
+ Provides a user interface for creating, managing, and applying window layouts.
 */
 
 import SwiftUI
@@ -44,22 +46,8 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Window Layouts")
                         .font(.headline)
-
                     Spacer()
-
                     Button {
-                        if let launchId = launchLayoutId {
-                            selectedLayoutNameBeforeJSON =
-                                layoutManager.layouts.first {
-                                    $0.id == launchId
-                                }?.name
-                        } else {
-                            selectedLayoutNameBeforeJSON = nil
-                        }
-
-                        layoutsJSON = layoutsToJSON()
-                        isJSONEditorVisible = true
-                    } label: {
                         Text("[JSON]")
                             .foregroundColor(.secondary)
                     }
@@ -73,93 +61,9 @@ struct LayoutSettingsTab: View {
                 }
                 .padding(.bottom, 4)
 
-                VStack {
-                    List {
-                        if layoutManager.layouts.isEmpty {
-                            Text("No layouts saved")
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(layoutManager.layouts) { layout in
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        HStack {
-                                            Text(layout.name)
-                                                .lineLimit(1)
-                                                .help("Layout name")
-                                        }
-                                        Text("\(layout.windows.count) windows")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-
-                                    Spacer()
-
-                                    Button {
-                                        layoutToModify = layout
-                                        showingApplyAlert = true
-                                    } label: {
-                                        Image(
-                                            systemName:
-                                                "checkmark.arrow.trianglehead.counterclockwise"
-                                        )
-                                        .foregroundColor(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("Apply layout")
-
-                                    Button {
-                                        layoutToModify = layout
-                                        showingUpdateAlert = true
-                                    } label: {
-                                        Image(systemName: "arrow.triangle.2.circlepath")
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("Update layout")
-
-                                    Button {
-                                        layoutToModify = layout
-                                        showingDeleteAlert = true
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("Delete layout")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                HStack {
-                    TextField("Layout name", text: $newLayoutName)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: newLayoutName) { newValue in
-                            newLayoutName = newValue.trimmingCharacters(in: .whitespaces)
-                        }
-
-                    Button("Create") {
-                        createLayout()
-                    }
-                    .disabled(
-                        newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
-                }
-
-                HStack {
-                    Text("Apply layout on launch")
-                    Spacer()
-                    Picker("", selection: $launchLayoutId) {
-                        Text("None").tag(nil as UUID?)
-                        ForEach(layoutManager.layouts) { layout in
-                            Text(layout.name).tag(layout.id as UUID?)
-                        }
-                    }
-                    .frame(width: 160)
-                    .onChange(of: launchLayoutId) { newValue in
-                        layoutManager.setLaunchLayout(id: newValue)
-                    }
-                }
+                layoutListView
+                layoutCreationControls
+                launchLayoutSelector
             }
         }
         .formStyle(.grouped)
@@ -265,6 +169,20 @@ struct LayoutSettingsTab: View {
 
     // MARK: - Actions
 
+    private func prepareJSONEditor() {
+        if let launchId: UUID = launchLayoutId {
+            selectedLayoutNameBeforeJSON =
+                layoutManager.layouts.first {
+                    $0.id == launchId
+                }?.name
+        } else {
+            selectedLayoutNameBeforeJSON = nil
+        }
+
+        layoutsJSON = layoutsToJSON()
+        isJSONEditorVisible = true
+    }
+
     private func createLayout() {
         if !newLayoutName.isEmpty && layoutManager.isLayoutNameUnique(newLayoutName) {
             _ = windowManager.saveLayout(name: newLayoutName)
@@ -301,10 +219,8 @@ struct LayoutSettingsTab: View {
             }
 
             let decoder = JSONDecoder()
-            let layoutsFromJSON: [LayoutJSON] = try decoder.decode(
-                [LayoutJSON].self, from: jsonData)
+            let layoutsFromJSON = try decoder.decode([LayoutJSON].self, from: jsonData)
 
-            // Validate layouts
             if !validateLayouts(layoutsFromJSON) {
                 return
             }
@@ -316,6 +232,44 @@ struct LayoutSettingsTab: View {
         } catch {
             jsonError = "JSON Error: \(error.localizedDescription)"
             logger.logError(error, context: "Failed to import layouts from JSON")
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func validateLayouts(_ layouts: [LayoutJSON]) -> Bool {
+        if layouts.contains(where: { $0.name.isEmpty }) {
+            jsonError = "Layout names cannot be empty"
+            return false
+        }
+
+        let uniqueNames: Set<String> = Set(layouts.map { $0.name.lowercased() })
+        if uniqueNames.count != layouts.count {
+            jsonError = "Layout names must be unique (case-insensitive)"
+            return false
+        }
+
+        return true
+    }
+
+    private func importLayouts(_ layoutsFromJSON: [LayoutJSON]) {
+        while !layoutManager.layouts.isEmpty {
+            layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
+        }
+
+        for layout: LayoutJSON in layoutsFromJSON {
+            _ = windowManager.saveLayout(name: layout.name)
+
+            if let newLayout = layoutManager.layouts.last {
+                layoutManager.updateLayout(id: newLayout.id, name: layout.name)
+
+                if let index = layoutManager.layouts.firstIndex(where: { $0.id == newLayout.id }) {
+                    var updatedLayout = layoutManager.layouts[index]
+                    updatedLayout.update(windows: layout.windows)
+                    layoutManager.layouts[index] = updatedLayout
+                    layoutManager.saveLayouts()
+                }
+            }
         }
     }
 
@@ -332,50 +286,6 @@ struct LayoutSettingsTab: View {
             launchLayoutId = nil
             layoutManager.setLaunchLayout(id: nil)
             logger.debug("Previous launch layout no longer exists, cleared setting")
-        }
-    }
-
-    // MARK: - Helper Methods
-
-    private func validateLayouts(_ layouts: [LayoutJSON]) -> Bool {
-        // Check for empty layout names
-        if layouts.contains(where: { $0.name.isEmpty }) {
-            jsonError = "Layout names cannot be empty"
-            return false
-        }
-
-        // Check for duplicate names
-        let uniqueNames: Set<String> = Set(layouts.map { $0.name.lowercased() })
-        if uniqueNames.count != layouts.count {
-            jsonError = "Layout names must be unique (case-insensitive)"
-            return false
-        }
-
-        return true
-    }
-
-    private func importLayouts(_ layoutsFromJSON: [LayoutJSON]) {
-        // Remove all existing layouts
-        while !layoutManager.layouts.isEmpty {
-            layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
-        }
-
-        // Add the new layouts
-        for layout: LayoutJSON in layoutsFromJSON {
-            _ = windowManager.saveLayout(name: layout.name)
-
-            // Get the newly created layout and update its windows
-            if let newLayout = layoutManager.layouts.last {
-                layoutManager.updateLayout(id: newLayout.id, name: layout.name)
-
-                // Need to update layout with windows separately
-                if let index = layoutManager.layouts.firstIndex(where: { $0.id == newLayout.id }) {
-                    var updatedLayout = layoutManager.layouts[index]
-                    updatedLayout.update(windows: layout.windows)
-                    layoutManager.layouts[index] = updatedLayout
-                    layoutManager.saveLayouts()
-                }
-            }
         }
     }
 }
