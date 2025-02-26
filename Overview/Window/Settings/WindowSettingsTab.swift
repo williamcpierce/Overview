@@ -74,7 +74,7 @@ struct WindowSettingsTab: View {
                             value: Binding(
                                 get: { defaultWidth },
                                 set: { newValue in
-                                    defaultWidth = max(newValue, 160)
+                                    defaultWidth = max(newValue, 80)
                                 }
                             ), formatter: NumberFormatter()
                         )
@@ -92,7 +92,7 @@ struct WindowSettingsTab: View {
                             value: Binding(
                                 get: { defaultHeight },
                                 set: { newValue in
-                                    defaultHeight = max(newValue, 80)
+                                    defaultHeight = max(newValue, 40)
                                 }
                             ), formatter: NumberFormatter()
                         )

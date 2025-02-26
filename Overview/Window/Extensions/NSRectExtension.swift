@@ -13,8 +13,8 @@ import AppKit
 extension NSRect {
     // Constants
     private struct Constraints {
-        static let minWidth: CGFloat = 160
-        static let minHeight: CGFloat = 80
+        static let minWidth: CGFloat = 100
+        static let minHeight: CGFloat = 50
         static let maxWidth: CGFloat = 5120
         static let maxHeight: CGFloat = 2880
         static let minVisiblePortion: CGFloat = 50

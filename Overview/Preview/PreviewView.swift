@@ -70,7 +70,7 @@ struct PreviewView: View {
                 )
                 .opacity(isPreviewVisible ? 1 : 0)
         }
-        .frame(minWidth: 160, minHeight: 80)
+        .frame(minWidth: 100, minHeight: 50)
         .onAppear(perform: setupCapture)
         .onDisappear(perform: teardownCapture)
         .onChange(of: captureCoordinator.capturedFrame?.size) { newSize in

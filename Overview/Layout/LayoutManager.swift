@@ -4,7 +4,7 @@
 
  Created by William Pierce on 2/24/25.
 
- Manages window layout layout storage, retrieval, and application.
+ Manages window layout storage, retrieval, and application.
 */
 
 import SwiftUI
@@ -34,7 +34,18 @@ final class LayoutManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    func createLayout(name: String) -> Layout {
+    func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {
+        return layouts.filter {
+            $0.name.lowercased() == name.lowercased() && $0.id != excludingId
+        }.isEmpty
+    }
+
+    func createLayout(name: String) -> Layout? {
+        guard isLayoutNameUnique(name) else {
+            logger.warning("Attempted to create layout with non-unique name: \(name)")
+            return nil
+        }
+
         let currentWindows = windowServices.windowStorage.collectWindows()
         let layout = Layout(name: name, windows: currentWindows)
 
@@ -54,12 +65,15 @@ final class LayoutManager: ObservableObject {
         var layout = layouts[index]
 
         if let name = name {
+            guard isLayoutNameUnique(name, excludingId: id) else {
+                logger.warning("Attempted to update layout with non-unique name: \(name)")
+                return
+            }
             layout.update(name: name)
         } else {
             let currentWindows = windowServices.windowStorage.collectWindows()
             layout.update(windows: currentWindows)
-            logger.info(
-                "Updated layout '\(layout.name)' with \(currentWindows.count) windows")
+            logger.info("Updated layout '\(layout.name)' with \(currentWindows.count) windows")
         }
 
         layouts[index] = layout
@@ -116,9 +130,7 @@ final class LayoutManager: ObservableObject {
         return launchLayoutId != nil && getLaunchLayout() != nil
     }
 
-    // MARK: - Private Methods
-
-    private func saveLayouts() {
+    func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
             UserDefaults.standard.set(encodedLayouts, forKey: LayoutSettingsKeys.layouts)
@@ -127,6 +139,8 @@ final class LayoutManager: ObservableObject {
             logger.logError(error, context: "Failed to encode layouts")
         }
     }
+
+    // MARK: - Private Methods
 
     private func loadLayouts() -> [Layout] {
         guard let data = UserDefaults.standard.data(forKey: LayoutSettingsKeys.layouts) else {

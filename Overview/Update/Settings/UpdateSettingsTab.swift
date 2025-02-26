@@ -54,7 +54,8 @@ struct UpdateSettingsTab: View {
                             updateManager.updater.automaticallyDownloadsUpdates = newValue
                         }
 
-                    Toggle("Enable beta updates", isOn: $enableBetaUpdates)
+                    Toggle("Enable beta updates", isOn: $enableBetaUpdates).disabled(true)
+                        .help("All updates are beta updates currently, this setting has no effect.")
                 }
 
                 HStack {
