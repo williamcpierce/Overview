@@ -52,7 +52,7 @@ struct LayoutSettingsTab: View {
                     Button(action: {
                         prepareJSONEditor()
                     }) {
-                        Image(systemName: "text.cursor")
+                        Image(systemName: "ellipsis.curlybraces")
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -80,7 +80,7 @@ struct LayoutSettingsTab: View {
                                                 .lineLimit(1)
                                                 .help("Layout name")
                                         }
-                                        Text("\(layout.windows.count) windows")
+                                        Text("\(layout.windows.count) \(layout.windows.count == 1 ? "window" : "windows")")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
                                     }

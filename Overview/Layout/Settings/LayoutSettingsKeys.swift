@@ -10,4 +10,5 @@ import Foundation
 enum LayoutSettingsKeys {
     static let layouts: String = "storedLayouts"
     static let launchLayoutId: String = "launchLayoutId"
+    static let closeWindowsOnApply: String = "closeWindowsOnApply"
 }
