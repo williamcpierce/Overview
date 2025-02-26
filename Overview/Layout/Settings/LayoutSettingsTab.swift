@@ -145,7 +145,8 @@ struct LayoutSettingsTab: View {
                     .disabled(
                         newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
                 }
-
+            }
+            VStack {
                 // Launch Layout Selector
                 HStack {
                     Text("Apply layout on launch")
@@ -162,6 +163,7 @@ struct LayoutSettingsTab: View {
                     }
                 }
 
+                // Close all window toggle
                 Toggle(
                     "Close all windows when applying layouts",
                     isOn: $closeWindowsOnApply

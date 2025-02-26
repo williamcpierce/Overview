@@ -31,7 +31,7 @@ struct PreviewSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Preview Frame Rate")
+                    Text("Frame Rate")
                         .font(.headline)
                     Spacer()
                     InfoPopover(
@@ -54,7 +54,7 @@ struct PreviewSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Automatic Preview Hiding")
+                    Text("Automatic Hiding")
                         .font(.headline)
                     Spacer()
                     InfoPopover(

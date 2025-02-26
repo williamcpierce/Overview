@@ -63,8 +63,6 @@ struct WindowSettingsTab: View {
                         .frame(width: 40)
                 }
 
-                Toggle("Shadows", isOn: $shadowEnabled)
-
                 VStack {
                     HStack {
                         Text("Default width")
@@ -102,6 +100,8 @@ struct WindowSettingsTab: View {
                             .foregroundColor(.secondary)
                     }
                 }
+
+                Toggle("Shadows", isOn: $shadowEnabled)
 
                 Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
             }

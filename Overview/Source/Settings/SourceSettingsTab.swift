@@ -70,13 +70,12 @@ struct SourceSettingsTab: View {
                     }
                     .disabled(newAppName.isEmpty)
                 }
-
-                Picker("Filter mode", selection: $filterMode) {
-                    Text("Blocklist").tag(FilterMode.blocklist)
-                    Text("Allowlist").tag(FilterMode.allowlist)
-                }
-                .pickerStyle(.segmented)
             }
+            Picker("Filter mode", selection: $filterMode) {
+                Text("Blocklist").tag(FilterMode.blocklist)
+                Text("Allowlist").tag(FilterMode.allowlist)
+            }
+            .pickerStyle(.segmented)
         }
         .formStyle(.grouped)
     }
