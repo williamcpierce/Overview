@@ -114,6 +114,9 @@ final class SettingsManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
         layoutManager.layouts = []
         layoutManager.setLaunchLayout(id: nil)
+        UserDefaults.standard.set(
+            LayoutSettingsKeys.defaults.closeWindowsOnApply,
+            forKey: LayoutSettingsKeys.closeWindowsOnApply)
 
         /// Reset Preview settings
         UserDefaults.standard.set(

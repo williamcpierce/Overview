@@ -35,6 +35,10 @@ struct LayoutSettingsTab: View {
     @State private var layoutsJSON: String = ""
     @State private var jsonError: String? = nil
 
+    // Layout Settings
+    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
+    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
         self._windowManager = StateObject(wrappedValue: windowManager)
@@ -80,9 +84,11 @@ struct LayoutSettingsTab: View {
                                                 .lineLimit(1)
                                                 .help("Layout name")
                                         }
-                                        Text("\(layout.windows.count) \(layout.windows.count == 1 ? "window" : "windows")")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
+                                        Text(
+                                            "\(layout.windows.count) \(layout.windows.count == 1 ? "window" : "windows")"
+                                        )
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                     }
 
                                     Spacer()
@@ -155,6 +161,11 @@ struct LayoutSettingsTab: View {
                         layoutManager.setLaunchLayout(id: newValue)
                     }
                 }
+
+                Toggle(
+                    "Close all windows when applying layouts",
+                    isOn: $closeWindowsOnApply
+                )
             }
         }
         .formStyle(.grouped)
