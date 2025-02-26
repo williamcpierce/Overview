@@ -1,10 +1,3 @@
-//
-//  OverlaySettingsTab 2.swift
-//  Overview
-//
-//  Created by William Pierce on 2/26/25.
-//
-
 /*
  Overlay/Settings/OverlaySettingsTab.swift
  Overview
