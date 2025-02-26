@@ -31,6 +31,10 @@ extension InfoPopoverContent {
                 title: "Auto-apply on Launch",
                 text: "Automatically apply the selected layout when Overview starts"
             ),
+            Section(
+                title: "Close All Windows When Applying Layouts",
+                text: "Close all open preview windows when applying a layout"
+            ),
         ],
         isWarning: false
     )

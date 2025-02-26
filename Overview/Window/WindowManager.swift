@@ -38,6 +38,10 @@ final class WindowManager: ObservableObject {
     @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
     private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
 
+    // Layout Settings
+    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
+    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+
     init(
         previewManager: PreviewManager,
         sourceManager: SourceManager,
@@ -120,7 +124,9 @@ final class WindowManager: ObservableObject {
     }
 
     func applyLayout(_ layout: Layout) {
-        closeAllWindows()
+        if closeWindowsOnApply {
+            closeAllWindows()
+        }
 
         windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
             guard let self = self else { return }
