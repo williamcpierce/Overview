@@ -16,7 +16,9 @@ struct ShortcutSettingsTab: View {
     // Private State
     @State private var showingShortcutInfo: Bool = false
     @State private var showingWindowTitlesInfo: Bool = false
+    @State private var showingDeleteAlert: Bool = false
     @State private var newWindowTitles: String = ""
+    @State private var shortcutToDelete: ShortcutItem?
 
     // Title Editor State
     @State private var isWindowTitlesEditorVisible: Bool = false
@@ -71,7 +73,10 @@ struct ShortcutSettingsTab: View {
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)
 
-                                Button(action: { shortcutStorage.removeShortcut(shortcut) }) {
+                                Button(action: {
+                                    shortcutToDelete = shortcut
+                                    showingDeleteAlert = true
+                                }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.secondary)
                                         .padding(.leading, 8)
@@ -99,6 +104,22 @@ struct ShortcutSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .alert("Delete Shortcut", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                if let shortcut = shortcutToDelete {
+                    shortcutStorage.removeShortcut(shortcut)
+                }
+                shortcutToDelete = nil
+            }
+        } message: {
+            if let shortcut = shortcutToDelete {
+                let titles = shortcut.windowTitles.joined(separator: ", ")
+                Text("Delete shortcut for '\(titles)'? This cannot be undone.")
+            } else {
+                Text("Select a shortcut to delete")
+            }
+        }
         .sheet(isPresented: $isWindowTitlesEditorVisible) {
             // Window Titles JSON Editor View
             VStack(spacing: 0) {
