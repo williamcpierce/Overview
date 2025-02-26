@@ -95,7 +95,6 @@ struct ShortcutSettingsTab: View {
                         addShortcut()
                     }
                     .disabled(newWindowTitles.isEmpty)
-
                 }
             }
         }
