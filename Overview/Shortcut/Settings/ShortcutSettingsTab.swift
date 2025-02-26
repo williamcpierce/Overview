@@ -50,10 +50,20 @@ struct ShortcutSettingsTab: View {
                         List(shortcutStorage.shortcuts, id: \.self) { shortcut in
                             HStack {
                                 VStack(alignment: .leading) {
-                                    ForEach(shortcut.windowTitles, id: \.self) { title in
-                                        Text(title)
+                                    ForEach(
+                                        Array(shortcut.windowTitles.prefix(2)).indices, id: \.self
+                                    ) { index in
+                                        Text(shortcut.windowTitles[index])
                                             .lineLimit(1)
-                                            .help(title)
+                                            .help(shortcut.windowTitles[index])
+                                    }
+
+                                    if shortcut.windowTitles.count > 2 {
+                                        Text(
+                                            "+\(shortcut.windowTitles.count - 2) more"
+                                        )
+                                        .foregroundColor(.secondary)
+                                        .font(.caption)
                                     }
                                 }
                                 .frame(width: 120, alignment: .leading)
@@ -68,7 +78,7 @@ struct ShortcutSettingsTab: View {
                                         .foregroundColor(.secondary)
                                 }
                                 .buttonStyle(.plain)
-                                .help("Edit window titles")
+                                .help("Edit window titles as JSON")
 
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)

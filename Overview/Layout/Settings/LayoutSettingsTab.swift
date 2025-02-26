@@ -46,11 +46,13 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Window Layouts")
                         .font(.headline)
+
                     Spacer()
-                    Button {
+
+                    Button(action: {
                         prepareJSONEditor()
-                    } label: {
-                        Text("[JSON]")
+                    }) {
+                        Image(systemName: "text.cursor")
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
