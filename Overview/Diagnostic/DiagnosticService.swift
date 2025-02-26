@@ -78,9 +78,9 @@ final class DiagnosticService {
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-        let logURL = overviewDirURL.appendingPathComponent(logFilename)
-        try await saveLogFile(to: logURL)
-        logger.info("Log file saved: \(logFilename)")
+//        let logURL = overviewDirURL.appendingPathComponent(logFilename)
+//        try await saveLogFile(to: logURL)
+//        logger.info("Log file saved: \(logFilename)")
 
         return reportURL
     }
@@ -171,14 +171,16 @@ final class DiagnosticService {
                 defaultWidth: Int(defaults.double(forKey: WindowSettingsKeys.defaultWidth)),
                 defaultHeight: Int(defaults.double(forKey: WindowSettingsKeys.defaultHeight)),
                 shadows: defaults.bool(forKey: WindowSettingsKeys.shadowEnabled),
+                syncAspectRatio: defaults.bool(forKey: WindowSettingsKeys.syncAspectRatio),
                 missionControlIntegration: defaults.bool(
                     forKey: WindowSettingsKeys.managedByMissionControl),
-                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
-                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
                 showOnAllDesktops: defaults.bool(
                     forKey: WindowSettingsKeys.assignPreviewsToAllDesktops),
+                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
+                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
                 saveWindowsOnQuit: defaults.bool(forKey: WindowSettingsKeys.saveWindowsOnQuit),
-                restoreWindowsOnLaunch: defaults.bool(forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
+                restoreWindowsOnLaunch: defaults.bool(
+                    forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
@@ -196,6 +198,9 @@ final class DiagnosticService {
                     type: defaults.string(forKey: OverlaySettingsKeys.sourceTitleType)
                         ?? TitleType.windowTitle
                 )
+            ),
+            layout: LayoutSettings(
+                closeWindowsOnApply: defaults.bool(forKey: LayoutSettingsKeys.closeWindowsOnApply)
             ),
             source: SourceSettings(
                 filterMode: defaults.bool(forKey: SourceSettingsKeys.filterMode)
@@ -253,14 +258,14 @@ final class DiagnosticService {
             }
         )
     }
-    
+
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
         let defaults = UserDefaults.standard
-        
+
         guard let data = defaults.data(forKey: WindowSettingsKeys.storedWindows) else {
             return StoredWindowsInfo(count: 0, windows: [])
         }
-        
+
         do {
             let windowStates = try JSONDecoder().decode([WindowState].self, from: data)
             return StoredWindowsInfo(
@@ -279,23 +284,24 @@ final class DiagnosticService {
             return StoredWindowsInfo(count: 0, windows: [])
         }
     }
-    
+
     private func getLayoutsInfo() async throws -> LayoutsInfo {
         let defaults = UserDefaults.standard
-        
+
         guard let data = defaults.data(forKey: LayoutSettingsKeys.layouts) else {
             return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
         }
-        
+
         do {
             let layouts = try JSONDecoder().decode([Layout].self, from: data)
-            
+
             // Get launch layout ID
             var launchLayoutId: String? = nil
-            if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId) {
+            if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId)
+            {
                 launchLayoutId = launchLayoutIdString
             }
-            
+
             return LayoutsInfo(
                 count: layouts.count,
                 layouts: layouts.map { layout in
@@ -456,6 +462,7 @@ struct SettingsInfo: Codable {
     let preview: PreviewSettings
     let window: WindowSettings
     let overlay: OverlaySettings
+    let layout: LayoutSettings
     let source: SourceSettings
     let updates: UpdateSettings
 }
@@ -471,10 +478,11 @@ struct WindowSettings: Codable {
     let defaultWidth: Int
     let defaultHeight: Int
     let shadows: Bool
+    let syncAspectRatio: Bool
     let missionControlIntegration: Bool
+    let showOnAllDesktops: Bool
     let createOnLaunch: Bool
     let closeWithSource: Bool
-    let showOnAllDesktops: Bool
     let saveWindowsOnQuit: Bool
     let restoreWindowsOnLaunch: Bool
 }
@@ -497,6 +505,9 @@ struct SourceTitleSettings: Codable {
     let type: String
 }
 
+struct LayoutSettings: Codable {
+    let closeWindowsOnApply: Bool
+}
 struct SourceSettings: Codable {
     let filterMode: String
     let filterAppNames: [String]

@@ -25,12 +25,12 @@ final class WindowManager: ObservableObject {
     private var sessionWindowCounter: Int
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.defaultWidth)
     private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
     @AppStorage(WindowSettingsKeys.defaultHeight)
     private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
+    @AppStorage(WindowSettingsKeys.shadowEnabled)
+    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
     @AppStorage(WindowSettingsKeys.createOnLaunch)
     private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
     @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)

@@ -16,13 +16,13 @@ extension InfoPopoverContent {
                 text: "Controls preview window transparency"
             ),
             Section(
-                title: "Shadows",
-                text: "Adds shadows to preview windows"
-            ),
-            Section(
                 title: "Default Dimensions",
                 text:
                     "Sets initial dimensions for new preview windows. Windows can be resized while in Edit Mode."
+            ),
+            Section(
+                title: "Shadows",
+                text: "Adds shadows to preview windows"
             ),
             Section(
                 title: "Synchronize Aspect Ratio",

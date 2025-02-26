@@ -58,7 +58,7 @@ struct ShortcutSettingsTab: View {
                                 }
                                 .buttonStyle(.plain)
                                 .help("Edit window titles as JSON")
-                                
+
                                 VStack(alignment: .leading) {
                                     ForEach(
                                         Array(shortcut.windowTitles.prefix(2)).indices, id: \.self
