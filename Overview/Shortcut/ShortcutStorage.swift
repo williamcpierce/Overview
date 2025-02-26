@@ -37,6 +37,18 @@ final class ShortcutStorage: ObservableObject {
             "Added new keyboard shortcut for windows: '\(windowTitles.joined(separator: ", "))'")
     }
 
+    func updateShortcutTitles(_ shortcut: ShortcutItem, titles: [String]) {
+        if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
+            var updatedShortcut = shortcuts[index]
+            updatedShortcut.windowTitles = titles
+            shortcuts[index] = updatedShortcut
+            logger.info(
+                "Updated window titles for shortcut: '\(titles.joined(separator: ", "))'")
+        } else {
+            logger.warning("Cannot update titles: shortcut not found")
+        }
+    }
+
     func removeShortcut(_ shortcut: ShortcutItem) {
         if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
             KeyboardShortcuts.reset(shortcut.shortcutName)

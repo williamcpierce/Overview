@@ -38,12 +38,16 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            GeneralSettingsTab()
-                .tabItem { Label("General", systemImage: "gear") }
+            PreviewSettingsTab()
+                .tabItem { Label("Previews", systemImage: "record.circle") }
                 .scrollDisabled(true)
 
             WindowSettingsTab()
                 .tabItem { Label("Windows", systemImage: "macwindow") }
+                .scrollDisabled(true)
+
+            OverlaySettingsTab()
+                .tabItem { Label("Overlays", systemImage: "square.2.layers.3d.bottom.filled") }
                 .scrollDisabled(true)
 
             LayoutSettingsTab(windowManager: windowManager, layoutManager: layoutManager)
@@ -55,7 +59,7 @@ struct SettingsView: View {
                 .frame(minHeight: 288, maxHeight: 504)
 
             SourceSettingsTab(settingsManager: settingsManager)
-                .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
+                .tabItem { Label("Sources", systemImage: "inset.filled.rectangle.badge.record") }
                 .frame(minHeight: 288, maxHeight: 504)
 
             UpdateSettingsTab(updateManager: updateManager)
@@ -71,7 +75,7 @@ struct SettingsView: View {
             .padding(.bottom, 8)
             .background(.regularMaterial)
         }
-        .frame(width: 384)
+        .frame(width: 432)
         .fixedSize()
 
         // MARK: - Settings Window Level

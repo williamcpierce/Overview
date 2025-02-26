@@ -35,6 +35,10 @@ struct LayoutSettingsTab: View {
     @State private var layoutsJSON: String = ""
     @State private var jsonError: String? = nil
 
+    // Layout Settings
+    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
+    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
         self._windowManager = StateObject(wrappedValue: windowManager)
@@ -46,11 +50,13 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Window Layouts")
                         .font(.headline)
+
                     Spacer()
-                    Button {
+
+                    Button(action: {
                         prepareJSONEditor()
-                    } label: {
-                        Text("[JSON]")
+                    }) {
+                        Image(systemName: "ellipsis.curlybraces")
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -64,57 +70,62 @@ struct LayoutSettingsTab: View {
                 .padding(.bottom, 4)
 
                 // Layout List
-                List {
-                    if layoutManager.layouts.isEmpty {
-                        Text("No layouts saved")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(layoutManager.layouts) { layout in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    HStack {
-                                        Text(layout.name)
-                                            .lineLimit(1)
-                                            .help("Layout name")
-                                    }
-                                    Text("\(layout.windows.count) windows")
+                VStack {
+                    List {
+                        if layoutManager.layouts.isEmpty {
+                            Text("No layouts saved")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(layoutManager.layouts) { layout in
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        HStack {
+                                            Text(layout.name)
+                                                .lineLimit(1)
+                                                .help("Layout name")
+                                        }
+                                        Text(
+                                            "\(layout.windows.count) \(layout.windows.count == 1 ? "window" : "windows")"
+                                        )
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                }
+                                    }
 
-                                Spacer()
+                                    Spacer()
 
-                                Button {
-                                    layoutToModify = layout
-                                    showingApplyAlert = true
-                                } label: {
-                                    Image(
-                                        systemName: "checkmark.arrow.trianglehead.counterclockwise"
-                                    )
-                                    .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Apply layout")
-
-                                Button {
-                                    layoutToModify = layout
-                                    showingUpdateAlert = true
-                                } label: {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                    Button {
+                                        layoutToModify = layout
+                                        showingApplyAlert = true
+                                    } label: {
+                                        Image(
+                                            systemName:
+                                                "checkmark.arrow.trianglehead.counterclockwise"
+                                        )
                                         .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Update layout")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Apply layout")
 
-                                Button {
-                                    layoutToModify = layout
-                                    showingDeleteAlert = true
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
+                                    Button {
+                                        layoutToModify = layout
+                                        showingUpdateAlert = true
+                                    } label: {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Update layout")
+
+                                    Button {
+                                        layoutToModify = layout
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Delete layout")
                                 }
-                                .buttonStyle(.plain)
-                                .help("Delete layout")
                             }
                         }
                     }
@@ -150,6 +161,11 @@ struct LayoutSettingsTab: View {
                         layoutManager.setLaunchLayout(id: newValue)
                     }
                 }
+
+                Toggle(
+                    "Close all windows when applying layouts",
+                    isOn: $closeWindowsOnApply
+                )
             }
         }
         .formStyle(.grouped)
@@ -299,8 +315,14 @@ struct LayoutSettingsTab: View {
     private func applyJSON(_ jsonString: String) {
         jsonError = nil
 
+        // Replace any curly quotes with straight quotes
+        let processedJSON =
+            jsonString
+            .replacingOccurrences(of: "\u{201C}", with: "\"")
+            .replacingOccurrences(of: "\u{201D}", with: "\"")
+
         do {
-            guard let jsonData = jsonString.data(using: .utf8) else {
+            guard let jsonData = processedJSON.data(using: .utf8) else {
                 jsonError = "Invalid text encoding"
                 return
             }

@@ -58,7 +58,7 @@ For development updates, please join our Discord:
 See setting menu info panels for full details
 
 -   General
-    -   Capture Frame Rate
+    -   Preview Frame Rate
     -   Automatic Preview Hiding
         -   Hide previews for inactive source applications
         -   Hide preview for focused source window
@@ -91,12 +91,12 @@ See setting menu info panels for full details
         - Update existing layouts
         - Apply layout on launch
 -   Shortcuts
-    -   Window Activation
-        -   Keyboard shortcuts for focusing windows
-        -   Multiple window titles per shortcut for window cycling
+    -   Source Activation
+        -   Keyboard shortcuts for focusing source windows
+        -   Multiple source window titles per shortcut for cycling
 -   Sources
-    -   Source App Filter
-        -   Window source list filtering
+    -   Source Application Filter
+        -   Source list filtering
         -   Filter mode (blocklist/allowlist)
 -   Updates
     -   Automatically check for updates

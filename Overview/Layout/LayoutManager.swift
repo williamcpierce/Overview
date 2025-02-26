@@ -34,12 +34,6 @@ final class LayoutManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {
-        return layouts.filter {
-            $0.name.lowercased() == name.lowercased() && $0.id != excludingId
-        }.isEmpty
-    }
-
     func createLayout(name: String) -> Layout? {
         guard isLayoutNameUnique(name) else {
             logger.warning("Attempted to create layout with non-unique name: \(name)")
@@ -128,6 +122,12 @@ final class LayoutManager: ObservableObject {
 
     func shouldApplyLayoutOnLaunch() -> Bool {
         return launchLayoutId != nil && getLaunchLayout() != nil
+    }
+    
+    func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {
+        return layouts.filter {
+            $0.name.lowercased() == name.lowercased() && $0.id != excludingId
+        }.isEmpty
     }
 
     func saveLayouts() {

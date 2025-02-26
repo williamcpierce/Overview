@@ -98,7 +98,6 @@
 				Components/ResetSettingsButton.swift,
 				Components/WiggleModifier.swift,
 				Extensions/ColorExtension.swift,
-				GeneralSettingsTab.swift,
 				SettingsManager.swift,
 				SettingsMigrationUtility.swift,
 				SettingsView.swift,
@@ -112,6 +111,7 @@
 				PreviewView.swift,
 				Settings/PreviewSettingsContent.swift,
 				Settings/PreviewSettingsKeys.swift,
+				Settings/PreviewSettingsTab.swift,
 				Views/PreviewCapture.swift,
 				Views/PreviewSelection.swift,
 			);
@@ -162,6 +162,7 @@
 			membershipExceptions = (
 				Settings/OverlaySettingsContent.swift,
 				Settings/OverlaySettingsKeys.swift,
+				Settings/OverlaySettingsTab.swift,
 				Views/CloseButtonOverlay.swift,
 				Views/EditIndicatorOverlay.swift,
 				Views/FocusBorderOverlay.swift,
