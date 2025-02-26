@@ -33,7 +33,8 @@ struct OverviewApp: App {
                 settingsManager: appDelegate.settingsManager,
                 updateManager: appDelegate.updateManager,
                 windowManager: appDelegate.windowManager,
-                layoutManager: appDelegate.layoutManager
+                layoutManager: appDelegate.layoutManager,
+                autoCaptureService: appDelegate.autoCaptureService
             )
         }
         .commands {

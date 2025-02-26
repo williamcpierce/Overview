@@ -25,7 +25,16 @@ final class CaptureCoordinator: ObservableObject {
         didSet {
             sourceWindowTitle = selectedSource?.title
             sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            Task { await synchronizeFocusState() }
+            Task {
+                await synchronizeFocusState()
+                
+                // Save window position for characters if this is for a known app
+                if let window = NSApp.windows.first(where: { $0.isVisible && $0.isKeyWindow }),
+                   let title = sourceWindowTitle,
+                   let appName = sourceApplicationTitle {
+                    windowManager?.saveWindowPosition(window, title: title)
+                }
+            }
         }
     }
 
@@ -35,6 +44,7 @@ final class CaptureCoordinator: ObservableObject {
     private let captureEngine: CaptureEngine
     private let captureServices: CaptureServices = CaptureServices.shared
     private let logger = AppLogger.capture
+    private let windowManager: WindowManager?
 
     // Private State
     private var hasPermission: Bool = false
@@ -48,10 +58,12 @@ final class CaptureCoordinator: ObservableObject {
     init(
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
+        windowManager: WindowManager? = nil,  // Added WindowManager parameter
         captureEngine: CaptureEngine = CaptureEngine()
     ) {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.windowManager = windowManager
         self.captureEngine = captureEngine
         setupSubscriptions()
     }

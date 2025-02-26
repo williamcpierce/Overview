@@ -19,6 +19,7 @@ struct SettingsView: View {
     @ObservedObject var updateManager: UpdateManager
     @ObservedObject var windowManager: WindowManager
     @ObservedObject var layoutManager: LayoutManager
+    @ObservedObject var autoCaptureService: AutoCaptureService
     private let logger = AppLogger.settings
 
     init(
@@ -26,14 +27,15 @@ struct SettingsView: View {
         settingsManager: SettingsManager,
         updateManager: UpdateManager,
         windowManager: WindowManager,
-        layoutManager: LayoutManager
-
+        layoutManager: LayoutManager,
+        autoCaptureService: AutoCaptureService
     ) {
         self.sourceManager = sourceManager
         self.settingsManager = settingsManager
         self.updateManager = updateManager
         self.windowManager = windowManager
         self.layoutManager = layoutManager
+        self.autoCaptureService = autoCaptureService
     }
 
     var body: some View {
@@ -58,7 +60,7 @@ struct SettingsView: View {
                 .tabItem { Label("Sources", systemImage: "line.3.horizontal.decrease.circle.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
-            UpdateSettingsTab(updateManager: updateManager)
+            AutoCaptureSettingsTab(autoCaptureService: autoCaptureService)
                 .tabItem { Label("Updates", systemImage: "arrow.clockwise.circle.fill") }
                 .scrollDisabled(true)
         }
