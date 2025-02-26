@@ -16,18 +16,21 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let logger = AppLogger.interface
     let updateManager: UpdateManager
     let permissionManager: PermissionManager
-    let layoutManager: LayoutManager!
+    let layoutManager: LayoutManager
     let settingsManager: SettingsManager
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let shortcutManager: ShortcutManager
-    var windowManager: WindowManager!
+    let windowManager: WindowManager
+    let eveAutoCaptureService: EveAutoCaptureService // New service
 
     override init() {
+        // Initialize basic services first
         updateManager = UpdateManager()
         permissionManager = PermissionManager()
         layoutManager = LayoutManager()
 
+        // Initialize dependent services
         settingsManager = SettingsManager(
             updateManager: updateManager,
             layoutManager: layoutManager
@@ -43,15 +46,22 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         shortcutManager = ShortcutManager(
             sourceManager: sourceManager
         )
-
-        super.init()
-
+        
+        // Initialize window manager
         windowManager = WindowManager(
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
             layoutManager: layoutManager
         )
+        
+        // Initialize the EVE Auto Capture service last
+        eveAutoCaptureService = EveAutoCaptureService(
+            windowManager: windowManager,
+            sourceManager: sourceManager
+        )
+        
+        super.init()
 
         setupObservers()
     }
