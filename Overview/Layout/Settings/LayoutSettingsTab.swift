@@ -228,6 +228,7 @@ struct LayoutSettingsTab: View {
 
                     TextEditor(text: $layoutsJSON)
                         .font(.system(.body, design: .monospaced))
+                        .disableAutocorrection(true)
                         .frame(minHeight: 300)
                         .border(Color.secondary.opacity(0.2))
                         .padding()
