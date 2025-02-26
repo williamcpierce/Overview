@@ -1,5 +1,12 @@
+//
+//  OverlaySettingsTab 2.swift
+//  Overview
+//
+//  Created by William Pierce on 2/26/25.
+//
+
 /*
- Settings/GeneralSettingsTab.swift
+ Overlay/Settings/OverlaySettingsTab.swift
  Overview
 
  Created by William Pierce on 1/12/25.
@@ -7,24 +14,10 @@
 
 import SwiftUI
 
-struct GeneralSettingsTab: View {
-    // Dependencies
-    private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
-    private let logger = AppLogger.settings
-
+struct OverlaySettingsTab: View {
     // Private State
-    @State private var showingFrameRateInfo: Bool = false
-    @State private var showingAutoHidingInfo: Bool = false
     @State private var showingWindowFocusInfo: Bool = false
     @State private var showingSourceTitleInfo: Bool = false
-
-    // Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
-    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
 
     // Focus Border Settings
     @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
@@ -45,66 +38,16 @@ struct GeneralSettingsTab: View {
     @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
     private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
     @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+    private var previewSourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
 
     var body: some View {
         Form {
-
-            // MARK: - Frame Rate Section
-
-            Section {
-                HStack {
-                    Text("Preview Frame Rate")
-                        .font(.headline)
-                    Spacer()
-                    InfoPopover(
-                        content: .frameRate,
-                        isPresented: $showingFrameRateInfo,
-                        showWarning: captureFrameRate > 10.0
-                    )
-                }
-                .padding(.bottom, 4)
-
-                Picker("FPS", selection: $captureFrameRate) {
-                    ForEach(availableFrameRates, id: \.self) { rate in
-                        Text("\(Int(rate))").tag(rate)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            // MARK: - Auto Hiding Section
-
-            Section {
-                HStack {
-                    Text("Automatic Preview Hiding")
-                        .font(.headline)
-                    Spacer()
-                    InfoPopover(
-                        content: .autoHiding,
-                        isPresented: $showingAutoHidingInfo
-                    )
-                }
-                .padding(.bottom, 4)
-
-                VStack {
-                    Toggle(
-                        "Hide previews for inactive source applications",
-                        isOn: $hideInactiveApplications
-                    )
-
-                    Toggle(
-                        "Hide preview for focused source window",
-                        isOn: $hideActiveWindow
-                    )
-                }
-            }
 
             // MARK: - Focus Border Section
 
             Section {
                 HStack {
-                    Text("Source Focus Overlay")
+                    Text("Source Focus")
                         .font(.headline)
                     InfoPopover(
                         content: .windowFocus,
@@ -140,7 +83,7 @@ struct GeneralSettingsTab: View {
 
             Section {
                 HStack {
-                    Text("Source Title Overlay")
+                    Text("Source Title")
                         .font(.headline)
                     InfoPopover(
                         content: .sourceTitle,
@@ -174,14 +117,14 @@ struct GeneralSettingsTab: View {
                     }
                     HStack {
                         Picker("Location", selection: $sourceTitleLocation) {
-                            Text("Top").tag(true)
-                            Text("Bottom").tag(false)
+                            Text("Upper").tag(true)
+                            Text("Lower").tag(false)
                         }
                         .pickerStyle(.segmented)
 
                     }
                     HStack {
-                        Picker("Type", selection: $sourceTitleType) {
+                        Picker("Type", selection: $previewSourceTitleType) {
                             Text("Window Title").tag(TitleType.windowTitle)
                             Text("Application Name").tag(TitleType.appName)
                             Text("Both").tag(TitleType.fullTitle)
