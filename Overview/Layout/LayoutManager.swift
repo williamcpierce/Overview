@@ -116,9 +116,7 @@ final class LayoutManager: ObservableObject {
         return launchLayoutId != nil && getLaunchLayout() != nil
     }
 
-    // MARK: - Private Methods
-
-    private func saveLayouts() {
+    func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
             UserDefaults.standard.set(encodedLayouts, forKey: LayoutSettingsKeys.layouts)
@@ -127,6 +125,8 @@ final class LayoutManager: ObservableObject {
             logger.logError(error, context: "Failed to encode layouts")
         }
     }
+
+    // MARK: - Private Methods
 
     private func loadLayouts() -> [Layout] {
         guard let data = UserDefaults.standard.data(forKey: LayoutSettingsKeys.layouts) else {

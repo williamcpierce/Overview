@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+struct LayoutJSON: Codable {
+    var name: String
+    var windows: [WindowState]
+}
+
 struct LayoutSettingsTab: View {
     // Dependencies
     @ObservedObject private var layoutManager: LayoutManager
@@ -22,6 +27,10 @@ struct LayoutSettingsTab: View {
     @State private var newLayoutName: String = ""
     @State private var launchLayoutId: UUID? = nil
 
+    // JSON Editor State
+    @State private var isJSONEditorVisible: Bool = false
+    @State private var layoutsJSON: String = ""
+    @State private var jsonError: String? = nil
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
         self._windowManager = StateObject(wrappedValue: windowManager)
@@ -33,7 +42,19 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Window Layouts")
                         .font(.headline)
+
                     Spacer()
+
+                    Button {
+                        layoutsJSON = layoutsToJSON()
+                        isJSONEditorVisible = true
+                    } label: {
+                        Text("[JSON]")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Update layout")
+
                     InfoPopover(
                         content: .windowLayouts,
                         isPresented: $showingLayoutInfo
@@ -66,8 +87,11 @@ struct LayoutSettingsTab: View {
                                         layoutToModify = layout
                                         showingApplyAlert = true
                                     } label: {
-                                        Image(systemName: "checkmark.arrow.trianglehead.counterclockwise")
-                                            .foregroundColor(.secondary)
+                                        Image(
+                                            systemName:
+                                                "checkmark.arrow.trianglehead.counterclockwise"
+                                        )
+                                        .foregroundColor(.secondary)
                                     }
                                     .buttonStyle(.plain)
                                     .help("Apply layout")
@@ -178,6 +202,129 @@ struct LayoutSettingsTab: View {
             } else {
                 Text("Select a layout to delete")
             }
+        }
+        .sheet(isPresented: $isJSONEditorVisible) {
+            Form {
+                VStack(spacing: 8) {
+                    Text("Edit Layouts JSON")
+                        .font(.headline)
+
+                    if let error = jsonError {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.callout)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+
+                    TextEditor(text: $layoutsJSON)
+                        .font(.system(.body, design: .monospaced))
+                        .frame(minHeight: 300)
+                        .border(Color.secondary.opacity(0.2))
+                        .padding()
+
+                    HStack {
+                        Button("Cancel") {
+                            isJSONEditorVisible = false
+                            jsonError = nil
+                        }
+                        .keyboardShortcut(.cancelAction)
+
+                        Spacer()
+
+                        Button("Save") {
+                            applyJSON(layoutsJSON)
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    }
+                    .padding()
+                }
+                .frame(width: 400, height: 500)
+                .padding()
+            }.formStyle(.grouped)
+        }
+    }
+
+    // MARK: - Actions
+
+    // Convert layouts to JSON for editing
+    private func layoutsToJSON() -> String {
+        let layoutsForJSON = layoutManager.layouts.map { layout in
+            LayoutJSON(name: layout.name, windows: layout.windows)
+        }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+        do {
+            let jsonData = try encoder.encode(layoutsForJSON)
+            return String(data: jsonData, encoding: .utf8) ?? "[]"
+        } catch {
+            logger.logError(error, context: "Failed to convert layouts to JSON")
+            return "[]"
+        }
+    }
+
+    // Validate and apply the edited JSON
+    private func applyJSON(_ jsonString: String) {
+        jsonError = nil
+
+        do {
+            // Validate JSON format
+            guard let jsonData = jsonString.data(using: .utf8) else {
+                jsonError = "Invalid text encoding"
+                return
+            }
+
+            // Try to decode into layout objects
+            let decoder = JSONDecoder()
+            let layoutsFromJSON = try decoder.decode([LayoutJSON].self, from: jsonData)
+
+            // Create new layouts with fresh UUIDs and timestamps
+            let newLayouts = layoutsFromJSON.map { jsonLayout in
+                Layout(name: jsonLayout.name, windows: jsonLayout.windows)
+            }
+
+            // Check for empty layout names
+            if newLayouts.contains(where: { $0.name.isEmpty }) {
+                jsonError = "Layout names cannot be empty"
+                return
+            }
+
+            // Remove all existing layouts
+            while !layoutManager.layouts.isEmpty {
+                layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
+            }
+
+            // Add the new layouts
+            for layout in newLayouts {
+                _ = windowManager.saveLayout(name: layout.name)
+
+                // Get the newly created layout and update its windows
+                if let newLayout = layoutManager.layouts.last {
+                    layoutManager.updateLayout(
+                        id: newLayout.id,
+                        name: layout.name
+                    )
+
+                    // Need to update layout with windows separately
+                    if let index = layoutManager.layouts.firstIndex(where: { $0.id == newLayout.id }
+                    ) {
+                        var updatedLayout = layoutManager.layouts[index]
+                        updatedLayout.update(windows: layout.windows)
+                        layoutManager.layouts[index] = updatedLayout
+                        layoutManager.saveLayouts()
+                    }
+                }
+            }
+
+            // Close the editor
+            isJSONEditorVisible = false
+            logger.info("Successfully imported \(newLayouts.count) layouts from JSON")
+        } catch {
+            jsonError = "JSON Error: \(error.localizedDescription)"
+            logger.logError(error, context: "Failed to import layouts from JSON")
         }
     }
 }
