@@ -26,11 +26,13 @@ struct LayoutSettingsTab: View {
     @State private var layoutToModify: Layout? = nil
     @State private var newLayoutName: String = ""
     @State private var launchLayoutId: UUID? = nil
+    @State private var selectedLayoutNameBeforeJSON: String? = nil
 
     // JSON Editor State
     @State private var isJSONEditorVisible: Bool = false
     @State private var layoutsJSON: String = ""
     @State private var jsonError: String? = nil
+
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
         self._windowManager = StateObject(wrappedValue: windowManager)
@@ -46,6 +48,15 @@ struct LayoutSettingsTab: View {
                     Spacer()
 
                     Button {
+                        if let launchId = launchLayoutId {
+                            selectedLayoutNameBeforeJSON =
+                                layoutManager.layouts.first {
+                                    $0.id == launchId
+                                }?.name
+                        } else {
+                            selectedLayoutNameBeforeJSON = nil
+                        }
+
                         layoutsJSON = layoutsToJSON()
                         isJSONEditorVisible = true
                     } label: {
@@ -53,7 +64,7 @@ struct LayoutSettingsTab: View {
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Update layout")
+                    .help("Edit layouts as JSON")
 
                     InfoPopover(
                         content: .windowLayouts,
@@ -129,14 +140,7 @@ struct LayoutSettingsTab: View {
                         }
 
                     Button("Create") {
-                        if !newLayoutName.isEmpty {
-                            if layoutManager.isLayoutNameUnique(newLayoutName) {
-                                _ = windowManager.saveLayout(name: newLayoutName)
-                                newLayoutName = ""
-                            } else {
-                                logger.warning("Attempted to create layout with non-unique name")
-                            }
-                        }
+                        createLayout()
                     }
                     .disabled(
                         newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
@@ -224,7 +228,6 @@ struct LayoutSettingsTab: View {
                     .background(Color.red.opacity(0.1))
                 }
 
-                // Main text editor
                 TextEditor(text: $layoutsJSON)
                     .font(.system(.body, design: .monospaced))
                     .disableAutocorrection(true)
@@ -256,13 +259,21 @@ struct LayoutSettingsTab: View {
                 .background(.ultraThinMaterial)
             }
             .background(.ultraThickMaterial)
-            .frame(width: 300)
+            .frame(width: 600)
         }
     }
 
     // MARK: - Actions
 
-    // Convert layouts to JSON for editing
+    private func createLayout() {
+        if !newLayoutName.isEmpty && layoutManager.isLayoutNameUnique(newLayoutName) {
+            _ = windowManager.saveLayout(name: newLayoutName)
+            newLayoutName = ""
+        } else {
+            logger.warning("Attempted to create layout with empty or non-unique name")
+        }
+    }
+
     private func layoutsToJSON() -> String {
         let layoutsForJSON = layoutManager.layouts.map { layout in
             LayoutJSON(name: layout.name, windows: layout.windows)
@@ -280,78 +291,91 @@ struct LayoutSettingsTab: View {
         }
     }
 
-    // Validate and apply the edited JSON
     private func applyJSON(_ jsonString: String) {
         jsonError = nil
 
         do {
-            // Validate JSON format
             guard let jsonData = jsonString.data(using: .utf8) else {
                 jsonError = "Invalid text encoding"
                 return
             }
 
-            // Try to decode into layout objects
             let decoder = JSONDecoder()
-            let layoutsFromJSON = try decoder.decode([LayoutJSON].self, from: jsonData)
+            let layoutsFromJSON: [LayoutJSON] = try decoder.decode(
+                [LayoutJSON].self, from: jsonData)
 
-            // Create new layouts with fresh UUIDs and timestamps
-            let newLayouts = layoutsFromJSON.map { jsonLayout in
-                Layout(name: jsonLayout.name, windows: jsonLayout.windows)
-            }
-
-            // Check for empty layout names
-            if newLayouts.contains(where: { $0.name.isEmpty }) {
-                jsonError = "Layout names cannot be empty"
+            // Validate layouts
+            if !validateLayouts(layoutsFromJSON) {
                 return
             }
 
-            // Validate layout names
-            if newLayouts.contains(where: { $0.name.isEmpty }) {
-                jsonError = "Layout names cannot be empty"
-                return
-            }
-
-            // Check for duplicate names
-            let uniqueNames = Set(newLayouts.map { $0.name.lowercased() })
-            if uniqueNames.count != newLayouts.count {
-                jsonError = "Layout names must be unique (case-insensitive)"
-                return
-            }
-
-            // Remove all existing layouts
-            while !layoutManager.layouts.isEmpty {
-                layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
-            }
-
-            // Add the new layouts
-            for layout in newLayouts {
-                _ = windowManager.saveLayout(name: layout.name)
-
-                // Get the newly created layout and update its windows
-                if let newLayout = layoutManager.layouts.last {
-                    layoutManager.updateLayout(
-                        id: newLayout.id,
-                        name: layout.name
-                    )
-
-                    // Need to update layout with windows separately
-                    if let index = layoutManager.layouts.firstIndex(where: { $0.id == newLayout.id }
-                    ) {
-                        var updatedLayout = layoutManager.layouts[index]
-                        updatedLayout.update(windows: layout.windows)
-                        layoutManager.layouts[index] = updatedLayout
-                        layoutManager.saveLayouts()
-                    }
-                }
-            }
-
-            // Close the editor
+            importLayouts(layoutsFromJSON)
+            restoreLaunchSetting()
             isJSONEditorVisible = false
-            logger.info("Successfully imported \(newLayouts.count) layouts from JSON")
+            logger.info("Successfully imported \(layoutsFromJSON.count) layouts from JSON")
         } catch {
             jsonError = "JSON Error: \(error.localizedDescription)"
             logger.logError(error, context: "Failed to import layouts from JSON")
+        }
+    }
+
+    private func restoreLaunchSetting() {
+        if let previousLayoutName: String = selectedLayoutNameBeforeJSON,
+            let matchingLayout = layoutManager.layouts.first(where: {
+                $0.name == previousLayoutName
+            })
+        {
+            launchLayoutId = matchingLayout.id
+            layoutManager.setLaunchLayout(id: matchingLayout.id)
+            logger.debug("Restored launch layout setting to '\(previousLayoutName)'")
+        } else {
+            launchLayoutId = nil
+            layoutManager.setLaunchLayout(id: nil)
+            logger.debug("Previous launch layout no longer exists, cleared setting")
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func validateLayouts(_ layouts: [LayoutJSON]) -> Bool {
+        // Check for empty layout names
+        if layouts.contains(where: { $0.name.isEmpty }) {
+            jsonError = "Layout names cannot be empty"
+            return false
+        }
+
+        // Check for duplicate names
+        let uniqueNames: Set<String> = Set(layouts.map { $0.name.lowercased() })
+        if uniqueNames.count != layouts.count {
+            jsonError = "Layout names must be unique (case-insensitive)"
+            return false
+        }
+
+        return true
+    }
+
+    private func importLayouts(_ layoutsFromJSON: [LayoutJSON]) {
+        // Remove all existing layouts
+        while !layoutManager.layouts.isEmpty {
+            layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
+        }
+
+        // Add the new layouts
+        for layout: LayoutJSON in layoutsFromJSON {
+            _ = windowManager.saveLayout(name: layout.name)
+
+            // Get the newly created layout and update its windows
+            if let newLayout = layoutManager.layouts.last {
+                layoutManager.updateLayout(id: newLayout.id, name: layout.name)
+
+                // Need to update layout with windows separately
+                if let index = layoutManager.layouts.firstIndex(where: { $0.id == newLayout.id }) {
+                    var updatedLayout = layoutManager.layouts[index]
+                    updatedLayout.update(windows: layout.windows)
+                    layoutManager.layouts[index] = updatedLayout
+                    layoutManager.saveLayouts()
+                }
+            }
         }
     }
 }
