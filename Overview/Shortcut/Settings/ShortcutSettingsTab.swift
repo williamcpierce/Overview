@@ -49,6 +49,16 @@ struct ShortcutSettingsTab: View {
                     } else {
                         List(shortcutStorage.shortcuts, id: \.self) { shortcut in
                             HStack {
+                                Button(action: {
+                                    shortcutToEdit = shortcut
+                                    prepareTitlesEditor(for: shortcut)
+                                }) {
+                                    Image(systemName: "ellipsis.curlybraces")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Edit window titles as JSON")
+                                
                                 VStack(alignment: .leading) {
                                     ForEach(
                                         Array(shortcut.windowTitles.prefix(2)).indices, id: \.self
@@ -66,19 +76,9 @@ struct ShortcutSettingsTab: View {
                                         .font(.caption)
                                     }
                                 }
-                                .frame(width: 120, alignment: .leading)
+                                .frame(width: 160, alignment: .leading)
 
                                 Spacer()
-
-                                Button(action: {
-                                    shortcutToEdit = shortcut
-                                    prepareTitlesEditor(for: shortcut)
-                                }) {
-                                    Image(systemName: "text.cursor")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Edit window titles as JSON")
 
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)
