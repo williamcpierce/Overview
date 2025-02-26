@@ -46,11 +46,13 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Window Layouts")
                         .font(.headline)
+
                     Spacer()
-                    Button {
+
+                    Button(action: {
                         prepareJSONEditor()
-                    } label: {
-                        Text("[JSON]")
+                    }) {
+                        Image(systemName: "text.cursor")
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -302,8 +304,14 @@ struct LayoutSettingsTab: View {
     private func applyJSON(_ jsonString: String) {
         jsonError = nil
 
+        // Replace any curly quotes with straight quotes
+        let processedJSON =
+            jsonString
+            .replacingOccurrences(of: "\u{201C}", with: "\"")
+            .replacingOccurrences(of: "\u{201D}", with: "\"")
+
         do {
-            guard let jsonData = jsonString.data(using: .utf8) else {
+            guard let jsonData = processedJSON.data(using: .utf8) else {
                 jsonError = "Invalid text encoding"
                 return
             }
