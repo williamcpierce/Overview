@@ -212,46 +212,51 @@ struct LayoutSettingsTab: View {
             }
         }
         .sheet(isPresented: $isJSONEditorVisible) {
-            Form {
-                VStack(spacing: 8) {
-                    Text("Edit Layouts JSON")
-                        .font(.headline)
-
-                    if let error = jsonError {
+            VStack(spacing: 0) {
+                if let error = jsonError {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
                         Text(error)
                             .foregroundColor(.red)
-                            .font(.callout)
-                            .padding()
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(8)
                     }
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                }
 
-                    TextEditor(text: $layoutsJSON)
-                        .font(.system(.body, design: .monospaced))
-                        .disableAutocorrection(true)
-                        .frame(minHeight: 300)
-                        .border(Color.secondary.opacity(0.2))
-                        .padding()
-
-                    HStack {
+                // Main text editor
+                TextEditor(text: $layoutsJSON)
+                    .font(.system(.body, design: .monospaced))
+                    .disableAutocorrection(true)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 300)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding()
+            .safeAreaInset(edge: .bottom) {
+                VStack {
+                    Divider()
+                    HStack(spacing: 12) {
+                        Spacer()
                         Button("Cancel") {
                             isJSONEditorVisible = false
                             jsonError = nil
                         }
                         .keyboardShortcut(.cancelAction)
 
-                        Spacer()
-
                         Button("Save") {
                             applyJSON(layoutsJSON)
                         }
                         .keyboardShortcut(.defaultAction)
+                        Spacer()
                     }
-                    .padding()
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
                 }
-                .frame(width: 400, height: 500)
-                .padding()
-            }.formStyle(.grouped)
+                .background(.ultraThinMaterial)
+            }
+            .background(.ultraThickMaterial)
+            .frame(width: 300)
         }
     }
 
