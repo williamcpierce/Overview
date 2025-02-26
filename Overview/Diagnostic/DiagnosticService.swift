@@ -57,7 +57,7 @@ final class DiagnosticService {
     func saveDiagnosticReport(_ report: String) async throws -> URL {
         let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true))"
         let reportFilename = "\(filename).json"
-        let logFilename = "\(filename)-logs.txt"
+//        let logFilename = "\(filename)-logs.txt"
 
         guard
             let documentsURL = FileManager.default.urls(

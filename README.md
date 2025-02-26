@@ -22,6 +22,8 @@ For development updates, please join our Discord:
 
 **Glanceable Info Overlays:** Display source app names, window titles, and focus status at a glance
 
+**Saved Preview Layouts:** Save and restore collections of preconfigured preview windows
+
 ## System Requirements
 
 -   macOS Ventura (13.0) or later
@@ -57,39 +59,41 @@ For development updates, please join our Discord:
 
 See setting menu info panels for full details
 
--   General
-    -   Preview Frame Rate
-    -   Automatic Preview Hiding
+-   Previews
+    -   Frame Rate
+    -   Automatic Hiding
         -   Hide previews for inactive source applications
         -   Hide preview for focused source window
-    -   Source Focus Overlay
-        -   Border width
-        -   Border color
-    -   Source Title Overlay
-        -   Font size
-        -   Background opacity
-        -   Location
-        -   Type (window, application, or both)
 -   Windows
     -   Appearance
         -   Opacity
-        -   Shadows
         -   Default dimensions
+        -   Shadows
         -   Synchronize aspect ratio
     -   System Visibility
         -   Show windows in Mission Control
         -   Show windows on all desktops (including fullscreen)
     -   Management
-        -   Create window on launch
+        -   Always create window on launch
         -   Close window with preview source
         -   Save window positions on quit
         -   Restore window positions on launch
+- Overlays
+    -   Source Focus
+        -   Border width
+        -   Border color
+    -   Source Title
+        -   Font size
+        -   Background opacity
+        -   Location
+        -   Type (window, application, or both)
 -   Layouts
     -   Window Layouts
         - Create layouts to save window arrangements
         - Apply layouts to restore window configurations
         - Update existing layouts
-        - Apply layout on launch
+    - Apply layout on launch
+    - Close all windows when applying layouts
 -   Shortcuts
     -   Source Activation
         -   Keyboard shortcuts for focusing source windows
@@ -97,7 +101,7 @@ See setting menu info panels for full details
 -   Sources
     -   Source Application Filter
         -   Source list filtering
-        -   Filter mode (blocklist/allowlist)
+    -   Filter mode (blocklist/allowlist)
 -   Updates
     -   Automatically check for updates
     -   Automatically download updates
