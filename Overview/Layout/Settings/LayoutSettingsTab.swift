@@ -48,6 +48,8 @@ struct LayoutSettingsTab: View {
                         .font(.headline)
                     Spacer()
                     Button {
+                        prepareJSONEditor()
+                    } label: {
                         Text("[JSON]")
                             .foregroundColor(.secondary)
                     }
@@ -61,9 +63,93 @@ struct LayoutSettingsTab: View {
                 }
                 .padding(.bottom, 4)
 
-                layoutListView
-                layoutCreationControls
-                launchLayoutSelector
+                // Layout List
+                List {
+                    if layoutManager.layouts.isEmpty {
+                        Text("No layouts saved")
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(layoutManager.layouts) { layout in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Text(layout.name)
+                                            .lineLimit(1)
+                                            .help("Layout name")
+                                    }
+                                    Text("\(layout.windows.count) windows")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Button {
+                                    layoutToModify = layout
+                                    showingApplyAlert = true
+                                } label: {
+                                    Image(
+                                        systemName: "checkmark.arrow.trianglehead.counterclockwise"
+                                    )
+                                    .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Apply layout")
+
+                                Button {
+                                    layoutToModify = layout
+                                    showingUpdateAlert = true
+                                } label: {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Update layout")
+
+                                Button {
+                                    layoutToModify = layout
+                                    showingDeleteAlert = true
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Delete layout")
+                            }
+                        }
+                    }
+                }
+
+                // Layout Creation Controls
+                HStack {
+                    TextField("Layout name", text: $newLayoutName)
+                        .textFieldStyle(.roundedBorder)
+                        .onChange(of: newLayoutName) { newValue in
+                            newLayoutName = newValue.trimmingCharacters(in: .whitespaces)
+                        }
+
+                    Button("Create") {
+                        createLayout()
+                    }
+                    .disabled(
+                        newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
+                }
+
+                // Launch Layout Selector
+                HStack {
+                    Text("Apply layout on launch")
+                    Spacer()
+                    Picker("", selection: $launchLayoutId) {
+                        Text("None").tag(nil as UUID?)
+                        ForEach(layoutManager.layouts) { layout in
+                            Text(layout.name).tag(layout.id as UUID?)
+                        }
+                    }
+                    .frame(width: 160)
+                    .onChange(of: launchLayoutId) { newValue in
+                        layoutManager.setLaunchLayout(id: newValue)
+                    }
+                }
             }
         }
         .formStyle(.grouped)
@@ -120,6 +206,7 @@ struct LayoutSettingsTab: View {
             }
         }
         .sheet(isPresented: $isJSONEditorVisible) {
+            // JSON Editor View
             VStack(spacing: 0) {
                 if let error = jsonError {
                     HStack {
