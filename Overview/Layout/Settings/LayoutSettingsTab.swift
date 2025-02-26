@@ -124,14 +124,22 @@ struct LayoutSettingsTab: View {
                 HStack {
                     TextField("Layout name", text: $newLayoutName)
                         .textFieldStyle(.roundedBorder)
+                        .onChange(of: newLayoutName) { newValue in
+                            newLayoutName = newValue.trimmingCharacters(in: .whitespaces)
+                        }
 
                     Button("Create") {
                         if !newLayoutName.isEmpty {
-                            _ = windowManager.saveLayout(name: newLayoutName)
-                            newLayoutName = ""
+                            if layoutManager.isLayoutNameUnique(newLayoutName) {
+                                _ = windowManager.saveLayout(name: newLayoutName)
+                                newLayoutName = ""
+                            } else {
+                                logger.warning("Attempted to create layout with non-unique name")
+                            }
                         }
                     }
-                    .disabled(newLayoutName.isEmpty)
+                    .disabled(
+                        newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
                 }
 
                 HStack {
@@ -289,6 +297,19 @@ struct LayoutSettingsTab: View {
             // Check for empty layout names
             if newLayouts.contains(where: { $0.name.isEmpty }) {
                 jsonError = "Layout names cannot be empty"
+                return
+            }
+
+            // Validate layout names
+            if newLayouts.contains(where: { $0.name.isEmpty }) {
+                jsonError = "Layout names cannot be empty"
+                return
+            }
+
+            // Check for duplicate names
+            let uniqueNames = Set(newLayouts.map { $0.name.lowercased() })
+            if uniqueNames.count != newLayouts.count {
+                jsonError = "Layout names must be unique (case-insensitive)"
                 return
             }
 

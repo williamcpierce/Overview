@@ -114,7 +114,7 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func saveLayout(name: String) -> Layout {
+    func saveLayout(name: String) -> Layout? {
         let layout = layoutManager.createLayout(name: name)
         return layout
     }

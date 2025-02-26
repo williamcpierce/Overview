@@ -34,7 +34,18 @@ final class LayoutManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    func createLayout(name: String) -> Layout {
+    func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {
+        return layouts.filter {
+            $0.name.lowercased() == name.lowercased() && $0.id != excludingId
+        }.isEmpty
+    }
+
+    func createLayout(name: String) -> Layout? {
+        guard isLayoutNameUnique(name) else {
+            logger.warning("Attempted to create layout with non-unique name: \(name)")
+            return nil
+        }
+
         let currentWindows = windowServices.windowStorage.collectWindows()
         let layout = Layout(name: name, windows: currentWindows)
 
@@ -54,6 +65,10 @@ final class LayoutManager: ObservableObject {
         var layout = layouts[index]
 
         if let name = name {
+            guard isLayoutNameUnique(name, excludingId: id) else {
+                logger.warning("Attempted to update layout with non-unique name: \(name)")
+                return
+            }
             layout.update(name: name)
         } else {
             let currentWindows = windowServices.windowStorage.collectWindows()
