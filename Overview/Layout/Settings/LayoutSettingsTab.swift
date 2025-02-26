@@ -64,57 +64,60 @@ struct LayoutSettingsTab: View {
                 .padding(.bottom, 4)
 
                 // Layout List
-                List {
-                    if layoutManager.layouts.isEmpty {
-                        Text("No layouts saved")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(layoutManager.layouts) { layout in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    HStack {
-                                        Text(layout.name)
-                                            .lineLimit(1)
-                                            .help("Layout name")
+                VStack {
+                    List {
+                        if layoutManager.layouts.isEmpty {
+                            Text("No layouts saved")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(layoutManager.layouts) { layout in
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        HStack {
+                                            Text(layout.name)
+                                                .lineLimit(1)
+                                                .help("Layout name")
+                                        }
+                                        Text("\(layout.windows.count) windows")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
                                     }
-                                    Text("\(layout.windows.count) windows")
-                                        .font(.caption)
+
+                                    Spacer()
+
+                                    Button {
+                                        layoutToModify = layout
+                                        showingApplyAlert = true
+                                    } label: {
+                                        Image(
+                                            systemName:
+                                                "checkmark.arrow.trianglehead.counterclockwise"
+                                        )
                                         .foregroundColor(.secondary)
-                                }
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Apply layout")
 
-                                Spacer()
+                                    Button {
+                                        layoutToModify = layout
+                                        showingUpdateAlert = true
+                                    } label: {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Update layout")
 
-                                Button {
-                                    layoutToModify = layout
-                                    showingApplyAlert = true
-                                } label: {
-                                    Image(
-                                        systemName: "checkmark.arrow.trianglehead.counterclockwise"
-                                    )
-                                    .foregroundColor(.secondary)
+                                    Button {
+                                        layoutToModify = layout
+                                        showingDeleteAlert = true
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Delete layout")
                                 }
-                                .buttonStyle(.plain)
-                                .help("Apply layout")
-
-                                Button {
-                                    layoutToModify = layout
-                                    showingUpdateAlert = true
-                                } label: {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Update layout")
-
-                                Button {
-                                    layoutToModify = layout
-                                    showingDeleteAlert = true
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Delete layout")
                             }
                         }
                     }
