@@ -12,7 +12,7 @@
                 <h3>Changes in Overview v1.2.0-beta</h3>
                 <h4>Features</h4>
                 <ul>
-                    <li>Added storeable/applyable window layouts, with menu bar apply options and JSON editor for export/import</li>
+                    <li>Added storable/applicable window layouts, with menu bar apply options and JSON editor for export/import</li>
                     <li>Added edit feature to shortcut window title lists</li>
                     <li>Made aspect ratio locking preview windows to their source optional</li>
                     <li>Rearrangements and clarification of settings</li>
