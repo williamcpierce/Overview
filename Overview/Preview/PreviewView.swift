@@ -40,6 +40,7 @@ struct PreviewView: View {
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
+        windowManager: WindowManager,  // Added WindowManager parameter
         onClose: @escaping () -> Void
     ) {
         self.previewManager = previewManager
@@ -48,7 +49,9 @@ struct PreviewView: View {
         self.onClose = onClose
         self._captureCoordinator = StateObject(
             wrappedValue: CaptureCoordinator(
-                sourceManager: sourceManager, permissionManager: permissionManager)
+                sourceManager: sourceManager,
+                permissionManager: permissionManager,
+                windowManager: windowManager)  // Pass WindowManager to CaptureCoordinator
         )
     }
 

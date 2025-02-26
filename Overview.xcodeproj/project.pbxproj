@@ -129,6 +129,16 @@
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};
+		C8B1AF422D6EC50300791E4E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AutoCaptureService.swift,
+				AutoCaptureSettingsContent.swift,
+				AutoCaptureSettingsKeys.swift,
+				AutoCaptureSettingsTab.swift,
+			);
+			target = C87695812CBA082D00FBCA6C /* Overview */;
+		};
 		C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -193,6 +203,7 @@
 		C8A837D72D0405B7002EC00B /* Settings */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A837D82D0405C0002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Settings; sourceTree = "<group>"; };
 		C8A8387E2D0421ED002EC00B /* Preview */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A838842D0421ED002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Preview; sourceTree = "<group>"; };
 		C8A838892D0421EF002EC00B /* Capture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8A8388E2D0421EF002EC00B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Capture; sourceTree = "<group>"; };
+		C8B1AF3F2D6EC4E400791E4E /* AutoCapture */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8B1AF422D6EC50300791E4E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = AutoCapture; sourceTree = "<group>"; };
 		C8C2E4942D2BAEA8004F8C1F /* Window */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8C2E4952D2BAEAD004F8C1F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Window; sourceTree = "<group>"; };
 		C8C56D062D6BE14200B91999 /* Onboarding */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8C56D072D6BE15100B91999 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Onboarding; sourceTree = "<group>"; };
 		C8CCFE3E2D36307C005F724E /* Overlay */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8CCFE3F2D363083005F724E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Overlay; sourceTree = "<group>"; };
@@ -237,6 +248,7 @@
 			children = (
 				C8A838342D0410CF002EC00B /* OverviewApp.swift */,
 				C8BBECDF2D59F50E00459820 /* OverviewAppDelegate.swift */,
+				C8B1AF3F2D6EC4E400791E4E /* AutoCapture */,
 				C8A8387E2D0421ED002EC00B /* Preview */,
 				C8C2E4942D2BAEA8004F8C1F /* Window */,
 				C8CCFE3E2D36307C005F724E /* Overlay */,

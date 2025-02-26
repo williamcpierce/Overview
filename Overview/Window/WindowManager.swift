@@ -16,6 +16,7 @@ final class WindowManager: ObservableObject {
     private var sourceManager: SourceManager
     private var layoutManager: LayoutManager
     private var permissionManager: PermissionManager
+    private var autoCaptureService: AutoCaptureService
     private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
 
@@ -42,13 +43,16 @@ final class WindowManager: ObservableObject {
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
-        layoutManager: LayoutManager
+        layoutManager: LayoutManager,
+        autoCaptureService: AutoCaptureService
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
         self.layoutManager = layoutManager
+        self.autoCaptureService = autoCaptureService
         self.sessionWindowCounter = 0
+        self.autoCaptureService.setWindowManager(self)  // Set the WindowManager in AutoCaptureService
         logger.debug("Window manager initialized")
     }
 
@@ -162,6 +166,7 @@ final class WindowManager: ObservableObject {
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
+            windowManager: self,  // Pass WindowManager to PreviewView
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)
@@ -184,6 +189,10 @@ final class WindowManager: ObservableObject {
         } else {
             logger.info("Successfully restored \(restoredCount) windows")
         }
+    }
+    
+    func saveWindowPosition(_ window: NSWindow, title: String) {
+        autoCaptureService.saveWindowPosition(title: title, frame: window.frame)
     }
 }
 

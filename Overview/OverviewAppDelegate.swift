@@ -21,6 +21,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     let sourceManager: SourceManager
     let previewManager: PreviewManager
     let shortcutManager: ShortcutManager
+    let autoCaptureService: AutoCaptureService
     var windowManager: WindowManager!
 
     override init() {
@@ -43,16 +44,21 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         shortcutManager = ShortcutManager(
             sourceManager: sourceManager
         )
-
+        autoCaptureService = AutoCaptureService(
+            sourceManager: sourceManager,
+            sourceObserver: SourceServices.shared.sourceObserver
+        )
+        
         super.init()
 
         windowManager = WindowManager(
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
-            layoutManager: layoutManager
+            layoutManager: layoutManager,
+            autoCaptureService: autoCaptureService
         )
-
+        
         setupObservers()
     }
 
@@ -73,6 +79,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             do {
                 try await permissionManager.ensurePermission()
                 windowManager.handleWindowsOnLaunch()
+                autoCaptureService.start()  // Start the auto-capture service
                 logger.info("Application initialization completed")
             } catch {
                 logger.logError(error, context: "Failed to ensure permissions during launch")
