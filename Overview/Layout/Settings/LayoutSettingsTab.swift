@@ -167,7 +167,13 @@ struct LayoutSettingsTab: View {
             }
         } message: {
             if let layout = layoutToModify {
-                Text("Apply layout '\(layout.name)'? This will close all current windows.")
+                Group {
+                    if Defaults[.closeWindowsOnApply] {
+                        Text("Apply layout '\(layout.name)'? This will close all current windows.")
+                    } else {
+                        Text("Apply layout '\(layout.name)'?")
+                    }
+                }
             } else {
                 Text("Select a layout to apply")
             }

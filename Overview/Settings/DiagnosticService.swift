@@ -1,5 +1,5 @@
 /*
- Settings/DiagnosticService.swift
+ Diagnostic/DiagnosticService.swift
  Overview
 
  Created by William Pierce on 2/17/25.
@@ -18,45 +18,77 @@ final class DiagnosticService {
     // Dependencies
     private let logger = AppLogger.interface
     private let shortcutManager: ShortcutManager
+    private let layoutManager: LayoutManager
     private let jsonEncoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return encoder
     }()
 
-    init(shortcutManager: ShortcutManager) {
+    init(shortcutManager: ShortcutManager, layoutManager: LayoutManager) {
         self.shortcutManager = shortcutManager
+        self.layoutManager = layoutManager
         logger.debug("Initializing diagnostic service")
     }
 
     func generateDiagnosticReport() async throws -> String {
         logger.info("Starting diagnostic report generation")
-
-        let report = DiagnosticReport(
-            generatedAt: formatDate(Date()),
-            appInfo: try await getAppInfo(),
-            systemInfo: try await getSystemInfo(),
-            permissionStatus: try await getPermissionInfo(),
-            settings: try await getSettingsInfo(),
-            windowStatus: try await getWindowInfo(),
-            shortcuts: try await getShortcutsInfo(),
-            storedWindows: try await getStoredWindowsInfo(),
-            layouts: try await getLayoutsInfo()
-        )
-
-        let jsonData = try jsonEncoder.encode(report)
-        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw DiagnosticError.encodingError
+        
+        do {
+            logger.debug("Collecting app information")
+            let appInfo = try await getAppInfo()
+            
+            logger.debug("Collecting system information")
+            let systemInfo = try await getSystemInfo()
+            
+            logger.debug("Checking permission status")
+            let permissionStatus = try await getPermissionInfo()
+            
+            logger.debug("Collecting settings information")
+            let settings = try await getSettingsInfo()
+            
+            logger.debug("Collecting window status")
+            let windowStatus = try await getWindowInfo()
+            
+            logger.debug("Collecting shortcuts information")
+            let shortcuts = try await getShortcutsInfo()
+            
+            logger.debug("Collecting stored windows information")
+            let storedWindows = try await getStoredWindowsInfo()
+            
+            logger.debug("Collecting layouts information")
+            let layouts = try await getLayoutsInfo()
+            
+            let report = DiagnosticReport(
+                generatedAt: formatDate(Date()),
+                appInfo: appInfo,
+                systemInfo: systemInfo,
+                permissionStatus: permissionStatus,
+                settings: settings,
+                windowStatus: windowStatus,
+                shortcuts: shortcuts,
+                storedWindows: storedWindows,
+                layouts: layouts
+            )
+            
+            let jsonData = try jsonEncoder.encode(report)
+            guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+                logger.error("Failed to encode report to string")
+                throw DiagnosticError.encodingError
+            }
+            
+            logger.info("Diagnostic report generation completed successfully")
+            return jsonString
+        } catch {
+            logger.logError(error, context: "Failed during diagnostic report generation")
+            throw error
         }
-
-        logger.info("Diagnostic report generation completed")
-        return jsonString
     }
 
     func saveDiagnosticReport(_ report: String) async throws -> URL {
         let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true))"
         let reportFilename = "\(filename).json"
-        let logFilename = "\(filename)-logs.txt"
+//        let logFilename = "\(filename)-logs.txt"
 
         guard
             let documentsURL = FileManager.default.urls(
@@ -77,9 +109,9 @@ final class DiagnosticService {
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-        let logURL = overviewDirURL.appendingPathComponent(logFilename)
-        try await saveLogFile(to: logURL)
-        logger.info("Log file saved: \(logFilename)")
+//        let logURL = overviewDirURL.appendingPathComponent(logFilename)
+//        try await saveLogFile(to: logURL)
+//        logger.info("Log file saved: \(logFilename)")
 
         return reportURL
     }
@@ -249,66 +281,65 @@ final class DiagnosticService {
     }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
+        let storedWindows = try getStoredWindows()
+        
+        logger.debug("Collecting stored window information: \(storedWindows.count) windows")
+        
+        return StoredWindowsInfo(
+            count: storedWindows.count,
+            windows: storedWindows.map { window in
+                StoredWindowDiagnostic(
+                    x: Int(window.x),
+                    y: Int(window.y),
+                    width: Int(window.width),
+                    height: Int(window.height)
+                )
+            }
+        )
+    }
+    
+    private func getStoredWindows() throws -> [Window] {
         guard let data = Defaults[.storedWindows] else {
-            return StoredWindowsInfo(count: 0, windows: [])
+            logger.debug("No stored windows data found")
+            return []
         }
 
         do {
-            let windowStates = try JSONDecoder().decode([Window].self, from: data)
-            return StoredWindowsInfo(
-                count: windowStates.count,
-                windows: windowStates.map { state in
-                    StoredWindowDiagnostic(
-                        x: Int(state.x),
-                        y: Int(state.y),
-                        width: Int(state.width),
-                        height: Int(state.height)
-                    )
-                }
-            )
+            return try JSONDecoder().decode([Window].self, from: data)
         } catch {
             logger.logError(error, context: "Failed to decode stored windows")
-            return StoredWindowsInfo(count: 0, windows: [])
+            throw DiagnosticError.decodingError
         }
     }
 
     private func getLayoutsInfo() async throws -> LayoutsInfo {
-        guard let data = Defaults[.storedLayouts] else {
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutUUID: nil)
-        }
-
-        do {
-            let layouts = try JSONDecoder().decode([Layout].self, from: data)
-
-            // Get launch layout ID
-            let launchLayoutUUID: UUID? = Defaults[.launchLayoutUUID]
-
-            return LayoutsInfo(
-                count: layouts.count,
-                layouts: layouts.map { layout in
-                    LayoutDiagnostic(
-                        id: layout.id.uuidString,
-                        name: layout.name,
-                        windowCount: layout.windows.count,
-                        createdAt: formatDate(layout.createdAt),
-                        updatedAt: formatDate(layout.updatedAt),
-                        isLaunchLayout: layout.id == launchLayoutUUID,
-                        windows: layout.windows.map { window in
-                            StoredWindowDiagnostic(
-                                x: Int(window.x),
-                                y: Int(window.y),
-                                width: Int(window.width),
-                                height: Int(window.height)
-                            )
-                        }
-                    )
-                },
-                launchLayoutUUID: Defaults[.launchLayoutUUID]
-            )
-        } catch {
-            logger.logError(error, context: "Failed to decode layouts")
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutUUID: nil)
-        }
+        let layouts = layoutManager.layouts
+        let launchLayoutUUID = Defaults[.launchLayoutUUID]
+        
+        logger.debug("Collecting layout information: \(layouts.count) layouts")
+        
+        return LayoutsInfo(
+            count: layouts.count,
+            layouts: layouts.map { layout in
+                LayoutDiagnostic(
+                    id: layout.id.uuidString,
+                    name: layout.name,
+                    windowCount: layout.windows.count,
+                    createdAt: formatDate(layout.createdAt),
+                    updatedAt: formatDate(layout.updatedAt),
+                    isLaunchLayout: layout.id == launchLayoutUUID,
+                    windows: layout.windows.map { window in
+                        StoredWindowDiagnostic(
+                            x: Int(window.x),
+                            y: Int(window.y),
+                            width: Int(window.width),
+                            height: Int(window.height)
+                        )
+                    }
+                )
+            },
+            launchLayoutUUID: launchLayoutUUID
+        )
     }
 
     // MARK: - Helper Methods
@@ -585,6 +616,8 @@ enum DiagnosticError: LocalizedError {
     case fileSystemError
     case encodingError
     case logStoreAccessError
+    case decodingError
+    case dataCollectionError(String)
 
     var errorDescription: String? {
         switch self {
@@ -592,8 +625,12 @@ enum DiagnosticError: LocalizedError {
             return "Failed to access file system for report generation"
         case .encodingError:
             return "Failed to encode diagnostic report to JSON"
+        case .decodingError:
+            return "Failed to decode stored data during report generation"
         case .logStoreAccessError:
             return "Failed to access system log store"
+        case .dataCollectionError(let context):
+            return "Failed to collect diagnostic data: \(context)"
         }
     }
 }
