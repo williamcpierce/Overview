@@ -6,7 +6,6 @@
 */
 
 import Defaults
-import Foundation
 import KeyboardShortcuts
 import SwiftUI
 
@@ -22,62 +21,71 @@ final class ShortcutStorage: ObservableObject {
         }
     }
 
-    // Shortcut Settings
-    private var storedShortcuts = Defaults[.storedShortcuts]
-
     init() {
         self.shortcuts = ShortcutStorage.loadShortcuts()
-        logger.debug("Keyboard shortcut storage initialized")
+        logger.debug("Keyboard shortcut initialized with \(shortcuts.count) shortcuts")
     }
-    
+
     // MARK: - Public Methods
 
-    func addShortcut(windowTitles: [String]) {
+    func createShortcut(windowTitles: [String]) -> ShortcutItem? {
         let shortcutName = KeyboardShortcuts.Name("windowShortcut_\(UUID().uuidString)")
+
         let shortcut = ShortcutItem(windowTitles: windowTitles, shortcutName: shortcutName)
         shortcuts.append(shortcut)
+
         logger.info(
             "Added new keyboard shortcut for windows: '\(windowTitles.joined(separator: ", "))'")
+        return shortcut
     }
 
-    func updateShortcutTitles(_ shortcut: ShortcutItem, titles: [String]) {
-        if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
-            var updatedShortcut = shortcuts[index]
-            updatedShortcut.windowTitles = titles
-            shortcuts[index] = updatedShortcut
-            logger.info(
-                "Updated window titles for shortcut: '\(titles.joined(separator: ", "))'")
-        } else {
-            logger.warning("Cannot update titles: shortcut not found")
+    func updateShortcut(id: UUID, windowTitles: [String]) {
+        guard let index = shortcuts.firstIndex(where: { $0.id == id }) else {
+            logger.warning("Attempted to update non-existent shortcut: \(id)")
+            return
         }
+
+        var shortcut = shortcuts[index]
+        shortcut.windowTitles = windowTitles
+        shortcuts[index] = shortcut
+        logger.info(
+            "Updated window titles for shortcut: '\(windowTitles.joined(separator: ", "))'")
     }
 
-    func removeShortcut(_ shortcut: ShortcutItem) {
-        if let index = shortcuts.firstIndex(where: { $0.id == shortcut.id }) {
-            KeyboardShortcuts.reset(shortcut.shortcutName)
-            shortcuts.remove(at: index)
-            logger.info(
-                "Removed keyboard shortcut for windows: '\(shortcut.windowTitles.joined(separator: ", "))'"
-            )
+    func deleteShortcut(id: UUID) {
+        guard let shortcut = shortcuts.first(where: { $0.id == id }) else {
+            logger.warning("Attempted to delete non-existent shortcut: \(id)")
+            return
         }
+        let windowTitles = shortcut.windowTitles
+        KeyboardShortcuts.reset(shortcut.shortcutName)
+        shortcuts.removeAll(where: { $0.id == id })
+
+        logger.info(
+            "Removed shortcut for windows: '\(windowTitles.joined(separator: ", "))'"
+        )
     }
 
     func resetToDefaults() {
-        logger.debug("Resetting keyboard shortcut settings")
+        logger.debug("Resetting shortcut storage")
         let shortcutsToReset = shortcuts
         shortcuts.removeAll()
         shortcutsToReset.forEach { shortcut in
             KeyboardShortcuts.reset(shortcut.shortcutName)
         }
-        storedShortcuts = nil
-        logger.info("Keyboard shortcut settings reset completed")
+        Defaults[.storedShortcuts] = nil
+        logger.info("Shortcut storage reset completed")
     }
-    
+
     // MARK: - Private Methods
 
     private func saveShortcuts() {
-        if let encoded = try? JSONEncoder().encode(shortcuts) {
-            storedShortcuts = encoded
+        do {
+            let encodedShortcuts = try JSONEncoder().encode(shortcuts)
+            Defaults[.storedShortcuts] = encodedShortcuts
+            logger.debug("Saved \(shortcuts.count) shortcuts to user defaults")
+        } catch {
+            logger.logError(error, context: "Failed to encode shortcuts")
         }
     }
 

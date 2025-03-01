@@ -122,7 +122,7 @@ struct ShortcutSettingsTab: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 if let shortcut = shortcutToDelete {
-                    shortcutManager.shortcutStorage.removeShortcut(shortcut)
+                    shortcutManager.shortcutStorage.deleteShortcut(id: shortcut.id)
                 }
                 shortcutToDelete = nil
             }
@@ -193,7 +193,7 @@ struct ShortcutSettingsTab: View {
 
         guard !titles.isEmpty else { return }
 
-        shortcutManager.shortcutStorage.addShortcut(windowTitles: titles)
+        _ = shortcutManager.shortcutStorage.createShortcut(windowTitles: titles)
         newWindowTitles = ""
     }
 
@@ -244,7 +244,8 @@ struct ShortcutSettingsTab: View {
                 return
             }
 
-            shortcutManager.shortcutStorage.updateShortcutTitles(shortcut, titles: windowTitles)
+            shortcutManager.shortcutStorage.updateShortcut(
+                id: shortcut.id, windowTitles: windowTitles)
             isWindowTitlesEditorVisible = false
             logger.info("Successfully updated window titles for shortcut")
         } catch {
