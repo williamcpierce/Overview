@@ -41,7 +41,7 @@ final class DiagnosticService {
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
             windowStatus: try await getWindowInfo(),
-//            shortcuts: try await getShortcutsInfo(),
+            //            shortcuts: try await getShortcutsInfo(),
             storedWindows: try await getStoredWindowsInfo(),
             layouts: try await getLayoutsInfo()
         )
@@ -236,19 +236,19 @@ final class DiagnosticService {
         )
     }
 
-//    private func getShortcutsInfo() async throws -> ShortcutsInfo {
-//        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
-//        return ShortcutsInfo(
-//            shortcuts: shortcutItems.map { shortcut in
-//                ShortcutDiagnostic(
-//                    id: shortcut.id.uuidString,
-//                    windowTitles: shortcut.windowTitles,
-//                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
-//                        .description ?? "unset"
-//                )
-//            }
-//        )
-//    }
+    //    private func getShortcutsInfo() async throws -> ShortcutsInfo {
+    //        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
+    //        return ShortcutsInfo(
+    //            shortcuts: shortcutItems.map { shortcut in
+    //                ShortcutDiagnostic(
+    //                    id: shortcut.id.uuidString,
+    //                    windowTitles: shortcut.windowTitles,
+    //                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
+    //                        .description ?? "unset"
+    //                )
+    //            }
+    //        )
+    //    }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
         guard let data = Defaults[.storedWindows] else {
@@ -276,14 +276,14 @@ final class DiagnosticService {
 
     private func getLayoutsInfo() async throws -> LayoutsInfo {
         guard let data = Defaults[.layouts] else {
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
+            return LayoutsInfo(count: 0, layouts: [], launchLayoutUUID: nil)
         }
 
         do {
             let layouts = try JSONDecoder().decode([Layout].self, from: data)
 
             // Get launch layout ID
-            let launchLayoutId: String? = Defaults[.launchLayoutId]
+            let launchLayoutUUID: UUID? = Defaults[.launchLayoutUUID]
 
             return LayoutsInfo(
                 count: layouts.count,
@@ -294,7 +294,7 @@ final class DiagnosticService {
                         windowCount: layout.windows.count,
                         createdAt: formatDate(layout.createdAt),
                         updatedAt: formatDate(layout.updatedAt),
-                        isLaunchLayout: layout.id.uuidString == launchLayoutId,
+                        isLaunchLayout: layout.id == launchLayoutUUID,
                         windows: layout.windows.map { window in
                             StoredWindowDiagnostic(
                                 x: Int(window.x),
@@ -305,11 +305,11 @@ final class DiagnosticService {
                         }
                     )
                 },
-                launchLayoutId: launchLayoutId
+                launchLayoutUUID: Defaults[.launchLayoutUUID]
             )
         } catch {
             logger.logError(error, context: "Failed to decode layouts")
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
+            return LayoutsInfo(count: 0, layouts: [], launchLayoutUUID: nil)
         }
     }
 
@@ -411,7 +411,7 @@ struct DiagnosticReport: Codable {
     let permissionStatus: PermissionInfo
     let settings: SettingsInfo
     let windowStatus: WindowStatus
-//    let shortcuts: ShortcutsInfo
+    //    let shortcuts: ShortcutsInfo
     let storedWindows: StoredWindowsInfo
     let layouts: LayoutsInfo
 }
@@ -568,7 +568,7 @@ struct StoredWindowDiagnostic: Codable {
 struct LayoutsInfo: Codable {
     let count: Int
     let layouts: [LayoutDiagnostic]
-    let launchLayoutId: String?
+    let launchLayoutUUID: UUID?
 }
 
 struct LayoutDiagnostic: Codable {
