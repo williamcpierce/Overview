@@ -16,10 +16,6 @@ struct OverviewApp: App {
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
     private let logger = AppLogger.interface
 
-    init() {
-        SettingsMigrationUtility.migrateSettingsIfNeeded()
-    }
-
     var body: some Scene {
         MenuBarExtra {
             menuContent

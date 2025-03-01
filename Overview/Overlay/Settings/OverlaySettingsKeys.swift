@@ -4,39 +4,28 @@
 
  Created by William Pierce on 1/12/25.
 
- Defines storage keys for overlay-related settings.
+ Defines keys for overlay-related settings.
 */
 
+import Defaults
 import SwiftUI
 
-enum OverlaySettingsKeys {
-    static let focusBorderEnabled: String = "showFocusedBorder"
-    static let focusBorderWidth: String = "focusBorderWidth"
-    static let focusBorderColor: String = "focusBorderColor"
+extension Defaults.Keys {
+    // Focus Border Settings
+    static let focusBorderEnabled = Key<Bool>("showFocusedBorder", default: true)
+    static let focusBorderWidth = Key<Double>("focusBorderWidth", default: 5.0)
+    static let focusBorderColor = Key<Color>("focusBorderColor", default: .gray)
 
-    static let sourceTitleEnabled: String = "showWindowTitle"
-    static let sourceTitleFontSize: String = "titleFontSize"
-    static let sourceTitleBackgroundOpacity: String = "titleBackgroundOpacity"
-    static let sourceTitleLocation: String = "windowTitleLocation"
-    static let sourceTitleType: String = "sourceTitleType"
-
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let focusBorderEnabled: Bool = true
-        let focusBorderWidth: Double = 5.0
-        let focusBorderColor: Color = .gray
-
-        let sourceTitleEnabled: Bool = true
-        let sourceTitleFontSize: Double = 12.0
-        let sourceTitleBackgroundOpacity: Double = 0.4
-        let sourceTitleLocation: Bool = true
-        let sourceTitleType: String = TitleType.windowTitle
-    }
+    // Source Title Settings
+    static let sourceTitleEnabled = Key<Bool>("showWindowTitle", default: true)
+    static let sourceTitleFontSize = Key<Double>("titleFontSize", default: 12.0)
+    static let sourceTitleBackgroundOpacity = Key<Double>("titleBackgroundOpacity", default: 0.4)
+    static let sourceTitleLocation = Key<Bool>("windowTitleLocation", default: true)
+    static let sourceTitleType = Key<TitleType>("sourceTitleType", default: .windowTitle)
 }
 
-enum TitleType {
-    static let windowTitle = "windowTitle"
-    static let appName = "appName"
-    static let fullTitle = "fullTitle"
+enum TitleType: String, Defaults.Serializable {
+    case windowTitle = "windowTitle"
+    case appName = "appName"
+    case fullTitle = "fullTitle"
 }

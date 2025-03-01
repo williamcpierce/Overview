@@ -8,6 +8,7 @@
 */
 
 import AppKit
+import Defaults
 import KeyboardShortcuts
 import OSLog
 import ScreenCaptureKit
@@ -57,7 +58,7 @@ final class DiagnosticService {
     func saveDiagnosticReport(_ report: String) async throws -> URL {
         let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true))"
         let reportFilename = "\(filename).json"
-//        let logFilename = "\(filename)-logs.txt"
+        //        let logFilename = "\(filename)-logs.txt"
 
         guard
             let documentsURL = FileManager.default.urls(
@@ -78,9 +79,9 @@ final class DiagnosticService {
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-//        let logURL = overviewDirURL.appendingPathComponent(logFilename)
-//        try await saveLogFile(to: logURL)
-//        logger.info("Log file saved: \(logFilename)")
+        //        let logURL = overviewDirURL.appendingPathComponent(logFilename)
+        //        try await saveLogFile(to: logURL)
+        //        logger.info("Log file saved: \(logFilename)")
 
         return reportURL
     }
@@ -184,19 +185,16 @@ final class DiagnosticService {
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
-                    enabled: defaults.bool(forKey: OverlaySettingsKeys.focusBorderEnabled),
-                    width: Int(defaults.double(forKey: OverlaySettingsKeys.focusBorderWidth))
+                    enabled: Defaults[.focusBorderEnabled],
+                    width: Int(Defaults[.focusBorderWidth]),
+                    color: colorToHexString(Defaults[.focusBorderColor])
                 ),
                 sourceTitle: SourceTitleSettings(
-                    enabled: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleEnabled),
-                    fontSize: Int(defaults.double(forKey: OverlaySettingsKeys.sourceTitleFontSize)),
-                    backgroundOpacity: Int(
-                        defaults.double(forKey: OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-                            * 100),
-                    location: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleLocation)
-                        ? "upper" : "lower",
-                    type: defaults.string(forKey: OverlaySettingsKeys.sourceTitleType)
-                        ?? TitleType.windowTitle
+                    enabled: Defaults[.sourceTitleEnabled],
+                    fontSize: Int(Defaults[.sourceTitleFontSize]),
+                    backgroundOpacity: Int(Defaults[.sourceTitleBackgroundOpacity] * 100),
+                    location: Defaults[.sourceTitleLocation] ? "upper" : "lower",
+                    type: Defaults[.sourceTitleType].rawValue
                 )
             ),
             layout: LayoutSettings(
@@ -401,6 +399,22 @@ final class DiagnosticService {
         /// 1024^3
         return String(format: "%.1f", gigabytes)
     }
+
+    private func colorToHexString(_ color: Color) -> String {
+        let nsColor = NSColor(color)
+
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+
+        nsColor.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+
+        let components = [r, g, b, a].map { Int($0 * 255) }
+        return String(
+            format: "#%02X%02X%02X (alpha: %02X)",
+            components[0], components[1], components[2], components[3])
+    }
 }
 
 // MARK: - Report Models
@@ -495,6 +509,7 @@ struct OverlaySettings: Codable {
 struct FocusBorderSettings: Codable {
     let enabled: Bool
     let width: Int
+    let color: String
 }
 
 struct SourceTitleSettings: Codable {
