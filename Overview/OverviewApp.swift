@@ -70,10 +70,25 @@ struct OverviewApp: App {
     }
 
     private var settingsButton: some View {
-        Button("Settings...") {
-            openSettings()
+        Group {
+            if #available(macOS 14.0, *) {
+                SettingsLink {
+                    Text("Settings...")
+                }
+                .keyboardShortcut(",")
+                .onAppear {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            } else {
+                Button("Settings...") {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                }
+                .keyboardShortcut(",")
+            }
         }
-        .keyboardShortcut(",")
     }
 
     private var supportButton: some View {
@@ -239,18 +254,6 @@ struct OverviewApp: App {
     private func toggleEditMode() {
         Task { @MainActor in
             appDelegate.previewManager.editModeEnabled.toggle()
-        }
-    }
-
-    private func openSettings() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        if #available(macOS 14.0, *) {
-            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
-            openSettings()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
     }
 
