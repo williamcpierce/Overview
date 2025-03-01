@@ -1,5 +1,5 @@
 /*
- Diagnostic/DiagnosticService.swift
+ Settings/DiagnosticService.swift
  Overview
 
  Created by William Pierce on 2/17/25.
@@ -17,16 +17,15 @@ import SwiftUI
 final class DiagnosticService {
     // Dependencies
     private let logger = AppLogger.interface
+    private let shortcutManager: ShortcutManager
     private let jsonEncoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return encoder
     }()
 
-    // Singleton
-    static let shared = DiagnosticService()
-
-    private init() {
+    init(shortcutManager: ShortcutManager) {
+        self.shortcutManager = shortcutManager
         logger.debug("Initializing diagnostic service")
     }
 
@@ -40,7 +39,7 @@ final class DiagnosticService {
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
             windowStatus: try await getWindowInfo(),
-            //            shortcuts: try await getShortcutsInfo(),
+            shortcuts: try await getShortcutsInfo(),
             storedWindows: try await getStoredWindowsInfo(),
             layouts: try await getLayoutsInfo()
         )
@@ -57,7 +56,7 @@ final class DiagnosticService {
     func saveDiagnosticReport(_ report: String) async throws -> URL {
         let filename = "Overview-Diagnostic-\(formatDate(Date(), forFilename: true))"
         let reportFilename = "\(filename).json"
-        //        let logFilename = "\(filename)-logs.txt"
+        let logFilename = "\(filename)-logs.txt"
 
         guard
             let documentsURL = FileManager.default.urls(
@@ -78,9 +77,9 @@ final class DiagnosticService {
         try report.write(to: reportURL, atomically: true, encoding: .utf8)
         logger.info("Diagnostic report saved: \(reportFilename)")
 
-        //        let logURL = overviewDirURL.appendingPathComponent(logFilename)
-        //        try await saveLogFile(to: logURL)
-        //        logger.info("Log file saved: \(logFilename)")
+        let logURL = overviewDirURL.appendingPathComponent(logFilename)
+        try await saveLogFile(to: logURL)
+        logger.info("Log file saved: \(logFilename)")
 
         return reportURL
     }
@@ -235,19 +234,19 @@ final class DiagnosticService {
         )
     }
 
-    //    private func getShortcutsInfo() async throws -> ShortcutsInfo {
-    //        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
-    //        return ShortcutsInfo(
-    //            shortcuts: shortcutItems.map { shortcut in
-    //                ShortcutDiagnostic(
-    //                    id: shortcut.id.uuidString,
-    //                    windowTitles: shortcut.windowTitles,
-    //                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
-    //                        .description ?? "unset"
-    //                )
-    //            }
-    //        )
-    //    }
+    private func getShortcutsInfo() async throws -> ShortcutsInfo {
+        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
+        return ShortcutsInfo(
+            shortcuts: shortcutItems.map { shortcut in
+                ShortcutDiagnostic(
+                    id: shortcut.id.uuidString,
+                    windowTitles: shortcut.windowTitles,
+                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
+                        .description ?? "unset"
+                )
+            }
+        )
+    }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
         guard let data = Defaults[.storedWindows] else {
@@ -410,7 +409,7 @@ struct DiagnosticReport: Codable {
     let permissionStatus: PermissionInfo
     let settings: SettingsInfo
     let windowStatus: WindowStatus
-    //    let shortcuts: ShortcutsInfo
+    let shortcuts: ShortcutsInfo
     let storedWindows: StoredWindowsInfo
     let layouts: LayoutsInfo
 }

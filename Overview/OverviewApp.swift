@@ -263,8 +263,8 @@ struct OverviewApp: App {
     private func generateDiagnosticReport() {
         Task {
             do {
-                let report = try await DiagnosticService.shared.generateDiagnosticReport()
-                let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
+                let report = try await appDelegate.settingsManager.generateDiagnosticReport()
+                let fileURL = try await appDelegate.settingsManager.saveDiagnosticReport(report)
 
                 NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
                 logger.info("Diagnostic report generated and saved successfully")

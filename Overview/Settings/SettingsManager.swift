@@ -19,12 +19,16 @@ final class SettingsManager: ObservableObject {
     private let shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
 
+    // Services
+    let diagnosticService: DiagnosticService
+
     init(
         updateManager: UpdateManager, layoutManager: LayoutManager, shortcutManager: ShortcutManager
     ) {
         self.updateManager = updateManager
         self.layoutManager = layoutManager
         self.shortcutManager = shortcutManager
+        self.diagnosticService = DiagnosticService(shortcutManager: shortcutManager)
     }
 
     // MARK: - Settings Reset
@@ -89,5 +93,15 @@ final class SettingsManager: ObservableObject {
         )
 
         logger.info("Settings reset completed successfully")
+    }
+
+    // MARK: - Diagnostic Functions
+
+    func generateDiagnosticReport() async throws -> String {
+        return try await diagnosticService.generateDiagnosticReport()
+    }
+
+    func saveDiagnosticReport(_ report: String) async throws -> URL {
+        return try await diagnosticService.saveDiagnosticReport(report)
     }
 }
