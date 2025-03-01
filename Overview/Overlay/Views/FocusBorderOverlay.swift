@@ -8,6 +8,7 @@
  source window is active.
 */
 
+import Defaults
 import SwiftUI
 
 struct FocusBorderOverlay: View {
@@ -22,12 +23,9 @@ struct FocusBorderOverlay: View {
     private var previewHideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
 
     // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
-    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
-    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
-    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+    @Default(.focusBorderEnabled) private var focusBorderEnabled
+    @Default(.focusBorderWidth) private var focusBorderWidth
+    @Default(.focusBorderColor) private var focusBorderColor
 
     var body: some View {
         Group {

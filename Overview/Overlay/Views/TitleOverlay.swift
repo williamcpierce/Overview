@@ -8,6 +8,7 @@
  customizable opacity and font size.
 */
 
+import Defaults
 import SwiftUI
 
 struct TitleOverlay: View {
@@ -16,17 +17,11 @@ struct TitleOverlay: View {
     let applicationTitle: String?
 
     // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
-    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
-    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
-    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
-    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
-        .sourceTitleBackgroundOpacity
-    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
-    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
-    @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+    @Default(.sourceTitleEnabled) private var sourceTitleEnabled
+    @Default(.sourceTitleFontSize) private var sourceTitleFontSize
+    @Default(.sourceTitleBackgroundOpacity) private var sourceTitleBackgroundOpacity
+    @Default(.sourceTitleLocation) private var sourceTitleLocation
+    @Default(.sourceTitleType) private var sourceTitleType
 
     var body: some View {
         Group {

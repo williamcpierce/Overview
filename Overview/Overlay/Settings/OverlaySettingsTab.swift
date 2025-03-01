@@ -5,6 +5,7 @@
  Created by William Pierce on 1/12/25.
 */
 
+import Defaults
 import SwiftUI
 
 struct OverlaySettingsTab: View {
@@ -13,31 +14,20 @@ struct OverlaySettingsTab: View {
     @State private var showingSourceTitleInfo: Bool = false
 
     // Focus Border Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderEnabled)
-    private var focusBorderEnabled = OverlaySettingsKeys.defaults.focusBorderEnabled
-    @AppStorage(OverlaySettingsKeys.focusBorderWidth)
-    private var focusBorderWidth = OverlaySettingsKeys.defaults.focusBorderWidth
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+    @Default(.focusBorderEnabled) private var focusBorderEnabled
+    @Default(.focusBorderWidth) private var focusBorderWidth
+    @Default(.focusBorderColor) private var focusBorderColor
 
     // Source Title Settings
-    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
-    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
-    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
-    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
-    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
-        .sourceTitleBackgroundOpacity
-    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
-    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
-    @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var previewSourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+    @Default(.sourceTitleEnabled) private var sourceTitleEnabled
+    @Default(.sourceTitleFontSize) private var sourceTitleFontSize
+    @Default(.sourceTitleBackgroundOpacity) private var sourceTitleBackgroundOpacity
+    @Default(.sourceTitleLocation) private var sourceTitleLocation
+    @Default(.sourceTitleType) private var sourceTitleType
 
     var body: some View {
         Form {
-
             // MARK: - Focus Border Section
-
             Section {
                 HStack {
                     Text("Source Focus")
@@ -73,7 +63,6 @@ struct OverlaySettingsTab: View {
             }
 
             // MARK: - Source Title Section
-
             Section {
                 HStack {
                     Text("Source Title")
@@ -108,23 +97,22 @@ struct OverlaySettingsTab: View {
                             .foregroundColor(.secondary)
                             .frame(width: 40)
                     }
+
                     HStack {
                         Picker("Location", selection: $sourceTitleLocation) {
                             Text("Upper").tag(true)
                             Text("Lower").tag(false)
                         }
                         .pickerStyle(.segmented)
-
                     }
+
                     HStack {
-                        Picker("Type", selection: $previewSourceTitleType) {
+                        Picker("Type", selection: $sourceTitleType) {
                             Text("Window Title").tag(TitleType.windowTitle)
                             Text("Application Name").tag(TitleType.appName)
                             Text("Both").tag(TitleType.fullTitle)
-
                         }
                         .pickerStyle(.menu)
-
                     }
                 }
             }
