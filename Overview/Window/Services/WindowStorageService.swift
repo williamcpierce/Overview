@@ -59,9 +59,9 @@ final class WindowStorageService {
 
     private func saveWindows(_ windows: [Window]) throws {
         do {
-            let data = try JSONEncoder().encode(windows)
-            Defaults[.storedWindows] = data
-            logger.debug("Windows persisted to storage")
+            let encodedWindows = try JSONEncoder().encode(windows)
+            Defaults[.storedWindows] = encodedWindows
+            logger.debug("Saved \(windows.count) windows to user defaults")
         } catch {
             logger.error("Window encoding failed: \(error.localizedDescription)")
             throw WindowStorageError.encodingFailed
