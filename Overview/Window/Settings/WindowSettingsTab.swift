@@ -5,6 +5,7 @@
  Created by William Pierce on 1/12/25.
 */
 
+import Defaults
 import SwiftUI
 
 struct WindowSettingsTab: View {
@@ -14,29 +15,9 @@ struct WindowSettingsTab: View {
     @State private var showingManagementInfo: Bool = false
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.previewOpacity)
-    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.defaultWidth)
-    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-    @AppStorage(WindowSettingsKeys.defaultHeight)
-    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-    @AppStorage(WindowSettingsKeys.syncAspectRatio)
-    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
-    @AppStorage(WindowSettingsKeys.managedByMissionControl)
-    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
-    @AppStorage(WindowSettingsKeys.createOnLaunch)
-    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
-    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
-    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
-        .assignPreviewsToAllDesktops
-    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
-    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
-    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
-    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+    @Default(.windowOpacity) private var windowOpacity
+    @Default(.defaultWindowWidth) private var defaultWindowWidth
+    @Default(.defaultWindowHeight) private var defaultWindowHeight
 
     var body: some View {
         Form {
@@ -57,8 +38,8 @@ struct WindowSettingsTab: View {
 
                 HStack(spacing: 8) {
                     Text("Opacity")
-                    OpacitySlider(value: $previewOpacity)
-                    Text("\(Int(previewOpacity * 100))%")
+                    OpacitySlider(value: $windowOpacity)
+                    Text("\(Int(windowOpacity * 100))%")
                         .foregroundColor(.secondary)
                         .frame(width: 40)
                 }
@@ -70,9 +51,9 @@ struct WindowSettingsTab: View {
                         TextField(
                             "",
                             value: Binding(
-                                get: { defaultWidth },
+                                get: { defaultWindowWidth },
                                 set: { newValue in
-                                    defaultWidth = max(newValue, 80)
+                                    defaultWindowWidth = max(newValue, 80)
                                 }
                             ), formatter: NumberFormatter()
                         )
@@ -88,9 +69,9 @@ struct WindowSettingsTab: View {
                         TextField(
                             "",
                             value: Binding(
-                                get: { defaultHeight },
+                                get: { defaultWindowHeight },
                                 set: { newValue in
-                                    defaultHeight = max(newValue, 40)
+                                    defaultWindowHeight = max(newValue, 40)
                                 }
                             ), formatter: NumberFormatter()
                         )
@@ -101,9 +82,8 @@ struct WindowSettingsTab: View {
                     }
                 }
 
-                Toggle("Shadows", isOn: $shadowEnabled)
-
-                Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
+                Defaults.Toggle("Shadows", key: .windowShadowEnabled)
+                Defaults.Toggle("Synchronize aspect ratio", key: .syncAspectRatio)
             }
 
             // MARK: - System Visibility Section
@@ -120,8 +100,10 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
-                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    Defaults.Toggle(
+                        "Show windows in Mission Control", key: .managedByMissionControl)
+                    Defaults.Toggle(
+                        "Show windows on all desktops", key: .assignPreviewsToAllDesktops)
                 }
             }
 
@@ -139,10 +121,11 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Always create window on launch", isOn: $createOnLaunch)
-                    Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
-                    Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
+                    Defaults.Toggle("Always create window on launch", key: .createOnLaunch)
+                    Defaults.Toggle("Close window with preview source", key: .closeOnCaptureStop)
+                    Defaults.Toggle("Save window positions on quit", key: .saveWindowsOnQuit)
+                    Defaults.Toggle(
+                        "Restore window positions on launch", key: .restoreWindowsOnLaunch)
                 }
             }
         }

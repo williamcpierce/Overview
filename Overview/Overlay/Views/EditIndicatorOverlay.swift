@@ -7,6 +7,7 @@
  Renders a visual indicator when edit mode is enabled for preview windows.
 */
 
+import Defaults
 import SwiftUI
 
 struct EditIndicatorOverlay: View {
@@ -14,8 +15,7 @@ struct EditIndicatorOverlay: View {
     let isEditModeEnabled: Bool
 
     // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.focusBorderColor)
-    private var focusBorderColor = OverlaySettingsKeys.defaults.focusBorderColor
+    @Default(.focusBorderColor) private var focusBorderColor
 
     var body: some View {
         Group {

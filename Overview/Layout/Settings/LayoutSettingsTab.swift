@@ -7,17 +7,18 @@
  Provides a user interface for creating, managing, and applying window layouts.
 */
 
+import Defaults
 import SwiftUI
 
 struct LayoutJSON: Codable {
     var name: String
-    var windows: [WindowState]
+    var windows: [Window]
 }
 
 struct LayoutSettingsTab: View {
     // Dependencies
     @ObservedObject private var layoutManager: LayoutManager
-    @StateObject private var windowManager: WindowManager
+    @ObservedObject private var windowManager: WindowManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -27,7 +28,6 @@ struct LayoutSettingsTab: View {
     @State private var showingDeleteAlert: Bool = false
     @State private var layoutToModify: Layout? = nil
     @State private var newLayoutName: String = ""
-    @State private var launchLayoutId: UUID? = nil
     @State private var selectedLayoutNameBeforeJSON: String? = nil
 
     // JSON Editor State
@@ -36,12 +36,11 @@ struct LayoutSettingsTab: View {
     @State private var jsonError: String? = nil
 
     // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+    @Default(.launchLayoutUUID) private var launchLayoutUUID
 
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
-        self._windowManager = StateObject(wrappedValue: windowManager)
+        self.windowManager = windowManager
     }
 
     var body: some View {
@@ -69,7 +68,6 @@ struct LayoutSettingsTab: View {
                 }
                 .padding(.bottom, 4)
 
-                // Layout List
                 VStack {
                     List {
                         if layoutManager.layouts.isEmpty {
@@ -79,20 +77,15 @@ struct LayoutSettingsTab: View {
                             ForEach(layoutManager.layouts) { layout in
                                 HStack {
                                     VStack(alignment: .leading) {
-                                        HStack {
-                                            Text(layout.name)
-                                                .lineLimit(1)
-                                                .help("Layout name")
-                                        }
+                                        Text(layout.name)
+                                            .lineLimit(1)
                                         Text(
                                             "\(layout.windows.count) \(layout.windows.count == 1 ? "window" : "windows")"
                                         )
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                     }
-
                                     Spacer()
-
                                     Button {
                                         layoutToModify = layout
                                         showingApplyAlert = true
@@ -131,7 +124,6 @@ struct LayoutSettingsTab: View {
                     }
                 }
 
-                // Layout Creation Controls
                 HStack {
                     TextField("Layout name", text: $newLayoutName)
                         .textFieldStyle(.roundedBorder)
@@ -146,34 +138,25 @@ struct LayoutSettingsTab: View {
                         newLayoutName.isEmpty || !layoutManager.isLayoutNameUnique(newLayoutName))
                 }
             }
+
             VStack {
-                // Launch Layout Selector
                 HStack {
                     Text("Apply layout on launch")
                     Spacer()
-                    Picker("", selection: $launchLayoutId) {
+                    Picker("", selection: $launchLayoutUUID) {
                         Text("None").tag(nil as UUID?)
                         ForEach(layoutManager.layouts) { layout in
                             Text(layout.name).tag(layout.id as UUID?)
                         }
                     }
                     .frame(width: 160)
-                    .onChange(of: launchLayoutId) { newValue in
-                        layoutManager.setLaunchLayout(id: newValue)
-                    }
                 }
 
-                // Close all window toggle
-                Toggle(
-                    "Close all windows when applying layouts",
-                    isOn: $closeWindowsOnApply
-                )
+                Defaults.Toggle(
+                    "Close all windows when applying layouts", key: .closeWindowsOnApply)
             }
         }
         .formStyle(.grouped)
-        .onAppear {
-            launchLayoutId = layoutManager.launchLayoutId
-        }
         .alert("Apply Layout", isPresented: $showingApplyAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Apply") {
@@ -184,7 +167,13 @@ struct LayoutSettingsTab: View {
             }
         } message: {
             if let layout = layoutToModify {
-                Text("Apply layout '\(layout.name)'? This will close all current windows.")
+                Group {
+                    if Defaults[.closeWindowsOnApply] {
+                        Text("Apply layout '\(layout.name)'? This will close all current windows.")
+                    } else {
+                        Text("Apply layout '\(layout.name)'?")
+                    }
+                }
             } else {
                 Text("Select a layout to apply")
             }
@@ -209,9 +198,8 @@ struct LayoutSettingsTab: View {
             Button("Delete", role: .destructive) {
                 if let layout = layoutToModify {
                     layoutManager.deleteLayout(id: layout.id)
-
-                    if launchLayoutId == layout.id {
-                        launchLayoutId = nil
+                    if launchLayoutUUID == layout.id {
+                        launchLayoutUUID = nil
                     }
                 }
                 layoutToModify = nil
@@ -224,7 +212,6 @@ struct LayoutSettingsTab: View {
             }
         }
         .sheet(isPresented: $isJSONEditorVisible) {
-            // JSON Editor View
             VStack(spacing: 0) {
                 if let error = jsonError {
                     HStack {
@@ -255,7 +242,6 @@ struct LayoutSettingsTab: View {
                             jsonError = nil
                         }
                         .keyboardShortcut(.cancelAction)
-
                         Button("Save") {
                             applyJSON(layoutsJSON)
                         }
@@ -275,10 +261,10 @@ struct LayoutSettingsTab: View {
     // MARK: - Actions
 
     private func prepareJSONEditor() {
-        if let launchId: UUID = launchLayoutId {
+        if let launchUUID: UUID = launchLayoutUUID {
             selectedLayoutNameBeforeJSON =
                 layoutManager.layouts.first {
-                    $0.id == launchId
+                    $0.id == launchUUID
                 }?.name
         } else {
             selectedLayoutNameBeforeJSON = nil
@@ -287,14 +273,13 @@ struct LayoutSettingsTab: View {
         layoutsJSON = layoutsToJSON()
         isJSONEditorVisible = true
     }
-
     private func createLayout() {
-        if !newLayoutName.isEmpty && layoutManager.isLayoutNameUnique(newLayoutName) {
-            _ = windowManager.saveLayout(name: newLayoutName)
-            newLayoutName = ""
-        } else {
+        guard !newLayoutName.isEmpty, layoutManager.createLayout(name: newLayoutName) != nil
+        else {
             logger.warning("Attempted to create layout with empty or non-unique name")
+            return
         }
+        newLayoutName = ""
     }
 
     private func layoutsToJSON() -> String {
@@ -353,13 +338,11 @@ struct LayoutSettingsTab: View {
             jsonError = "Layout names cannot be empty"
             return false
         }
-
-        let uniqueNames: Set<String> = Set(layouts.map { $0.name.lowercased() })
+        let uniqueNames = Set(layouts.map { $0.name.lowercased() })
         if uniqueNames.count != layouts.count {
             jsonError = "Layout names must be unique (case-insensitive)"
             return false
         }
-
         return true
     }
 
@@ -368,7 +351,7 @@ struct LayoutSettingsTab: View {
             layoutManager.deleteLayout(id: layoutManager.layouts[0].id)
         }
 
-        for layout: LayoutJSON in layoutsFromJSON {
+        for layout in layoutsFromJSON {
             _ = windowManager.saveLayout(name: layout.name)
 
             if let newLayout = layoutManager.layouts.last {
@@ -378,7 +361,6 @@ struct LayoutSettingsTab: View {
                     var updatedLayout = layoutManager.layouts[index]
                     updatedLayout.update(windows: layout.windows)
                     layoutManager.layouts[index] = updatedLayout
-                    layoutManager.saveLayouts()
                 }
             }
         }
@@ -390,12 +372,10 @@ struct LayoutSettingsTab: View {
                 $0.name == previousLayoutName
             })
         {
-            launchLayoutId = matchingLayout.id
-            layoutManager.setLaunchLayout(id: matchingLayout.id)
+            launchLayoutUUID = matchingLayout.id
             logger.debug("Restored launch layout setting to '\(previousLayoutName)'")
         } else {
-            launchLayoutId = nil
-            layoutManager.setLaunchLayout(id: nil)
+            launchLayoutUUID = nil
             logger.debug("Previous launch layout no longer exists, cleared setting")
         }
     }

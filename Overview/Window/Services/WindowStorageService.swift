@@ -4,10 +4,10 @@
 
  Created by William Pierce on 1/5/25.
 
- Manages persistence and restoration of window state information.
+ Manages persistence and restoration of window information.
 */
 
-import AppKit
+import Defaults
 import SwiftUI
 
 final class WindowStorageService {
@@ -26,13 +26,13 @@ final class WindowStorageService {
         }
     }
 
-    func collectWindows() -> [WindowState] {
+    func collectWindows() -> [Window] {
         NSApplication.shared.windows.compactMap { window in
             guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
             else {
                 return nil
             }
-            return WindowState(frame: window.frame)
+            return Window(frame: window.frame)
         }
     }
 
@@ -48,7 +48,7 @@ final class WindowStorageService {
         }
     }
 
-    func applyWindows(_ windows: [WindowState], using handler: (NSRect) -> Void) {
+    func applyWindows(_ windows: [Window], using handler: (NSRect) -> Void) {
         windows.forEach { window in
             handler(window.frame)
         }
@@ -57,30 +57,30 @@ final class WindowStorageService {
 
     // MARK: - Private Methods
 
-    private func saveWindows(_ windows: [WindowState]) throws {
+    private func saveWindows(_ windows: [Window]) throws {
         do {
-            let data = try JSONEncoder().encode(windows)
-            UserDefaults.standard.set(data, forKey: WindowSettingsKeys.storedWindows)
-            logger.debug("Windows persisted to storage")
+            let encodedWindows = try JSONEncoder().encode(windows)
+            Defaults[.storedWindows] = encodedWindows
+            logger.debug("Saved \(windows.count) windows to user defaults")
         } catch {
-            logger.error("Window state encoding failed: \(error.localizedDescription)")
+            logger.error("Window encoding failed: \(error.localizedDescription)")
             throw WindowStorageError.encodingFailed
         }
     }
 
-    private func loadWindows() throws -> [WindowState] {
-        guard let data = UserDefaults.standard.data(forKey: WindowSettingsKeys.storedWindows) else {
+    private func loadWindows() throws -> [Window] {
+        guard let data = Defaults[.storedWindows] else {
             logger.debug("No stored windows found")
             throw WindowStorageError.noDataFound
         }
 
         do {
-            let windows = try JSONDecoder().decode([WindowState].self, from: data)
+            let windows = try JSONDecoder().decode([Window].self, from: data)
             return windows
         } catch let error as WindowStorageError {
             throw error
         } catch {
-            logger.error("Window state decoding failed: \(error.localizedDescription)")
+            logger.error("Window decoding failed: \(error.localizedDescription)")
             throw WindowStorageError.decodingFailed
         }
     }
@@ -96,9 +96,9 @@ enum WindowStorageError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .encodingFailed:
-            return "Failed to encode window states"
+            return "Failed to encode windows"
         case .decodingFailed:
-            return "Failed to decode stored window states"
+            return "Failed to decode stored windows"
         case .noDataFound:
             return "No stored window data found"
         }

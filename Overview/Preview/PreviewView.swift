@@ -8,6 +8,7 @@
  and user interactions across the application's preview functionality.
 */
 
+import Defaults
 import SwiftUI
 
 struct PreviewView: View {
@@ -15,7 +16,7 @@ struct PreviewView: View {
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
     @ObservedObject private var permissionManager: PermissionManager
-    @StateObject private var captureCoordinator: CaptureCoordinator
+    @ObservedObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
     let onClose: () -> Void
 
@@ -25,31 +26,25 @@ struct PreviewView: View {
     @State private var previewAspectRatio: CGFloat = 0
 
     // Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
-    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @Default(.captureFrameRate) private var captureFrameRate
+    @Default(.hideInactiveApplications) private var hideInactiveApplications
+    @Default(.hideActiveWindow) private var hideActiveWindow
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
-    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+    @Default(.closeOnCaptureStop) private var closeOnCaptureStop
 
     init(
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
+        captureCoordinator: CaptureCoordinator,
         onClose: @escaping () -> Void
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.captureCoordinator = captureCoordinator
         self.onClose = onClose
-        self._captureCoordinator = StateObject(
-            wrappedValue: CaptureCoordinator(
-                sourceManager: sourceManager, permissionManager: permissionManager)
-        )
     }
 
     var body: some View {

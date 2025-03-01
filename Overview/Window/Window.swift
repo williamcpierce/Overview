@@ -1,5 +1,5 @@
 /*
- Window/WindowState.swift
+ Window/Window.swift
  Overview
 
  Created by William Pierce on 1/5/25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct WindowState: Codable, Equatable {
+struct Window: Codable, Equatable {
     let x: Double
     let y: Double
     let width: Double

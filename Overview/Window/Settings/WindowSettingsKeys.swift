@@ -3,42 +3,29 @@
  Overview
 
  Created by William Pierce on 1/12/25.
-
- Defines storage keys for window-related settings.
 */
 
-enum WindowSettingsKeys {
-    static let previewOpacity: String = "windowOpacity"
-    static let defaultWidth: String = "defaultWindowWidth"
-    static let defaultHeight: String = "defaultWindowHeight"
-    static let shadowEnabled: String = "windowShadowEnabled"
-    static let syncAspectRatio: String = "syncAspectRatio"
+import Defaults
+import Foundation
 
-    static let managedByMissionControl: String = "managedByMissionControl"
-    static let assignPreviewsToAllDesktops: String = "desktopAssignmentBehavior"
+extension Defaults.Keys {
+    // Appearance Settings
+    static let windowOpacity = Key<Double>("windowOpacity", default: 0.95)
+    static let defaultWindowWidth = Key<Double>("defaultWindowWidth", default: 288)
+    static let defaultWindowHeight = Key<Double>("defaultWindowHeight", default: 162)
+    static let windowShadowEnabled = Key<Bool>("windowShadowEnabled", default: true)
+    static let syncAspectRatio = Key<Bool>("syncAspectRatio", default: true)
 
-    static let createOnLaunch: String = "windowCreateOnLaunch"
-    static let closeOnCaptureStop: String = "closeOnCaptureStop"
-    static let saveWindowsOnQuit: String = "savePositionsOnClose"
-    static let restoreWindowsOnLaunch: String = "restoreWindowsOnLaunch"
+    // System Visibility Settings
+    static let managedByMissionControl = Key<Bool>("managedByMissionControl", default: true)
+    static let assignPreviewsToAllDesktops = Key<Bool>("desktopAssignmentBehavior", default: false)
 
-    static let storedWindows: String = "StoredWindowPositions"
+    // Window Management Settings
+    static let createOnLaunch = Key<Bool>("windowCreateOnLaunch", default: true)
+    static let closeOnCaptureStop = Key<Bool>("closeOnCaptureStop", default: false)
+    static let saveWindowsOnQuit = Key<Bool>("savePositionsOnClose", default: true)
+    static let restoreWindowsOnLaunch = Key<Bool>("restoreWindowsOnLaunch", default: true)
 
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let previewOpacity: Double = 0.95
-        let defaultWidth: Double = 288
-        let defaultHeight: Double = 162
-        let shadowEnabled: Bool = true
-        let syncAspectRatio: Bool = true
-
-        let managedByMissionControl: Bool = true
-        let assignPreviewsToAllDesktops: Bool = false
-
-        let createOnLaunch: Bool = true
-        let closeOnCaptureStop: Bool = false
-        let saveWindowsOnQuit: Bool = true
-        let restoreWindowsOnLaunch: Bool = true
-    }
+    // Data Storage Keys
+    static let storedWindows = Key<Data?>("StoredWindowPositions", default: nil)
 }

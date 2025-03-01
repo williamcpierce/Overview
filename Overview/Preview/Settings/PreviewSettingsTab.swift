@@ -5,11 +5,12 @@
  Created by William Pierce on 1/12/25.
 */
 
+import Defaults
 import SwiftUI
 
 struct PreviewSettingsTab: View {
     // Dependencies
-    private let availableFrameRates = PreviewSettingsKeys.defaults.availableCaptureFrameRates
+    private let availableFrameRates = PreviewConstants.availableCaptureFrameRates
     private let logger = AppLogger.settings
 
     // Private State
@@ -17,12 +18,7 @@ struct PreviewSettingsTab: View {
     @State private var showingAutoHidingInfo: Bool = false
 
     // Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
-    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @Default(.captureFrameRate) private var captureFrameRate
 
     var body: some View {
         Form {
@@ -65,14 +61,14 @@ struct PreviewSettingsTab: View {
                 .padding(.bottom, 4)
 
                 VStack {
-                    Toggle(
+                    Defaults.Toggle(
                         "Hide previews for inactive source applications",
-                        isOn: $hideInactiveApplications
+                        key: .hideInactiveApplications
                     )
 
-                    Toggle(
+                    Defaults.Toggle(
                         "Hide preview for focused source window",
-                        isOn: $hideActiveWindow
+                        key: .hideActiveWindow
                     )
                 }
             }

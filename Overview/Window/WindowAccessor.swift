@@ -7,6 +7,7 @@
  Manages window state synchronization through SwiftUI's NSViewRepresentable interface.
 */
 
+import Defaults
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
@@ -23,17 +24,6 @@ struct WindowAccessor: NSViewRepresentable {
     private let configService = WindowServices.shared.windowConfiguration
     private let aspectService = WindowServices.shared.windowAspect
     private let logger = AppLogger.interface
-
-    // Window Settings
-    @AppStorage(WindowSettingsKeys.managedByMissionControl)
-    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
-        .assignPreviewsToAllDesktops
-    @AppStorage(WindowSettingsKeys.syncAspectRatio)
-    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
 
     // MARK: - NSViewRepresentable
 
@@ -79,9 +69,9 @@ struct WindowAccessor: NSViewRepresentable {
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         window.level = newLevel
-        window.hasShadow = shadowEnabled
+        window.hasShadow = Defaults[.windowShadowEnabled]
 
-        if syncAspectRatio {
+        if Defaults[.syncAspectRatio] {
             aspectService.synchronizeAspectRatio(
                 for: window,
                 aspectRatio: aspectRatio,
@@ -89,10 +79,10 @@ struct WindowAccessor: NSViewRepresentable {
             )
         }
 
-        configService.updateMissionControl(window, isManaged: managedByMissionControl)
+        configService.updateMissionControl(window, isManaged: Defaults[.managedByMissionControl])
 
         var currentBehavior = window.collectionBehavior
-        if assignPreviewsToAllDesktops {
+        if Defaults[.assignPreviewsToAllDesktops] {
             currentBehavior.insert(.canJoinAllSpaces)
         } else {
             currentBehavior.remove(.canJoinAllSpaces)

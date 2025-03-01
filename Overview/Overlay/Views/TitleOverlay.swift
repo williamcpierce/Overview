@@ -8,6 +8,7 @@
  customizable opacity and font size.
 */
 
+import Defaults
 import SwiftUI
 
 struct TitleOverlay: View {
@@ -16,31 +17,25 @@ struct TitleOverlay: View {
     let applicationTitle: String?
 
     // Overlay Settings
-    @AppStorage(OverlaySettingsKeys.sourceTitleEnabled)
-    private var sourceTitleEnabled = OverlaySettingsKeys.defaults.sourceTitleEnabled
-    @AppStorage(OverlaySettingsKeys.sourceTitleFontSize)
-    private var sourceTitleFontSize = OverlaySettingsKeys.defaults.sourceTitleFontSize
-    @AppStorage(OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-    private var sourceTitleBackgroundOpacity = OverlaySettingsKeys.defaults
-        .sourceTitleBackgroundOpacity
-    @AppStorage(OverlaySettingsKeys.sourceTitleLocation)
-    private var sourceTitleLocation = OverlaySettingsKeys.defaults.sourceTitleLocation
-    @AppStorage(OverlaySettingsKeys.sourceTitleType)
-    private var sourceTitleType = OverlaySettingsKeys.defaults.sourceTitleType
+    @Default(.sourceTitleEnabled) private var sourceTitleEnabled
+    @Default(.sourceTitleFontSize) private var sourceTitleFontSize
+    @Default(.sourceTitleBackgroundOpacity) private var sourceTitleBackgroundOpacity
+    @Default(.sourceTitleLocation) private var sourceTitleLocation
+    @Default(.sourceTitleType) private var sourceTitleType
 
     var body: some View {
         Group {
-            if sourceTitleEnabled && sourceTitleType == TitleType.windowTitle,
+            if sourceTitleEnabled && sourceTitleType == .windowTitle,
                 let title = windowTitle
             {
                 titleContainer(for: title)
             }
 
-            if sourceTitleEnabled && sourceTitleType == TitleType.appName,
+            if sourceTitleEnabled && sourceTitleType == .appName,
                 let title = applicationTitle
             {
                 titleContainer(for: title)
-            } else if sourceTitleEnabled && sourceTitleType == TitleType.fullTitle {
+            } else if sourceTitleEnabled && sourceTitleType == .fullTitle {
                 let combinedTitle = buildFullTitle(
                     applicationTitle: applicationTitle,
                     windowTitle: windowTitle

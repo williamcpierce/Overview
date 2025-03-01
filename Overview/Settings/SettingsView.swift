@@ -19,6 +19,7 @@ struct SettingsView: View {
     @ObservedObject var updateManager: UpdateManager
     @ObservedObject var windowManager: WindowManager
     @ObservedObject var layoutManager: LayoutManager
+    @ObservedObject var shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
 
     init(
@@ -26,7 +27,8 @@ struct SettingsView: View {
         settingsManager: SettingsManager,
         updateManager: UpdateManager,
         windowManager: WindowManager,
-        layoutManager: LayoutManager
+        layoutManager: LayoutManager,
+        shortcutManager: ShortcutManager
 
     ) {
         self.sourceManager = sourceManager
@@ -34,6 +36,7 @@ struct SettingsView: View {
         self.updateManager = updateManager
         self.windowManager = windowManager
         self.layoutManager = layoutManager
+        self.shortcutManager = shortcutManager
     }
 
     var body: some View {
@@ -54,7 +57,7 @@ struct SettingsView: View {
                 .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
-            ShortcutSettingsTab()
+            ShortcutSettingsTab(shortcutManager: shortcutManager)
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 

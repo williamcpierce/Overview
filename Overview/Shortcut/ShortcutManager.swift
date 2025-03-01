@@ -13,15 +13,17 @@ import SwiftUI
 final class ShortcutManager: ObservableObject {
     // Dependencies
     private var sourceManager: SourceManager
-    private let shortcutStorage = ShortcutStorage.shared
     private let logger = AppLogger.shortcuts
+
+    // Published State
+    @Published var shortcutStorage: ShortcutStorage
 
     // Private State
     private var cancellables = Set<AnyCancellable>()
 
     init(sourceManager: SourceManager) {
         self.sourceManager = sourceManager
-        logger.debug("Initializing ShortcutManager")
+        self.shortcutStorage = ShortcutStorage()
         setupShortcuts()
     }
 
@@ -33,6 +35,10 @@ final class ShortcutManager: ObservableObject {
         shortcutStorage.$shortcuts
             .dropFirst()
             .sink { [weak self] shortcuts in
+                if shortcuts.isEmpty {
+                    self?.logger.debug("Shortcuts reset detected, clearing observers")
+                }
+
                 shortcuts.forEach { shortcut in
                     self?.setupShortcutObserver(for: shortcut)
                 }
@@ -40,7 +46,7 @@ final class ShortcutManager: ObservableObject {
             .store(in: &cancellables)
     }
 
-    private func setupShortcutObserver(for shortcut: ShortcutItem) {
+    private func setupShortcutObserver(for shortcut: Shortcut) {
         KeyboardShortcuts.onKeyDown(for: shortcut.shortcutName) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
@@ -80,7 +86,7 @@ final class ShortcutManager: ObservableObject {
         return nextTitle
     }
 
-    private func activateSourceWindow(for shortcut: ShortcutItem) {
+    private func activateSourceWindow(for shortcut: Shortcut) {
         let titles = shortcut.windowTitles
         guard !titles.isEmpty else {
             logger.warning("No window titles specified for shortcut")
@@ -128,5 +134,12 @@ final class ShortcutManager: ObservableObject {
         }
         logger.debug("Failed to focus window: '\(title)'")
         return false
+    }
+    
+    func resetShortcuts() {
+        logger.debug("Resetting shortcut manager")
+        shortcutStorage.resetToDefaults()
+        self.objectWillChange.send()
+        logger.info("Shortcut manager reset completed")
     }
 }
