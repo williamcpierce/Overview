@@ -69,10 +69,10 @@ final class ShortcutStorage: ObservableObject {
     func resetToDefaults() {
         logger.debug("Resetting shortcut storage")
         let shortcutsToReset = shortcuts
-        shortcuts.removeAll()
         shortcutsToReset.forEach { shortcut in
             KeyboardShortcuts.reset(shortcut.shortcutName)
         }
+        shortcuts = []
         Defaults[.storedShortcuts] = nil
         logger.info("Shortcut storage reset completed")
     }
