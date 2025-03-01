@@ -7,6 +7,7 @@
  Coordinates window lifecycle management and state persistence.
 */
 
+import Defaults
 import SwiftUI
 
 @MainActor
@@ -25,22 +26,15 @@ final class WindowManager: ObservableObject {
     private var sessionWindowCounter: Int
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.defaultWidth)
-    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-    @AppStorage(WindowSettingsKeys.defaultHeight)
-    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.createOnLaunch)
-    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
-    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
-    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
-    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+    private var defaultWidth: Double = Defaults[.defaultWindowWidth]
+    private var defaultHeight: Double = Defaults[.defaultWindowHeight]
+    private var shadowEnabled: Bool = Defaults[.windowShadowEnabled]
+    private var createOnLaunch: Bool = Defaults[.createOnLaunch]
+    private var saveWindowsOnQuit: Bool = Defaults[.saveWindowsOnQuit]
+    private var restoreWindowsOnLaunch: Bool = Defaults[.restoreWindowsOnLaunch]
 
     // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+    private var closeWindowsOnApply: Bool = Defaults[.closeWindowsOnApply]
 
     init(
         previewManager: PreviewManager,
@@ -164,10 +158,16 @@ final class WindowManager: ObservableObject {
     }
 
     private func setupWindowContent(_ window: NSWindow) {
+        let captureCoordinator = CaptureCoordinator(
+            sourceManager: sourceManager,
+            permissionManager: permissionManager
+        )
+
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
+            captureCoordinator: captureCoordinator,
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)

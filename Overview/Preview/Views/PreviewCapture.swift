@@ -8,6 +8,7 @@
  focus borders and window titles.
 */
 
+import Defaults
 import SwiftUI
 
 struct PreviewCapture: View {
@@ -16,8 +17,7 @@ struct PreviewCapture: View {
     private let logger = AppLogger.interface
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.previewOpacity)
-    private var previewOpacity = WindowSettingsKeys.defaults.previewOpacity
+    @Default(.windowOpacity) private var windowOpacity
 
     init(captureCoordinator: CaptureCoordinator) {
         self.captureCoordinator = captureCoordinator
@@ -48,6 +48,6 @@ struct PreviewCapture: View {
                     windowTitle: captureCoordinator.sourceWindowTitle,
                     applicationTitle: captureCoordinator.sourceApplicationTitle)
             )
-            .opacity(previewOpacity)
+            .opacity(windowOpacity)
     }
 }

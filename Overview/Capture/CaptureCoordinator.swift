@@ -9,6 +9,7 @@
 */
 
 import Combine
+import Defaults
 import ScreenCaptureKit
 import SwiftUI
 
@@ -42,8 +43,7 @@ final class CaptureCoordinator: ObservableObject {
     private var subscriptions = Set<AnyCancellable>()
 
     // Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
+    private var captureFrameRate: Double = Defaults[.captureFrameRate]
 
     init(
         sourceManager: SourceManager,

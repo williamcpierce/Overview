@@ -8,11 +8,15 @@
 */
 
 import AppKit
+import Defaults
 import SwiftUI
 
 final class WindowStorageService {
     // Dependencies
     private let logger = AppLogger.interface
+
+    // Window Settings
+    private var storedWindows = Defaults[.storedWindows]
 
     // MARK: - Public Methods
 
@@ -60,7 +64,7 @@ final class WindowStorageService {
     private func saveWindows(_ windows: [WindowState]) throws {
         do {
             let data = try JSONEncoder().encode(windows)
-            UserDefaults.standard.set(data, forKey: WindowSettingsKeys.storedWindows)
+            storedWindows = data
             logger.debug("Windows persisted to storage")
         } catch {
             logger.error("Window state encoding failed: \(error.localizedDescription)")
@@ -69,7 +73,7 @@ final class WindowStorageService {
     }
 
     private func loadWindows() throws -> [WindowState] {
-        guard let data = UserDefaults.standard.data(forKey: WindowSettingsKeys.storedWindows) else {
+        guard let data = storedWindows else {
             logger.debug("No stored windows found")
             throw WindowStorageError.noDataFound
         }

@@ -3,18 +3,11 @@
  Overview
 
  Created by William Pierce on 1/12/25.
-
- Defines storage keys for keyboard shortcut-related settings.
 */
 
+import Defaults
 import Foundation
 
-enum ShortcutSettingsKeys {
-    static let storedShortcuts: String = "storedShortcuts"
-
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let shortcuts: [ShortcutItem] = []
-    }
+extension Defaults.Keys {
+    static let storedShortcuts = Key<Data?>("storedShortcuts", default: nil)
 }

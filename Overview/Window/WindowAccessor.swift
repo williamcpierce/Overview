@@ -7,6 +7,7 @@
  Manages window state synchronization through SwiftUI's NSViewRepresentable interface.
 */
 
+import Defaults
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
@@ -25,15 +26,10 @@ struct WindowAccessor: NSViewRepresentable {
     private let logger = AppLogger.interface
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.managedByMissionControl)
-    private var managedByMissionControl = WindowSettingsKeys.defaults.managedByMissionControl
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.assignPreviewsToAllDesktops)
-    private var assignPreviewsToAllDesktops = WindowSettingsKeys.defaults
-        .assignPreviewsToAllDesktops
-    @AppStorage(WindowSettingsKeys.syncAspectRatio)
-    private var syncAspectRatio = WindowSettingsKeys.defaults.syncAspectRatio
+    var managedByMissionControl: Bool = Defaults[.managedByMissionControl]
+    var shadowEnabled: Bool = Defaults[.windowShadowEnabled]
+    var assignPreviewsToAllDesktops: Bool = Defaults[.assignPreviewsToAllDesktops]
+    var syncAspectRatio: Bool = Defaults[.syncAspectRatio]
 
     // MARK: - NSViewRepresentable
 

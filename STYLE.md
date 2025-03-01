@@ -46,8 +46,7 @@ private var sourceObserver: NSObjectProtocol?
 @Published private(set) var sourceWindowTitle: String?
 
 // Preview Settings
-@AppStorage(PreviewSettingsKeys.captureFrameRate)
-private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
+@Default(.captureFrameRate) private var captureFrameRate
 
 // Actions
 func startCapture() {

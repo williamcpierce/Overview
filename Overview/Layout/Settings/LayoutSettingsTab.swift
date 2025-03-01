@@ -7,6 +7,7 @@
  Provides a user interface for creating, managing, and applying window layouts.
 */
 
+import Defaults
 import SwiftUI
 
 struct LayoutJSON: Codable {
@@ -17,7 +18,7 @@ struct LayoutJSON: Codable {
 struct LayoutSettingsTab: View {
     // Dependencies
     @ObservedObject private var layoutManager: LayoutManager
-    @StateObject private var windowManager: WindowManager
+    @ObservedObject private var windowManager: WindowManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -27,7 +28,7 @@ struct LayoutSettingsTab: View {
     @State private var showingDeleteAlert: Bool = false
     @State private var layoutToModify: Layout? = nil
     @State private var newLayoutName: String = ""
-    @State private var launchLayoutId: UUID? = nil
+    @State private var launchLayoutUUID: UUID? = nil
     @State private var selectedLayoutNameBeforeJSON: String? = nil
 
     // JSON Editor State
@@ -36,12 +37,11 @@ struct LayoutSettingsTab: View {
     @State private var jsonError: String? = nil
 
     // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+    @Default(.closeWindowsOnApply) private var closeWindowsOnApply
 
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
-        self._windowManager = StateObject(wrappedValue: windowManager)
+        self.windowManager = windowManager
     }
 
     var body: some View {
@@ -151,14 +151,14 @@ struct LayoutSettingsTab: View {
                 HStack {
                     Text("Apply layout on launch")
                     Spacer()
-                    Picker("", selection: $launchLayoutId) {
+                    Picker("", selection: $launchLayoutUUID) {
                         Text("None").tag(nil as UUID?)
                         ForEach(layoutManager.layouts) { layout in
                             Text(layout.name).tag(layout.id as UUID?)
                         }
                     }
                     .frame(width: 160)
-                    .onChange(of: launchLayoutId) { newValue in
+                    .onChange(of: launchLayoutUUID) { newValue in
                         layoutManager.setLaunchLayout(id: newValue)
                     }
                 }
@@ -172,7 +172,7 @@ struct LayoutSettingsTab: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            launchLayoutId = layoutManager.launchLayoutId
+            launchLayoutUUID = layoutManager.launchLayoutUUID
         }
         .alert("Apply Layout", isPresented: $showingApplyAlert) {
             Button("Cancel", role: .cancel) {}
@@ -210,8 +210,8 @@ struct LayoutSettingsTab: View {
                 if let layout = layoutToModify {
                     layoutManager.deleteLayout(id: layout.id)
 
-                    if launchLayoutId == layout.id {
-                        launchLayoutId = nil
+                    if launchLayoutUUID == layout.id {
+                        launchLayoutUUID = nil
                     }
                 }
                 layoutToModify = nil
@@ -275,7 +275,7 @@ struct LayoutSettingsTab: View {
     // MARK: - Actions
 
     private func prepareJSONEditor() {
-        if let launchId: UUID = launchLayoutId {
+        if let launchId: UUID = launchLayoutUUID {
             selectedLayoutNameBeforeJSON =
                 layoutManager.layouts.first {
                     $0.id == launchId
@@ -390,11 +390,11 @@ struct LayoutSettingsTab: View {
                 $0.name == previousLayoutName
             })
         {
-            launchLayoutId = matchingLayout.id
+            launchLayoutUUID = matchingLayout.id
             layoutManager.setLaunchLayout(id: matchingLayout.id)
             logger.debug("Restored launch layout setting to '\(previousLayoutName)'")
         } else {
-            launchLayoutId = nil
+            launchLayoutUUID = nil
             layoutManager.setLaunchLayout(id: nil)
             logger.debug("Previous launch layout no longer exists, cleared setting")
         }

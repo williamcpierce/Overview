@@ -19,8 +19,7 @@ struct FocusBorderOverlay: View {
     let isWindowFocused: Bool
 
     // Preview Settings
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var previewHideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @Default(.hideActiveWindow) private var hideActiveWindow
 
     // Overlay Settings
     @Default(.focusBorderEnabled) private var focusBorderEnabled
@@ -46,7 +45,7 @@ struct FocusBorderOverlay: View {
 
     private var shouldShowFocusBorder: Bool {
         let shouldShow: Bool =
-            focusBorderEnabled && isWindowFocused && !previewHideActiveWindow
+            focusBorderEnabled && isWindowFocused && !hideActiveWindow
 
         return shouldShow
     }

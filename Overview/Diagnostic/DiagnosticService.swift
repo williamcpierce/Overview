@@ -41,7 +41,7 @@ final class DiagnosticService {
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
             windowStatus: try await getWindowInfo(),
-            shortcuts: try await getShortcutsInfo(),
+//            shortcuts: try await getShortcutsInfo(),
             storedWindows: try await getStoredWindowsInfo(),
             layouts: try await getLayoutsInfo()
         )
@@ -158,30 +158,24 @@ final class DiagnosticService {
     }
 
     private func getSettingsInfo() async throws -> SettingsInfo {
-        let defaults = UserDefaults.standard
-
         return SettingsInfo(
             preview: PreviewSettings(
-                frameRate: defaults.double(forKey: PreviewSettingsKeys.captureFrameRate),
-                hideInactiveApplications: defaults.bool(
-                    forKey: PreviewSettingsKeys.hideInactiveApplications),
-                hideActiveWindow: defaults.bool(forKey: PreviewSettingsKeys.hideActiveWindow)
+                frameRate: Defaults[.captureFrameRate],
+                hideInactiveApplications: Defaults[.hideInactiveApplications],
+                hideActiveWindow: Defaults[.hideActiveWindow]
             ),
             window: WindowSettings(
-                opacity: Int(defaults.double(forKey: WindowSettingsKeys.previewOpacity) * 100),
-                defaultWidth: Int(defaults.double(forKey: WindowSettingsKeys.defaultWidth)),
-                defaultHeight: Int(defaults.double(forKey: WindowSettingsKeys.defaultHeight)),
-                shadows: defaults.bool(forKey: WindowSettingsKeys.shadowEnabled),
-                syncAspectRatio: defaults.bool(forKey: WindowSettingsKeys.syncAspectRatio),
-                missionControlIntegration: defaults.bool(
-                    forKey: WindowSettingsKeys.managedByMissionControl),
-                showOnAllDesktops: defaults.bool(
-                    forKey: WindowSettingsKeys.assignPreviewsToAllDesktops),
-                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
-                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
-                saveWindowsOnQuit: defaults.bool(forKey: WindowSettingsKeys.saveWindowsOnQuit),
-                restoreWindowsOnLaunch: defaults.bool(
-                    forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
+                opacity: Int(Defaults[.windowOpacity] * 100),
+                defaultWidth: Int(Defaults[.defaultWindowWidth]),
+                defaultHeight: Int(Defaults[.defaultWindowHeight]),
+                shadows: Defaults[.windowShadowEnabled],
+                syncAspectRatio: Defaults[.syncAspectRatio],
+                missionControlIntegration: Defaults[.managedByMissionControl],
+                showOnAllDesktops: Defaults[.assignPreviewsToAllDesktops],
+                createOnLaunch: Defaults[.createOnLaunch],
+                closeWithSource: Defaults[.closeOnCaptureStop],
+                saveWindowsOnQuit: Defaults[.saveWindowsOnQuit],
+                restoreWindowsOnLaunch: Defaults[.restoreWindowsOnLaunch]
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
@@ -198,17 +192,16 @@ final class DiagnosticService {
                 )
             ),
             layout: LayoutSettings(
-                closeWindowsOnApply: defaults.bool(forKey: LayoutSettingsKeys.closeWindowsOnApply)
+                closeWindowsOnApply: Defaults[.closeWindowsOnApply]
             ),
             source: SourceSettings(
-                filterMode: defaults.bool(forKey: SourceSettingsKeys.filterMode)
-                    ? "blocklist" : "allowlist",
-                filterAppNames: defaults.stringArray(forKey: SourceSettingsKeys.appNames) ?? []
+                filterMode: Defaults[.filterMode] ? "blocklist" : "allowlist",
+                filterAppNames: Defaults[.appFilterNames]
             ),
             updates: UpdateSettings(
-                autoCheck: defaults.bool(forKey: "SUEnableAutomaticChecks"),
-                autoDownload: defaults.bool(forKey: "SUAutomaticallyUpdate"),
-                betaUpdates: defaults.bool(forKey: UpdateSettingsKeys.enableBetaUpdates)
+                autoCheck: UserDefaults.standard.bool(forKey: "SUEnableAutomaticChecks"),
+                autoDownload: UserDefaults.standard.bool(forKey: "SUAutomaticallyUpdate"),
+                betaUpdates: Defaults[.enableBetaUpdates]
             )
         )
     }
@@ -243,24 +236,22 @@ final class DiagnosticService {
         )
     }
 
-    private func getShortcutsInfo() async throws -> ShortcutsInfo {
-        let shortcutItems = ShortcutStorage.shared.shortcuts
-        return ShortcutsInfo(
-            shortcuts: shortcutItems.map { shortcut in
-                ShortcutDiagnostic(
-                    id: shortcut.id.uuidString,
-                    windowTitles: shortcut.windowTitles,
-                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
-                        .description ?? "unset"
-                )
-            }
-        )
-    }
+//    private func getShortcutsInfo() async throws -> ShortcutsInfo {
+//        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
+//        return ShortcutsInfo(
+//            shortcuts: shortcutItems.map { shortcut in
+//                ShortcutDiagnostic(
+//                    id: shortcut.id.uuidString,
+//                    windowTitles: shortcut.windowTitles,
+//                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
+//                        .description ?? "unset"
+//                )
+//            }
+//        )
+//    }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
-        let defaults = UserDefaults.standard
-
-        guard let data = defaults.data(forKey: WindowSettingsKeys.storedWindows) else {
+        guard let data = Defaults[.storedWindows] else {
             return StoredWindowsInfo(count: 0, windows: [])
         }
 
@@ -284,9 +275,7 @@ final class DiagnosticService {
     }
 
     private func getLayoutsInfo() async throws -> LayoutsInfo {
-        let defaults = UserDefaults.standard
-
-        guard let data = defaults.data(forKey: LayoutSettingsKeys.layouts) else {
+        guard let data = Defaults[.layouts] else {
             return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
         }
 
@@ -294,11 +283,7 @@ final class DiagnosticService {
             let layouts = try JSONDecoder().decode([Layout].self, from: data)
 
             // Get launch layout ID
-            var launchLayoutId: String? = nil
-            if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId)
-            {
-                launchLayoutId = launchLayoutIdString
-            }
+            let launchLayoutId: String? = Defaults[.launchLayoutId]
 
             return LayoutsInfo(
                 count: layouts.count,
@@ -426,7 +411,7 @@ struct DiagnosticReport: Codable {
     let permissionStatus: PermissionInfo
     let settings: SettingsInfo
     let windowStatus: WindowStatus
-    let shortcuts: ShortcutsInfo
+//    let shortcuts: ShortcutsInfo
     let storedWindows: StoredWindowsInfo
     let layouts: LayoutsInfo
 }

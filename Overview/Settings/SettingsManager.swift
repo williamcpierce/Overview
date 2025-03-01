@@ -16,26 +16,15 @@ final class SettingsManager: ObservableObject {
     // Dependencies
     private let updateManager: UpdateManager
     private let layoutManager: LayoutManager
+    private let shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
 
-    // Published State
-    @Published var filterAppNames: [String] {
-        didSet {
-            UserDefaults.standard.set(filterAppNames, forKey: SourceSettingsKeys.appNames)
-        }
-    }
-
-    init(updateManager: UpdateManager, layoutManager: LayoutManager) {
+    init(
+        updateManager: UpdateManager, layoutManager: LayoutManager, shortcutManager: ShortcutManager
+    ) {
         self.updateManager = updateManager
         self.layoutManager = layoutManager
-
-        if let storedNames = UserDefaults.standard.array(forKey: SourceSettingsKeys.appNames)
-            as? [String]
-        {
-            self.filterAppNames = storedNames
-        } else {
-            self.filterAppNames = SourceSettingsKeys.defaults.appNames
-        }
+        self.shortcutManager = shortcutManager
     }
 
     // MARK: - Settings Reset
@@ -43,46 +32,23 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
-        /// Reset Keyboard Shortcut settings
-        ShortcutStorage.shared.resetToDefaults()
-
-        let domain: String = Bundle.main.bundleIdentifier ?? "Overview"
-        UserDefaults.standard.removePersistentDomain(forName: domain)
+        /// Reset Shortcut settings
+        shortcutManager.shortcutStorage.resetToDefaults()
 
         /// Reset Window settings
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.previewOpacity,
-            forKey: WindowSettingsKeys.previewOpacity)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.defaultWidth,
-            forKey: WindowSettingsKeys.defaultWidth)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.defaultHeight,
-            forKey: WindowSettingsKeys.defaultHeight)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.shadowEnabled,
-            forKey: WindowSettingsKeys.shadowEnabled)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.syncAspectRatio,
-            forKey: WindowSettingsKeys.syncAspectRatio)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.managedByMissionControl,
-            forKey: WindowSettingsKeys.managedByMissionControl)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.createOnLaunch,
-            forKey: WindowSettingsKeys.createOnLaunch)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.closeOnCaptureStop,
-            forKey: WindowSettingsKeys.closeOnCaptureStop)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.assignPreviewsToAllDesktops,
-            forKey: WindowSettingsKeys.assignPreviewsToAllDesktops)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.saveWindowsOnQuit,
-            forKey: WindowSettingsKeys.saveWindowsOnQuit)
-        UserDefaults.standard.set(
-            WindowSettingsKeys.defaults.restoreWindowsOnLaunch,
-            forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
+        Defaults.reset(
+            .windowOpacity,
+            .defaultWindowWidth,
+            .defaultWindowHeight,
+            .windowShadowEnabled,
+            .syncAspectRatio,
+            .managedByMissionControl,
+            .createOnLaunch,
+            .closeOnCaptureStop,
+            .assignPreviewsToAllDesktops,
+            .saveWindowsOnQuit,
+            .restoreWindowsOnLaunch
+        )
 
         /// Reset Overlay settings
         Defaults.reset(
@@ -97,37 +63,31 @@ final class SettingsManager: ObservableObject {
         )
 
         /// Reset Layout settings
-        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.layouts)
-        UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.launchLayoutId)
+        Defaults.reset(
+            .layouts,
+            .launchLayoutId,
+            .closeWindowsOnApply
+        )
         layoutManager.layouts = []
         layoutManager.setLaunchLayout(id: nil)
-        UserDefaults.standard.set(
-            LayoutSettingsKeys.defaults.closeWindowsOnApply,
-            forKey: LayoutSettingsKeys.closeWindowsOnApply)
 
         /// Reset Preview settings
-        UserDefaults.standard.set(
-            PreviewSettingsKeys.defaults.hideInactiveApplications,
-            forKey: PreviewSettingsKeys.hideInactiveApplications)
-        UserDefaults.standard.set(
-            PreviewSettingsKeys.defaults.hideActiveWindow,
-            forKey: PreviewSettingsKeys.hideActiveWindow)
-        UserDefaults.standard.set(
-            PreviewSettingsKeys.defaults.captureFrameRate,
-            forKey: PreviewSettingsKeys.captureFrameRate)
+        Defaults.reset(
+            .captureFrameRate,
+            .hideInactiveApplications,
+            .hideActiveWindow
+        )
 
         /// Reset Update settings
         updateManager.updater.automaticallyChecksForUpdates = true
         updateManager.updater.automaticallyDownloadsUpdates = false
-        UserDefaults.standard.set(
-            UpdateSettingsKeys.defaults.enableBetaUpdates,
-            forKey: UpdateSettingsKeys.enableBetaUpdates)
+        Defaults.reset(.enableBetaUpdates)
 
         /// Reset Source settings
-        filterAppNames = SourceSettingsKeys.defaults.appNames
-        UserDefaults.standard.set(
-            SourceSettingsKeys.defaults.filterMode,
-            forKey: SourceSettingsKeys.filterMode)
+        Defaults.reset(
+            .filterMode,
+            .appFilterNames
+        )
 
         logger.info("Settings reset completed successfully")
     }

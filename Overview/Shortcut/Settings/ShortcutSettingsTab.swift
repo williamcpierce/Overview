@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ShortcutSettingsTab: View {
     // Dependencies
-    @StateObject private var shortcutStorage = ShortcutStorage.shared
+    @ObservedObject private var shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -25,6 +25,10 @@ struct ShortcutSettingsTab: View {
     @State private var shortcutToEdit: ShortcutItem?
     @State private var titlesJSON: String = ""
     @State private var jsonError: String? = nil
+
+    init(shortcutManager: ShortcutManager) {
+        self.shortcutManager = shortcutManager
+    }
 
     var body: some View {
         Form {
@@ -41,13 +45,13 @@ struct ShortcutSettingsTab: View {
                 .padding(.bottom, 4)
 
                 VStack {
-                    if shortcutStorage.shortcuts.isEmpty {
+                    if shortcutManager.shortcutStorage.shortcuts.isEmpty {
                         List {
                             Text("No shortcuts configured")
                                 .foregroundColor(.secondary)
                         }
                     } else {
-                        List(shortcutStorage.shortcuts, id: \.self) { shortcut in
+                        List(shortcutManager.shortcutStorage.shortcuts, id: \.self) { shortcut in
                             HStack {
                                 Button(action: {
                                     shortcutToEdit = shortcut
@@ -118,7 +122,7 @@ struct ShortcutSettingsTab: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 if let shortcut = shortcutToDelete {
-                    shortcutStorage.removeShortcut(shortcut)
+                    shortcutManager.shortcutStorage.removeShortcut(shortcut)
                 }
                 shortcutToDelete = nil
             }
@@ -190,7 +194,7 @@ struct ShortcutSettingsTab: View {
 
         guard !titles.isEmpty else { return }
 
-        shortcutStorage.addShortcut(windowTitles: titles)
+        shortcutManager.shortcutStorage.addShortcut(windowTitles: titles)
         newWindowTitles = ""
     }
 
@@ -241,7 +245,7 @@ struct ShortcutSettingsTab: View {
                 return
             }
 
-            shortcutStorage.updateShortcutTitles(shortcut, titles: windowTitles)
+            shortcutManager.shortcutStorage.updateShortcutTitles(shortcut, titles: windowTitles)
             isWindowTitlesEditorVisible = false
             logger.info("Successfully updated window titles for shortcut")
         } catch {

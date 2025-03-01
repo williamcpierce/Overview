@@ -28,12 +28,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         permissionManager = PermissionManager()
         layoutManager = LayoutManager()
 
-        settingsManager = SettingsManager(
-            updateManager: updateManager,
-            layoutManager: layoutManager
-        )
         sourceManager = SourceManager(
-            settingsManager: settingsManager,
             permissionManager: permissionManager
         )
         previewManager = PreviewManager(
@@ -42,6 +37,11 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         )
         shortcutManager = ShortcutManager(
             sourceManager: sourceManager
+        )
+        settingsManager = SettingsManager(
+            updateManager: updateManager,
+            layoutManager: layoutManager,
+            shortcutManager: shortcutManager
         )
 
         super.init()

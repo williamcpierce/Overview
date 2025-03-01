@@ -5,6 +5,7 @@
  Created by William Pierce on 2/4/25.
 */
 
+import Defaults
 import Sparkle
 import SwiftUI
 
@@ -19,8 +20,7 @@ struct UpdateSettingsTab: View {
     @State private var showingUpdateInfo: Bool = false
 
     // Settings
-    @AppStorage(UpdateSettingsKeys.enableBetaUpdates)
-    private var enableBetaUpdates = UpdateSettingsKeys.defaults.enableBetaUpdates
+    @Default(.enableBetaUpdates) private var enableBetaUpdates
 
     init(updateManager: UpdateManager) {
         self.updateManager = updateManager
