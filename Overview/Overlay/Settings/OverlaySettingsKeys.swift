@@ -3,8 +3,6 @@
  Overview
 
  Created by William Pierce on 1/12/25.
-
- Defines keys for overlay-related settings.
 */
 
 import Defaults
