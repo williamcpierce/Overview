@@ -27,7 +27,9 @@ struct OverlaySettingsTab: View {
 
     var body: some View {
         Form {
+
             // MARK: - Focus Border Section
+
             Section {
                 HStack {
                     Text("Source Focus")
@@ -63,6 +65,7 @@ struct OverlaySettingsTab: View {
             }
 
             // MARK: - Source Title Section
+
             Section {
                 HStack {
                     Text("Source Title")

@@ -25,17 +25,17 @@ struct TitleOverlay: View {
 
     var body: some View {
         Group {
-            if sourceTitleEnabled && sourceTitleType == TitleType.windowTitle,
+            if sourceTitleEnabled && sourceTitleType == .windowTitle,
                 let title = windowTitle
             {
                 titleContainer(for: title)
             }
 
-            if sourceTitleEnabled && sourceTitleType == TitleType.appName,
+            if sourceTitleEnabled && sourceTitleType == .appName,
                 let title = applicationTitle
             {
                 titleContainer(for: title)
-            } else if sourceTitleEnabled && sourceTitleType == TitleType.fullTitle {
+            } else if sourceTitleEnabled && sourceTitleType == .fullTitle {
                 let combinedTitle = buildFullTitle(
                     applicationTitle: applicationTitle,
                     windowTitle: windowTitle

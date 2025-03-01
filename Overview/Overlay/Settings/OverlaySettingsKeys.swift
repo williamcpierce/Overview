@@ -21,12 +21,11 @@ extension Defaults.Keys {
     static let sourceTitleFontSize = Key<Double>("titleFontSize", default: 12.0)
     static let sourceTitleBackgroundOpacity = Key<Double>("titleBackgroundOpacity", default: 0.4)
     static let sourceTitleLocation = Key<Bool>("windowTitleLocation", default: true)
-    static let sourceTitleType = Key<String>("sourceTitleType", default: TitleType.windowTitle)
+    static let sourceTitleType = Key<TitleType>("sourceTitleType", default: .windowTitle)
 }
 
-// Keep the TitleType enum for compatibility
-enum TitleType {
-    static let windowTitle = "windowTitle"
-    static let appName = "appName"
-    static let fullTitle = "fullTitle"
+enum TitleType: String, Defaults.Serializable {
+    case windowTitle = "windowTitle"
+    case appName = "appName"
+    case fullTitle = "fullTitle"
 }
