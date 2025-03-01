@@ -39,7 +39,7 @@ final class SettingsManager: ObservableObject {
         logger.info("Initiating settings reset")
 
         /// Reset Shortcut settings
-        shortcutManager.shortcutStorage.resetToDefaults()
+        shortcutManager.resetShortcuts()
 
         /// Reset Window settings
         Defaults.reset(

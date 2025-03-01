@@ -35,6 +35,10 @@ final class ShortcutManager: ObservableObject {
         shortcutStorage.$shortcuts
             .dropFirst()
             .sink { [weak self] shortcuts in
+                if shortcuts.isEmpty {
+                    self?.logger.debug("Shortcuts reset detected, clearing observers")
+                }
+
                 shortcuts.forEach { shortcut in
                     self?.setupShortcutObserver(for: shortcut)
                 }
@@ -130,5 +134,12 @@ final class ShortcutManager: ObservableObject {
         }
         logger.debug("Failed to focus window: '\(title)'")
         return false
+    }
+    
+    func resetShortcuts() {
+        logger.debug("Resetting shortcut manager")
+        shortcutStorage.resetToDefaults()
+        self.objectWillChange.send()
+        logger.info("Shortcut manager reset completed")
     }
 }
