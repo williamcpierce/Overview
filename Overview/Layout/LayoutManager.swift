@@ -23,10 +23,6 @@ final class LayoutManager: ObservableObject {
         }
     }
 
-    // Layout Settings
-    private var storedLayouts = Defaults[.storedLayouts]
-    private var launchLayoutUUID: UUID? = Defaults[.launchLayoutUUID]
-
     init() {
         self.layouts = LayoutManager.loadLayouts()
         logger.debug("Layout manager initialized with \(layouts.count) layouts")
@@ -81,15 +77,15 @@ final class LayoutManager: ObservableObject {
         let layoutName = layouts.first(where: { $0.id == id })?.name ?? "Unknown"
         layouts.removeAll(where: { $0.id == id })
 
-        if launchLayoutUUID == id {
-            launchLayoutUUID = nil
+        if Defaults[.launchLayoutUUID] == id {
+            Defaults[.launchLayoutUUID] = nil
         }
 
         logger.info("Deleted layout '\(layoutName)'")
     }
 
     func getLaunchLayout() -> Layout? {
-        guard let uuid = launchLayoutUUID else {
+        guard let uuid = Defaults[.launchLayoutUUID] else {
             return nil
         }
         return layouts.first(where: { $0.id == uuid })
@@ -115,7 +111,7 @@ final class LayoutManager: ObservableObject {
     func resetToDefaults() {
         logger.debug("Resetting layout storage")
         layouts.removeAll()
-        storedLayouts = nil
+        Defaults[.storedLayouts] = nil
         logger.info("Layout storage reset completed")
     }
 
@@ -124,7 +120,7 @@ final class LayoutManager: ObservableObject {
     private func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
-            storedLayouts = encodedLayouts
+            Defaults[.storedLayouts] = encodedLayouts
             logger.debug("Saved \(layouts.count) layouts to user defaults")
         } catch {
             logger.logError(error, context: "Failed to encode layouts")

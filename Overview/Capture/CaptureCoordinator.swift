@@ -42,9 +42,6 @@ final class CaptureCoordinator: ObservableObject {
     private var activeFrameProcessingTask: Task<Void, Never>?
     private var subscriptions = Set<AnyCancellable>()
 
-    // Preview Settings
-    private var captureFrameRate: Double = Defaults[.captureFrameRate]
-
     init(
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
@@ -77,7 +74,7 @@ final class CaptureCoordinator: ObservableObject {
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
-            frameRate: captureFrameRate
+            frameRate: Defaults[.captureFrameRate]
         )
 
         await startFrameProcessing(stream: stream)
@@ -98,13 +95,13 @@ final class CaptureCoordinator: ObservableObject {
 
     func updateStreamConfiguration() async {
         guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(captureFrameRate)")
+        logger.debug("Updating stream configuration: frameRate=\(Defaults[.captureFrameRate])")
 
         do {
             try await captureServices.updateStreamConfiguration(
                 source: source,
                 stream: captureEngine.stream,
-                frameRate: captureFrameRate
+                frameRate: Defaults[.captureFrameRate]
             )
             logger.info("Stream configuration updated successfully")
         } catch {

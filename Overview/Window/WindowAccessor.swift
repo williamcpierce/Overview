@@ -25,12 +25,6 @@ struct WindowAccessor: NSViewRepresentable {
     private let aspectService = WindowServices.shared.windowAspect
     private let logger = AppLogger.interface
 
-    // Window Settings
-    var managedByMissionControl: Bool = Defaults[.managedByMissionControl]
-    var shadowEnabled: Bool = Defaults[.windowShadowEnabled]
-    var assignPreviewsToAllDesktops: Bool = Defaults[.assignPreviewsToAllDesktops]
-    var syncAspectRatio: Bool = Defaults[.syncAspectRatio]
-
     // MARK: - NSViewRepresentable
 
     func makeNSView(context: Context) -> NSView {
@@ -75,9 +69,9 @@ struct WindowAccessor: NSViewRepresentable {
         let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
 
         window.level = newLevel
-        window.hasShadow = shadowEnabled
+        window.hasShadow = Defaults[.windowShadowEnabled]
 
-        if syncAspectRatio {
+        if Defaults[.syncAspectRatio] {
             aspectService.synchronizeAspectRatio(
                 for: window,
                 aspectRatio: aspectRatio,
@@ -85,10 +79,10 @@ struct WindowAccessor: NSViewRepresentable {
             )
         }
 
-        configService.updateMissionControl(window, isManaged: managedByMissionControl)
+        configService.updateMissionControl(window, isManaged: Defaults[.managedByMissionControl])
 
         var currentBehavior = window.collectionBehavior
-        if assignPreviewsToAllDesktops {
+        if Defaults[.assignPreviewsToAllDesktops] {
             currentBehavior.insert(.canJoinAllSpaces)
         } else {
             currentBehavior.remove(.canJoinAllSpaces)
