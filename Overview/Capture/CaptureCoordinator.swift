@@ -43,7 +43,7 @@ final class CaptureCoordinator: ObservableObject {
     private var subscriptions = Set<AnyCancellable>()
 
     // Preview Settings
-    @Default(.captureFrameRate) private var captureFrameRate
+    private var captureFrameRate: Double = Defaults[.captureFrameRate]
 
     init(
         sourceManager: SourceManager,

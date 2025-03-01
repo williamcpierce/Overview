@@ -30,8 +30,8 @@ final class SourceManager: ObservableObject {
     private let observerId = UUID()
 
     // Source Settings
-    @Default(.filterMode) private var filterMode
-    @Default(.appFilterNames) private var appFilterNames
+    private var filterMode: Bool = Defaults[.filterMode]
+    private var appFilterNames: [String] = Defaults[.appFilterNames]
 
     // Type Definitions
     struct SourceID: Hashable {

@@ -22,6 +22,9 @@ final class ShortcutStorage: ObservableObject {
         }
     }
 
+    // Shortcut Settings
+    private var storedShortcuts = Defaults[.storedShortcuts]
+
     init() {
         self.shortcuts = ShortcutStorage.loadShortcuts()
         logger.debug("Keyboard shortcut storage initialized")
@@ -64,13 +67,13 @@ final class ShortcutStorage: ObservableObject {
         shortcutsToReset.forEach { shortcut in
             KeyboardShortcuts.reset(shortcut.shortcutName)
         }
-        Defaults[.storedShortcuts] = nil
+        storedShortcuts = nil
         logger.info("Keyboard shortcut settings reset completed")
     }
 
     private func saveShortcuts() {
         if let encoded = try? JSONEncoder().encode(shortcuts) {
-            Defaults[.storedShortcuts] = encoded
+            storedShortcuts = encoded
         }
     }
 

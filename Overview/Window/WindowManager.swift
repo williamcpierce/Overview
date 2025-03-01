@@ -26,15 +26,15 @@ final class WindowManager: ObservableObject {
     private var sessionWindowCounter: Int
 
     // Window Settings
-    @Default(.defaultWindowWidth) private var defaultWidth
-    @Default(.defaultWindowHeight) private var defaultHeight
-    @Default(.windowShadowEnabled) private var shadowEnabled
-    @Default(.createOnLaunch) private var createOnLaunch
-    @Default(.saveWindowsOnQuit) private var saveWindowsOnQuit
-    @Default(.restoreWindowsOnLaunch) private var restoreWindowsOnLaunch
+    private var defaultWidth: Double = Defaults[.defaultWindowWidth]
+    private var defaultHeight: Double = Defaults[.defaultWindowHeight]
+    private var shadowEnabled: Bool = Defaults[.windowShadowEnabled]
+    private var createOnLaunch: Bool = Defaults[.createOnLaunch]
+    private var saveWindowsOnQuit: Bool = Defaults[.saveWindowsOnQuit]
+    private var restoreWindowsOnLaunch: Bool = Defaults[.restoreWindowsOnLaunch]
 
     // Layout Settings
-    @Default(.closeWindowsOnApply) private var closeWindowsOnApply
+    private var closeWindowsOnApply: Bool = Defaults[.closeWindowsOnApply]
 
     init(
         previewManager: PreviewManager,
@@ -158,10 +158,16 @@ final class WindowManager: ObservableObject {
     }
 
     private func setupWindowContent(_ window: NSWindow) {
+        let captureCoordinator = CaptureCoordinator(
+            sourceManager: sourceManager,
+            permissionManager: permissionManager
+        )
+
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
+            captureCoordinator: captureCoordinator,
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)

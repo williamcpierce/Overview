@@ -26,10 +26,10 @@ struct WindowAccessor: NSViewRepresentable {
     private let logger = AppLogger.interface
 
     // Window Settings
-    @Default(.managedByMissionControl) private var managedByMissionControl
-    @Default(.windowShadowEnabled) private var shadowEnabled
-    @Default(.assignPreviewsToAllDesktops) private var assignPreviewsToAllDesktops
-    @Default(.syncAspectRatio) private var syncAspectRatio
+    var managedByMissionControl: Bool = Defaults[.managedByMissionControl]
+    var shadowEnabled: Bool = Defaults[.windowShadowEnabled]
+    var assignPreviewsToAllDesktops: Bool = Defaults[.assignPreviewsToAllDesktops]
+    var syncAspectRatio: Bool = Defaults[.syncAspectRatio]
 
     // MARK: - NSViewRepresentable
 

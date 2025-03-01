@@ -18,15 +18,18 @@ final class LayoutManager: ObservableObject {
 
     // Published State
     @Published var layouts: [Layout] = []
-    @Published var launchLayoutId: UUID? = nil
+    @Published var launchLayoutUUID: UUID? = nil
+
+    // Layout Settings
+    private var launchLayoutId = Defaults[.launchLayoutId]
 
     init() {
         self.layouts = loadLayouts()
 
-        if let launchLayoutIdString = Defaults[.launchLayoutId],
+        if let launchLayoutIdString = launchLayoutId,
             let launchLayoutId = UUID(uuidString: launchLayoutIdString)
         {
-            self.launchLayoutId = launchLayoutId
+            self.launchLayoutUUID = launchLayoutId
         }
 
         logger.debug("Layout manager initialized with \(layouts.count) layouts")
@@ -83,9 +86,9 @@ final class LayoutManager: ObservableObject {
         let layoutName = layouts.first(where: { $0.id == id })?.name ?? "Unknown"
         layouts.removeAll(where: { $0.id == id })
 
-        if launchLayoutId == id {
+        if launchLayoutUUID == id {
+            launchLayoutUUID = nil
             launchLayoutId = nil
-            Defaults[.launchLayoutId] = nil
         }
 
         saveLayouts()
@@ -93,19 +96,19 @@ final class LayoutManager: ObservableObject {
     }
 
     func setLaunchLayout(id: UUID?) {
-        launchLayoutId = id
+        launchLayoutUUID = id
 
         if let id = id {
-            Defaults[.launchLayoutId] = id.uuidString
+            launchLayoutId = id.uuidString
             logger.info("Set launch layout: \(id)")
         } else {
-            Defaults[.launchLayoutId] = nil
+            launchLayoutId = nil
             logger.info("Cleared launch layout")
         }
     }
 
     func getLaunchLayout() -> Layout? {
-        guard let launchLayoutId = launchLayoutId else {
+        guard let launchLayoutId = launchLayoutUUID else {
             return nil
         }
 
@@ -121,7 +124,7 @@ final class LayoutManager: ObservableObject {
     }
 
     func shouldApplyLayoutOnLaunch() -> Bool {
-        return launchLayoutId != nil && getLaunchLayout() != nil
+        return launchLayoutUUID != nil && getLaunchLayout() != nil
     }
 
     func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {

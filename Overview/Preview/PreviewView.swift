@@ -16,7 +16,7 @@ struct PreviewView: View {
     @ObservedObject private var previewManager: PreviewManager
     @ObservedObject private var sourceManager: SourceManager
     @ObservedObject private var permissionManager: PermissionManager
-    @StateObject private var captureCoordinator: CaptureCoordinator
+    @ObservedObject private var captureCoordinator: CaptureCoordinator
     private let logger = AppLogger.interface
     let onClose: () -> Void
 
@@ -37,16 +37,14 @@ struct PreviewView: View {
         previewManager: PreviewManager,
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
+        captureCoordinator: CaptureCoordinator,
         onClose: @escaping () -> Void
     ) {
         self.previewManager = previewManager
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        self.captureCoordinator = captureCoordinator
         self.onClose = onClose
-        self._captureCoordinator = StateObject(
-            wrappedValue: CaptureCoordinator(
-                sourceManager: sourceManager, permissionManager: permissionManager)
-        )
     }
 
     var body: some View {
