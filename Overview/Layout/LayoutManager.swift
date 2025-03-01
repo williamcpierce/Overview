@@ -17,21 +17,17 @@ final class LayoutManager: ObservableObject {
     private let logger = AppLogger.interface
 
     // Published State
-    @Published var layouts: [Layout] = []
-    @Published var launchLayoutUUID: UUID? = nil
+    @Published var layouts: [Layout] = [] {
+        didSet {
+            saveLayouts()
+        }
+    }
 
     // Layout Settings
-    private var launchLayoutId = Defaults[.launchLayoutId]
+    private var launchLayoutUUID: UUID? = Defaults[.launchLayoutUUID]
 
     init() {
         self.layouts = loadLayouts()
-
-        if let launchLayoutIdString = launchLayoutId,
-            let launchLayoutId = UUID(uuidString: launchLayoutIdString)
-        {
-            self.launchLayoutUUID = launchLayoutId
-        }
-
         logger.debug("Layout manager initialized with \(layouts.count) layouts")
     }
 
@@ -47,7 +43,6 @@ final class LayoutManager: ObservableObject {
         let layout = Layout(name: name, windows: currentWindows)
 
         layouts.append(layout)
-        saveLayouts()
 
         logger.info("Created new layout '\(name)' with \(currentWindows.count) windows")
         return layout
@@ -74,7 +69,6 @@ final class LayoutManager: ObservableObject {
         }
 
         layouts[index] = layout
-        saveLayouts()
     }
 
     func deleteLayout(id: UUID) {
@@ -88,52 +82,38 @@ final class LayoutManager: ObservableObject {
 
         if launchLayoutUUID == id {
             launchLayoutUUID = nil
-            launchLayoutId = nil
         }
 
-        saveLayouts()
         logger.info("Deleted layout '\(layoutName)'")
     }
 
-    func setLaunchLayout(id: UUID?) {
-        launchLayoutUUID = id
-
-        if let id = id {
-            launchLayoutId = id.uuidString
-            logger.info("Set launch layout: \(id)")
-        } else {
-            launchLayoutId = nil
-            logger.info("Cleared launch layout")
-        }
-    }
-
     func getLaunchLayout() -> Layout? {
-        guard let launchLayoutId = launchLayoutUUID else {
+        guard let uuid = launchLayoutUUID else {
             return nil
         }
-
-        return layouts.first(where: { $0.id == launchLayoutId })
+        return layouts.first(where: { $0.id == uuid })
     }
 
     func applyLayout(_ layout: Layout, using handler: (WindowState) -> Void) {
         logger.info("Applying layout '\(layout.name)' with \(layout.windows.count) windows")
-
         layout.windows.forEach { windowState in
             handler(windowState)
         }
     }
 
     func shouldApplyLayoutOnLaunch() -> Bool {
-        return launchLayoutUUID != nil && getLaunchLayout() != nil
+        return getLaunchLayout() != nil
     }
 
     func isLayoutNameUnique(_ name: String, excludingId: UUID? = nil) -> Bool {
-        return layouts.filter {
-            $0.name.lowercased() == name.lowercased() && $0.id != excludingId
-        }.isEmpty
+        return layouts.allSatisfy {
+            !($0.name.lowercased() == name.lowercased() && $0.id != excludingId)
+        }
     }
 
-    func saveLayouts() {
+    // MARK: - Private Methods
+
+    private func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
             Defaults[.layouts] = encodedLayouts
@@ -142,8 +122,6 @@ final class LayoutManager: ObservableObject {
             logger.logError(error, context: "Failed to encode layouts")
         }
     }
-
-    // MARK: - Private Methods
 
     private func loadLayouts() -> [Layout] {
         guard let data = Defaults[.layouts] else {

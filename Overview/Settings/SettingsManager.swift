@@ -65,11 +65,10 @@ final class SettingsManager: ObservableObject {
         /// Reset Layout settings
         Defaults.reset(
             .layouts,
-            .launchLayoutId,
+            .launchLayoutUUID,
             .closeWindowsOnApply
         )
         layoutManager.layouts = []
-        layoutManager.setLaunchLayout(id: nil)
 
         /// Reset Preview settings
         Defaults.reset(
