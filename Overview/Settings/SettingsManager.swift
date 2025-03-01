@@ -64,11 +64,11 @@ final class SettingsManager: ObservableObject {
 
         /// Reset Layout settings
         Defaults.reset(
-            .layouts,
+            .storedLayouts,
             .launchLayoutUUID,
             .closeWindowsOnApply
         )
-        layoutManager.layouts = []
+        layoutManager.resetToDefaults()
 
         /// Reset Preview settings
         Defaults.reset(

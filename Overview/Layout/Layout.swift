@@ -14,8 +14,8 @@ struct Layout: Codable, Identifiable, Equatable {
     var createdAt: Date
     var updatedAt: Date
 
-    init(id: UUID = UUID(), name: String, windows: [WindowState]) {
-        self.id = id
+    init(name: String, windows: [WindowState]) {
+        self.id = UUID()
         self.name = name
         self.windows = windows
         self.createdAt = Date()

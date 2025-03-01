@@ -24,10 +24,11 @@ final class LayoutManager: ObservableObject {
     }
 
     // Layout Settings
+    private var storedLayouts = Defaults[.storedLayouts]
     private var launchLayoutUUID: UUID? = Defaults[.launchLayoutUUID]
 
     init() {
-        self.layouts = loadLayouts()
+        self.layouts = LayoutManager.loadLayouts()
         logger.debug("Layout manager initialized with \(layouts.count) layouts")
     }
 
@@ -111,31 +112,31 @@ final class LayoutManager: ObservableObject {
         }
     }
 
+    func resetToDefaults() {
+        logger.debug("Resetting layout storage")
+        layouts.removeAll()
+        storedLayouts = nil
+        logger.info("Layout storage reset completed")
+    }
+
     // MARK: - Private Methods
 
     private func saveLayouts() {
         do {
             let encodedLayouts = try JSONEncoder().encode(layouts)
-            Defaults[.layouts] = encodedLayouts
+            storedLayouts = encodedLayouts
             logger.debug("Saved \(layouts.count) layouts to user defaults")
         } catch {
             logger.logError(error, context: "Failed to encode layouts")
         }
     }
 
-    private func loadLayouts() -> [Layout] {
-        guard let data = Defaults[.layouts] else {
-            logger.debug("No saved layouts found")
+    private static func loadLayouts() -> [Layout] {
+        guard let data = Defaults[.storedLayouts],
+            let layouts = try? JSONDecoder().decode([Layout].self, from: data)
+        else {
             return []
         }
-
-        do {
-            let decodedLayouts = try JSONDecoder().decode([Layout].self, from: data)
-            logger.info("Loaded \(decodedLayouts.count) layouts")
-            return decodedLayouts
-        } catch {
-            logger.logError(error, context: "Failed to decode layouts")
-            return []
-        }
+        return layouts
     }
 }

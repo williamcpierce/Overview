@@ -275,7 +275,7 @@ final class DiagnosticService {
     }
 
     private func getLayoutsInfo() async throws -> LayoutsInfo {
-        guard let data = Defaults[.layouts] else {
+        guard let data = Defaults[.storedLayouts] else {
             return LayoutsInfo(count: 0, layouts: [], launchLayoutUUID: nil)
         }
 
