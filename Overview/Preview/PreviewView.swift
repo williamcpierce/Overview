@@ -8,6 +8,7 @@
  and user interactions across the application's preview functionality.
 */
 
+import Defaults
 import SwiftUI
 
 struct PreviewView: View {
@@ -25,16 +26,12 @@ struct PreviewView: View {
     @State private var previewAspectRatio: CGFloat = 0
 
     // Preview Settings
-    @AppStorage(PreviewSettingsKeys.captureFrameRate)
-    private var captureFrameRate = PreviewSettingsKeys.defaults.captureFrameRate
-    @AppStorage(PreviewSettingsKeys.hideInactiveApplications)
-    private var hideInactiveApplications = PreviewSettingsKeys.defaults.hideInactiveApplications
-    @AppStorage(PreviewSettingsKeys.hideActiveWindow)
-    private var hideActiveWindow = PreviewSettingsKeys.defaults.hideActiveWindow
+    @Default(.captureFrameRate) private var captureFrameRate
+    @Default(.hideInactiveApplications) private var hideInactiveApplications
+    @Default(.hideActiveWindow) private var hideActiveWindow
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.closeOnCaptureStop)
-    private var closeOnCaptureStop = WindowSettingsKeys.defaults.closeOnCaptureStop
+    @Default(.closeOnCaptureStop) private var closeOnCaptureStop
 
     init(
         previewManager: PreviewManager,

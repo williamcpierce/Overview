@@ -8,6 +8,7 @@
  filtering, and state observation across the application.
 */
 
+import Defaults
 import ScreenCaptureKit
 import SwiftUI
 
@@ -30,8 +31,7 @@ final class SourceManager: ObservableObject {
     private let observerId = UUID()
 
     // Source Settings
-    @AppStorage(SourceSettingsKeys.filterMode)
-    private var filterMode = SourceSettingsKeys.defaults.filterMode
+    @Default(.filterMode) private var filterMode
 
     // Type Definitions
     struct SourceID: Hashable {

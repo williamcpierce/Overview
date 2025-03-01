@@ -7,6 +7,7 @@
  Coordinates window lifecycle management and state persistence.
 */
 
+import Defaults
 import SwiftUI
 
 @MainActor
@@ -25,22 +26,15 @@ final class WindowManager: ObservableObject {
     private var sessionWindowCounter: Int
 
     // Window Settings
-    @AppStorage(WindowSettingsKeys.defaultWidth)
-    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-    @AppStorage(WindowSettingsKeys.defaultHeight)
-    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.createOnLaunch)
-    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
-    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
-    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
-    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
+    @Default(.defaultWindowWidth) private var defaultWidth
+    @Default(.defaultWindowHeight) private var defaultHeight
+    @Default(.windowShadowEnabled) private var shadowEnabled
+    @Default(.createOnLaunch) private var createOnLaunch
+    @Default(.saveWindowsOnQuit) private var saveWindowsOnQuit
+    @Default(.restoreWindowsOnLaunch) private var restoreWindowsOnLaunch
 
     // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+    @Default(.closeWindowsOnApply) private var closeWindowsOnApply
 
     init(
         previewManager: PreviewManager,

@@ -5,6 +5,7 @@
  Created by William Pierce on 2/16/25.
 */
 
+import Defaults
 import Foundation
 import KeyboardShortcuts
 import SwiftUI
@@ -66,18 +67,18 @@ final class ShortcutStorage: ObservableObject {
         shortcutsToReset.forEach { shortcut in
             KeyboardShortcuts.reset(shortcut.shortcutName)
         }
-        UserDefaults.standard.removeObject(forKey: ShortcutSettingsKeys.storedShortcuts)
+        Defaults[.storedShortcuts] = nil
         logger.info("Keyboard shortcut settings reset completed")
     }
 
     private func saveShortcuts() {
         if let encoded = try? JSONEncoder().encode(shortcuts) {
-            UserDefaults.standard.set(encoded, forKey: ShortcutSettingsKeys.storedShortcuts)
+            Defaults[.storedShortcuts] = encoded
         }
     }
 
     private static func loadShortcuts() -> [ShortcutItem] {
-        guard let data = UserDefaults.standard.data(forKey: ShortcutSettingsKeys.storedShortcuts),
+        guard let data = Defaults[.storedShortcuts],
             let shortcuts = try? JSONDecoder().decode([ShortcutItem].self, from: data)
         else {
             return []

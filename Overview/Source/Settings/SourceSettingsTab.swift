@@ -5,6 +5,7 @@
  Created by William Pierce on 1/12/25.
 */
 
+import Defaults
 import SwiftUI
 
 struct SourceSettingsTab: View {
@@ -17,8 +18,7 @@ struct SourceSettingsTab: View {
     @State private var showingSourceFilterInfo: Bool = false
 
     // App Filter Settings
-    @AppStorage(SourceSettingsKeys.filterMode)
-    private var filterMode = SourceSettingsKeys.defaults.filterMode
+    @Default(.filterMode) private var filterMode
 
     var body: some View {
         Form {

@@ -3,24 +3,20 @@
  Overview
 
  Created by William Pierce on 1/12/25.
-
- Defines storage keys for preview-related settings.
 */
 
-enum PreviewSettingsKeys {
-    static let captureFrameRate: String = "frameRate"
+import Defaults
 
-    static let hideInactiveApplications: String = "hideInactiveApplications"
-    static let hideActiveWindow: String = "hideActiveWindow"
+extension Defaults.Keys {
+    // Preview Capture Settings
+    static let captureFrameRate = Key<Double>("frameRate", default: 10.0)
 
-    static let defaults = Defaults()
+    // Visibility Settings
+    static let hideInactiveApplications = Key<Bool>("hideInactiveApplications", default: false)
+    static let hideActiveWindow = Key<Bool>("hideActiveWindow", default: false)
+}
 
-    struct Defaults {
-        let captureFrameRate: Double = 10.0
-
-        let hideInactiveApplications: Bool = false
-        let hideActiveWindow: Bool = false
-
-        let availableCaptureFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
-    }
+// Constants
+enum PreviewConstants {
+    static let availableCaptureFrameRates: [Double] = [1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
 }

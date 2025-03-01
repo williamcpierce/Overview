@@ -7,6 +7,7 @@
  Provides a user interface for creating, managing, and applying window layouts.
 */
 
+import Defaults
 import SwiftUI
 
 struct LayoutJSON: Codable {
@@ -17,7 +18,7 @@ struct LayoutJSON: Codable {
 struct LayoutSettingsTab: View {
     // Dependencies
     @ObservedObject private var layoutManager: LayoutManager
-    @StateObject private var windowManager: WindowManager
+    @ObservedObject private var windowManager: WindowManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -36,12 +37,11 @@ struct LayoutSettingsTab: View {
     @State private var jsonError: String? = nil
 
     // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
+    @Default(.closeWindowsOnApply) private var closeWindowsOnApply
 
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
-        self._windowManager = StateObject(wrappedValue: windowManager)
+        self.windowManager = windowManager
     }
 
     var body: some View {
