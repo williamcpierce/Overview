@@ -36,7 +36,6 @@ struct LayoutSettingsTab: View {
     @State private var jsonError: String? = nil
 
     // Layout Settings
-    @Default(.closeWindowsOnApply) private var closeWindowsOnApply
     @Default(.launchLayoutUUID) private var launchLayoutUUID
 
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
@@ -153,7 +152,8 @@ struct LayoutSettingsTab: View {
                     .frame(width: 160)
                 }
 
-                Toggle("Close all windows when applying layouts", isOn: $closeWindowsOnApply)
+                Defaults.Toggle(
+                    "Close all windows when applying layouts", key: .closeWindowsOnApply)
             }
         }
         .formStyle(.grouped)

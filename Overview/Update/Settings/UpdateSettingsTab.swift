@@ -19,9 +19,6 @@ struct UpdateSettingsTab: View {
     @State private var automaticallyDownloadsUpdates: Bool
     @State private var showingUpdateInfo: Bool = false
 
-    // Settings
-    @Default(.enableBetaUpdates) private var enableBetaUpdates
-
     init(updateManager: UpdateManager) {
         self.updateManager = updateManager
         self.automaticallyChecksForUpdates = updateManager.updater.automaticallyChecksForUpdates
@@ -54,7 +51,7 @@ struct UpdateSettingsTab: View {
                             updateManager.updater.automaticallyDownloadsUpdates = newValue
                         }
 
-                    Toggle("Enable beta updates", isOn: $enableBetaUpdates).disabled(true)
+                    Defaults.Toggle("Enable beta updates", key: .enableBetaUpdates).disabled(true)
                         .help("All updates are beta updates currently, this setting has no effect.")
                 }
 

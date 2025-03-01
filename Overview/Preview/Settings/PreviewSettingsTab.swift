@@ -19,8 +19,6 @@ struct PreviewSettingsTab: View {
 
     // Preview Settings
     @Default(.captureFrameRate) private var captureFrameRate
-    @Default(.hideInactiveApplications) private var hideInactiveApplications
-    @Default(.hideActiveWindow) private var hideActiveWindow
 
     var body: some View {
         Form {
@@ -63,14 +61,14 @@ struct PreviewSettingsTab: View {
                 .padding(.bottom, 4)
 
                 VStack {
-                    Toggle(
+                    Defaults.Toggle(
                         "Hide previews for inactive source applications",
-                        isOn: $hideInactiveApplications
+                        key: .hideInactiveApplications
                     )
 
-                    Toggle(
+                    Defaults.Toggle(
                         "Hide preview for focused source window",
-                        isOn: $hideActiveWindow
+                        key: .hideActiveWindow
                     )
                 }
             }

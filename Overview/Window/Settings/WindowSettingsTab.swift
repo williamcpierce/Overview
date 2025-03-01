@@ -16,16 +16,8 @@ struct WindowSettingsTab: View {
 
     // Window Settings
     @Default(.windowOpacity) private var windowOpacity
-    @Default(.windowShadowEnabled) private var shadowEnabled
     @Default(.defaultWindowWidth) private var defaultWindowWidth
     @Default(.defaultWindowHeight) private var defaultWindowHeight
-    @Default(.syncAspectRatio) private var syncAspectRatio
-    @Default(.managedByMissionControl) private var managedByMissionControl
-    @Default(.createOnLaunch) private var createOnLaunch
-    @Default(.closeOnCaptureStop) private var closeOnCaptureStop
-    @Default(.assignPreviewsToAllDesktops) private var assignPreviewsToAllDesktops
-    @Default(.saveWindowsOnQuit) private var saveWindowsOnQuit
-    @Default(.restoreWindowsOnLaunch) private var restoreWindowsOnLaunch
 
     var body: some View {
         Form {
@@ -90,9 +82,8 @@ struct WindowSettingsTab: View {
                     }
                 }
 
-                Toggle("Shadows", isOn: $shadowEnabled)
-
-                Toggle("Synchronize aspect ratio", isOn: $syncAspectRatio)
+                Defaults.Toggle("Shadows", key: .windowShadowEnabled)
+                Defaults.Toggle("Synchronize aspect ratio", key: .syncAspectRatio)
             }
 
             // MARK: - System Visibility Section
@@ -109,8 +100,10 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Show windows in Mission Control", isOn: $managedByMissionControl)
-                    Toggle("Show windows on all desktops", isOn: $assignPreviewsToAllDesktops)
+                    Defaults.Toggle(
+                        "Show windows in Mission Control", key: .managedByMissionControl)
+                    Defaults.Toggle(
+                        "Show windows on all desktops", key: .assignPreviewsToAllDesktops)
                 }
             }
 
@@ -128,10 +121,11 @@ struct WindowSettingsTab: View {
                 }
                 .padding(.bottom, 4)
                 VStack {
-                    Toggle("Always create window on launch", isOn: $createOnLaunch)
-                    Toggle("Close window with preview source", isOn: $closeOnCaptureStop)
-                    Toggle("Save window positions on quit", isOn: $saveWindowsOnQuit)
-                    Toggle("Restore window positions on launch", isOn: $restoreWindowsOnLaunch)
+                    Defaults.Toggle("Always create window on launch", key: .createOnLaunch)
+                    Defaults.Toggle("Close window with preview source", key: .closeOnCaptureStop)
+                    Defaults.Toggle("Save window positions on quit", key: .saveWindowsOnQuit)
+                    Defaults.Toggle(
+                        "Restore window positions on launch", key: .restoreWindowsOnLaunch)
                 }
             }
         }
