@@ -1,5 +1,5 @@
 /*
- Diagnostic/DiagnosticService.swift
+ Settings/Services/DiagnosticService.swift
  Overview
 
  Created by William Pierce on 2/17/25.

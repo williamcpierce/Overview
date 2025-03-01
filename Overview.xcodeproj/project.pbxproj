@@ -92,7 +92,7 @@
 				Components/OpacitySlider.swift,
 				Components/ResetSettingsButton.swift,
 				Components/WiggleModifier.swift,
-				DiagnosticService.swift,
+				Services/DiagnosticService.swift,
 				SettingsManager.swift,
 				SettingsView.swift,
 			);
