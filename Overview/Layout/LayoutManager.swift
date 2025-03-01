@@ -91,7 +91,7 @@ final class LayoutManager: ObservableObject {
         return layouts.first(where: { $0.id == uuid })
     }
 
-    func applyLayout(_ layout: Layout, using handler: (WindowState) -> Void) {
+    func applyLayout(_ layout: Layout, using handler: (Window) -> Void) {
         logger.info("Applying layout '\(layout.name)' with \(layout.windows.count) windows")
         layout.windows.forEach { windowState in
             handler(windowState)

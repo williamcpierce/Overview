@@ -12,7 +12,7 @@ import SwiftUI
 
 struct LayoutJSON: Codable {
     var name: String
-    var windows: [WindowState]
+    var windows: [Window]
 }
 
 struct LayoutSettingsTab: View {

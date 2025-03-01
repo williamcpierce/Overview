@@ -42,7 +42,7 @@ final class ShortcutManager: ObservableObject {
             .store(in: &cancellables)
     }
 
-    private func setupShortcutObserver(for shortcut: ShortcutItem) {
+    private func setupShortcutObserver(for shortcut: Shortcut) {
         KeyboardShortcuts.onKeyDown(for: shortcut.shortcutName) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
@@ -82,7 +82,7 @@ final class ShortcutManager: ObservableObject {
         return nextTitle
     }
 
-    private func activateSourceWindow(for shortcut: ShortcutItem) {
+    private func activateSourceWindow(for shortcut: Shortcut) {
         let titles = shortcut.windowTitles
         guard !titles.isEmpty else {
             logger.warning("No window titles specified for shortcut")

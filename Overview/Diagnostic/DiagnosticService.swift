@@ -7,7 +7,6 @@
  Manages the generation and export of diagnostic reports while preserving user privacy.
 */
 
-import AppKit
 import Defaults
 import KeyboardShortcuts
 import OSLog
@@ -256,7 +255,7 @@ final class DiagnosticService {
         }
 
         do {
-            let windowStates = try JSONDecoder().decode([WindowState].self, from: data)
+            let windowStates = try JSONDecoder().decode([Window].self, from: data)
             return StoredWindowsInfo(
                 count: windowStates.count,
                 windows: windowStates.map { state in
@@ -269,7 +268,7 @@ final class DiagnosticService {
                 }
             )
         } catch {
-            logger.logError(error, context: "Failed to decode stored window states")
+            logger.logError(error, context: "Failed to decode stored windows")
             return StoredWindowsInfo(count: 0, windows: [])
         }
     }

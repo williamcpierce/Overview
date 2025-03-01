@@ -54,7 +54,7 @@
 				Settings/ShortcutSettingsContent.swift,
 				Settings/ShortcutSettingsKeys.swift,
 				Settings/ShortcutSettingsTab.swift,
-				ShortcutItem.swift,
+				Shortcut.swift,
 				ShortcutManager.swift,
 				ShortcutStorage.swift,
 			);
@@ -141,11 +141,11 @@
 				Settings/WindowSettingsContent.swift,
 				Settings/WindowSettingsKeys.swift,
 				Settings/WindowSettingsTab.swift,
+				Window.swift,
 				WindowAccessor.swift,
 				WindowInteraction.swift,
 				WindowManager.swift,
 				WindowServices.swift,
-				WindowState.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;
 		};

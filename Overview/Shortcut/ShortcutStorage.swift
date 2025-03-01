@@ -15,7 +15,7 @@ final class ShortcutStorage: ObservableObject {
     private let logger = AppLogger.settings
 
     // Published State
-    @Published var shortcuts: [ShortcutItem] {
+    @Published var shortcuts: [Shortcut] {
         didSet {
             saveShortcuts()
         }
@@ -28,10 +28,10 @@ final class ShortcutStorage: ObservableObject {
 
     // MARK: - Public Methods
 
-    func createShortcut(windowTitles: [String]) -> ShortcutItem? {
+    func createShortcut(windowTitles: [String]) -> Shortcut? {
         let shortcutName = KeyboardShortcuts.Name("windowShortcut_\(UUID().uuidString)")
 
-        let shortcut = ShortcutItem(windowTitles: windowTitles, shortcutName: shortcutName)
+        let shortcut = Shortcut(windowTitles: windowTitles, shortcutName: shortcutName)
         shortcuts.append(shortcut)
 
         logger.info(
@@ -89,9 +89,9 @@ final class ShortcutStorage: ObservableObject {
         }
     }
 
-    private static func loadShortcuts() -> [ShortcutItem] {
+    private static func loadShortcuts() -> [Shortcut] {
         guard let data = Defaults[.storedShortcuts],
-            let shortcuts = try? JSONDecoder().decode([ShortcutItem].self, from: data)
+            let shortcuts = try? JSONDecoder().decode([Shortcut].self, from: data)
         else {
             return []
         }

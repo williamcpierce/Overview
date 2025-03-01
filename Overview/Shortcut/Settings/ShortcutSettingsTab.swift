@@ -18,11 +18,11 @@ struct ShortcutSettingsTab: View {
     @State private var showingWindowTitlesInfo: Bool = false
     @State private var showingDeleteAlert: Bool = false
     @State private var newWindowTitles: String = ""
-    @State private var shortcutToDelete: ShortcutItem?
+    @State private var shortcutToDelete: Shortcut?
 
     // Title Editor State
     @State private var isWindowTitlesEditorVisible: Bool = false
-    @State private var shortcutToEdit: ShortcutItem?
+    @State private var shortcutToEdit: Shortcut?
     @State private var titlesJSON: String = ""
     @State private var jsonError: String? = nil
 
@@ -199,7 +199,7 @@ struct ShortcutSettingsTab: View {
 
     // MARK: - Window Titles JSON Editor
 
-    private func prepareTitlesEditor(for shortcut: ShortcutItem) {
+    private func prepareTitlesEditor(for shortcut: Shortcut) {
         titlesJSON = windowTitlesToJSON(shortcut.windowTitles)
         isWindowTitlesEditorVisible = true
     }

@@ -41,7 +41,8 @@ final class WindowManager: ObservableObject {
 
     func createWindow(at frame: NSRect? = nil) throws {
         do {
-            let defaultSize = CGSize(width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
+            let defaultSize = CGSize(
+                width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
             let window = try windowServices.createWindow(
                 defaultSize: defaultSize,
                 windowCount: sessionWindowCounter,
@@ -134,7 +135,8 @@ final class WindowManager: ObservableObject {
     }
 
     private func configureWindow(_ window: NSWindow) {
-        windowServices.windowConfiguration.applyConfiguration(to: window, hasShadow: Defaults[.windowShadowEnabled])
+        windowServices.windowConfiguration.applyConfiguration(
+            to: window, hasShadow: Defaults[.windowShadowEnabled])
         setupWindowDelegate(for: window)
         setupWindowContent(window)
     }
