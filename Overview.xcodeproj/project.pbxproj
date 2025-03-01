@@ -98,9 +98,7 @@
 				Components/OpacitySlider.swift,
 				Components/ResetSettingsButton.swift,
 				Components/WiggleModifier.swift,
-				Extensions/ColorExtension.swift,
 				SettingsManager.swift,
-				SettingsMigrationUtility.swift,
 				SettingsView.swift,
 			);
 			target = C87695812CBA082D00FBCA6C /* Overview */;

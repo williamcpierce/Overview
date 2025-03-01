@@ -7,6 +7,7 @@
  Manages centralized settings operations and reset functionality across the application.
 */
 
+import Defaults
 import Sparkle
 import SwiftUI
 
@@ -84,30 +85,16 @@ final class SettingsManager: ObservableObject {
             forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
 
         /// Reset Overlay settings
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.focusBorderEnabled,
-            forKey: OverlaySettingsKeys.focusBorderEnabled)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.focusBorderWidth,
-            forKey: OverlaySettingsKeys.focusBorderWidth)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.focusBorderColor.rawValue,
-            forKey: OverlaySettingsKeys.focusBorderColor)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.sourceTitleEnabled,
-            forKey: OverlaySettingsKeys.sourceTitleEnabled)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.sourceTitleFontSize,
-            forKey: OverlaySettingsKeys.sourceTitleFontSize)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.sourceTitleBackgroundOpacity,
-            forKey: OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.sourceTitleLocation,
-            forKey: OverlaySettingsKeys.sourceTitleLocation)
-        UserDefaults.standard.set(
-            OverlaySettingsKeys.defaults.sourceTitleType,
-            forKey: OverlaySettingsKeys.sourceTitleType)
+        Defaults.reset(
+            .focusBorderEnabled,
+            .focusBorderWidth,
+            .focusBorderColor,
+            .sourceTitleEnabled,
+            .sourceTitleFontSize,
+            .sourceTitleBackgroundOpacity,
+            .sourceTitleLocation,
+            .sourceTitleType
+        )
 
         /// Reset Layout settings
         UserDefaults.standard.removeObject(forKey: LayoutSettingsKeys.layouts)
