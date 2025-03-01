@@ -6,7 +6,7 @@
 */
 
 import Defaults
-import SwiftUI
+import Foundation
 
 extension Defaults.Keys {
     // Appearance Settings
