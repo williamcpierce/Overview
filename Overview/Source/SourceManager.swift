@@ -15,7 +15,6 @@ import SwiftUI
 @MainActor
 final class SourceManager: ObservableObject {
     // Dependencies
-    @ObservedObject var settingsManager: SettingsManager
     @ObservedObject var permissionManager: PermissionManager
     private let sourceServices: SourceServices = SourceServices.shared
     private let captureServices: CaptureServices = CaptureServices.shared
@@ -32,6 +31,7 @@ final class SourceManager: ObservableObject {
 
     // Source Settings
     @Default(.filterMode) private var filterMode
+    @Default(.appFilterNames) private var appFilterNames
 
     // Type Definitions
     struct SourceID: Hashable {
@@ -39,8 +39,7 @@ final class SourceManager: ObservableObject {
         let windowID: CGWindowID
     }
 
-    init(settingsManager: SettingsManager, permissionManager: PermissionManager) {
-        self.settingsManager = settingsManager
+    init(permissionManager: PermissionManager) {
         self.permissionManager = permissionManager
         setupObservers()
         logger.debug("Source window manager initialization complete")
@@ -81,7 +80,7 @@ final class SourceManager: ObservableObject {
 
         let filteredSources = sourceServices.filterSources(
             availableSources,
-            appFilterNames: settingsManager.filterAppNames,
+            appFilterNames: appFilterNames,
             isFilterBlocklist: filterMode == FilterMode.blocklist
         )
 

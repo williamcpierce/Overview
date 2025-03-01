@@ -41,7 +41,7 @@ final class DiagnosticService {
             permissionStatus: try await getPermissionInfo(),
             settings: try await getSettingsInfo(),
             windowStatus: try await getWindowInfo(),
-            shortcuts: try await getShortcutsInfo(),
+//            shortcuts: try await getShortcutsInfo(),
             storedWindows: try await getStoredWindowsInfo(),
             layouts: try await getLayoutsInfo()
         )
@@ -236,19 +236,19 @@ final class DiagnosticService {
         )
     }
 
-    private func getShortcutsInfo() async throws -> ShortcutsInfo {
-        let shortcutItems = ShortcutStorage.shared.shortcuts
-        return ShortcutsInfo(
-            shortcuts: shortcutItems.map { shortcut in
-                ShortcutDiagnostic(
-                    id: shortcut.id.uuidString,
-                    windowTitles: shortcut.windowTitles,
-                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
-                        .description ?? "unset"
-                )
-            }
-        )
-    }
+//    private func getShortcutsInfo() async throws -> ShortcutsInfo {
+//        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
+//        return ShortcutsInfo(
+//            shortcuts: shortcutItems.map { shortcut in
+//                ShortcutDiagnostic(
+//                    id: shortcut.id.uuidString,
+//                    windowTitles: shortcut.windowTitles,
+//                    keyboardShortcut: KeyboardShortcuts.getShortcut(for: shortcut.shortcutName)?
+//                        .description ?? "unset"
+//                )
+//            }
+//        )
+//    }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
         guard let data = Defaults[.storedWindows] else {
@@ -411,7 +411,7 @@ struct DiagnosticReport: Codable {
     let permissionStatus: PermissionInfo
     let settings: SettingsInfo
     let windowStatus: WindowStatus
-    let shortcuts: ShortcutsInfo
+//    let shortcuts: ShortcutsInfo
     let storedWindows: StoredWindowsInfo
     let layouts: LayoutsInfo
 }

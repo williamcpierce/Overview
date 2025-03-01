@@ -13,15 +13,17 @@ import SwiftUI
 final class ShortcutManager: ObservableObject {
     // Dependencies
     private var sourceManager: SourceManager
-    private let shortcutStorage = ShortcutStorage.shared
     private let logger = AppLogger.shortcuts
+
+    // Published State
+    @Published var shortcutStorage: ShortcutStorage
 
     // Private State
     private var cancellables = Set<AnyCancellable>()
 
     init(sourceManager: SourceManager) {
         self.sourceManager = sourceManager
-        logger.debug("Initializing ShortcutManager")
+        self.shortcutStorage = ShortcutStorage()
         setupShortcuts()
     }
 

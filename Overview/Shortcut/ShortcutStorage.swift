@@ -22,10 +22,7 @@ final class ShortcutStorage: ObservableObject {
         }
     }
 
-    // Singleton
-    static let shared = ShortcutStorage()
-
-    private init() {
+    init() {
         self.shortcuts = ShortcutStorage.loadShortcuts()
         logger.debug("Keyboard shortcut storage initialized")
     }

@@ -16,19 +16,15 @@ final class SettingsManager: ObservableObject {
     // Dependencies
     private let updateManager: UpdateManager
     private let layoutManager: LayoutManager
+    private let shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
 
-    // Published State
-    @Published var filterAppNames: [String] {
-        didSet {
-            Defaults[.appFilterNames] = filterAppNames
-        }
-    }
-
-    init(updateManager: UpdateManager, layoutManager: LayoutManager) {
+    init(
+        updateManager: UpdateManager, layoutManager: LayoutManager, shortcutManager: ShortcutManager
+    ) {
         self.updateManager = updateManager
         self.layoutManager = layoutManager
-        self.filterAppNames = Defaults[.appFilterNames]
+        self.shortcutManager = shortcutManager
     }
 
     // MARK: - Settings Reset
@@ -36,8 +32,8 @@ final class SettingsManager: ObservableObject {
     func resetAllSettings() {
         logger.info("Initiating settings reset")
 
-        /// Reset Keyboard Shortcut settings
-        ShortcutStorage.shared.resetToDefaults()
+        /// Reset Shortcut settings
+        shortcutManager.shortcutStorage.resetToDefaults()
 
         /// Reset Window settings
         Defaults.reset(
@@ -88,7 +84,6 @@ final class SettingsManager: ObservableObject {
         Defaults.reset(.enableBetaUpdates)
 
         /// Reset Source settings
-        filterAppNames = []
         Defaults.reset(
             .filterMode,
             .appFilterNames
