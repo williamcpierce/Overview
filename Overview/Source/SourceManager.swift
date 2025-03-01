@@ -29,10 +29,6 @@ final class SourceManager: ObservableObject {
     // Private State
     private let observerId = UUID()
 
-    // Source Settings
-    private var filterMode: Bool = Defaults[.filterMode]
-    private var appFilterNames: [String] = Defaults[.appFilterNames]
-
     // Type Definitions
     struct SourceID: Hashable {
         let processID: pid_t
@@ -80,8 +76,8 @@ final class SourceManager: ObservableObject {
 
         let filteredSources = sourceServices.filterSources(
             availableSources,
-            appFilterNames: appFilterNames,
-            isFilterBlocklist: filterMode == FilterMode.blocklist
+            appFilterNames: Defaults[.appFilterNames],
+            isFilterBlocklist: Defaults[.filterMode] == FilterMode.blocklist
         )
 
         logger.info("Retrieved \(filteredSources.count) filtered source windows")

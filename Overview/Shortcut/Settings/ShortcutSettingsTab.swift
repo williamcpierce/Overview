@@ -18,11 +18,11 @@ struct ShortcutSettingsTab: View {
     @State private var showingWindowTitlesInfo: Bool = false
     @State private var showingDeleteAlert: Bool = false
     @State private var newWindowTitles: String = ""
-    @State private var shortcutToDelete: ShortcutItem?
+    @State private var shortcutToDelete: Shortcut?
 
     // Title Editor State
     @State private var isWindowTitlesEditorVisible: Bool = false
-    @State private var shortcutToEdit: ShortcutItem?
+    @State private var shortcutToEdit: Shortcut?
     @State private var titlesJSON: String = ""
     @State private var jsonError: String? = nil
 
@@ -122,7 +122,7 @@ struct ShortcutSettingsTab: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
                 if let shortcut = shortcutToDelete {
-                    shortcutManager.shortcutStorage.removeShortcut(shortcut)
+                    shortcutManager.shortcutStorage.deleteShortcut(id: shortcut.id)
                 }
                 shortcutToDelete = nil
             }
@@ -135,7 +135,6 @@ struct ShortcutSettingsTab: View {
             }
         }
         .sheet(isPresented: $isWindowTitlesEditorVisible) {
-            // Window Titles JSON Editor View
             VStack(spacing: 0) {
                 if let error = jsonError {
                     HStack {
@@ -194,13 +193,13 @@ struct ShortcutSettingsTab: View {
 
         guard !titles.isEmpty else { return }
 
-        shortcutManager.shortcutStorage.addShortcut(windowTitles: titles)
+        _ = shortcutManager.shortcutStorage.createShortcut(windowTitles: titles)
         newWindowTitles = ""
     }
 
     // MARK: - Window Titles JSON Editor
 
-    private func prepareTitlesEditor(for shortcut: ShortcutItem) {
+    private func prepareTitlesEditor(for shortcut: Shortcut) {
         titlesJSON = windowTitlesToJSON(shortcut.windowTitles)
         isWindowTitlesEditorVisible = true
     }
@@ -245,7 +244,8 @@ struct ShortcutSettingsTab: View {
                 return
             }
 
-            shortcutManager.shortcutStorage.updateShortcutTitles(shortcut, titles: windowTitles)
+            shortcutManager.shortcutStorage.updateShortcut(
+                id: shortcut.id, windowTitles: windowTitles)
             isWindowTitlesEditorVisible = false
             logger.info("Successfully updated window titles for shortcut")
         } catch {
