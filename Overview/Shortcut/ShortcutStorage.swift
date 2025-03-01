@@ -29,6 +29,8 @@ final class ShortcutStorage: ObservableObject {
         self.shortcuts = ShortcutStorage.loadShortcuts()
         logger.debug("Keyboard shortcut storage initialized")
     }
+    
+    // MARK: - Public Methods
 
     func addShortcut(windowTitles: [String]) {
         let shortcutName = KeyboardShortcuts.Name("windowShortcut_\(UUID().uuidString)")
@@ -70,6 +72,8 @@ final class ShortcutStorage: ObservableObject {
         storedShortcuts = nil
         logger.info("Keyboard shortcut settings reset completed")
     }
+    
+    // MARK: - Private Methods
 
     private func saveShortcuts() {
         if let encoded = try? JSONEncoder().encode(shortcuts) {

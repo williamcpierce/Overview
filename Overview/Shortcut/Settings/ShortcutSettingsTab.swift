@@ -135,7 +135,6 @@ struct ShortcutSettingsTab: View {
             }
         }
         .sheet(isPresented: $isWindowTitlesEditorVisible) {
-            // Window Titles JSON Editor View
             VStack(spacing: 0) {
                 if let error = jsonError {
                     HStack {
