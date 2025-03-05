@@ -65,29 +65,34 @@ final class CaptureCoordinator: ObservableObject {
 
     func startCapture() async throws {
         guard !isCapturing else { return }
+
         guard let source: SCWindow = selectedSource else {
             logger.error("Capture failed: No source window selected")
             throw CaptureError.noSourceSelected
         }
 
         logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
+
         let stream = try await captureServices.startCapture(
             source: source,
             engine: captureEngine,
             frameRate: Defaults[.captureFrameRate]
         )
 
-        await startFrameProcessing(stream: stream)
+        await processFrames(from: stream)
+
         isCapturing = true
         logger.info("Capture started: '\(source.title ?? "Untitled")'")
     }
 
     func stopCapture() async {
         guard isCapturing else { return }
+
         activeFrameProcessingTask?.cancel()
         activeFrameProcessingTask = nil
 
         await captureEngine.stopCapture()
+
         isCapturing = false
         capturedFrame = nil
         logger.debug("Capture stopped")
@@ -117,28 +122,60 @@ final class CaptureCoordinator: ObservableObject {
 
     // MARK: - Frame Processing
 
-    private func startFrameProcessing(stream: AsyncThrowingStream<CapturedFrame, Error>) async {
+    private func processFrames(from stream: AsyncThrowingStream<CapturedFrame, Error>) async {
         activeFrameProcessingTask?.cancel()
 
         activeFrameProcessingTask = Task { @MainActor in
             do {
                 for try await frame in stream {
+                    if Task.isCancelled { break }
+
                     self.capturedFrame = frame
                 }
+
+                if !Task.isCancelled {
+                    logger.debug("Stream ended normally")
+                    isCapturing = false
+                }
+
+            } catch let error as SCStreamError {
+                await handleStreamError(error)
+
             } catch {
-                await handleCaptureError(error)
+                logger.warning("Capture ended with error: \(error.localizedDescription)")
+
+                if isCapturing {
+                    await recoverFromError()
+                }
             }
         }
     }
 
-    private func handleCaptureError(_ error: Error) async {
-        if let scError = error as? SCStreamError, scError.code.isFatal {
-            logger.logError(error, context: "Fatal capture error")
+    private func handleStreamError(_ error: SCStreamError) async {
+        let errorDescription = error.localizedDescription
+
+        if error.code.isFatal {
+            logger.logError(error, context: "Fatal stream error: \(errorDescription)")
             await stopCapture()
         } else {
-            logger.warning("Recoverable capture error: \(error.localizedDescription)")
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            try? await startCapture()
+            logger.warning("Recoverable stream error: \(errorDescription)")
+            await recoverFromError()
+        }
+    }
+
+    private func recoverFromError() async {
+        guard isCapturing else { return }
+
+        logger.debug("Attempting to recover from capture error")
+
+        try? await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
+
+        do {
+            try await startCapture()
+            logger.info("Successfully recovered from capture error")
+        } catch {
+            logger.logError(error, context: "Failed to recover from capture error")
+            isCapturing = false
         }
     }
 
@@ -190,6 +227,22 @@ enum CaptureError: LocalizedError {
             return "No source window is selected for capture"
         case .permissionDenied:
             return "Screen capture permission was denied"
+        }
+    }
+}
+
+extension SCStreamError.Code {
+    var isFatal: Bool {
+        switch self {
+        case .userDeclined, .missingEntitlements, .userStopped,
+            .noCaptureSource, .noWindowList,
+            .failedApplicationConnectionInvalid,
+            .failedApplicationConnectionInterrupted,
+            .failedNoMatchingApplicationContext,
+            .systemStoppedStream, .internalError:
+            return true
+        default:
+            return false
         }
     }
 }

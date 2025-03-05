@@ -19,9 +19,9 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
     // Private State
     private let frameProcessingQueue = DispatchQueue(
-        label: "com.example.apple-samplecode.VideoSampleBufferQueue"
+        label: "io.williampierce.Overview.VideoSampleBufferQueue"
     )
-    private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private var streamOutput: CaptureEngineStreamOutput?
     private(set) var stream: SCStream?
 
@@ -32,9 +32,11 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     {
         AsyncThrowingStream<CapturedFrame, Error> { continuation in
             logger.debug("Initializing capture stream with filter")
+            self.continuation = continuation
 
             let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
             self.streamOutput = streamOutput
+
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
 
             do {
@@ -49,6 +51,7 @@ class CaptureEngine: NSObject, @unchecked Sendable {
                     type: .screen,
                     sampleHandlerQueue: self.frameProcessingQueue
                 )
+
                 self.stream?.startCapture()
                 logger.info("Capture stream started successfully")
             } catch {
@@ -62,13 +65,19 @@ class CaptureEngine: NSObject, @unchecked Sendable {
         logger.debug("Initiating capture stream shutdown")
 
         do {
-            try await stream?.stopCapture()
-            frameStreamContinuation?.finish()
-            logger.info("Capture stream stopped successfully")
+            if let stream = stream {
+                try await stream.stopCapture()
+                logger.info("Capture stream stopped successfully")
+            }
+            continuation?.finish()
         } catch {
             logger.logError(error, context: "Failed to stop capture stream")
-            frameStreamContinuation?.finish(throwing: error)
+            continuation?.finish(throwing: error)
         }
+
+        stream = nil
+        streamOutput = nil
+        continuation = nil
     }
 
     func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
@@ -88,14 +97,14 @@ class CaptureEngine: NSObject, @unchecked Sendable {
 
 private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
     // Dependencies
-    private var frameStreamContinuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
+    private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private let logger = AppLogger.capture
 
     // Public Properties
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
 
-    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
-        self.frameStreamContinuation = continuation
+    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation) {
+        self.continuation = continuation
         super.init()
         logger.debug("Initialized stream output handler")
     }
@@ -112,32 +121,22 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return
         }
 
-        switch outputType {
-        case .screen:
-            if let frame: CapturedFrame = extractCapturedFrame(from: sampleBuffer) {
-                capturedFrameHandler?(frame)
-            }
-        case .audio:
-            logger.debug("Audio stream output ignored")
-        default:
-            logger.error("Received unknown output type: \(String(describing: outputType))")
-            fatalError("Unknown output type: \(outputType)")
+        if outputType == .screen, let frame = createFrame(for: sampleBuffer) {
+            capturedFrameHandler?(frame)
         }
     }
 
-    private func extractCapturedFrame(from sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
+    // MARK: - Frame Processing
+
+    private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
         guard
             let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
                 sampleBuffer,
                 createIfNecessary: false
-            ) as? [[SCStreamFrameInfo: Any]]
+            ) as? [[SCStreamFrameInfo: Any]],
+            let attachments = attachmentsArray.first
         else {
             logger.error("Failed to get sample buffer attachments")
-            return nil
-        }
-
-        guard let attachments: [SCStreamFrameInfo: Any] = attachmentsArray.first else {
-            logger.error("Empty sample buffer attachments")
             return nil
         }
 
@@ -148,38 +147,24 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             return nil
         }
 
-        guard let pixelBuffer: CVImageBuffer = sampleBuffer.imageBuffer else {
+        guard let pixelBuffer = sampleBuffer.imageBuffer else {
             logger.error("Missing image buffer in sample")
             return nil
         }
 
-        guard
-            let surfaceRef: IOSurfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?
-                .takeUnretainedValue()
-        else {
+        guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
             logger.error("Failed to get IOSurface from buffer")
             return nil
         }
 
-        let surface: IOSurface = unsafeBitCast(surfaceRef, to: IOSurface.self)
+        let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
 
-        guard let contentRectDict = attachments[.contentRect] as! CFDictionary? else {
-            logger.error("Missing content rect in attachments")
-            return nil
-        }
-
-        guard let contentRect = CGRect(dictionaryRepresentation: contentRectDict) else {
-            logger.error("Failed to convert content rect dictionary")
-            return nil
-        }
-
-        guard let contentScale = attachments[.contentScale] as? CGFloat else {
-            logger.error("Missing content scale in attachments")
-            return nil
-        }
-
-        guard let scaleFactor = attachments[.scaleFactor] as? CGFloat else {
-            logger.error("Missing scale factor in attachments")
+        guard let contentRectDict = attachments[.contentRect],
+            let contentRect = CGRect(dictionaryRepresentation: contentRectDict as! CFDictionary),
+            let contentScale = attachments[.contentScale] as? CGFloat,
+            let scaleFactor = attachments[.scaleFactor] as? CGFloat
+        else {
+            logger.error("Failed to get frame metadata from attachments")
             return nil
         }
 
@@ -194,16 +179,8 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     // MARK: - Error Handling
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        if let scError = error as? SCStreamError {
-            if scError.code.isFatal {
-                logger.logError(error, context: "Fatal stream error")
-                frameStreamContinuation?.finish(throwing: error)
-            } else {
-                logger.warning("Recoverable stream error: \(error.localizedDescription)")
-            }
-        } else {
-            logger.warning("Non-stream error: \(error.localizedDescription)")
-        }
+        logger.logError(error, context: "Stream stopped with error")
+        continuation?.finish(throwing: error)
     }
 }
 
@@ -223,20 +200,4 @@ struct CapturedFrame {
     )
 
     var size: CGSize { contentRect.size }
-}
-
-extension SCStreamError.Code {
-    var isFatal: Bool {
-        switch self {
-        case .userDeclined, .missingEntitlements, .userStopped,
-            .noCaptureSource, .noWindowList,
-            .failedApplicationConnectionInvalid,
-            .failedApplicationConnectionInterrupted,
-            .failedNoMatchingApplicationContext,
-            .systemStoppedStream, .internalError:
-            return true
-        default:
-            return false
-        }
-    }
 }
