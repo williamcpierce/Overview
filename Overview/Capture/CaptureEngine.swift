@@ -11,25 +11,23 @@
  which is licensed under the MIT License. See LICENSE.md for details.
 */
 
-import AVFAudio
-import Combine
 import ScreenCaptureKit
 
 /// A structure that contains the video data to render.
-struct CapturedFrame {
-    static let invalid = CapturedFrame(
-        surface: nil,
-        contentRect: .zero,
-        contentScale: 0,
-        scaleFactor: 0
-    )
-
+struct CapturedFrame: @unchecked Sendable {
     let surface: IOSurface?
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
 
     var size: CGSize { contentRect.size }
+
+    static let invalid = CapturedFrame(
+        surface: nil,
+        contentRect: .zero,
+        contentScale: 0,
+        scaleFactor: 0
+    )
 }
 
 /// An object that captures a stream of captured sample buffers containing screen content.
@@ -42,12 +40,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
     private var streamOutput: CaptureEngineStreamOutput?
     private let frameProcessingQueue = DispatchQueue(
         label: "io.williampierce.Overview.VideoSampleBufferQueue"
-    )
-    private let audioSampleBufferQueue = DispatchQueue(
-        label: "io.williampierce.Overview.AudioSampleBufferQueue"
-    )
-    private let micSampleBufferQueue = DispatchQueue(
-        label: "io.williampierce.Overview.MicSampleBufferQueue"
     )
 
     // Continuation management
@@ -82,13 +74,6 @@ class CaptureEngine: NSObject, @unchecked Sendable {
                     sampleHandlerQueue: frameProcessingQueue
                 )
 
-                // Add a stream output to capture audio
-                try self.stream?.addStreamOutput(
-                    streamOutput,
-                    type: .audio,
-                    sampleHandlerQueue: audioSampleBufferQueue
-                )
-
                 // Start capturing
                 try self.stream?.startCapture()
                 logger.info("Capture stream started successfully")
@@ -114,15 +99,10 @@ class CaptureEngine: NSObject, @unchecked Sendable {
             }
         } catch {
             logger.logError(error, context: "Failed to stop capture stream")
-            // Allow the error to reach the continuation so callers can handle it
             continuation?.finish(throwing: error)
-            stream = nil
-            streamOutput = nil
-            continuation = nil
-            return
         }
 
-        // Clean up resources after normal shutdown
+        // Always clean up resources after attempting to stop
         continuation?.finish()
         stream = nil
         streamOutput = nil
@@ -166,13 +146,19 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         of outputType: SCStreamOutputType
     ) {
         // Return early if the sample buffer is invalid.
-        guard sampleBuffer.isValid else { return }
+        guard sampleBuffer.isValid else {
+            logger.warning("Received invalid sample buffer")
+            return
+        }
 
         // Process based on the output type
         switch outputType {
         case .screen:
             // Create a CapturedFrame structure for a video sample buffer.
-            guard let frame = createFrame(for: sampleBuffer) else { return }
+            guard let frame = createFrame(for: sampleBuffer) else {
+                logger.debug("Unable to create frame from sample buffer")
+                return
+            }
             capturedFrameHandler?(frame)
         case .audio:
             // We don't process audio in this implementation
@@ -182,6 +168,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             break
         @unknown default:
             // Handle future stream output types
+            logger.debug("Received unknown output type: \(outputType)")
             break
         }
     }
@@ -202,6 +189,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
                 sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
             let attachments = attachmentsArray.first
         else {
+            logger.error("Failed to get sample buffer attachments")
             return nil
         }
 
@@ -215,11 +203,13 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else {
+            logger.error("Missing image buffer in sample")
             return nil
         }
 
         // Get the backing IOSurface.
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
+            logger.error("Failed to get IOSurface from buffer")
             return nil
         }
         let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
@@ -230,6 +220,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             let contentScale = attachments[.contentScale] as? CGFloat,
             let scaleFactor = attachments[.scaleFactor] as? CGFloat
         else {
+            logger.error("Failed to get frame metadata from attachments")
             return nil
         }
 
