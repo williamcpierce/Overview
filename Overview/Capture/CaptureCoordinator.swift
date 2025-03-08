@@ -76,24 +76,19 @@ final class CaptureCoordinator: ObservableObject {
         do {
             let (config, filter) = captureServices.createStreamConfiguration(
                 source, frameRate: Defaults[.captureFrameRate])
+            
+            isCapturing = true
 
             for try await frame in captureEngine.startCapture(configuration: config, filter: filter)
             {
                 self.capturedFrame = frame
             }
-
-            isCapturing = true
             logger.info("Capture started: '\(source.title ?? "Untitled")'")
         } catch {
             logger.logError(error, context: "Failed to start capture")
             isCapturing = false
             capturedFrame = nil
-
-            if error is SCContentFilterError {
-                throw CaptureError.filterSetupFailed
-            } else {
-                throw error
-            }
+            throw error
         }
     }
 
@@ -172,7 +167,6 @@ final class CaptureCoordinator: ObservableObject {
 enum CaptureError: LocalizedError {
     case noSourceSelected
     case permissionDenied
-    case filterSetupFailed
 
     var errorDescription: String? {
         switch self {
@@ -180,8 +174,6 @@ enum CaptureError: LocalizedError {
             return "No source window is selected for capture"
         case .permissionDenied:
             return "Screen capture permission was denied"
-        case .filterSetupFailed:
-            return "Failed to set up content filter for capture"
         }
     }
 }
