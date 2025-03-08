@@ -32,15 +32,10 @@ final class CaptureServices {
         try await availabilityService.getAvailableSources()
     }
 
-    func startCapture(
-        source: SCWindow,
-        engine: CaptureEngine,
-        frameRate: Double
-    ) async throws -> AsyncThrowingStream<CapturedFrame, Error> {
-        let (config, filter) = configService.createConfiguration(source, frameRate: frameRate)
-
-        // Start the capture and return the stream
-        return engine.startCapture(configuration: config, filter: filter)
+    func createStreamConfiguration(_ source: SCWindow, frameRate: Double) -> (
+        SCStreamConfiguration, SCContentFilter
+    ) {
+        return configService.createConfiguration(source, frameRate: frameRate)
     }
 
     func updateStreamConfiguration(

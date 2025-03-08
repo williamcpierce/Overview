@@ -70,32 +70,27 @@ final class CaptureCoordinator: ObservableObject {
             logger.error("Capture failed: No source window selected")
             throw CaptureError.noSourceSelected
         }
+        do {
+            let (config, filter) = captureServices.createStreamConfiguration(
+                source, frameRate: Defaults[.captureFrameRate])
 
-        logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
+            isCapturing = true
 
-        let stream = try await captureServices.startCapture(
-            source: source,
-            engine: captureEngine,
-            frameRate: Defaults[.captureFrameRate]
-        )
-
-        await processFrames(from: stream)
-
-        isCapturing = true
-        logger.info("Capture started: '\(source.title ?? "Untitled")'")
+            for try await frame in captureEngine.startCapture(configuration: config, filter: filter)
+            {
+                self.capturedFrame = frame
+            }
+        } catch {
+            logger.error("\(error.localizedDescription)")
+            isCapturing = false
+            capturedFrame = nil
+        }
     }
 
     func stopCapture() async {
         guard isCapturing else { return }
-
-        activeFrameProcessingTask?.cancel()
-        activeFrameProcessingTask = nil
-
         await captureEngine.stopCapture()
-
         isCapturing = false
-        capturedFrame = nil
-        logger.debug("Capture stopped")
     }
 
     func updateStreamConfiguration() async {
@@ -118,37 +113,6 @@ final class CaptureCoordinator: ObservableObject {
         guard let source: SCWindow = selectedSource else { return }
         logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
         sourceManager.focusSource(source)
-    }
-
-    // MARK: - Frame Processing
-
-    private func processFrames(from stream: AsyncThrowingStream<CapturedFrame, Error>) async {
-        // Cancel any existing processing task
-        activeFrameProcessingTask?.cancel()
-
-        activeFrameProcessingTask = Task { @MainActor in
-            do {
-                for try await frame in stream {
-                    if Task.isCancelled { break }
-
-                    self.capturedFrame = frame
-                }
-
-                // Stream ended normally
-                logger.debug("Stream ended normally")
-            } catch {
-                // Only log if we didn't cancel the task ourselves
-                if !Task.isCancelled {
-                    logger.error("Capture ended with error: \(error.localizedDescription)")
-                }
-            }
-
-            // Always clean up state when the stream ends, regardless of how it ended
-            if !Task.isCancelled && isCapturing {
-                isCapturing = false
-                capturedFrame = nil
-            }
-        }
     }
 
     // MARK: - State Synchronization
