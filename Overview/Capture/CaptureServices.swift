@@ -38,6 +38,8 @@ final class CaptureServices {
         frameRate: Double
     ) async throws -> AsyncThrowingStream<CapturedFrame, Error> {
         let (config, filter) = configService.createConfiguration(source, frameRate: frameRate)
+
+        // Start the capture and return the stream
         return engine.startCapture(configuration: config, filter: filter)
     }
 
@@ -46,6 +48,11 @@ final class CaptureServices {
         stream: SCStream?,
         frameRate: Double
     ) async throws {
+        guard let stream = stream else {
+            logger.warning("Cannot update configuration: stream is nil")
+            return
+        }
+
         try await configService.updateConfiguration(stream, source, frameRate: frameRate)
     }
 }

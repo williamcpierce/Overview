@@ -123,6 +123,7 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: - Frame Processing
 
     private func processFrames(from stream: AsyncThrowingStream<CapturedFrame, Error>) async {
+        // Cancel any existing processing task
         activeFrameProcessingTask?.cancel()
 
         activeFrameProcessingTask = Task { @MainActor in
@@ -133,20 +134,26 @@ final class CaptureCoordinator: ObservableObject {
                     self.capturedFrame = frame
                 }
 
+                // Stream ended normally (without error)
                 if !Task.isCancelled {
                     logger.debug("Stream ended normally")
+
+                    // Clean up state
                     isCapturing = false
+                    capturedFrame = nil
                 }
-
             } catch let error as SCStreamError {
+                // Handle SCStreamError specifically
                 await handleStreamError(error)
-
             } catch {
+                // Handle other errors
+                if Task.isCancelled { return }
+
                 logger.warning("Capture ended with error: \(error.localizedDescription)")
 
-                if isCapturing {
-                    await recoverFromError()
-                }
+                // Clean up state
+                isCapturing = false
+                capturedFrame = nil
             }
         }
     }
@@ -156,10 +163,18 @@ final class CaptureCoordinator: ObservableObject {
 
         if error.code.isFatal {
             logger.logError(error, context: "Fatal stream error: \(errorDescription)")
-            await stopCapture()
+
+            // Clean up state completely for fatal errors
+            isCapturing = false
+            capturedFrame = nil
+
+            // Don't try to recover from fatal errors
         } else {
             logger.warning("Recoverable stream error: \(errorDescription)")
-            await recoverFromError()
+
+            if isCapturing {
+                await recoverFromError()
+            }
         }
     }
 
@@ -168,6 +183,7 @@ final class CaptureCoordinator: ObservableObject {
 
         logger.debug("Attempting to recover from capture error")
 
+        // Wait a moment before trying to recover
         try? await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
 
         do {
@@ -175,7 +191,10 @@ final class CaptureCoordinator: ObservableObject {
             logger.info("Successfully recovered from capture error")
         } catch {
             logger.logError(error, context: "Failed to recover from capture error")
+
+            // Clean up state if recovery failed
             isCapturing = false
+            capturedFrame = nil
         }
     }
 
