@@ -114,9 +114,15 @@ class CaptureEngine: NSObject, @unchecked Sendable {
             }
         } catch {
             logger.logError(error, context: "Failed to stop capture stream")
+            // Allow the error to reach the continuation so callers can handle it
+            continuation?.finish(throwing: error)
+            stream = nil
+            streamOutput = nil
+            continuation = nil
+            return
         }
 
-        // Clean up resources regardless of any errors
+        // Clean up resources after normal shutdown
         continuation?.finish()
         stream = nil
         streamOutput = nil
@@ -162,9 +168,21 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         // Return early if the sample buffer is invalid.
         guard sampleBuffer.isValid else { return }
 
-        // Process only screen frames
-        if outputType == .screen, let frame = createFrame(for: sampleBuffer) {
+        // Process based on the output type
+        switch outputType {
+        case .screen:
+            // Create a CapturedFrame structure for a video sample buffer.
+            guard let frame = createFrame(for: sampleBuffer) else { return }
             capturedFrameHandler?(frame)
+        case .audio:
+            // We don't process audio in this implementation
+            break
+        case .microphone:
+            // We don't process microphone in this implementation
+            break
+        @unknown default:
+            // Handle future stream output types
+            break
         }
     }
 
@@ -184,7 +202,6 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
                 sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
             let attachments = attachmentsArray.first
         else {
-            logger.error("Failed to get sample buffer attachments")
             return nil
         }
 
@@ -198,13 +215,11 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         // Get the pixel buffer that contains the image data.
         guard let pixelBuffer = sampleBuffer.imageBuffer else {
-            logger.error("Missing image buffer in sample")
             return nil
         }
 
         // Get the backing IOSurface.
         guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
-            logger.error("Failed to get IOSurface from buffer")
             return nil
         }
         let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
@@ -215,7 +230,6 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
             let contentScale = attachments[.contentScale] as? CGFloat,
             let scaleFactor = attachments[.scaleFactor] as? CGFloat
         else {
-            logger.error("Failed to get frame metadata from attachments")
             return nil
         }
 

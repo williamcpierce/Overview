@@ -134,19 +134,17 @@ final class CaptureCoordinator: ObservableObject {
                     self.capturedFrame = frame
                 }
 
-                // Stream ended normally (without error)
-                if !Task.isCancelled {
-                    logger.debug("Stream ended normally")
-                }
+                // Stream ended normally
+                logger.debug("Stream ended normally")
             } catch {
-                // Handle all errors - don't try to recover
-                if Task.isCancelled { return }
-
-                logger.logError(error, context: "Capture ended with error")
+                // Only log if we didn't cancel the task ourselves
+                if !Task.isCancelled {
+                    logger.error("Capture ended with error: \(error.localizedDescription)")
+                }
             }
 
-            // Clean up state - happens on normal end or error
-            if isCapturing {
+            // Always clean up state when the stream ends, regardless of how it ended
+            if !Task.isCancelled && isCapturing {
                 isCapturing = false
                 capturedFrame = nil
             }
