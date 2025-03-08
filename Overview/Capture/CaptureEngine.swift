@@ -68,30 +68,38 @@ class CaptureEngine: NSObject, @unchecked Sendable {
             streamOutput.capturedFrameHandler = { continuation.yield($0) }
 
             do {
-                let stream = SCStream(
+                // Create the stream with the provided filter and configuration
+                self.stream = SCStream(
                     filter: filter,
                     configuration: configuration,
                     delegate: streamOutput
                 )
-                self.stream = stream
 
-                try stream.addStreamOutput(
+                // Add a stream output to capture screen content
+                try self.stream?.addStreamOutput(
                     streamOutput,
                     type: .screen,
                     sampleHandlerQueue: frameProcessingQueue
                 )
 
-                try stream.addStreamOutput(
+                // Add a stream output to capture audio
+                try self.stream?.addStreamOutput(
                     streamOutput,
                     type: .audio,
                     sampleHandlerQueue: audioSampleBufferQueue
                 )
 
-                stream.startCapture()
+                // Start capturing
+                try self.stream?.startCapture()
                 logger.info("Capture stream started successfully")
             } catch {
                 logger.logError(error, context: "Failed to initialize capture stream")
                 continuation.finish(throwing: error)
+
+                // Clean up resources on error
+                self.stream = nil
+                self.streamOutput = nil
+                self.continuation = nil
             }
         }
     }
@@ -104,12 +112,12 @@ class CaptureEngine: NSObject, @unchecked Sendable {
                 try await stream.stopCapture()
                 logger.info("Capture stream stopped successfully")
             }
-            continuation?.finish()
         } catch {
             logger.logError(error, context: "Failed to stop capture stream")
-            continuation?.finish(throwing: error)
         }
 
+        // Clean up resources regardless of any errors
+        continuation?.finish()
         stream = nil
         streamOutput = nil
         continuation = nil
@@ -138,7 +146,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
     private let logger = AppLogger.capture
 
-    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation) {
+    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
         super.init()
         logger.debug("Initialized stream output handler")
@@ -152,10 +160,7 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
         of outputType: SCStreamOutputType
     ) {
         // Return early if the sample buffer is invalid.
-        guard sampleBuffer.isValid else {
-            logger.error("Received invalid sample buffer")
-            return
-        }
+        guard sampleBuffer.isValid else { return }
 
         // Process only screen frames
         if outputType == .screen, let frame = createFrame(for: sampleBuffer) {

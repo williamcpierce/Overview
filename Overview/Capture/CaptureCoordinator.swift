@@ -137,64 +137,19 @@ final class CaptureCoordinator: ObservableObject {
                 // Stream ended normally (without error)
                 if !Task.isCancelled {
                     logger.debug("Stream ended normally")
-
-                    // Clean up state
-                    isCapturing = false
-                    capturedFrame = nil
                 }
-            } catch let error as SCStreamError {
-                // Handle SCStreamError specifically
-                await handleStreamError(error)
             } catch {
-                // Handle other errors
+                // Handle all errors - don't try to recover
                 if Task.isCancelled { return }
 
-                logger.warning("Capture ended with error: \(error.localizedDescription)")
+                logger.logError(error, context: "Capture ended with error")
+            }
 
-                // Clean up state
+            // Clean up state - happens on normal end or error
+            if isCapturing {
                 isCapturing = false
                 capturedFrame = nil
             }
-        }
-    }
-
-    private func handleStreamError(_ error: SCStreamError) async {
-        let errorDescription = error.localizedDescription
-
-        if error.code.isFatal {
-            logger.logError(error, context: "Fatal stream error: \(errorDescription)")
-
-            // Clean up state completely for fatal errors
-            isCapturing = false
-            capturedFrame = nil
-
-            // Don't try to recover from fatal errors
-        } else {
-            logger.warning("Recoverable stream error: \(errorDescription)")
-
-            if isCapturing {
-                await recoverFromError()
-            }
-        }
-    }
-
-    private func recoverFromError() async {
-        guard isCapturing else { return }
-
-        logger.debug("Attempting to recover from capture error")
-
-        // Wait a moment before trying to recover
-        try? await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
-
-        do {
-            try await startCapture()
-            logger.info("Successfully recovered from capture error")
-        } catch {
-            logger.logError(error, context: "Failed to recover from capture error")
-
-            // Clean up state if recovery failed
-            isCapturing = false
-            capturedFrame = nil
         }
     }
 
@@ -246,22 +201,6 @@ enum CaptureError: LocalizedError {
             return "No source window is selected for capture"
         case .permissionDenied:
             return "Screen capture permission was denied"
-        }
-    }
-}
-
-extension SCStreamError.Code {
-    var isFatal: Bool {
-        switch self {
-        case .userDeclined, .missingEntitlements, .userStopped,
-            .noCaptureSource, .noWindowList,
-            .failedApplicationConnectionInvalid,
-            .failedApplicationConnectionInterrupted,
-            .failedNoMatchingApplicationContext,
-            .systemStoppedStream, .internalError:
-            return true
-        default:
-            return false
         }
     }
 }
