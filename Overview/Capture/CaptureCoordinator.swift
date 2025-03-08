@@ -77,19 +77,23 @@ final class CaptureCoordinator: ObservableObject {
             let (config, filter) = captureServices.createStreamConfiguration(
                 source, frameRate: Defaults[.captureFrameRate])
 
-            isCapturing = true
-
             for try await frame in captureEngine.startCapture(configuration: config, filter: filter)
             {
                 self.capturedFrame = frame
             }
 
+            isCapturing = true
             logger.info("Capture started: '\(source.title ?? "Untitled")'")
         } catch {
             logger.logError(error, context: "Failed to start capture")
             isCapturing = false
             capturedFrame = nil
-            throw error
+
+            if error is SCContentFilterError {
+                throw CaptureError.filterSetupFailed
+            } else {
+                throw error
+            }
         }
     }
 
@@ -141,6 +145,7 @@ final class CaptureCoordinator: ObservableObject {
     private func synchronizeFocusState() async {
         guard let selectedSource: SCWindow = selectedSource else {
             isSourceWindowFocused = false
+            isSourceAppFocused = false
             return
         }
 
@@ -157,7 +162,7 @@ final class CaptureCoordinator: ObservableObject {
         else { return }
 
         let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceWindowTitle = titles[sourceID]
+        sourceWindowTitle = titles[sourceID] ?? source.title
         sourceApplicationTitle = source.owningApplication?.applicationName
     }
 }
@@ -167,6 +172,7 @@ final class CaptureCoordinator: ObservableObject {
 enum CaptureError: LocalizedError {
     case noSourceSelected
     case permissionDenied
+    case filterSetupFailed
 
     var errorDescription: String? {
         switch self {
@@ -174,6 +180,8 @@ enum CaptureError: LocalizedError {
             return "No source window is selected for capture"
         case .permissionDenied:
             return "Screen capture permission was denied"
+        case .filterSetupFailed:
+            return "Failed to set up content filter for capture"
         }
     }
 }
