@@ -32,13 +32,10 @@ final class CaptureServices {
         try await availabilityService.getAvailableSources()
     }
 
-    func startCapture(
-        source: SCWindow,
-        engine: CaptureEngine,
-        frameRate: Double
-    ) async throws -> AsyncThrowingStream<CapturedFrame, Error> {
-        let (config, filter) = configService.createConfiguration(source, frameRate: frameRate)
-        return engine.startCapture(configuration: config, filter: filter)
+    func createStreamConfiguration(_ source: SCWindow, frameRate: Double) -> (
+        SCStreamConfiguration, SCContentFilter
+    ) {
+        return configService.createConfiguration(source, frameRate: frameRate)
     }
 
     func updateStreamConfiguration(
@@ -46,6 +43,11 @@ final class CaptureServices {
         stream: SCStream?,
         frameRate: Double
     ) async throws {
+        guard let stream = stream else {
+            logger.warning("Cannot update configuration: stream is nil")
+            return
+        }
+
         try await configService.updateConfiguration(stream, source, frameRate: frameRate)
     }
 }

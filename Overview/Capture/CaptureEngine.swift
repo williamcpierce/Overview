@@ -7,8 +7,8 @@
  Manages screen capture operations using ScreenCaptureKit, handling frame
  processing, stream management, and error handling for captured content.
 
- This file includes code derived from Apple Inc.'s ScreenRecorder code sample,
- which is licensed under the MIT License. See LICENSE.md for details.
+ This file includes code derived from Apple Inc.'s CapturingScreenContentInMacOS
+ code sample, which is licensed under the MIT License. See LICENSE.md for details.
 */
 
 import ScreenCaptureKit
@@ -103,9 +103,8 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     // Public Properties
     var capturedFrameHandler: ((CapturedFrame) -> Void)?
 
-    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation) {
+    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?) {
         self.continuation = continuation
-        super.init()
         logger.debug("Initialized stream output handler")
     }
 
