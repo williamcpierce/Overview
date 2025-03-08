@@ -70,6 +70,9 @@ final class CaptureCoordinator: ObservableObject {
             logger.error("Capture failed: No source window selected")
             throw CaptureError.noSourceSelected
         }
+
+        logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
+
         do {
             let (config, filter) = captureServices.createStreamConfiguration(
                 source, frameRate: Defaults[.captureFrameRate])
@@ -80,17 +83,25 @@ final class CaptureCoordinator: ObservableObject {
             {
                 self.capturedFrame = frame
             }
+
+            logger.info("Capture started: '\(source.title ?? "Untitled")'")
         } catch {
-            logger.error("\(error.localizedDescription)")
+            logger.logError(error, context: "Failed to start capture")
             isCapturing = false
             capturedFrame = nil
+            throw error
         }
     }
 
     func stopCapture() async {
         guard isCapturing else { return }
+
+        logger.debug("Stopping capture")
         await captureEngine.stopCapture()
+
         isCapturing = false
+        capturedFrame = nil
+        logger.debug("Capture stopped")
     }
 
     func updateStreamConfiguration() async {
@@ -151,7 +162,7 @@ final class CaptureCoordinator: ObservableObject {
     }
 }
 
-// MARK - Support Types
+// MARK: - Support Types
 
 enum CaptureError: LocalizedError {
     case noSourceSelected
