@@ -18,6 +18,7 @@ final class PreviewManager: ObservableObject {
     @Published private(set) var availableSources: [SCWindow] = []
     @Published private(set) var sourceListVersion: UUID = UUID()
     @Published var editModeEnabled: Bool = false
+    @Published var hideAllPreviews: Bool = false
 
     // Dependencies
     private var sourceManager: SourceManager
