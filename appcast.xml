@@ -3,6 +3,31 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.2.1-beta</title>
+            <pubDate>Sun, 13 Feb 2025 00:00:00 +0000</pubDate>
+            <sparkle:version>1.2.1</sparkle:version>
+            <sparkle:shortVersionString>v1.2.1-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.2.1-beta</h3>
+                <h4>Features</h4>
+                <ul>
+                    <li>Added a global "Hide All Previews" toggle to the menu bar menu</li>
+                </ul>
+                <h4>Bug Fixes</h4>
+                <ul>
+                    <li>Settings storage implementation redone to improve stability</li>
+                    <li>Screen capture error handling updated to reduce crashes</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.2.1-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.2.0-beta</title>
             <pubDate>Wed, 26 Feb 2025 13:00:00 +0000</pubDate>
             <sparkle:version>1.2.0</sparkle:version>
