@@ -5,16 +5,11 @@
  Created by William Pierce on 2/24/25.
 */
 
+import Defaults
 import Foundation
 
-enum LayoutSettingsKeys {
-    static let layouts: String = "storedLayouts"
-    static let launchLayoutId: String = "launchLayoutId"
-    static let closeWindowsOnApply: String = "closeWindowsOnApply"
-
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let closeWindowsOnApply: Bool = true
-    }
+extension Defaults.Keys {
+    static let storedLayouts = Key<Data?>("storedLayouts", default: nil)
+    static let launchLayoutUUID = Key<UUID?>("launchLayoutUUID", default: nil)
+    static let closeWindowsOnApply = Key<Bool>("closeWindowsOnApply", default: true)
 }

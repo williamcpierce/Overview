@@ -1,5 +1,5 @@
 /*
- Diagnostic/DiagnosticService.swift
+ Settings/Services/DiagnosticService.swift
  Overview
 
  Created by William Pierce on 2/17/25.
@@ -7,7 +7,7 @@
  Manages the generation and export of diagnostic reports while preserving user privacy.
 */
 
-import AppKit
+import Defaults
 import KeyboardShortcuts
 import OSLog
 import ScreenCaptureKit
@@ -17,41 +17,72 @@ import SwiftUI
 final class DiagnosticService {
     // Dependencies
     private let logger = AppLogger.interface
+    private let shortcutManager: ShortcutManager
+    private let layoutManager: LayoutManager
     private let jsonEncoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return encoder
     }()
 
-    // Singleton
-    static let shared = DiagnosticService()
-
-    private init() {
+    init(shortcutManager: ShortcutManager, layoutManager: LayoutManager) {
+        self.shortcutManager = shortcutManager
+        self.layoutManager = layoutManager
         logger.debug("Initializing diagnostic service")
     }
 
     func generateDiagnosticReport() async throws -> String {
         logger.info("Starting diagnostic report generation")
-
-        let report = DiagnosticReport(
-            generatedAt: formatDate(Date()),
-            appInfo: try await getAppInfo(),
-            systemInfo: try await getSystemInfo(),
-            permissionStatus: try await getPermissionInfo(),
-            settings: try await getSettingsInfo(),
-            windowStatus: try await getWindowInfo(),
-            shortcuts: try await getShortcutsInfo(),
-            storedWindows: try await getStoredWindowsInfo(),
-            layouts: try await getLayoutsInfo()
-        )
-
-        let jsonData = try jsonEncoder.encode(report)
-        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw DiagnosticError.encodingError
+        
+        do {
+            logger.debug("Collecting app information")
+            let appInfo = try await getAppInfo()
+            
+            logger.debug("Collecting system information")
+            let systemInfo = try await getSystemInfo()
+            
+            logger.debug("Checking permission status")
+            let permissionStatus = try await getPermissionInfo()
+            
+            logger.debug("Collecting settings information")
+            let settings = try await getSettingsInfo()
+            
+            logger.debug("Collecting window status")
+            let windowStatus = try await getWindowInfo()
+            
+            logger.debug("Collecting shortcuts information")
+            let shortcuts = try await getShortcutsInfo()
+            
+            logger.debug("Collecting stored windows information")
+            let storedWindows = try await getStoredWindowsInfo()
+            
+            logger.debug("Collecting layouts information")
+            let layouts = try await getLayoutsInfo()
+            
+            let report = DiagnosticReport(
+                generatedAt: formatDate(Date()),
+                appInfo: appInfo,
+                systemInfo: systemInfo,
+                permissionStatus: permissionStatus,
+                settings: settings,
+                windowStatus: windowStatus,
+                shortcuts: shortcuts,
+                storedWindows: storedWindows,
+                layouts: layouts
+            )
+            
+            let jsonData = try jsonEncoder.encode(report)
+            guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+                logger.error("Failed to encode report to string")
+                throw DiagnosticError.encodingError
+            }
+            
+            logger.info("Diagnostic report generation completed successfully")
+            return jsonString
+        } catch {
+            logger.logError(error, context: "Failed during diagnostic report generation")
+            throw error
         }
-
-        logger.info("Diagnostic report generation completed")
-        return jsonString
     }
 
     func saveDiagnosticReport(_ report: String) async throws -> URL {
@@ -157,60 +188,50 @@ final class DiagnosticService {
     }
 
     private func getSettingsInfo() async throws -> SettingsInfo {
-        let defaults = UserDefaults.standard
-
         return SettingsInfo(
             preview: PreviewSettings(
-                frameRate: defaults.double(forKey: PreviewSettingsKeys.captureFrameRate),
-                hideInactiveApplications: defaults.bool(
-                    forKey: PreviewSettingsKeys.hideInactiveApplications),
-                hideActiveWindow: defaults.bool(forKey: PreviewSettingsKeys.hideActiveWindow)
+                frameRate: Defaults[.captureFrameRate],
+                hideInactiveApplications: Defaults[.hideInactiveApplications],
+                hideActiveWindow: Defaults[.hideActiveWindow]
             ),
             window: WindowSettings(
-                opacity: Int(defaults.double(forKey: WindowSettingsKeys.previewOpacity) * 100),
-                defaultWidth: Int(defaults.double(forKey: WindowSettingsKeys.defaultWidth)),
-                defaultHeight: Int(defaults.double(forKey: WindowSettingsKeys.defaultHeight)),
-                shadows: defaults.bool(forKey: WindowSettingsKeys.shadowEnabled),
-                syncAspectRatio: defaults.bool(forKey: WindowSettingsKeys.syncAspectRatio),
-                missionControlIntegration: defaults.bool(
-                    forKey: WindowSettingsKeys.managedByMissionControl),
-                showOnAllDesktops: defaults.bool(
-                    forKey: WindowSettingsKeys.assignPreviewsToAllDesktops),
-                createOnLaunch: defaults.bool(forKey: WindowSettingsKeys.createOnLaunch),
-                closeWithSource: defaults.bool(forKey: WindowSettingsKeys.closeOnCaptureStop),
-                saveWindowsOnQuit: defaults.bool(forKey: WindowSettingsKeys.saveWindowsOnQuit),
-                restoreWindowsOnLaunch: defaults.bool(
-                    forKey: WindowSettingsKeys.restoreWindowsOnLaunch)
+                opacity: Int(Defaults[.windowOpacity] * 100),
+                defaultWidth: Int(Defaults[.defaultWindowWidth]),
+                defaultHeight: Int(Defaults[.defaultWindowHeight]),
+                shadows: Defaults[.windowShadowEnabled],
+                syncAspectRatio: Defaults[.syncAspectRatio],
+                missionControlIntegration: Defaults[.managedByMissionControl],
+                showOnAllDesktops: Defaults[.assignPreviewsToAllDesktops],
+                createOnLaunch: Defaults[.createOnLaunch],
+                closeWithSource: Defaults[.closeOnCaptureStop],
+                saveWindowsOnQuit: Defaults[.saveWindowsOnQuit],
+                restoreWindowsOnLaunch: Defaults[.restoreWindowsOnLaunch]
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
-                    enabled: defaults.bool(forKey: OverlaySettingsKeys.focusBorderEnabled),
-                    width: Int(defaults.double(forKey: OverlaySettingsKeys.focusBorderWidth))
+                    enabled: Defaults[.focusBorderEnabled],
+                    width: Int(Defaults[.focusBorderWidth]),
+                    color: colorToHexString(Defaults[.focusBorderColor])
                 ),
                 sourceTitle: SourceTitleSettings(
-                    enabled: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleEnabled),
-                    fontSize: Int(defaults.double(forKey: OverlaySettingsKeys.sourceTitleFontSize)),
-                    backgroundOpacity: Int(
-                        defaults.double(forKey: OverlaySettingsKeys.sourceTitleBackgroundOpacity)
-                            * 100),
-                    location: defaults.bool(forKey: OverlaySettingsKeys.sourceTitleLocation)
-                        ? "upper" : "lower",
-                    type: defaults.string(forKey: OverlaySettingsKeys.sourceTitleType)
-                        ?? TitleType.windowTitle
+                    enabled: Defaults[.sourceTitleEnabled],
+                    fontSize: Int(Defaults[.sourceTitleFontSize]),
+                    backgroundOpacity: Int(Defaults[.sourceTitleBackgroundOpacity] * 100),
+                    location: Defaults[.sourceTitleLocation] ? "upper" : "lower",
+                    type: Defaults[.sourceTitleType].rawValue
                 )
             ),
             layout: LayoutSettings(
-                closeWindowsOnApply: defaults.bool(forKey: LayoutSettingsKeys.closeWindowsOnApply)
+                closeWindowsOnApply: Defaults[.closeWindowsOnApply]
             ),
             source: SourceSettings(
-                filterMode: defaults.bool(forKey: SourceSettingsKeys.filterMode)
-                    ? "blocklist" : "allowlist",
-                filterAppNames: defaults.stringArray(forKey: SourceSettingsKeys.appNames) ?? []
+                filterMode: Defaults[.filterMode] ? "blocklist" : "allowlist",
+                filterAppNames: Defaults[.appFilterNames]
             ),
             updates: UpdateSettings(
-                autoCheck: defaults.bool(forKey: "SUEnableAutomaticChecks"),
-                autoDownload: defaults.bool(forKey: "SUAutomaticallyUpdate"),
-                betaUpdates: defaults.bool(forKey: UpdateSettingsKeys.enableBetaUpdates)
+                autoCheck: UserDefaults.standard.bool(forKey: "SUEnableAutomaticChecks"),
+                autoDownload: UserDefaults.standard.bool(forKey: "SUAutomaticallyUpdate"),
+                betaUpdates: Defaults[.enableBetaUpdates]
             )
         )
     }
@@ -246,7 +267,7 @@ final class DiagnosticService {
     }
 
     private func getShortcutsInfo() async throws -> ShortcutsInfo {
-        let shortcutItems = ShortcutStorage.shared.shortcuts
+        let shortcutItems = shortcutManager.shortcutStorage.shortcuts
         return ShortcutsInfo(
             shortcuts: shortcutItems.map { shortcut in
                 ShortcutDiagnostic(
@@ -260,74 +281,65 @@ final class DiagnosticService {
     }
 
     private func getStoredWindowsInfo() async throws -> StoredWindowsInfo {
-        let defaults = UserDefaults.standard
-
-        guard let data = defaults.data(forKey: WindowSettingsKeys.storedWindows) else {
-            return StoredWindowsInfo(count: 0, windows: [])
+        let storedWindows = try getStoredWindows()
+        
+        logger.debug("Collecting stored window information: \(storedWindows.count) windows")
+        
+        return StoredWindowsInfo(
+            count: storedWindows.count,
+            windows: storedWindows.map { window in
+                StoredWindowDiagnostic(
+                    x: Int(window.x),
+                    y: Int(window.y),
+                    width: Int(window.width),
+                    height: Int(window.height)
+                )
+            }
+        )
+    }
+    
+    private func getStoredWindows() throws -> [Window] {
+        guard let data = Defaults[.storedWindows] else {
+            logger.debug("No stored windows data found")
+            return []
         }
 
         do {
-            let windowStates = try JSONDecoder().decode([WindowState].self, from: data)
-            return StoredWindowsInfo(
-                count: windowStates.count,
-                windows: windowStates.map { state in
-                    StoredWindowDiagnostic(
-                        x: Int(state.x),
-                        y: Int(state.y),
-                        width: Int(state.width),
-                        height: Int(state.height)
-                    )
-                }
-            )
+            return try JSONDecoder().decode([Window].self, from: data)
         } catch {
-            logger.logError(error, context: "Failed to decode stored window states")
-            return StoredWindowsInfo(count: 0, windows: [])
+            logger.logError(error, context: "Failed to decode stored windows")
+            throw DiagnosticError.decodingError
         }
     }
 
     private func getLayoutsInfo() async throws -> LayoutsInfo {
-        let defaults = UserDefaults.standard
-
-        guard let data = defaults.data(forKey: LayoutSettingsKeys.layouts) else {
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
-        }
-
-        do {
-            let layouts = try JSONDecoder().decode([Layout].self, from: data)
-
-            // Get launch layout ID
-            var launchLayoutId: String? = nil
-            if let launchLayoutIdString = defaults.string(forKey: LayoutSettingsKeys.launchLayoutId)
-            {
-                launchLayoutId = launchLayoutIdString
-            }
-
-            return LayoutsInfo(
-                count: layouts.count,
-                layouts: layouts.map { layout in
-                    LayoutDiagnostic(
-                        id: layout.id.uuidString,
-                        name: layout.name,
-                        windowCount: layout.windows.count,
-                        createdAt: formatDate(layout.createdAt),
-                        updatedAt: formatDate(layout.updatedAt),
-                        isLaunchLayout: layout.id.uuidString == launchLayoutId,
-                        windows: layout.windows.map { window in
-                            StoredWindowDiagnostic(
-                                x: Int(window.x),
-                                y: Int(window.y),
-                                width: Int(window.width),
-                                height: Int(window.height)
-                            )
-                        }
-                    )
-                },
-                launchLayoutId: launchLayoutId
-            )
-        } catch {
-            logger.logError(error, context: "Failed to decode layouts")
-            return LayoutsInfo(count: 0, layouts: [], launchLayoutId: nil)
-        }
+        let layouts = layoutManager.layouts
+        let launchLayoutUUID = Defaults[.launchLayoutUUID]
+        
+        logger.debug("Collecting layout information: \(layouts.count) layouts")
+        
+        return LayoutsInfo(
+            count: layouts.count,
+            layouts: layouts.map { layout in
+                LayoutDiagnostic(
+                    id: layout.id.uuidString,
+                    name: layout.name,
+                    windowCount: layout.windows.count,
+                    createdAt: formatDate(layout.createdAt),
+                    updatedAt: formatDate(layout.updatedAt),
+                    isLaunchLayout: layout.id == launchLayoutUUID,
+                    windows: layout.windows.map { window in
+                        StoredWindowDiagnostic(
+                            x: Int(window.x),
+                            y: Int(window.y),
+                            width: Int(window.width),
+                            height: Int(window.height)
+                        )
+                    }
+                )
+            },
+            launchLayoutUUID: launchLayoutUUID
+        )
     }
 
     // MARK: - Helper Methods
@@ -400,6 +412,22 @@ final class DiagnosticService {
         let gigabytes = Double(bytes) / 1_073_741_824
         /// 1024^3
         return String(format: "%.1f", gigabytes)
+    }
+
+    private func colorToHexString(_ color: Color) -> String {
+        let nsColor = NSColor(color)
+
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+
+        nsColor.usingColorSpace(.sRGB)?.getRed(&r, green: &g, blue: &b, alpha: &a)
+
+        let components = [r, g, b, a].map { Int($0 * 255) }
+        return String(
+            format: "#%02X%02X%02X (alpha: %02X)",
+            components[0], components[1], components[2], components[3])
     }
 }
 
@@ -495,6 +523,7 @@ struct OverlaySettings: Codable {
 struct FocusBorderSettings: Codable {
     let enabled: Bool
     let width: Int
+    let color: String
 }
 
 struct SourceTitleSettings: Codable {
@@ -568,7 +597,7 @@ struct StoredWindowDiagnostic: Codable {
 struct LayoutsInfo: Codable {
     let count: Int
     let layouts: [LayoutDiagnostic]
-    let launchLayoutId: String?
+    let launchLayoutUUID: UUID?
 }
 
 struct LayoutDiagnostic: Codable {
@@ -587,6 +616,8 @@ enum DiagnosticError: LocalizedError {
     case fileSystemError
     case encodingError
     case logStoreAccessError
+    case decodingError
+    case dataCollectionError(String)
 
     var errorDescription: String? {
         switch self {
@@ -594,8 +625,12 @@ enum DiagnosticError: LocalizedError {
             return "Failed to access file system for report generation"
         case .encodingError:
             return "Failed to encode diagnostic report to JSON"
+        case .decodingError:
+            return "Failed to decode stored data during report generation"
         case .logStoreAccessError:
             return "Failed to access system log store"
+        case .dataCollectionError(let context):
+            return "Failed to collect diagnostic data: \(context)"
         }
     }
 }

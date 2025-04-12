@@ -8,6 +8,7 @@
  framework integration.
 */
 
+import Defaults
 import Sparkle
 import SwiftUI
 
@@ -20,10 +21,6 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     // Published State
     @Published private(set) var updater: SPUUpdater
     @Published private(set) var canCheckForUpdates: Bool = false
-
-    // Update Settings
-    @AppStorage(UpdateSettingsKeys.enableBetaUpdates)
-    var enableBetaUpdates = UpdateSettingsKeys.defaults.enableBetaUpdates
 
     override init() {
         logger.debug("Initializing update manager")
@@ -53,7 +50,7 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     // MARK: - SPUUpdaterDelegate
 
     nonisolated func allowedChannels(for updater: SPUUpdater) -> Set<String> {
-        if UserDefaults.standard.bool(forKey: UpdateSettingsKeys.enableBetaUpdates) {
+        if Defaults[.enableBetaUpdates] {
             return Set(["beta"])
         }
         return Set()

@@ -7,6 +7,7 @@
  Coordinates window lifecycle management and state persistence.
 */
 
+import Defaults
 import SwiftUI
 
 @MainActor
@@ -24,24 +25,6 @@ final class WindowManager: ObservableObject {
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
     private var sessionWindowCounter: Int
 
-    // Window Settings
-    @AppStorage(WindowSettingsKeys.defaultWidth)
-    private var defaultWidth = WindowSettingsKeys.defaults.defaultWidth
-    @AppStorage(WindowSettingsKeys.defaultHeight)
-    private var defaultHeight = WindowSettingsKeys.defaults.defaultHeight
-    @AppStorage(WindowSettingsKeys.shadowEnabled)
-    private var shadowEnabled = WindowSettingsKeys.defaults.shadowEnabled
-    @AppStorage(WindowSettingsKeys.createOnLaunch)
-    private var createOnLaunch = WindowSettingsKeys.defaults.createOnLaunch
-    @AppStorage(WindowSettingsKeys.saveWindowsOnQuit)
-    private var saveWindowsOnQuit = WindowSettingsKeys.defaults.saveWindowsOnQuit
-    @AppStorage(WindowSettingsKeys.restoreWindowsOnLaunch)
-    private var restoreWindowsOnLaunch = WindowSettingsKeys.defaults.restoreWindowsOnLaunch
-
-    // Layout Settings
-    @AppStorage(LayoutSettingsKeys.closeWindowsOnApply)
-    private var closeWindowsOnApply = LayoutSettingsKeys.defaults.closeWindowsOnApply
-
     init(
         previewManager: PreviewManager,
         sourceManager: SourceManager,
@@ -58,7 +41,8 @@ final class WindowManager: ObservableObject {
 
     func createWindow(at frame: NSRect? = nil) throws {
         do {
-            let defaultSize = CGSize(width: defaultWidth, height: defaultHeight)
+            let defaultSize = CGSize(
+                width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
             let window = try windowServices.createWindow(
                 defaultSize: defaultSize,
                 windowCount: sessionWindowCounter,
@@ -96,7 +80,7 @@ final class WindowManager: ObservableObject {
 
         var restoredCount: Int = 0
 
-        if restoreWindowsOnLaunch {
+        if Defaults[.restoreWindowsOnLaunch] {
             windowServices.windowStorage.restoreWindows { [weak self] frame in
                 guard let self = self else { return }
                 do {
@@ -113,7 +97,7 @@ final class WindowManager: ObservableObject {
     }
 
     func handleWindowsOnQuit() {
-        if saveWindowsOnQuit {
+        if Defaults[.saveWindowsOnQuit] {
             windowServices.windowStorage.storeWindows()
         }
     }
@@ -124,7 +108,7 @@ final class WindowManager: ObservableObject {
     }
 
     func applyLayout(_ layout: Layout) {
-        if closeWindowsOnApply {
+        if Defaults[.closeWindowsOnApply] {
             closeAllWindows()
         }
 
@@ -151,7 +135,8 @@ final class WindowManager: ObservableObject {
     }
 
     private func configureWindow(_ window: NSWindow) {
-        windowServices.windowConfiguration.applyConfiguration(to: window, hasShadow: shadowEnabled)
+        windowServices.windowConfiguration.applyConfiguration(
+            to: window, hasShadow: Defaults[.windowShadowEnabled])
         setupWindowDelegate(for: window)
         setupWindowContent(window)
     }
@@ -164,10 +149,16 @@ final class WindowManager: ObservableObject {
     }
 
     private func setupWindowContent(_ window: NSWindow) {
+        let captureCoordinator = CaptureCoordinator(
+            sourceManager: sourceManager,
+            permissionManager: permissionManager
+        )
+
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,
             permissionManager: permissionManager,
+            captureCoordinator: captureCoordinator,
             onClose: { [weak self, weak window] in
                 guard let window = window else { return }
                 self?.closeWindow(window)
@@ -184,7 +175,7 @@ final class WindowManager: ObservableObject {
     }
 
     private func handleRestoreCompletion(_ restoredCount: Int) {
-        if restoredCount == 0 && createOnLaunch {
+        if restoredCount == 0 && Defaults[.createOnLaunch] {
             logger.info("No windows restored, creating default window")
             createDefaultWindow()
         } else {

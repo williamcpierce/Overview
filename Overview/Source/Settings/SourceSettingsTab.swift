@@ -5,6 +5,7 @@
  Created by William Pierce on 1/12/25.
 */
 
+import Defaults
 import SwiftUI
 
 struct SourceSettingsTab: View {
@@ -17,8 +18,8 @@ struct SourceSettingsTab: View {
     @State private var showingSourceFilterInfo: Bool = false
 
     // App Filter Settings
-    @AppStorage(SourceSettingsKeys.filterMode)
-    private var filterMode = SourceSettingsKeys.defaults.filterMode
+    @Default(.filterMode) private var filterMode
+    @Default(.appFilterNames) private var appFilterNames
 
     var body: some View {
         Form {
@@ -39,13 +40,13 @@ struct SourceSettingsTab: View {
                 .padding(.bottom, 4)
 
                 VStack {
-                    if settingsManager.filterAppNames.isEmpty {
+                    if appFilterNames.isEmpty {
                         List {
                             Text("No applications configured")
                                 .foregroundColor(.secondary)
                         }
                     } else {
-                        List(settingsManager.filterAppNames, id: \.self) { appName in
+                        List(appFilterNames, id: \.self) { appName in
                             HStack {
                                 Text(appName)
                                     .lineLimit(1)
@@ -85,13 +86,13 @@ struct SourceSettingsTab: View {
     private func addAppFilter() {
         guard !newAppName.isEmpty else { return }
         logger.info("Adding app filter: '\(newAppName)'")
-        settingsManager.filterAppNames.append(newAppName)
+        appFilterNames.append(newAppName)
         newAppName = ""
     }
 
     private func removeAppFilter(_ appName: String) {
-        if let index = settingsManager.filterAppNames.firstIndex(of: appName) {
-            settingsManager.filterAppNames.remove(at: index)
+        if let index = appFilterNames.firstIndex(of: appName) {
+            appFilterNames.remove(at: index)
             logger.info("Removed app filter: '\(appName)'")
         }
     }

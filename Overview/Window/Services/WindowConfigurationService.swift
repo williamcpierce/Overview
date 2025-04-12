@@ -36,7 +36,7 @@ final class WindowConfigurationService {
         )
 
         guard validateWindow(window) else {
-            logger.error("Window creation failed: invalid window state")
+            logger.error("Window creation failed: invalid window")
             throw WindowManagerError.windowCreationFailed
         }
 

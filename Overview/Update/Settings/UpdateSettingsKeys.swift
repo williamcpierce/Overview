@@ -5,12 +5,8 @@
  Created by William Pierce on 2/16/25.
 */
 
-enum UpdateSettingsKeys {
-    static let enableBetaUpdates: String = "enableBetaUpdates"
+import Defaults
 
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let enableBetaUpdates: Bool = true
-    }
+extension Defaults.Keys {
+    static let enableBetaUpdates = Key<Bool>("enableBetaUpdates", default: true)
 }

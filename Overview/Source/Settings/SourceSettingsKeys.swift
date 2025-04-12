@@ -3,20 +3,13 @@
  Overview
 
  Created by William Pierce on 1/12/25.
-
- Defines storage keys for source-related settings.
 */
 
-enum SourceSettingsKeys {
-    static let appNames: String = "appFilterNames"
-    static let filterMode: String = "isFilterBlocklist"
+import Defaults
 
-    static let defaults = Defaults()
-
-    struct Defaults {
-        let appNames: [String] = []
-        let filterMode: Bool = FilterMode.blocklist
-    }
+extension Defaults.Keys {
+    static let appFilterNames = Key<[String]>("appFilterNames", default: [])
+    static let filterMode = Key<Bool>("isFilterBlocklist", default: FilterMode.blocklist)
 }
 
 enum FilterMode {

@@ -3,8 +3,6 @@
  Overview
 
  Created by William Pierce on 2/24/25.
-
- Provides help content for window layout-related settings.
 */
 
 extension InfoPopoverContent {

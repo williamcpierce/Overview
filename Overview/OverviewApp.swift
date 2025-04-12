@@ -16,15 +16,11 @@ struct OverviewApp: App {
     @NSApplicationDelegateAdaptor(OverviewAppDelegate.self) var appDelegate
     private let logger = AppLogger.interface
 
-    init() {
-        SettingsMigrationUtility.migrateSettingsIfNeeded()
-    }
-
     var body: some Scene {
         MenuBarExtra {
             menuContent
         } label: {
-            Image(systemName: "square.2.layers.3d.top.filled")
+            MenuBarIcon(previewManager: appDelegate.previewManager)
         }
 
         Settings {
@@ -33,7 +29,8 @@ struct OverviewApp: App {
                 settingsManager: appDelegate.settingsManager,
                 updateManager: appDelegate.updateManager,
                 windowManager: appDelegate.windowManager,
-                layoutManager: appDelegate.layoutManager
+                layoutManager: appDelegate.layoutManager,
+                shortcutManager: appDelegate.shortcutManager
             )
         }
         .commands {
@@ -48,6 +45,7 @@ struct OverviewApp: App {
             newWindowButton
             Divider()
             editModeButton
+            hidePreviewsButton
             layoutMenu
             Divider()
             settingsButton
@@ -66,17 +64,33 @@ struct OverviewApp: App {
     }
 
     private var editModeButton: some View {
-        Button("Toggle Edit Mode") {
-            toggleEditMode()
-        }
-        .keyboardShortcut("e")
+        EditModeButton(previewManager: appDelegate.previewManager)
+    }
+
+    private var hidePreviewsButton: some View {
+        HidePreviewsButton(previewManager: appDelegate.previewManager)
     }
 
     private var settingsButton: some View {
-        Button("Settings...") {
-            openSettings()
+        Group {
+            if #available(macOS 14.0, *) {
+                SettingsLink {
+                    Text("Settings...")
+                }
+                .keyboardShortcut(",")
+                .onAppear {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            } else {
+                Button("Settings...") {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                }
+                .keyboardShortcut(",")
+            }
         }
-        .keyboardShortcut(",")
     }
 
     private var supportButton: some View {
@@ -245,20 +259,43 @@ struct OverviewApp: App {
         }
     }
 
-    private func openSettings() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+    private func getAppVersion() -> String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
 
-        if #available(macOS 14.0, *) {
-            let openSettings: OpenSettingsAction = Environment(\.openSettings).wrappedValue
-            openSettings()
-        } else {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    // MARK: - Menu Bar Icon
+
+    struct MenuBarIcon: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Image(
+                systemName: previewManager.hideAllPreviews
+                    ? "square.2.layers.3d" : "square.2.layers.3d.top.filled")
         }
     }
 
-    private func getAppVersion() -> String? {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    // MARK: - Button Views
+
+    struct HidePreviewsButton: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Button(previewManager.hideAllPreviews ? "✓ Hide All Previews" : "Hide All Previews") {
+                previewManager.hideAllPreviews.toggle()
+            }
+        }
+    }
+
+    struct EditModeButton: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Button(previewManager.editModeEnabled ? "✓ Edit Mode" : "Edit Mode") {
+                previewManager.editModeEnabled.toggle()
+            }
+            .keyboardShortcut("e")
+        }
     }
 
     // MARK: - Diagnostic and Maintenance Methods
@@ -266,8 +303,8 @@ struct OverviewApp: App {
     private func generateDiagnosticReport() {
         Task {
             do {
-                let report = try await DiagnosticService.shared.generateDiagnosticReport()
-                let fileURL = try await DiagnosticService.shared.saveDiagnosticReport(report)
+                let report = try await appDelegate.settingsManager.generateDiagnosticReport()
+                let fileURL = try await appDelegate.settingsManager.saveDiagnosticReport(report)
 
                 NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
                 logger.info("Diagnostic report generated and saved successfully")

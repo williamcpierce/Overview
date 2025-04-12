@@ -3,8 +3,6 @@
  Overview
 
  Created by William Pierce on 1/13/25.
-
- Provides help content for overlay-related settings.
 */
 
 extension InfoPopoverContent {
