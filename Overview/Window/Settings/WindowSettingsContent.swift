@@ -25,7 +25,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Synchronize Aspect Ratio",
                 text:
-                    "Synchronize the preview window aspect ratio to the source window aspect ratio"
+                    "Synchronize the preview window aspect ratio to the source window aspect ratio. Note that this does not apply retroactively to currently active previews. "
             ),
         ],
         isWarning: false
