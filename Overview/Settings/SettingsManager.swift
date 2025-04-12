@@ -83,11 +83,6 @@ final class SettingsManager: ObservableObject {
             .hideActiveWindow
         )
 
-        /// Reset Update settings
-        updateManager.updater.automaticallyChecksForUpdates = true
-        updateManager.updater.automaticallyDownloadsUpdates = false
-        Defaults.reset(.enableBetaUpdates)
-
         /// Reset Source settings
         Defaults.reset(
             .filterMode,
