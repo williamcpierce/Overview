@@ -92,6 +92,9 @@ struct PreviewView: View {
         .onChange(of: hideActiveWindow) { _ in
             updatePreviewVisibility()
         }
+        .onChange(of: previewManager.hideAllPreviews) { _ in
+            updatePreviewVisibility()
+        }
         .onChange(of: captureFrameRate) { _ in
             updatePreviewFrameRate()
         }
@@ -177,6 +180,11 @@ struct PreviewView: View {
     }
 
     private func updatePreviewVisibility() {
+        if previewManager.hideAllPreviews {
+            isPreviewVisible = false
+            return
+        }
+
         let alwaysShown =
             isSelectionViewVisible || previewManager.editModeEnabled
             || sourceManager.isOverviewActive

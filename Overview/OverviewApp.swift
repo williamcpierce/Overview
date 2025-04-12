@@ -20,7 +20,7 @@ struct OverviewApp: App {
         MenuBarExtra {
             menuContent
         } label: {
-            Image(systemName: "square.2.layers.3d.top.filled")
+            MenuBarIcon(previewManager: appDelegate.previewManager)
         }
 
         Settings {
@@ -45,6 +45,7 @@ struct OverviewApp: App {
             newWindowButton
             Divider()
             editModeButton
+            hidePreviewsButton
             layoutMenu
             Divider()
             settingsButton
@@ -63,10 +64,11 @@ struct OverviewApp: App {
     }
 
     private var editModeButton: some View {
-        Button("Toggle Edit Mode") {
-            toggleEditMode()
-        }
-        .keyboardShortcut("e")
+        EditModeButton(previewManager: appDelegate.previewManager)
+    }
+
+    private var hidePreviewsButton: some View {
+        HidePreviewsButton(previewManager: appDelegate.previewManager)
     }
 
     private var settingsButton: some View {
@@ -259,6 +261,41 @@ struct OverviewApp: App {
 
     private func getAppVersion() -> String? {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+
+    // MARK: - Menu Bar Icon
+
+    struct MenuBarIcon: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Image(
+                systemName: previewManager.hideAllPreviews
+                    ? "square.2.layers.3d" : "square.2.layers.3d.top.filled")
+        }
+    }
+
+    // MARK: - Button Views
+
+    struct HidePreviewsButton: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Button(previewManager.hideAllPreviews ? "✓ Hide All Previews" : "Hide All Previews") {
+                previewManager.hideAllPreviews.toggle()
+            }
+        }
+    }
+
+    struct EditModeButton: View {
+        @ObservedObject var previewManager: PreviewManager
+
+        var body: some View {
+            Button(previewManager.editModeEnabled ? "✓ Edit Mode" : "Edit Mode") {
+                previewManager.editModeEnabled.toggle()
+            }
+            .keyboardShortcut("e")
+        }
     }
 
     // MARK: - Diagnostic and Maintenance Methods
