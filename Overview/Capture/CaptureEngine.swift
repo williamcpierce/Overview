@@ -159,8 +159,8 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
 
         let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
 
-        guard let contentRectDict = attachments[.contentRect],
-            let contentRect = CGRect(dictionaryRepresentation: contentRectDict as! CFDictionary),
+        guard let contentRectDict = attachments[.contentRect] as? CFDictionary,
+            let contentRect = CGRect(dictionaryRepresentation: contentRectDict),
             let contentScale = attachments[.contentScale] as? CGFloat,
             let scaleFactor = attachments[.scaleFactor] as? CGFloat
         else {
