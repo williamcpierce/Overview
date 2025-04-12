@@ -274,24 +274,24 @@ struct OverviewApp: App {
                     ? "square.2.layers.3d" : "square.2.layers.3d.top.filled")
         }
     }
-    
+
     // MARK: - Button Views
 
     struct HidePreviewsButton: View {
         @ObservedObject var previewManager: PreviewManager
 
         var body: some View {
-            Button(previewManager.hideAllPreviews ? "Show Previews" : "Hide All Previews") {
+            Button(previewManager.hideAllPreviews ? "✓ Hide All Previews" : "Hide All Previews") {
                 previewManager.hideAllPreviews.toggle()
             }
         }
     }
-    
+
     struct EditModeButton: View {
         @ObservedObject var previewManager: PreviewManager
-        
+
         var body: some View {
-            Button(previewManager.editModeEnabled ? "Disable Edit Mode" : "Enable Edit Mode") {
+            Button(previewManager.editModeEnabled ? "✓ Edit Mode" : "Edit Mode") {
                 previewManager.editModeEnabled.toggle()
             }
             .keyboardShortcut("e")
