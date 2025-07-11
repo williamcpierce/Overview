@@ -57,7 +57,7 @@ struct SettingsView: View {
                 .tabItem { Label("Layouts", systemImage: "rectangle.3.offgrid.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 
-            ShortcutSettingsTab(shortcutManager: shortcutManager)
+            ShortcutSettingsTab(shortcutManager: shortcutManager, sourceManager: sourceManager)
                 .tabItem { Label("Shortcuts", systemImage: "command.square.fill") }
                 .frame(minHeight: 288, maxHeight: 504)
 

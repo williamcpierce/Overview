@@ -6,11 +6,13 @@
 */
 
 import KeyboardShortcuts
+import ScreenCaptureKit
 import SwiftUI
 
 struct ShortcutSettingsTab: View {
     // Dependencies
     @ObservedObject private var shortcutManager: ShortcutManager
+    @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -26,8 +28,12 @@ struct ShortcutSettingsTab: View {
     @State private var titlesJSON: String = ""
     @State private var jsonError: String? = nil
 
-    init(shortcutManager: ShortcutManager) {
+    @State private var availableSources: [SCWindow] = []
+    @State private var sourceListVersion: UUID = UUID()
+
+    init(shortcutManager: ShortcutManager, sourceManager: SourceManager) {
         self.shortcutManager = shortcutManager
+        self.sourceManager = sourceManager
     }
 
     var body: some View {
@@ -105,6 +111,29 @@ struct ShortcutSettingsTab: View {
                     TextField("Window title(s)", text: $newWindowTitles)
                         .textFieldStyle(.roundedBorder)
                         .disableAutocorrection(true)
+
+                    Menu {
+                        ForEach(groupedSources.keys.sorted(), id: \.self) { appName in
+                            if let sources = groupedSources[appName] {
+                                Menu(appName) {
+                                    ForEach(
+                                        sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
+                                        id: \.windowID
+                                    ) { source in
+                                        Button(truncateTitle(source.title ?? "Untitled")) {
+                                            appendWindowTitle(source.title ?? "")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Divider()
+                        Button("Refresh") { refreshSourceList() }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .id(sourceListVersion)
+
                     Spacer()
                     InfoPopover(
                         content: .shortcutWindowTitles,
@@ -118,6 +147,7 @@ struct ShortcutSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .task { await refreshSourceList() }
         .alert("Delete Shortcut", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
@@ -266,5 +296,40 @@ struct ShortcutSettingsTab: View {
         }
 
         return true
+    }
+
+    // MARK: - Window Selection Helpers
+
+    private func refreshSourceList() {
+        Task { await updateAvailableSources() }
+    }
+
+    private func updateAvailableSources() async {
+        do {
+            let sources = try await sourceManager.getFilteredSources()
+            availableSources = sources
+            sourceListVersion = UUID()
+            logger.debug("Shortcut window list updated: \(sources.count) windows")
+        } catch {
+            logger.logError(error, context: "Failed to retrieve source windows")
+        }
+    }
+
+    private func appendWindowTitle(_ title: String) {
+        if newWindowTitles.isEmpty {
+            newWindowTitles = title
+        } else {
+            newWindowTitles.append(", \(title)")
+        }
+    }
+
+    private var groupedSources: [String: [SCWindow]] {
+        Dictionary(grouping: availableSources) {
+            $0.owningApplication?.applicationName ?? "Unknown"
+        }
+    }
+
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }
