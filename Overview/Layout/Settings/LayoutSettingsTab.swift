@@ -127,9 +127,6 @@ struct LayoutSettingsTab: View {
                 HStack {
                     TextField("Layout name", text: $newLayoutName)
                         .textFieldStyle(.roundedBorder)
-                        .onChange(of: newLayoutName) { newValue in
-                            newLayoutName = newValue.trimmingCharacters(in: .whitespaces)
-                        }
 
                     Button("Create") {
                         createLayout()
