@@ -30,6 +30,8 @@ struct ShortcutSettingsTab: View {
 
     @State private var availableSources: [SCWindow] = []
     @State private var sourceListVersion: UUID = UUID()
+    
+    @State private var enabledStates: [UUID: Bool] = [:]
 
     init(shortcutManager: ShortcutManager, sourceManager: SourceManager) {
         self.shortcutManager = shortcutManager
@@ -86,27 +88,31 @@ struct ShortcutSettingsTab: View {
                                         .font(.caption)
                                     }
                                 }
-                                .frame(width: 160, alignment: .leading)
 
                                 Spacer()
 
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)
 
-                                Toggle(
-                                    "",
-                                    isOn: Binding(
-                                        get: { shortcut.isEnabled },
+                                if let isEnabled = enabledStates[shortcut.id] {
+                                    Toggle("", isOn: Binding(
+                                        get: { isEnabled },
                                         set: { newValue in
+                                            enabledStates[shortcut.id] = newValue
+                                        }
+                                    ))
+                                    .onChange(of: enabledStates[shortcut.id]) { newValue in
+                                        if let newValue = newValue {
                                             shortcutManager.shortcutStorage.updateShortcut(
                                                 id: shortcut.id, isEnabled: newValue
                                             )
                                         }
-                                    )
-                                )
-                                .toggleStyle(.switch)
-                                .labelsHidden()
-                                .frame(width: 50)
+                                    }
+                                    .toggleStyle(.switch)
+                                    .scaleEffect(0.7)
+                                    .labelsHidden()
+                                    .padding(.leading, 8)
+                                }
 
                                 Button(action: {
                                     shortcutToDelete = shortcut
@@ -114,7 +120,7 @@ struct ShortcutSettingsTab: View {
                                 }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.secondary)
-                                        .padding(.leading, 8)
+                                        .padding(.horizontal, -8)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -226,6 +232,16 @@ struct ShortcutSettingsTab: View {
             }
             .background(.ultraThickMaterial)
             .frame(width: 500)
+        }
+        .onAppear {
+            for shortcut in shortcutManager.shortcutStorage.shortcuts {
+                enabledStates[shortcut.id] = shortcut.isEnabled
+            }
+        }
+        .onChange(of: shortcutManager.shortcutStorage.shortcuts) { newShortcuts in
+            for shortcut in newShortcuts {
+                enabledStates[shortcut.id] = shortcut.isEnabled
+            }
         }
     }
 
