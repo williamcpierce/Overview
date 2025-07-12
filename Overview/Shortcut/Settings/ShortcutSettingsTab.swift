@@ -147,7 +147,7 @@ struct ShortcutSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .task { await refreshSourceList() }
+        .task { refreshSourceList() }
         .alert("Delete Shortcut", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
