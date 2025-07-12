@@ -52,6 +52,20 @@ final class ShortcutStorage: ObservableObject {
             "Updated window titles for shortcut: '\(windowTitles.joined(separator: ", "))'")
     }
 
+    func updateShortcut(id: UUID, isEnabled: Bool) {
+        guard let index = shortcuts.firstIndex(where: { $0.id == id }) else {
+            logger.warning("Attempted to update non-existent shortcut: \(id)")
+            return
+        }
+
+        var shortcut = shortcuts[index]
+        shortcut.isEnabled = isEnabled
+        shortcuts[index] = shortcut
+        logger.info(
+            "\(isEnabled ? "Enabled" : "Disabled") shortcut for windows: '\(shortcut.windowTitles.joined(separator: ", "))'"
+        )
+    }
+
     func deleteShortcut(id: UUID) {
         guard let shortcut = shortcuts.first(where: { $0.id == id }) else {
             logger.warning("Attempted to delete non-existent shortcut: \(id)")

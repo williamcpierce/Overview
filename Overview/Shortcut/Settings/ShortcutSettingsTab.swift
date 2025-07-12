@@ -93,6 +93,21 @@ struct ShortcutSettingsTab: View {
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)
 
+                                Toggle(
+                                    "",
+                                    isOn: Binding(
+                                        get: { shortcut.isEnabled },
+                                        set: { newValue in
+                                            shortcutManager.shortcutStorage.updateShortcut(
+                                                id: shortcut.id, isEnabled: newValue
+                                            )
+                                        }
+                                    )
+                                )
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .frame(width: 50)
+
                                 Button(action: {
                                     shortcutToDelete = shortcut
                                     showingDeleteAlert = true
