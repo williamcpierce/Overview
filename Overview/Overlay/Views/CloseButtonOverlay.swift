@@ -15,12 +15,13 @@ struct CloseButtonOverlay: View {
 
     // Public Properties
     let isEditModeEnabled: Bool
+    let isSelectionViewVisible: Bool
     let teardownCapture: () async -> Void
     let onClose: () -> Void
 
     var body: some View {
         Group {
-            if isEditModeEnabled {
+            if isEditModeEnabled || isSelectionViewVisible {
                 VStack {
                     HStack {
                         Spacer()

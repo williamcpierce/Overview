@@ -59,6 +59,7 @@ struct PreviewView: View {
                 .overlay(
                     CloseButtonOverlay(
                         isEditModeEnabled: previewManager.editModeEnabled,
+                        isSelectionViewVisible: isSelectionViewVisible,
                         teardownCapture: teardownCapture,
                         onClose: onClose
                     )
