@@ -103,17 +103,7 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
         editModeItem.state = editModeEnabled ? .on : .off
         stopCaptureItem.isEnabled = !isSelectionVisible
     }
-
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        // Allow underlying SwiftUI views to receive events when the selection
-        // interface is visible. Beta 3 changed event propagation behavior so
-        // simply calling `super.mouseDown` no longer forwarded clicks through
-        // this overlay. Returning nil when the selection view is active lets
-        // dropdowns and buttons remain interactive.
-        if isSelectionVisible { return nil }
-        return super.hitTest(point)
-    }
-
+    
     override func mouseDown(with event: NSEvent) {
         if !editModeEnabled && !isSelectionVisible {
             onSourceWindowFocus?()

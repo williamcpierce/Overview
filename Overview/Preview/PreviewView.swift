@@ -52,9 +52,9 @@ struct PreviewView: View {
             previewContentStack(in: geometry)
                 .frame(width: geometry.size.width, height: geometry.size.height)
                 .aspectRatio(previewAspectRatio, contentMode: .fit)
+                .background(previewInteractionLayer)
                 .background(previewBackgroundLayer)
                 .background(windowConfigurationLayer)
-                .overlay(previewInteractionLayer)
                 .overlay(EditIndicatorOverlay(isEditModeEnabled: previewManager.editModeEnabled))
                 .overlay(
                     CloseButtonOverlay(
