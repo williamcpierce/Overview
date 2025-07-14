@@ -103,7 +103,7 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
         editModeItem.state = editModeEnabled ? .on : .off
         stopCaptureItem.isEnabled = !isSelectionVisible
     }
-
+    
     override func mouseDown(with event: NSEvent) {
         if !editModeEnabled && !isSelectionVisible {
             onSourceWindowFocus?()

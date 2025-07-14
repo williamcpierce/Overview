@@ -29,7 +29,11 @@ final class ShortcutManager: ObservableObject {
 
     private func setupShortcuts() {
         shortcutStorage.shortcuts.forEach { shortcut in
-            setupShortcutObserver(for: shortcut)
+            if shortcut.isEnabled {
+                setupShortcutObserver(for: shortcut)
+            } else {
+                KeyboardShortcuts.disable(shortcut.shortcutName)
+            }
         }
 
         shortcutStorage.$shortcuts
@@ -40,13 +44,18 @@ final class ShortcutManager: ObservableObject {
                 }
 
                 shortcuts.forEach { shortcut in
-                    self?.setupShortcutObserver(for: shortcut)
+                    if shortcut.isEnabled {
+                        self?.setupShortcutObserver(for: shortcut)
+                    } else {
+                        KeyboardShortcuts.disable(shortcut.shortcutName)
+                    }
                 }
             }
             .store(in: &cancellables)
     }
 
     private func setupShortcutObserver(for shortcut: Shortcut) {
+        guard shortcut.isEnabled else { return }
         KeyboardShortcuts.onKeyDown(for: shortcut.shortcutName) { [weak self] in
             guard let self = self else { return }
             Task { @MainActor in
