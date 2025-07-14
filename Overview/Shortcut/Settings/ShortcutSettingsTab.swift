@@ -126,43 +126,31 @@ struct ShortcutSettingsTab: View {
                         }
                     }
                 }
-
-                HStack {
-                    TextField("Window title(s)", text: $newWindowTitles)
-                        .textFieldStyle(.roundedBorder)
-                        .disableAutocorrection(true)
-
-                    Menu {
-                        ForEach(groupedSources.keys.sorted(), id: \.self) { appName in
-                            if let sources = groupedSources[appName] {
-                                Menu(appName) {
-                                    ForEach(
-                                        sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
-                                        id: \.windowID
-                                    ) { source in
-                                        Button(truncateTitle(source.title ?? "Untitled")) {
-                                            appendWindowTitle(source.title ?? "")
-                                        }
-                                    }
-                                }
-                            }
+                
+                VStack {
+                    HStack {
+                        Text("Window Title(s)")
+                        Spacer()
+                        quickAddMenu
+                        InfoPopover(
+                            content: .shortcutWindowTitles,
+                            isPresented: $showingWindowTitlesInfo
+                        )
+                        Button("Add") {
+                            addShortcut()
                         }
-                        Divider()
-                        Button("Refresh") { refreshSourceList() }
-                    } label: {
-                        Image(systemName: "plus")
+                        .disabled(newWindowTitles.isEmpty)
                     }
-                    .id(sourceListVersion)
-
-                    Spacer()
-                    InfoPopover(
-                        content: .shortcutWindowTitles,
-                        isPresented: $showingWindowTitlesInfo
-                    )
-                    Button("Add") {
-                        addShortcut()
-                    }
-                    .disabled(newWindowTitles.isEmpty)
+                    
+                    TextEditor(text: $newWindowTitles)
+                        .font(.system(.body, design: .default))
+                        .disableAutocorrection(true)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                        )
                 }
             }
         }
@@ -242,6 +230,33 @@ struct ShortcutSettingsTab: View {
                 enabledStates[shortcut.id] = shortcut.isEnabled
             }
         }
+    }
+
+    // MARK: - Computed Properties
+    
+    private var quickAddMenu: some View {
+        Menu {
+            ForEach(groupedSources.keys.sorted(), id: \.self) { appName in
+                if let sources = groupedSources[appName] {
+                    Menu(appName) {
+                        ForEach(
+                            sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
+                            id: \.windowID
+                        ) { source in
+                            Button(truncateTitle(source.title ?? "Untitled")) {
+                                appendWindowTitle(source.title ?? "")
+                            }
+                        }
+                    }
+                }
+            }
+            Divider()
+            Button("Refresh") { refreshSourceList() }
+        } label: {
+            Image(systemName: "plus")
+            Text("Quick Add...")
+        }
+        .id(sourceListVersion)
     }
 
     // MARK: - Actions
