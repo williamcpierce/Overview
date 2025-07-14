@@ -120,7 +120,6 @@ struct ShortcutSettingsTab: View {
                                 }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.secondary)
-                                        .padding(.horizontal, -8)
                                 }
                                 .buttonStyle(.plain)
                             }
