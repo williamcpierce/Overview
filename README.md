@@ -98,6 +98,7 @@ See setting menu info panels for full details
     -   Source Activation
         -   Keyboard shortcuts for focusing source windows
         -   Multiple source window titles per shortcut for cycling
+        -   Enable or disable individual shortcuts
 -   Sources
     -   Source Application Filter
         -   Source list filtering

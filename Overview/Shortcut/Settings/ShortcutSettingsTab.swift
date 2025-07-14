@@ -6,11 +6,13 @@
 */
 
 import KeyboardShortcuts
+import ScreenCaptureKit
 import SwiftUI
 
 struct ShortcutSettingsTab: View {
     // Dependencies
     @ObservedObject private var shortcutManager: ShortcutManager
+    @ObservedObject private var sourceManager: SourceManager
     private let logger = AppLogger.settings
 
     // Private State
@@ -26,8 +28,16 @@ struct ShortcutSettingsTab: View {
     @State private var titlesJSON: String = ""
     @State private var jsonError: String? = nil
 
-    init(shortcutManager: ShortcutManager) {
+    @State private var availableSources: [SCWindow] = []
+    @State private var sourceListVersion: UUID = UUID()
+    
+    @State private var enabledStates: [UUID: Bool] = [:]
+
+    @State private var selectedQuickAddSource: SCWindow? = nil
+
+    init(shortcutManager: ShortcutManager, sourceManager: SourceManager) {
         self.shortcutManager = shortcutManager
+        self.sourceManager = sourceManager
     }
 
     var body: some View {
@@ -80,12 +90,31 @@ struct ShortcutSettingsTab: View {
                                         .font(.caption)
                                     }
                                 }
-                                .frame(width: 160, alignment: .leading)
 
                                 Spacer()
 
                                 KeyboardShortcuts.Recorder("", name: shortcut.shortcutName)
                                     .frame(width: 120)
+
+                                if let isEnabled = enabledStates[shortcut.id] {
+                                    Toggle("", isOn: Binding(
+                                        get: { isEnabled },
+                                        set: { newValue in
+                                            enabledStates[shortcut.id] = newValue
+                                        }
+                                    ))
+                                    .onChange(of: enabledStates[shortcut.id]) { newValue in
+                                        if let newValue = newValue {
+                                            shortcutManager.shortcutStorage.updateShortcut(
+                                                id: shortcut.id, isEnabled: newValue
+                                            )
+                                        }
+                                    }
+                                    .toggleStyle(.switch)
+                                    .scaleEffect(0.7)
+                                    .labelsHidden()
+                                    .padding(.leading, 8)
+                                }
 
                                 Button(action: {
                                     shortcutToDelete = shortcut
@@ -93,31 +122,53 @@ struct ShortcutSettingsTab: View {
                                 }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.secondary)
-                                        .padding(.leading, 8)
                                 }
                                 .buttonStyle(.plain)
+                                .padding(.horizontal, -8)
                             }
                         }
                     }
                 }
-
-                HStack {
-                    TextField("Window title(s)", text: $newWindowTitles)
-                        .textFieldStyle(.roundedBorder)
-                        .disableAutocorrection(true)
-                    Spacer()
-                    InfoPopover(
-                        content: .shortcutWindowTitles,
-                        isPresented: $showingWindowTitlesInfo
-                    )
-                    Button("Add") {
-                        addShortcut()
+                
+                VStack {
+                    HStack {
+                        Text("Window Title(s)")
+                        Spacer()
+                        SourceListView(
+                            selectedSource: $selectedQuickAddSource,
+                            sources: availableSources,
+                            onSourceSelected: { source in
+                                if let source = source {
+                                    appendWindowTitle(source.title ?? "")
+                                    selectedQuickAddSource = nil
+                                }
+                            },
+                            previewText: "Add open window"
+                        )
+                        InfoPopover(
+                            content: .shortcutWindowTitles,
+                            isPresented: $showingWindowTitlesInfo
+                        )
+                        Button("Add") {
+                            addShortcut()
+                        }
+                        .disabled(newWindowTitles.isEmpty)
                     }
-                    .disabled(newWindowTitles.isEmpty)
+                    
+                    TextEditor(text: $newWindowTitles)
+                        .font(.system(.body, design: .default))
+                        .disableAutocorrection(true)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 60)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                        )
                 }
             }
         }
         .formStyle(.grouped)
+        .task { refreshSourceList() }
         .alert("Delete Shortcut", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
@@ -181,6 +232,16 @@ struct ShortcutSettingsTab: View {
             }
             .background(.ultraThickMaterial)
             .frame(width: 500)
+        }
+        .onAppear {
+            for shortcut in shortcutManager.shortcutStorage.shortcuts {
+                enabledStates[shortcut.id] = shortcut.isEnabled
+            }
+        }
+        .onChange(of: shortcutManager.shortcutStorage.shortcuts) { newShortcuts in
+            for shortcut in newShortcuts {
+                enabledStates[shortcut.id] = shortcut.isEnabled
+            }
         }
     }
 
@@ -266,5 +327,40 @@ struct ShortcutSettingsTab: View {
         }
 
         return true
+    }
+
+    // MARK: - Window Selection Helpers
+
+    private func refreshSourceList() {
+        Task { await updateAvailableSources() }
+    }
+
+    private func updateAvailableSources() async {
+        do {
+            let sources = try await sourceManager.getFilteredSources()
+            availableSources = sources
+            sourceListVersion = UUID()
+            logger.debug("Shortcut window list updated: \(sources.count) windows")
+        } catch {
+            logger.logError(error, context: "Failed to retrieve source windows")
+        }
+    }
+
+    private func appendWindowTitle(_ title: String) {
+        if newWindowTitles.isEmpty {
+            newWindowTitles = title
+        } else {
+            newWindowTitles.append(", \(title)")
+        }
+    }
+
+    private var groupedSources: [String: [SCWindow]] {
+        Dictionary(grouping: availableSources) {
+            $0.owningApplication?.applicationName ?? "Unknown"
+        }
+    }
+
+    private func truncateTitle(_ title: String) -> String {
+        title.count > 50 ? title.prefix(50) + "..." : title
     }
 }
