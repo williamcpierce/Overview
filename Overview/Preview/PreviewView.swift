@@ -114,6 +114,7 @@ struct PreviewView: View {
                 PreviewCapture(
                     captureCoordinator: captureCoordinator
                 )
+                .overlay(previewInteractionLayer)
             }
         }
     }
