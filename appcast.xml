@@ -3,6 +3,32 @@
     <channel>
         <title>Overview Updates</title>
         <item>
+            <title>v1.2.2-beta</title>
+            <pubDate>Mon, 14 Jul 2025 23:00:00 +0000</pubDate>
+            <sparkle:version>1.2.2</sparkle:version>
+            <sparkle:shortVersionString>v1.2.2-beta</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+                <h3>Changes in Overview v1.2.2-beta</h3>
+                <h4>Features</h4>
+                <ul>
+                    <li>Added a menu to quickly add window titles when creating shortcuts</li>
+                    <li>Added toggles to enable/disable shortcuts</li>
+                </ul>
+                <h4>Bug Fixes</h4>
+                <ul>
+                    <li>Resolved an issue where preview selection view buttons could not be clicked on macOS 26 beta 3</li>
+                    <li>Updated to allow spaces in layout titles</li>
+                </ul>
+            ]]>
+            </description>
+            <enclosure
+                url="https://williampierce.io/overview/releases/v1.2.2-beta/Overview.dmg"
+                sparkle:edSignature=""
+                length=""
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>v1.2.1-beta</title>
             <pubDate>Sun, 13 Feb 2025 00:00:00 +0000</pubDate>
             <sparkle:version>1.2.1</sparkle:version>
