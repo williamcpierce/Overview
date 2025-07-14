@@ -245,33 +245,6 @@ struct ShortcutSettingsTab: View {
         }
     }
 
-    // MARK: - Computed Properties
-    
-    private var quickAddMenu: some View {
-        Menu {
-            ForEach(groupedSources.keys.sorted(), id: \.self) { appName in
-                if let sources = groupedSources[appName] {
-                    Menu(appName) {
-                        ForEach(
-                            sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
-                            id: \.windowID
-                        ) { source in
-                            Button(truncateTitle(source.title ?? "Untitled")) {
-                                appendWindowTitle(source.title ?? "")
-                            }
-                        }
-                    }
-                }
-            }
-            Divider()
-            Button("Refresh") { refreshSourceList() }
-        } label: {
-            Image(systemName: "plus")
-            Text("Quick Add...")
-        }
-        .id(sourceListVersion)
-    }
-
     // MARK: - Actions
 
     private func addShortcut() {
