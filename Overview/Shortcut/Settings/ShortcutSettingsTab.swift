@@ -122,6 +122,7 @@ struct ShortcutSettingsTab: View {
                                         .foregroundColor(.secondary)
                                 }
                                 .buttonStyle(.plain)
+                                .padding(.horizontal, -8)
                             }
                         }
                     }
