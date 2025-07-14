@@ -33,6 +33,8 @@ struct ShortcutSettingsTab: View {
     
     @State private var enabledStates: [UUID: Bool] = [:]
 
+    @State private var selectedQuickAddSource: SCWindow? = nil
+
     init(shortcutManager: ShortcutManager, sourceManager: SourceManager) {
         self.shortcutManager = shortcutManager
         self.sourceManager = sourceManager
@@ -132,7 +134,17 @@ struct ShortcutSettingsTab: View {
                     HStack {
                         Text("Window Title(s)")
                         Spacer()
-                        quickAddMenu
+                        SourceListView(
+                            selectedSource: $selectedQuickAddSource,
+                            sources: availableSources,
+                            onSourceSelected: { source in
+                                if let source = source {
+                                    appendWindowTitle(source.title ?? "")
+                                    selectedQuickAddSource = nil
+                                }
+                            },
+                            previewText: "Add open window"
+                        )
                         InfoPopover(
                             content: .shortcutWindowTitles,
                             isPresented: $showingWindowTitlesInfo
@@ -231,33 +243,6 @@ struct ShortcutSettingsTab: View {
                 enabledStates[shortcut.id] = shortcut.isEnabled
             }
         }
-    }
-
-    // MARK: - Computed Properties
-    
-    private var quickAddMenu: some View {
-        Menu {
-            ForEach(groupedSources.keys.sorted(), id: \.self) { appName in
-                if let sources = groupedSources[appName] {
-                    Menu(appName) {
-                        ForEach(
-                            sources.sorted(by: { ($0.title ?? "") < ($1.title ?? "") }),
-                            id: \.windowID
-                        ) { source in
-                            Button(truncateTitle(source.title ?? "Untitled")) {
-                                appendWindowTitle(source.title ?? "")
-                            }
-                        }
-                    }
-                }
-            }
-            Divider()
-            Button("Refresh") { refreshSourceList() }
-        } label: {
-            Image(systemName: "plus")
-            Text("Quick Add...")
-        }
-        .id(sourceListVersion)
     }
 
     // MARK: - Actions
