@@ -19,10 +19,12 @@ struct SourceListView: View {
     // Public Properties
     var sources: [SCWindow]
     let onSourceSelected: (SCWindow?) -> Void
+    
+    var previewText: String = "Select source window..."
 
     var body: some View {
         Picker("", selection: $selectedSource) {
-            Text("Select source window...").tag(nil as SCWindow?)
+            Text(previewText).tag(nil as SCWindow?)
             sourcesListContent
         }
         .onChange(of: selectedSource) { newValue in
