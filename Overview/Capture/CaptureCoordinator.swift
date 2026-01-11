@@ -40,6 +40,7 @@ final class CaptureCoordinator: ObservableObject {
     // Private State
     private var hasPermission: Bool = false
     private var activeFrameProcessingTask: Task<Void, Never>?
+    private var systemStopRecoveryTask: Task<Void, Never>?
     private var subscriptions = Set<AnyCancellable>()
 
     init(
@@ -153,12 +154,31 @@ final class CaptureCoordinator: ObservableObject {
 
     private func handleStreamError(_ error: SCStreamError) async {
         let errorDescription = error.localizedDescription
+        let errorDetails = "code=\(error.code) fatal=\(error.code.isFatal)"
+
+        if isSystemStoppedStream(error.code) {
+            if systemStopRecoveryTask != nil {
+                logger.debug("System stop recovery already in progress")
+                return
+            }
+
+            systemStopRecoveryTask = Task { @MainActor in
+                await logSourceDiagnostics(reason: "systemStoppedStream")
+                await stopCapture()
+                await attemptSystemStopRecovery()
+                systemStopRecoveryTask = nil
+            }
+            return
+        }
 
         if error.code.isFatal {
-            logger.logError(error, context: "Fatal stream error: \(errorDescription)")
+            logger.logError(
+                error,
+                context: "Fatal stream error: \(errorDescription) (\(errorDetails))"
+            )
             await stopCapture()
         } else {
-            logger.warning("Recoverable stream error: \(errorDescription)")
+            logger.warning("Recoverable stream error: \(errorDescription) (\(errorDetails))")
             await recoverFromError()
         }
     }
@@ -177,6 +197,105 @@ final class CaptureCoordinator: ObservableObject {
             logger.logError(error, context: "Failed to recover from capture error")
             isCapturing = false
         }
+    }
+
+    private func attemptSystemStopRecovery() async {
+        guard let selectedSource = selectedSource else {
+            logger.warning("System stop recovery skipped: no selected source")
+            return
+        }
+
+        let snapshot = makeSourceSnapshot(from: selectedSource)
+        let retryDelays: [UInt64] = [1_000_000_000, 2_000_000_000, 5_000_000_000]
+
+        for (index, delay) in retryDelays.enumerated() {
+            try? await Task.sleep(nanoseconds: delay)
+
+            do {
+                let sources = try await sourceManager.getAvailableSources()
+                if let match = findMatchingSource(snapshot: snapshot, in: sources) {
+                    self.selectedSource = match
+                    try await startCapture()
+                    logger.info("System stop recovery succeeded after attempt \(index + 1)")
+                    return
+                } else {
+                    logger.warning(
+                        "System stop recovery attempt \(index + 1): source not found"
+                    )
+                }
+            } catch {
+                logger.logError(error, context: "System stop recovery attempt failed")
+            }
+        }
+
+        logger.warning("System stop recovery failed: no matching source found")
+    }
+
+    private func logSourceDiagnostics(reason: String) async {
+        guard let selectedSource = selectedSource else {
+            logger.warning("Source diagnostics skipped: no selected source")
+            return
+        }
+
+        let snapshot = makeSourceSnapshot(from: selectedSource)
+        let availability: String
+
+        do {
+            let sources = try await sourceManager.getAvailableSources()
+            let match = findMatchingSource(snapshot: snapshot, in: sources)
+            availability = match == nil ? "missing" : "available"
+        } catch {
+            logger.logError(error, context: "Failed to query available sources")
+            availability = "unknown"
+        }
+
+        let activeStatus: String
+        if #available(macOS 13.1, *) {
+            activeStatus = selectedSource.isActive ? "active" : "inactive"
+        } else {
+            activeStatus = "unknown"
+        }
+
+        logger.info(
+            "Source diagnostics (\(reason)): windowID=\(snapshot.windowID) title='\(snapshot.title)' app='\(snapshot.appName)' bundleId=\(snapshot.bundleId) processID=\(snapshot.processID) onScreen=\(selectedSource.isOnScreen) active=\(activeStatus) availability=\(availability)"
+        )
+    }
+
+    private func findMatchingSource(snapshot: SourceSnapshot, in sources: [SCWindow]) -> SCWindow? {
+        if let exact = sources.first(where: { $0.windowID == snapshot.windowID }) {
+            return exact
+        }
+
+        let title = snapshot.title
+        let bundleId = snapshot.bundleId
+        if let match = sources.first(where: {
+            $0.owningApplication?.bundleIdentifier == bundleId && $0.title == title
+        }) {
+            return match
+        }
+
+        let appName = snapshot.appName
+        if let match = sources.first(where: {
+            $0.owningApplication?.applicationName == appName && $0.title == title
+        }) {
+            return match
+        }
+
+        return nil
+    }
+
+    private func makeSourceSnapshot(from source: SCWindow) -> SourceSnapshot {
+        SourceSnapshot(
+            windowID: source.windowID,
+            title: source.title ?? "Untitled",
+            appName: source.owningApplication?.applicationName ?? "Unknown",
+            bundleId: source.owningApplication?.bundleIdentifier ?? "unknown",
+            processID: source.owningApplication?.processID ?? -1
+        )
+    }
+
+    private func isSystemStoppedStream(_ code: SCStreamError.Code) -> Bool {
+        code.rawValue == -3821
     }
 
     // MARK: - State Synchronization
@@ -229,6 +348,14 @@ enum CaptureError: LocalizedError {
             return "Screen capture permission was denied"
         }
     }
+}
+
+private struct SourceSnapshot {
+    let windowID: CGWindowID
+    let title: String
+    let appName: String
+    let bundleId: String
+    let processID: pid_t
 }
 
 extension SCStreamError.Code {

@@ -180,8 +180,11 @@ struct OverviewApp: App {
 
     private var versionText: some View {
         Group {
-            if let version: String = getAppVersion() {
-                Text("Version \(version)")
+            if let version: String = getAppVersion(),
+                let build: String = getAppBuild(),
+                let buildDate: String = getAppBuildDate()
+            {
+                Text("Version \(version) (\(build), \(buildDate))")
             }
         }
     }
@@ -261,6 +264,24 @@ struct OverviewApp: App {
 
     private func getAppVersion() -> String? {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+
+    private func getAppBuild() -> String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+    }
+
+    private func getAppBuildDate() -> String? {
+        guard let executableURL = Bundle.main.executableURL else { return nil }
+
+        let values = try? executableURL.resourceValues(forKeys: [.contentModificationDateKey])
+        guard let date = values?.contentModificationDate else { return nil }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+        return formatter.string(from: date)
     }
 
     // MARK: - Menu Bar Icon
