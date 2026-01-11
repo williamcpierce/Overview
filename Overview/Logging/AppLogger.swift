@@ -71,7 +71,7 @@ extension AppLogger {
         location: SourceLocation
     ) {
         let formattedMessage: String = "\(location.description) \(message)"
-        loggers[category]?.log(level: level.osLogType, "\(formattedMessage)")
+        loggers[category]?.log(level: level.osLogType, "\(formattedMessage, privacy: .public)")
     }
 
     static func logError(
@@ -85,7 +85,7 @@ extension AppLogger {
             message += " - Context: \(context)"
         }
 
-        loggers[category]?.error("\(message)")
+        loggers[category]?.error("\(message, privacy: .public)")
     }
 }
 

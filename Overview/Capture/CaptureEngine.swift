@@ -179,7 +179,14 @@ private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDeleg
     // MARK: - Error Handling
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {
-        logger.logError(error, context: "Stream stopped with error")
+        if let streamError = error as? SCStreamError {
+            logger.logError(
+                streamError,
+                context: "Stream stopped with error: code=\(streamError.code) fatal=\(streamError.code.isFatal)"
+            )
+        } else {
+            logger.logError(error, context: "Stream stopped with error")
+        }
         continuation?.finish(throwing: error)
     }
 }
