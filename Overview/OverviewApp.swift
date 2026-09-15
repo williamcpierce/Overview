@@ -27,7 +27,6 @@ struct OverviewApp: App {
             SettingsView(
                 sourceManager: appDelegate.sourceManager,
                 settingsManager: appDelegate.settingsManager,
-                updateManager: appDelegate.updateManager,
                 windowManager: appDelegate.windowManager,
                 layoutManager: appDelegate.layoutManager,
                 shortcutManager: appDelegate.shortcutManager
@@ -49,7 +48,6 @@ struct OverviewApp: App {
             layoutMenu
             Divider()
             settingsButton
-            supportButton
             helpMenu
             Divider()
             quitButton
@@ -93,14 +91,9 @@ struct OverviewApp: App {
         }
     }
 
-    private var supportButton: some View {
-        Button("Support Overview") {
-            openProjectSupport()
-        }
-    }
 
     private var quitButton: some View {
-        Button("Quit Overview") {
+        Button("Quit Overview Dev") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
@@ -139,31 +132,10 @@ struct OverviewApp: App {
 
     private var helpMenu: some View {
         Menu("Help") {
-            Button {
-                openDiscord()
-            } label: {
-                Image(systemName: "bubble.fill")
-                Text("Join Discord")
+            Button("Enable Exact Window Focus…") {
+                appDelegate.sourceManager.requestAccessibility()
             }
-
-            Button {
-                openBugReport()
-            } label: {
-                Image(systemName: "exclamationmark.triangle.fill")
-                Text("Report Bug")
-            }
-
-            Button {
-                openFeatureRequest()
-            } label: {
-                Image(systemName: "lightbulb.fill")
-                Text("Request Feature")
-            }
-
-            Divider()
-
             versionText
-            updateButton
 
             Divider()
 
@@ -186,11 +158,6 @@ struct OverviewApp: App {
         }
     }
 
-    private var updateButton: some View {
-        Button("Check for Updates...") {
-            appDelegate.updateManager.checkForUpdates()
-        }
-    }
 
     // MARK: - Command Group
 
@@ -209,35 +176,6 @@ struct OverviewApp: App {
                 }
                 .keyboardShortcut("e", modifiers: .command)
             }
-        }
-    }
-
-    // MARK: - External Resource Actions
-
-    private func openDiscord() {
-        if let url = URL(string: "https://discord.gg/ekKMnejQbA") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func openBugReport() {
-        if let url = URL(string: "https://github.com/williamcpierce/Overview/issues/new?labels=bug")
-        {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func openFeatureRequest() {
-        if let url = URL(
-            string: "https://github.com/williamcpierce/Overview/discussions/categories/ideas")
-        {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func openProjectSupport() {
-        if let url = URL(string: "https://williampierce.io/overview/#support") {
-            NSWorkspace.shared.open(url)
         }
     }
 

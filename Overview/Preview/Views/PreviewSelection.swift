@@ -30,6 +30,11 @@ struct PreviewSelection: View {
 
     var body: some View {
         VStack {
+            if captureCoordinator.state == .permissionRequired {
+                Text(captureCoordinator.statusLabel).font(.caption)
+                Button("Grant Screen Recording…") { Task { await captureCoordinator.retry() } }
+            }
+            if let message = captureCoordinator.resolutionMessage { Text(message).font(.caption) }
             sourceSelectionContent
         }
     }

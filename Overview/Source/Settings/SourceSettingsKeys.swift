@@ -2,7 +2,8 @@
  Source/Settings/SourceSettingsKeys.swift
  Overview
 
- Created by William Pierce on 1/12/25.
+ Legacy filter keys retained so old preference values do not crash.
+ Pickers are hard-limited to EVE Online via EveSourceMatcher; these keys are unused.
 */
 
 import Defaults

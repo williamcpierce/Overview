@@ -66,11 +66,6 @@ struct PreviewSettingsTab: View {
                         "Hide previews for inactive source applications",
                         key: .hideInactiveApplications
                     )
-
-                    Defaults.Toggle(
-                        "Hide preview for focused source window",
-                        key: .hideActiveWindow
-                    )
                 }
 
                 HStack {

@@ -2,91 +2,110 @@
  Window/WindowAccessor.swift
  Overview
 
- Created by William Pierce on 1/12/25.
-
- Manages window state synchronization through SwiftUI's NSViewRepresentable interface.
+ Syncs edit-mode chrome and locks aspect once a source is assigned.
 */
-
 import Defaults
 import SwiftUI
 
 struct WindowAccessor: NSViewRepresentable {
-    // Constants
-    private struct Constants {
-        static let throttleInterval: TimeInterval = 0.1
-    }
-
-    // Dependencies
     @Binding var aspectRatio: CGFloat
     @ObservedObject var captureCoordinator: CaptureCoordinator
     @ObservedObject var previewManager: PreviewManager
     @ObservedObject var sourceManager: SourceManager
-    private let configService = WindowServices.shared.windowConfiguration
-    private let aspectService = WindowServices.shared.windowAspect
-    private let logger = AppLogger.interface
 
-    // MARK: - NSViewRepresentable
+    func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
-        logger.debug("Created window accessor view")
+        view.setAccessibilityElement(false)
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        guard let window = validateWindowState(nsView) else { return }
-
-        DispatchQueue.main.async {
-            synchronizeWindowState(window)
-        }
+        guard let window = nsView.window, nsView.superview != nil else { return }
+        context.coordinator.sync(
+            window: window,
+            aspectRatio: aspectRatio,
+            hasAssignment: captureCoordinator.hasAssignment,
+            editModeEnabled: previewManager.editModeEnabled,
+            isOverviewActive: sourceManager.isOverviewActive
+        )
     }
 
-    // MARK: - Private Methods
+    @MainActor
+    final class Coordinator {
+        private let configService = WindowServices.shared.windowConfiguration
+        private let aspectService = WindowServices.shared.windowAspect
+        private var lastEditMode: Bool?
+        private var lastOverviewActive: Bool?
+        private var lastAspectRatio: CGFloat = -1
+        private var aspectLocked = false
+        private var lastShadow: Bool?
+        private var lastMissionControl: Bool?
+        private var lastAllDesktops: Bool?
 
-    private func validateWindowState(_ view: NSView) -> NSWindow? {
-        guard view.window != nil, view.superview != nil else {
-            logger.debug("Invalid window state detected")
-            return nil
+        func sync(
+            window: NSWindow,
+            aspectRatio: CGFloat,
+            hasAssignment: Bool,
+            editModeEnabled: Bool,
+            isOverviewActive: Bool
+        ) {
+            // Skip level/size snaps while the user is dragging the window.
+            let dragging = window.currentEvent?.type == .leftMouseDragged
+
+            let editChanged = lastEditMode != editModeEnabled
+            let overviewChanged = lastOverviewActive != isOverviewActive
+            if !dragging, editChanged || overviewChanged {
+                lastEditMode = editModeEnabled
+                lastOverviewActive = isOverviewActive
+                configService.updateResizability(window, isEditable: editModeEnabled)
+                configService.updateMovability(window, isMovable: editModeEnabled)
+                window.isMovableByWindowBackground = true
+                let shouldFloat = editModeEnabled && isOverviewActive
+                window.level = shouldFloat ? .floating : .statusBar + 1
+            }
+
+            let shadow = Defaults[.windowShadowEnabled]
+            if lastShadow != shadow {
+                lastShadow = shadow
+                window.hasShadow = shadow
+            }
+
+            let mission = Defaults[.managedByMissionControl]
+            if lastMissionControl != mission {
+                lastMissionControl = mission
+                configService.updateMissionControl(window, isManaged: mission)
+            }
+
+            let allDesktops = Defaults[.assignPreviewsToAllDesktops]
+            if lastAllDesktops != allDesktops {
+                lastAllDesktops = allDesktops
+                configService.updateSpaceParticipation(window, joinsAllDesktops: allDesktops)
+            }
+
+            // Once a source is assigned, lock resize to that aspect; still allows drag + scale.
+            let shouldLock =
+                Defaults[.syncAspectRatio]
+                && hasAssignment
+                && aspectRatio > 0
+                && aspectRatio.isFinite
+
+            if shouldLock {
+                let ratioChanged = abs(lastAspectRatio - aspectRatio) > 0.001
+                let snap = (!aspectLocked || ratioChanged) && !dragging && !window.inLiveResize
+                aspectService.applyAspectLock(
+                    for: window,
+                    aspectRatio: aspectRatio,
+                    snapToRatio: snap
+                )
+                lastAspectRatio = aspectRatio
+                aspectLocked = true
+            } else if aspectLocked {
+                aspectService.applyAspectLock(for: window, aspectRatio: nil, snapToRatio: false)
+                lastAspectRatio = -1
+                aspectLocked = false
+            }
         }
-        return view.window
-    }
-
-    private func synchronizeWindowState(_ window: NSWindow) {
-        synchronizeEditableState(window)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + Constants.throttleInterval) {
-            synchronizeLayoutAndBehavior(window)
-        }
-    }
-
-    private func synchronizeEditableState(_ window: NSWindow) {
-        configService.updateResizability(window, isEditable: previewManager.editModeEnabled)
-        configService.updateMovability(window, isMovable: previewManager.editModeEnabled)
-    }
-
-    private func synchronizeLayoutAndBehavior(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && sourceManager.isOverviewActive
-        let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
-
-        window.level = newLevel
-        window.hasShadow = Defaults[.windowShadowEnabled]
-
-        if Defaults[.syncAspectRatio] {
-            aspectService.synchronizeAspectRatio(
-                for: window,
-                aspectRatio: aspectRatio,
-                isCapturing: captureCoordinator.isCapturing
-            )
-        }
-
-        configService.updateMissionControl(window, isManaged: Defaults[.managedByMissionControl])
-
-        var currentBehavior = window.collectionBehavior
-        if Defaults[.assignPreviewsToAllDesktops] {
-            currentBehavior.insert(.canJoinAllSpaces)
-        } else {
-            currentBehavior.remove(.canJoinAllSpaces)
-        }
-        window.collectionBehavior = currentBehavior
     }
 }

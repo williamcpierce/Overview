@@ -1,41 +1,42 @@
-/*
- Capture/Capture.swift
- Overview
-
- Created by William Pierce on 12/6/24.
-
- Provides SwiftUI integration for rendering captured screen content,
- managing the lifecycle of frame presentation and surface updates.
-*/
-
+/* Capture/Capture.swift — Reuse the layer; retain only the latest surface. */
 import SwiftUI
 
 struct Capture: NSViewRepresentable {
-    // Dependencies
-    private let logger = AppLogger.capture
-
-    // Public Properties
     let frame: CapturedFrame
-
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
-        logger.debug("Created layer-backed NSView for frame presentation")
+        view.layer?.contentsGravity = .resizeAspect
         return view
     }
+    func updateNSView(_ view: NSView, context: Context) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        view.layer?.contents = frame.surface
+        view.layer?.contentsScale = view.window?.backingScaleFactor ?? 2
+        CATransaction.commit()
+    }
+}
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        guard let surfaceContent: IOSurface = frame.surface else {
-            logger.warning("Attempted to update view with invalid surface content")
-            return
+/// Backing-scale changes can happen without a SwiftUI size change when moving between displays.
+struct PreviewSizeReader: NSViewRepresentable {
+    let onSize: (CGSize) -> Void
+    func makeNSView(context: Context) -> SizingView { SizingView(onSize: onSize) }
+    func updateNSView(_ view: SizingView, context: Context) { view.onSize = onSize; view.report() }
+
+    final class SizingView: NSView {
+        var onSize: (CGSize) -> Void
+        private var lastSize = CGSize.zero
+        init(onSize: @escaping (CGSize) -> Void) { self.onSize = onSize; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { nil }
+        override func layout() { super.layout(); report() }
+        override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); report() }
+        override func viewDidChangeBackingProperties() { super.viewDidChangeBackingProperties(); report() }
+        func report() {
+            let size = convertToBacking(bounds).size
+            guard size.width > 0, size.height > 0, size != lastSize else { return }
+            lastSize = size
+            Task { @MainActor [weak self] in self?.onSize(size) }
         }
-
-        let renderLayer = CALayer()
-        renderLayer.contents = surfaceContent
-        renderLayer.contentsScale = frame.contentScale
-        renderLayer.bounds = frame.contentRect
-
-        /// Critical section: Layer assignment must be atomic to prevent screen tearing
-        nsView.layer = renderLayer
     }
 }

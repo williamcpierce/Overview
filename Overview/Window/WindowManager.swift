@@ -23,6 +23,7 @@ final class WindowManager: ObservableObject {
     // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var captures: [NSWindow: CaptureCoordinator] = [:]
     private var sessionWindowCounter: Int
 
     init(
@@ -39,16 +40,20 @@ final class WindowManager: ObservableObject {
         logger.debug("Window manager initialized")
     }
 
-    func createWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil, saved: Window? = nil) throws {
         do {
             let defaultSize = CGSize(
                 width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
+            let restoredFrame: NSRect?
+            if let saved, let screen = NSScreen.screens.first(where: { $0.persistentIdentifier == saved.displayIdentifier }) ?? NSScreen.main {
+                restoredFrame = PreviewGeometry.clamp(saved.frame, to: screen.visibleFrame)
+            } else { restoredFrame = frame }
             let window = try windowServices.createWindow(
                 defaultSize: defaultSize,
                 windowCount: sessionWindowCounter,
-                providedFrame: frame)
+                providedFrame: restoredFrame)
 
-            configureWindow(window)
+            configureWindow(window, saved: saved)
 
             activeWindows.insert(window)
             sessionWindowCounter += 1
@@ -62,12 +67,15 @@ final class WindowManager: ObservableObject {
     }
 
     func closeWindow(_ window: NSWindow) {
-        Task {
-            window.orderOut(self)
-            activeWindows.remove(window)
-            windowDelegates.removeValue(forKey: window)
-            logger.debug("Window closed successfully")
+        guard activeWindows.remove(window) != nil else { return }
+        window.orderOut(self)
+        windowDelegates.removeValue(forKey: window)
+        window.delegate = nil
+        if let capture = captures.removeValue(forKey: window) {
+            windowServices.windowStorage.unregister(capture.id)
+            Task { await capture.close() }
         }
+        window.close()
     }
 
     func handleWindowsOnLaunch() {
@@ -81,10 +89,10 @@ final class WindowManager: ObservableObject {
         var restoredCount: Int = 0
 
         if Defaults[.restoreWindowsOnLaunch] {
-            windowServices.windowStorage.restoreWindows { [weak self] frame in
+            windowServices.windowStorage.restoreWindows { [weak self] saved in
                 guard let self = self else { return }
                 do {
-                    try createWindow(at: frame)
+                    try createWindow(saved: saved)
                     restoredCount += 1
                     logger.debug("Restored window \(restoredCount)")
                 } catch {
@@ -112,10 +120,10 @@ final class WindowManager: ObservableObject {
             closeAllWindows()
         }
 
-        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
+        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] saved in
             guard let self = self else { return }
             do {
-                try createWindow(at: frame)
+                try createWindow(saved: saved)
             } catch {
                 logger.logError(
                     error, context: "Failed to create window from layout '\(layout.name)'")
@@ -134,11 +142,11 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    private func configureWindow(_ window: NSWindow) {
+    private func configureWindow(_ window: NSWindow, saved: Window?) {
         windowServices.windowConfiguration.applyConfiguration(
             to: window, hasShadow: Defaults[.windowShadowEnabled])
         setupWindowDelegate(for: window)
-        setupWindowContent(window)
+        setupWindowContent(window, saved: saved)
     }
 
     private func setupWindowDelegate(for window: NSWindow) {
@@ -148,12 +156,19 @@ final class WindowManager: ObservableObject {
         logger.debug("Window delegate configured: id=\(sessionWindowCounter)")
     }
 
-    private func setupWindowContent(_ window: NSWindow) {
+    private func setupWindowContent(_ window: NSWindow, saved: Window?) {
         let captureCoordinator = CaptureCoordinator(
             sourceManager: sourceManager,
-            permissionManager: permissionManager
+            permissionManager: permissionManager,
+            id: saved?.id ?? UUID(),
+            sources: saved?.sources ?? [],
+            hideWhenFocused: saved?.hideWhenFocused ?? Defaults[.hideActiveWindow],
+            source: saved?.source
         )
 
+        captures[window] = captureCoordinator
+        window.isReleasedWhenClosed = false
+        windowServices.windowStorage.register(window, capture: captureCoordinator)
         let contentView = PreviewView(
             previewManager: previewManager,
             sourceManager: sourceManager,

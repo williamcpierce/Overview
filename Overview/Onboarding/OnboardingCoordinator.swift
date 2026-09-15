@@ -141,7 +141,7 @@ final class OnboardingCoordinator: ObservableObject {
     private func startPermissionMonitoring() {
         guard permissionCheckTimer == nil else { return }
 
-        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) {
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) {
             [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.checkPermissions()
@@ -155,14 +155,7 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     private func checkPermissions() async {
-        do {
-            _ = try await SCShareableContent.current
-            screenRecordingPermission = .granted
-            logger.info("Screen recording permission granted")
-        } catch {
-            screenRecordingPermission = .denied
-            logger.info("Screen recording permission still denied: \(error.localizedDescription)")
-        }
+        screenRecordingPermission = CGPreflightScreenCaptureAccess() ? .granted : .denied
 
         // Notify permission manager of changes
         onPermissionStatusChanged?(

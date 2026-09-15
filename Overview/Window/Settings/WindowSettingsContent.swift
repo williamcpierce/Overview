@@ -25,7 +25,7 @@ extension InfoPopoverContent {
             Section(
                 title: "Synchronize Aspect Ratio",
                 text:
-                    "Synchronize the preview window aspect ratio to the source window aspect ratio. Note that this does not apply retroactively to currently active previews. "
+                    "When enabled, selecting a source locks that preview’s resize handle to the source aspect ratio. You can still move and scale the window in Edit Mode; free resize returns when no source is assigned."
             ),
         ],
         isWarning: false
@@ -40,7 +40,7 @@ extension InfoPopoverContent {
             ),
             Section(
                 title: "Show Windows on All Desktops",
-                text: "Show preview windows on all desktops, including over fullscreen windows"
+                text: "Show preview windows on all Spaces, including displays with a fullscreen game"
             ),
         ],
         isWarning: false

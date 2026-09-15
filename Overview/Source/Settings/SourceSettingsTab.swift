@@ -2,98 +2,25 @@
  Source/Settings/SourceSettingsTab.swift
  Overview
 
- Created by William Pierce on 1/12/25.
+ Sources tab — Overview Dev only lists EVE Online windows in pickers.
 */
 
-import Defaults
 import SwiftUI
 
 struct SourceSettingsTab: View {
-    // Dependencies
-    @ObservedObject var settingsManager: SettingsManager
-    private let logger = AppLogger.settings
-
-    // Private State
-    @State private var newAppName: String = ""
-    @State private var showingSourceFilterInfo: Bool = false
-
-    // App Filter Settings
-    @Default(.filterMode) private var filterMode
-    @Default(.appFilterNames) private var appFilterNames
-
     var body: some View {
         Form {
-
-            // MARK: - App Filter Section
-
             Section {
-                HStack {
-                    Text("Source Application Filter")
-                        .font(.headline)
-                    Spacer()
-                    InfoPopover(
-                        content: .sourceFilter,
-                        isPresented: $showingSourceFilterInfo,
-                        showWarning: filterMode == FilterMode.allowlist
-                    )
-                }
-                .padding(.bottom, 4)
-
-                VStack {
-                    if appFilterNames.isEmpty {
-                        List {
-                            Text("No applications configured")
-                                .foregroundColor(.secondary)
-                        }
-                    } else {
-                        List(appFilterNames, id: \.self) { appName in
-                            HStack {
-                                Text(appName)
-                                    .lineLimit(1)
-                                    .help(appName)
-                                Spacer()
-                                Button(action: { removeAppFilter(appName) }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
-
-                HStack {
-                    TextField("Application name", text: $newAppName)
-                        .textFieldStyle(.roundedBorder)
-                        .disableAutocorrection(true)
-                    Button("Add") {
-                        addAppFilter()
-                    }
-                    .disabled(newAppName.isEmpty)
-                }
+                Text("EVE Online only")
+                    .font(.headline)
+                    .padding(.bottom, 4)
+                Text(
+                    "Preview and shortcut source pickers only show windows from EVE Online clients (CCP apps such as EVE Online and EVE Launcher). Other applications are hidden."
+                )
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
-            Picker("Filter mode", selection: $filterMode) {
-                Text("Blocklist").tag(FilterMode.blocklist)
-                Text("Allowlist").tag(FilterMode.allowlist)
-            }
-            .pickerStyle(.segmented)
         }
         .formStyle(.grouped)
-    }
-
-    // MARK: - Actions
-
-    private func addAppFilter() {
-        guard !newAppName.isEmpty else { return }
-        logger.info("Adding app filter: '\(newAppName)'")
-        appFilterNames.append(newAppName)
-        newAppName = ""
-    }
-
-    private func removeAppFilter(_ appName: String) {
-        if let index = appFilterNames.firstIndex(of: appName) {
-            appFilterNames.remove(at: index)
-            logger.info("Removed app filter: '\(appName)'")
-        }
     }
 }

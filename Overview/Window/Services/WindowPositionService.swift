@@ -10,6 +10,7 @@
 
 import AppKit
 
+@MainActor
 final class WindowPositionService {
     // Constants
     private struct Constants {

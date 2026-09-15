@@ -32,9 +32,9 @@ extension InfoPopoverContent {
                     "When enabled, all preview windows will automatically hide except those belonging to the currently active application.\nThis is useful if you only use Overview with multiple instances of the same application (i.e. EVE Online) and would like previews hidden while using other applications."
             ),
             Section(
-                title: "Hide Preview for Focused Source Window",
+                title: "Source Groups and Hide When Focused",
                 text:
-                    "Automatically hides the preview window when its source window is focused.\nIn conjunction with this setting, two previews can be placed on top of one another, and used to switch back and forth between two applications while only ever seeing the preview of the inactive one."
+                    "Assign multiple clients to one preview with Manage Source Group. Groups with two or more clients always show the inactive member and swap on click.\nFor a single always-visible client (like Titan), leave it as the only source and keep Hide When Focused off."
             ),
             Section(
                 title: "Toggle Hiding All Previews",

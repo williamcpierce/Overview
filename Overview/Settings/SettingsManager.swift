@@ -8,13 +8,11 @@
 */
 
 import Defaults
-import Sparkle
 import SwiftUI
 
 @MainActor
 final class SettingsManager: ObservableObject {
     // Dependencies
-    private let updateManager: UpdateManager
     private let layoutManager: LayoutManager
     private let shortcutManager: ShortcutManager
     private let logger = AppLogger.settings
@@ -23,9 +21,8 @@ final class SettingsManager: ObservableObject {
     let diagnosticService: DiagnosticService
 
     init(
-        updateManager: UpdateManager, layoutManager: LayoutManager, shortcutManager: ShortcutManager
+        layoutManager: LayoutManager, shortcutManager: ShortcutManager
     ) {
-        self.updateManager = updateManager
         self.layoutManager = layoutManager
         self.shortcutManager = shortcutManager
         self.diagnosticService = DiagnosticService(shortcutManager: shortcutManager, layoutManager: layoutManager)
@@ -81,12 +78,6 @@ final class SettingsManager: ObservableObject {
             .captureFrameRate,
             .hideInactiveApplications,
             .hideActiveWindow
-        )
-
-        /// Reset Source settings
-        Defaults.reset(
-            .filterMode,
-            .appFilterNames
         )
 
         logger.info("Settings reset completed successfully")

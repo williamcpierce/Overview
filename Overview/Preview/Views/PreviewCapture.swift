@@ -12,11 +12,10 @@ import Defaults
 import SwiftUI
 
 struct PreviewCapture: View {
-    // Dependencies
     @ObservedObject private var captureCoordinator: CaptureCoordinator
-    private let logger = AppLogger.interface
+    /// Hold the last good frame so brief reconnects do not flash the grey placeholder.
+    @State private var lastFrame: CapturedFrame?
 
-    // Window Settings
     @Default(.windowOpacity) private var windowOpacity
 
     init(captureCoordinator: CaptureCoordinator) {
@@ -25,11 +24,31 @@ struct PreviewCapture: View {
 
     var body: some View {
         Group {
-            if let frame: CapturedFrame = captureCoordinator.capturedFrame {
+            if let frame = captureCoordinator.capturedFrame ?? retainedFrame {
                 previewContent(for: frame)
             } else {
                 loadingPlaceholder
             }
+        }
+        .onReceive(captureCoordinator.$capturedFrame) { frame in
+            if let frame { lastFrame = frame }
+        }
+        .onChange(of: captureCoordinator.state) { _, state in
+            switch state {
+            case .idle, .failed, .permissionRequired:
+                if captureCoordinator.capturedFrame == nil { lastFrame = nil }
+            case .starting, .running, .paused, .reconnecting:
+                break
+            }
+        }
+    }
+
+    private var retainedFrame: CapturedFrame? {
+        switch captureCoordinator.state {
+        case .starting, .reconnecting, .paused, .running:
+            return lastFrame
+        case .idle, .failed, .permissionRequired:
+            return nil
         }
     }
 
@@ -45,7 +64,7 @@ struct PreviewCapture: View {
             .overlay(FocusBorderOverlay(isWindowFocused: captureCoordinator.isSourceWindowFocused))
             .overlay(
                 TitleOverlay(
-                    windowTitle: captureCoordinator.sourceWindowTitle,
+                    windowTitle: captureCoordinator.sourceIdentity?.label ?? captureCoordinator.sourceWindowTitle,
                     applicationTitle: captureCoordinator.sourceApplicationTitle)
             )
             .opacity(windowOpacity)

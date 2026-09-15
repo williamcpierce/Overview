@@ -18,7 +18,7 @@ extension Defaults.Keys {
 
     // System Visibility Settings
     static let managedByMissionControl = Key<Bool>("managedByMissionControl", default: true)
-    static let assignPreviewsToAllDesktops = Key<Bool>("desktopAssignmentBehavior", default: false)
+    static let assignPreviewsToAllDesktops = Key<Bool>("desktopAssignmentBehavior", default: true)
 
     // Window Management Settings
     static let createOnLaunch = Key<Bool>("windowCreateOnLaunch", default: true)

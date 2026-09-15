@@ -9,6 +9,7 @@
 
 import ScreenCaptureKit
 
+@MainActor
 final class CaptureAvailabilityService {
     // Dependencies
     private let logger = AppLogger.capture

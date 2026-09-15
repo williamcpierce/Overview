@@ -1,169 +1,98 @@
-# Overview: Window Previews on macOS
+# Overview Dev
 
-Create live window previews for any application, and activate them efficiently with built-in task-switching
+Overview Dev is a personal Apple-silicon, macOS 27 preview companion for two to four EVE clients. It keeps live ScreenCaptureKit previews, restores client assignments, switches clients by click or shortcut, and labels paused or disconnected captures.
 
-![Example Screenshot](https://downloads.williampierce.io/Banner.jpg)
+This fork uses the independent bundle identifier `local.chriswilliamson.OverviewDev`. It has no update feed, donation action, or upstream support action.
 
-## Beta Release
+## Requirements
 
-**Note: Overview is beta software. It may contain bugs or unexpected behavior. Use at your own risk.**
+- macOS 27 on Apple silicon
+- Xcode 27
+- Screen Recording permission
+- Optional Accessibility permission for exact-window activation and focus tracking
 
-For development updates, please join our Discord:
+## Build and test
 
-[![Discord Banner](https://discord.com/api/guilds/1295309622445473865/widget.png?style=banner2)](https://discord.gg/ekKMnejQbA)
+Run the deterministic core tests:
 
-## Features
+```sh
+swift test
+```
 
-**Live Window Previews:** Real-time window previews with configurable frame rates and automatic hiding
+Build the app with local ad-hoc signing into a repository-local Derived Data directory:
 
-**Quick Application Switching:** Switch applications through preview clicks or keyboard shortcuts
+```sh
+xcodebuild \
+  -project Overview.xcodeproj \
+  -scheme Overview \
+  -configuration Debug \
+  -destination 'platform=macOS,arch=arm64' \
+  -derivedDataPath "$PWD/.derivedData" \
+  build
+```
 
-**Preview Customization:** Customize preview window appearance, visibility, and saving/restoration options
+For a compile-only verification that does not sign:
 
-**Glanceable Info Overlays:** Display source app names, window titles, and focus status at a glance
+```sh
+xcodebuild \
+  -project Overview.xcodeproj \
+  -scheme Overview \
+  -configuration Debug \
+  -destination 'platform=macOS,arch=arm64' \
+  -derivedDataPath "$PWD/.derivedData" \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
 
-**Saved Preview Layouts:** Save and restore collections of preconfigured preview windows
+Install the personal build at the consistent local path `/Applications/Overview Dev.app`:
 
-## System Requirements
+```sh
+ditto \
+  "$PWD/.derivedData/Build/Products/Debug/Overview Dev.app" \
+  "/Applications/Overview Dev.app"
+```
 
--   macOS Ventura (13.0) or later
--   Screen Recording permission (required for window capture)
+## Features in this fork
 
-## Installation
+- Reliable ScreenCaptureKit capture lifecycle with clear paused / reconnecting / permission / failed states.
+- Restored preview assignments and layouts (versioned storage; legacy geometry migrates).
+- **EVE-only sources:** pickers list only CCP EVE Online windows (`com.ccpgames.*`, or app name EVE Online / EVE Launcher).
+- **Source groups:** one preview can own Main + Scout and swap on focus; keep Titan on a separate always-visible preview.
+- Edit-mode move/resize with optional aspect lock; overlays stay out of the drag path.
+- **Spaces / fullscreen:** Settings → Windows → **Show on all Spaces / fullscreen** so previews can sit on a display running a fullscreen game (uses `canJoinAllSpaces` + `fullScreenAuxiliary`).
 
-1. Download the latest version from the Overview website [williampierce.io/overview/](https://williampierce.io/overview/).
-2. Mount the disk image and drag Overview into your Applications folder.
+See [PLAN.md](PLAN.md) for completed work and what is still manual.
 
-## Usage
+## First run
 
-### Quick Start
+1. Launch `/Applications/Overview Dev.app`.
+2. Grant Screen Recording permission when prompted.
+3. Create a preview with `⌘N` and select an EVE window.
+4. For Main + Scout swap: right-click the preview → **Manage Source Group…** and select both clients (swap is automatic for multi-source groups).
+5. For Titan: keep a separate preview with Titan only and leave **Hide When Focused** off.
+6. Turn on **Show on all Spaces / fullscreen** if you drag previews onto a fullscreen-game display.
+7. Use **Help → Enable Exact Window Focus…** if exact focus tracking is wanted.
+8. Use edit mode to move or resize previews; saved previews and layouts retain source groups.
 
-1. Launch Overview and grant screen recording permission when prompted
-2. Create a new preview window from the menu bar icon (⌘N)
-3. Select a window to capture from the source windows list
-4. Enable edit mode to move/resize preview windows
-5. Customize behavior through the settings panel (⌘,)
+For fewer Screen Recording / Accessibility re-prompts after rebuilds, use Xcode **Automatically manage signing** with a Personal Team instead of ad-hoc signing.
 
-### Controls
+Window image data stays local and is neither stored nor transmitted.
 
--   Left-click preview: Switch to source application
--   Right-click preview: Access context menu
-    -   Toggle Edit Mode for repositioning/resizing
-    -   Stop capture
-    -   Close preview window
--   `⌘N` Create new preview window
--   `⌘E` Toggle edit mode
--   `⌘,` Open settings
+## Live validation (still manual)
 
-### Settings
+The automated suite covers capture startup, cancellation, retry exhaustion, explicit stop, permission coalescing and revocation, source matching, EVE-only source matcher, legacy storage migration, display clamping, shortcut cycling, and source-group migration/selection.
 
-See setting menu info panels for full details
+Hardware-dependent validation still requires running two and four live EVE clients:
 
--   Previews
-    -   Frame Rate
-    -   Preview Hiding
-        -   Hide previews for inactive source applications
-        -   Hide preview for focused source window
-        -   Toggle hiding all previews
--   Windows
-    -   Appearance
-        -   Opacity
-        -   Default dimensions
-        -   Shadows
-        -   Synchronize aspect ratio
-    -   System Visibility
-        -   Show windows in Mission Control
-        -   Show windows on all desktops (including fullscreen)
-    -   Management
-        -   Always create window on launch
-        -   Close window with preview source
-        -   Save window positions on quit
-        -   Restore window positions on launch
-- Overlays
-    -   Source Focus
-        -   Border width
-        -   Border color
-    -   Source Title
-        -   Font size
-        -   Background opacity
-        -   Location
-        -   Type (window, application, or both)
--   Layouts
-    -   Window Layouts
-        - Create layouts to save window arrangements
-        - Apply layouts to restore window configurations
-        - Update existing layouts
-    - Apply layout on launch
-    - Close all windows when applying layouts
--   Shortcuts
-    -   Source Activation
-        -   Keyboard shortcuts for focusing source windows
-        -   Multiple source window titles per shortcut for cycling
-        -   Enable or disable individual shortcuts
--   Sources
-    -   Source Application Filter
-        -   Source list filtering
-    -   Filter mode (blocklist/allowlist)
--   Updates
-    -   Automatically check for updates
-    -   Automatically download updates
-    -   Enable beta updates
+- Click and shortcut switching, application-only and exact-window focus indicators, client closure/relaunch, and layout restoration.
+- Source-group swap (Main/Scout) plus always-visible Titan; edit-mode drag across monitors onto a fullscreen client.
+- Resize, Hide All/show, sleep/wake, Spaces, fullscreen, and connected/disconnected display configurations.
+- Accessibility granted and denied.
+- A 60-minute four-client session checking crashes, stream accumulation, memory growth, stale-frame labels, and capture resource release.
+- CPU, memory, and frame delivery compared with the upstream build at identical preview sizes and frame rates.
 
-## Privacy & Security
+## License and attribution
 
-Overview requires Screen Recording permission to function, but:
+This project remains MIT licensed; see [LICENSE.md](LICENSE.md).
 
--   Only captures window content for preview purposes
--   Does not store or transmit window content
--   All operations remain local to the device
-
-## Known Issues
-
-For the complete list of known issues, see [github.com/williamcpierce/Overview/issues](https://github.com/williamcpierce/Overview/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-
-## Project Funding
-
-Support Overview's development:
-
--   [GitHub Sponsors](https://github.com/sponsors/williamcpierce) (preferred)
--   [Patreon](https://www.patreon.com/overview_app)
-
-100% of donations will be used for project expenses or reinvested in development - no profits will be distributed to any individuals.
-
-See [FUNDING.md](https://github.com/williamcpierce/Overview/blob/main/FUNDING.md) for full details.
-
-## Development
-
-### Technical Requirements
-
--   Xcode 15.0
--   Swift 5.0
--   macOS 13.0+ deployment target
-
-### Frameworks and Libraries
-
--   SwiftUI for user interface
--   ScreenCaptureKit for window capture
--   KeyboardShortcuts for shortcut handling
--   Sparkle for automatic updates
-
-### Coding Standards
-
-The project adheres to a style guide (see [STYLE.md](https://github.com/williamcpierce/Overview/blob/main/STYLE.md)) that emphasizes:
-
--   Self-documenting code with clear naming
--   Consistent file organization and documentation
--   Structured logging with appropriate levels
--   Clear separation of concerns and modularity
-
-## License
-
-This project is MIT licensed (see [LICENSE.md](https://github.com/williamcpierce/Overview/blob/main/LICENSE.md))
-
-## Acknowledgments
-
-The design, features, and general purpose of Overview are heavily inspired by [Eve-O Preview](https://github.com/Proopai/eve-o-preview).
-
-Eve-O Preview was originally developed by StinkRay, and is currently maintained by Dal Shooth and Devilen.
-
-Parts of this application include code derived from Apple Inc.'s ScreenRecorder sample code, used under the MIT License.
+Overview was created by William Pierce. Its design and purpose were inspired by [EVE-O Preview](https://github.com/Proopai/eve-o-preview), originally developed by StinkRay and maintained by Dal Shooth and Devilen. Capture frame extraction includes code derived from Apple’s MIT-licensed ScreenRecorder sample.

@@ -1,94 +1,52 @@
-/*
- Source/Services/SourceFocusService.swift
- Overview
-
- Created by William Pierce on 12/15/24.
-
- Manages source window focus operations and application activation.
-*/
-
+/* Source/Services/SourceFocusService.swift — Conservative public Accessibility window matching. */
+import ApplicationServices
+import AppKit
 import ScreenCaptureKit
 
+@MainActor
 final class SourceFocusService {
-    private let logger = AppLogger.sources
+    enum FocusResult { case exactWindow, application, unavailable }
+    var accessibilityEnabled: Bool { AXIsProcessTrusted() }
 
-    // MARK: - Public Methods
-
-    func focusSource(source: SCWindow) {
-        guard let processID: pid_t = source.owningApplication?.processID else {
-            logger.warning("No process ID found for source: '\(source.title ?? "untitled")'")
-            return
-        }
-
-        logger.debug("Focusing source: '\(source.title ?? "untitled")', processID=\(processID)")
-
-        let success: Bool = activateProcess(processID)
-
-        if success {
-            logger.info("Source successfully focused: '\(source.title ?? "untitled")'")
-        } else {
-            logger.error("Source focus failed: processID=\(processID)")
-        }
+    func requestAccessibility() {
+        // The documented key value avoids importing the mutable Objective-C global into actor-isolated code.
+        let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
     }
 
-    func focusSource(withTitle title: String) -> Bool {
-        logger.debug("Processing title-based focus request: '\(title)'")
-
-        guard let runningApp: NSRunningApplication = findApplication(forSourceTitle: title) else {
-            logger.warning("No application found for source window: '\(title)'")
-            return false
+    func focusSource(source: SCWindow) -> FocusResult {
+        guard let pid = source.owningApplication?.processID,
+              let app = NSRunningApplication(processIdentifier: pid) else { return .unavailable }
+        let activated = app.activate()
+        if accessibilityEnabled, let title = source.title,
+           let window = uniqueWindow(pid: pid, title: title) {
+            _ = AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+            let raised = AXUIElementPerformAction(window, kAXRaiseAction as CFString) == .success
+            _ = AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, kCFBooleanTrue)
+            if activated && raised { return .exactWindow }
         }
-
-        NSApp.activate(ignoringOtherApps: true)
-        let success: Bool = runningApp.activate()
-
-        if success {
-            logger.info("Title-based focus successful: '\(title)'")
-        } else {
-            logger.error("Title-based focus failed: '\(title)'")
-        }
-
-        return success
+        return activated ? .application : .unavailable
     }
 
-    // MARK: - Private Methods
-
-    private func findApplication(forSourceTitle title: String) -> NSRunningApplication? {
-        let options = CGWindowListOption(arrayLiteral: .optionAll)
-        let sourceList =
-            CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[CFString: Any]] ?? []
-
-        logger.debug("Searching \(sourceList.count) source windows for title match: '\(title)'")
-
-        guard
-            let sourceInfo = sourceList.first(where: { info in
-                guard let sourceTitle = info[kCGWindowName] as? String,
-                    !sourceTitle.isEmpty
-                else { return false }
-                return sourceTitle == title
-            }), let sourcePID = sourceInfo[kCGWindowOwnerPID] as? pid_t
-        else {
-            logger.warning("No matching source window found: '\(title)'")
-            return nil
-        }
-
-        let runningApp: NSRunningApplication? = NSWorkspace.shared.runningApplications.first {
-            app in
-            app.processIdentifier == sourcePID
-        }
-
-        if let app: NSRunningApplication = runningApp {
-            logger.debug("Found application: '\(app.localizedName ?? "unknown")', pid=\(sourcePID)")
-        }
-
-        return runningApp
+    func focusedTitle(pid: pid_t) -> String? {
+        guard accessibilityEnabled else { return nil }
+        let app = AXUIElementCreateApplication(pid)
+        guard let raw = attribute(app, kAXFocusedWindowAttribute), CFGetTypeID(raw) == AXUIElementGetTypeID() else { return nil }
+        let window = unsafeDowncast(raw as AnyObject, to: AXUIElement.self)
+        return attribute(window, kAXTitleAttribute) as? String
     }
 
-    private func activateProcess(_ processID: pid_t) -> Bool {
-        guard let app = NSRunningApplication(processIdentifier: processID) else {
-            logger.error("Invalid process ID: \(processID)")
-            return false
-        }
-        return app.activate()
+    private func uniqueWindow(pid: pid_t, title: String) -> AXUIElement? {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, 0.2)
+        guard let windows = attribute(app, kAXWindowsAttribute) as? [AXUIElement] else { return nil }
+        let matches = windows.filter { attribute($0, kAXTitleAttribute) as? String == title }
+        return matches.count == 1 ? matches[0] : nil
+    }
+
+    private func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
+        var result: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, name as CFString, &result) == .success else { return nil }
+        return result
     }
 }

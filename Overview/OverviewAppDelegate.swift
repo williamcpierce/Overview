@@ -7,14 +7,12 @@
  The application delegate managing global state coordination and window management.
 */
 
-import Sparkle
 import SwiftUI
 
 @MainActor
 final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     // Dependencies
     let logger = AppLogger.interface
-    let updateManager: UpdateManager
     let permissionManager: PermissionManager
     let layoutManager: LayoutManager!
     let settingsManager: SettingsManager
@@ -24,7 +22,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     var windowManager: WindowManager!
 
     override init() {
-        updateManager = UpdateManager()
         permissionManager = PermissionManager()
         layoutManager = LayoutManager()
 
@@ -40,7 +37,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             previewManager: previewManager
         )
         settingsManager = SettingsManager(
-            updateManager: updateManager,
             layoutManager: layoutManager,
             shortcutManager: shortcutManager
         )
@@ -70,15 +66,8 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
-        Task {
-            do {
-                try await permissionManager.ensurePermission()
-                windowManager.handleWindowsOnLaunch()
-                logger.info("Application initialization completed")
-            } catch {
-                logger.logError(error, context: "Failed to ensure permissions during launch")
-            }
-        }
+        permissionManager.updatePermissionStatus()
+        windowManager.handleWindowsOnLaunch()
     }
 
     func applicationWillTerminate(_ notification: Notification) {

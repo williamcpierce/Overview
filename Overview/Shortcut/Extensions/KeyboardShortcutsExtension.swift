@@ -13,16 +13,3 @@ extension KeyboardShortcuts.Name {
     static let focusSelectedWindow = Self("focusSelectedWindow")
     static let toggleHideAllPreviews = Self("toggleHideAllPreviews")
 }
-
-extension KeyboardShortcuts.Name: Codable {
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(self.rawValue)
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue: String = try container.decode(String.self)
-        self.init(rawValue)
-    }
-}

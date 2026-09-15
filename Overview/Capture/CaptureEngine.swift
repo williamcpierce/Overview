@@ -1,203 +1,104 @@
 /*
  Capture/CaptureEngine.swift
- Overview
+ Overview Dev
 
- Created by William Pierce on 9/15/24.
-
- Manages screen capture operations using ScreenCaptureKit, handling frame
- processing, stream management, and error handling for captured content.
-
- This file includes code derived from Apple Inc.'s ScreenRecorder code sample,
- which is licensed under the MIT License. See LICENSE.md for details.
+ ScreenCaptureKit adapter. Frame extraction derives from Apple's MIT-licensed sample.
+ All stream mutations pass through one serial queue; callbacks only yield immutable frames.
 */
-
 import ScreenCaptureKit
 
-class CaptureEngine: NSObject, @unchecked Sendable {
-    // Dependencies
-    private let logger = AppLogger.capture
+struct CaptureRequest {
+    let source: SCWindow
+    let frameRate: Double
+    let pixelSize: CGSize
+}
 
-    // Private State
-    private let frameProcessingQueue = DispatchQueue(
-        label: "io.williampierce.Overview.VideoSampleBufferQueue"
-    )
-    private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
-    private var streamOutput: CaptureEngineStreamOutput?
-    private(set) var stream: SCStream?
+@MainActor
+final class CaptureEngine: CaptureSession {
+    typealias Request = CaptureRequest
+    typealias Frame = CapturedFrame
+    private let operations = SessionOperationQueue()
+    private let frameQueue = DispatchQueue(label: "local.chriswilliamson.OverviewDev.frames")
+    private var stream: SCStream?
+    private var output: CaptureOutput?
+    private let configuration = CaptureConfigurationService()
 
-    // MARK: - Stream Control
-
-    func startCapture(configuration: SCStreamConfiguration, filter: SCContentFilter)
-        -> AsyncThrowingStream<CapturedFrame, Error>
-    {
-        AsyncThrowingStream<CapturedFrame, Error> { continuation in
-            logger.debug("Initializing capture stream with filter")
-            self.continuation = continuation
-
-            let streamOutput = CaptureEngineStreamOutput(continuation: continuation)
-            self.streamOutput = streamOutput
-
-            streamOutput.capturedFrameHandler = { continuation.yield($0) }
-
+    func start(_ request: CaptureRequest) async throws -> AsyncThrowingStream<SessionEvent<CapturedFrame>, Error> {
+        try await operations.perform { [self] in
+            let (config, filter) = configuration.createConfiguration(request.source, frameRate: request.frameRate, pixelSize: request.pixelSize)
+            let pair = AsyncThrowingStream<SessionEvent<CapturedFrame>, Error>.makeStream(bufferingPolicy: .bufferingNewest(1))
+            let output = CaptureOutput(continuation: pair.continuation)
+            let stream = SCStream(filter: filter, configuration: config, delegate: output)
+            self.stream = stream
+            self.output = output
             do {
-                self.stream = SCStream(
-                    filter: filter,
-                    configuration: configuration,
-                    delegate: streamOutput
-                )
-
-                try self.stream?.addStreamOutput(
-                    streamOutput,
-                    type: .screen,
-                    sampleHandlerQueue: self.frameProcessingQueue
-                )
-
-                self.stream?.startCapture()
-                logger.info("Capture stream started successfully")
+                try stream.addStreamOutput(output, type: .screen, sampleHandlerQueue: frameQueue)
+                try await stream.startCapture()
+                guard stream.isCapturing else { throw CaptureAdapterError.notCapturing }
+                return pair.stream
             } catch {
-                logger.logError(error, context: "Failed to initialize capture stream")
-                continuation.finish(throwing: error)
+                pair.continuation.finish(throwing: error)
+                try? await stream.stopCapture()
+                self.stream = nil
+                self.output = nil
+                throw error
             }
         }
     }
 
-    func stopCapture() async {
-        logger.debug("Initiating capture stream shutdown")
-
-        do {
-            if let stream = stream {
-                try await stream.stopCapture()
-                logger.info("Capture stream stopped successfully")
-            }
-            continuation?.finish()
-        } catch {
-            logger.logError(error, context: "Failed to stop capture stream")
-            continuation?.finish(throwing: error)
+    func stop() async {
+        _ = try? await operations.perform { [self] in
+            if let stream { try? await stream.stopCapture() }
+            output?.finish()
+            stream = nil
+            output = nil
         }
-
-        stream = nil
-        streamOutput = nil
-        continuation = nil
     }
 
-    func update(configuration: SCStreamConfiguration, filter: SCContentFilter) async {
-        logger.debug("Updating capture configuration")
-
-        do {
-            try await stream?.updateConfiguration(configuration)
-            try await stream?.updateContentFilter(filter)
-            logger.info("Stream configuration updated successfully")
-        } catch {
-            logger.logError(error, context: "Failed to update stream configuration")
+    func update(_ request: CaptureRequest) async throws {
+        try await operations.perform { [self] in
+            guard let stream else { return }
+            let (config, filter) = configuration.createConfiguration(request.source, frameRate: request.frameRate, pixelSize: request.pixelSize)
+            try await stream.updateContentFilter(filter)
+            try await stream.updateConfiguration(config)
         }
     }
 }
 
-// MARK: - Stream Output
+private enum CaptureAdapterError: Error { case notCapturing }
 
-private class CaptureEngineStreamOutput: NSObject, SCStreamOutput, SCStreamDelegate {
-    // Dependencies
-    private var continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation?
-    private let logger = AppLogger.capture
-
-    // Public Properties
-    var capturedFrameHandler: ((CapturedFrame) -> Void)?
-
-    init(continuation: AsyncThrowingStream<CapturedFrame, Error>.Continuation) {
+private final class CaptureOutput: NSObject, SCStreamOutput, SCStreamDelegate, Sendable {
+    private let continuation: AsyncThrowingStream<SessionEvent<CapturedFrame>, Error>.Continuation
+    init(continuation: AsyncThrowingStream<SessionEvent<CapturedFrame>, Error>.Continuation) {
         self.continuation = continuation
-        super.init()
-        logger.debug("Initialized stream output handler")
     }
+    func finish() { continuation.finish() }
+    func stream(_ stream: SCStream, didStopWithError error: Error) { continuation.finish(throwing: error) }
+    func streamDidBecomeActive(_ stream: SCStream) { continuation.yield(.active) }
+    func streamDidBecomeInactive(_ stream: SCStream) { continuation.yield(.inactive) }
 
-    // MARK: - Stream Output Handling
-
-    func stream(
-        _ stream: SCStream,
-        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
-        of outputType: SCStreamOutputType
-    ) {
-        guard sampleBuffer.isValid else {
-            logger.error("Received invalid sample buffer")
-            return
-        }
-
-        if outputType == .screen, let frame = createFrame(for: sampleBuffer) {
-            capturedFrameHandler?(frame)
-        }
-    }
-
-    // MARK: - Frame Processing
-
-    private func createFrame(for sampleBuffer: CMSampleBuffer) -> CapturedFrame? {
-        guard
-            let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(
-                sampleBuffer,
-                createIfNecessary: false
-            ) as? [[SCStreamFrameInfo: Any]],
-            let attachments = attachmentsArray.first
-        else {
-            logger.error("Failed to get sample buffer attachments")
-            return nil
-        }
-
-        guard let statusRawValue = attachments[SCStreamFrameInfo.status] as? Int,
-            let status = SCFrameStatus(rawValue: statusRawValue),
-            status == .complete
-        else {
-            return nil
-        }
-
-        guard let pixelBuffer = sampleBuffer.imageBuffer else {
-            logger.error("Missing image buffer in sample")
-            return nil
-        }
-
-        guard let surfaceRef = CVPixelBufferGetIOSurface(pixelBuffer)?.takeUnretainedValue() else {
-            logger.error("Failed to get IOSurface from buffer")
-            return nil
-        }
-
-        let surface = unsafeBitCast(surfaceRef, to: IOSurface.self)
-
-        guard let contentRectDict = attachments[.contentRect],
-            let contentRect = CGRect(dictionaryRepresentation: contentRectDict as! CFDictionary),
-            let contentScale = attachments[.contentScale] as? CGFloat,
-            let scaleFactor = attachments[.scaleFactor] as? CGFloat
-        else {
-            logger.error("Failed to get frame metadata from attachments")
-            return nil
-        }
-
-        return CapturedFrame(
-            contentRect: contentRect,
-            contentScale: contentScale,
-            scaleFactor: scaleFactor,
-            surface: surface
-        )
-    }
-
-    // MARK: - Error Handling
-
-    func stream(_ stream: SCStream, didStopWithError error: Error) {
-        logger.logError(error, context: "Stream stopped with error")
-        continuation?.finish(throwing: error)
+    func stream(_ stream: SCStream, didOutputSampleBuffer buffer: CMSampleBuffer, of type: SCStreamOutputType) {
+        guard type == .screen, buffer.isValid,
+              let attachments = CMSampleBufferGetSampleAttachmentsArray(buffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
+              let metadata = attachments.first,
+              let raw = metadata[.status] as? Int,
+              SCFrameStatus(rawValue: raw) == .complete,
+              let pixels = buffer.imageBuffer,
+              let surface = CVPixelBufferGetIOSurface(pixels)?.takeUnretainedValue(),
+              let rectDictionary = metadata[.contentRect] as? NSDictionary,
+              let rect = CGRect(dictionaryRepresentation: rectDictionary),
+              let contentScale = metadata[.contentScale] as? CGFloat,
+              let scale = metadata[.scaleFactor] as? CGFloat else { return }
+        continuation.yield(.frame(CapturedFrame(contentRect: rect, contentScale: contentScale,
+                                                scaleFactor: scale, surface: surface)))
     }
 }
 
-// MARK: - Support Types
-
-struct CapturedFrame {
+// IOSurface is retained and only read by the compositor. No mutable surface access is exposed.
+struct CapturedFrame: @unchecked Sendable {
     let contentRect: CGRect
     let contentScale: CGFloat
     let scaleFactor: CGFloat
-    let surface: IOSurface?
-
-    static let invalid = CapturedFrame(
-        contentRect: .zero,
-        contentScale: 0,
-        scaleFactor: 0,
-        surface: nil
-    )
-
+    let surface: IOSurfaceRef
     var size: CGSize { contentRect.size }
 }

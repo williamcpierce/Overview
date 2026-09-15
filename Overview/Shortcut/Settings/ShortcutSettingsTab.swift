@@ -103,7 +103,7 @@ struct ShortcutSettingsTab: View {
                                             enabledStates[shortcut.id] = newValue
                                         }
                                     ))
-                                    .onChange(of: enabledStates[shortcut.id]) { newValue in
+                                    .onChange(of: enabledStates[shortcut.id]) { _, newValue in
                                         if let newValue = newValue {
                                             shortcutManager.shortcutStorage.updateShortcut(
                                                 id: shortcut.id, isEnabled: newValue
@@ -238,7 +238,7 @@ struct ShortcutSettingsTab: View {
                 enabledStates[shortcut.id] = shortcut.isEnabled
             }
         }
-        .onChange(of: shortcutManager.shortcutStorage.shortcuts) { newShortcuts in
+        .onChange(of: shortcutManager.shortcutStorage.shortcuts) { _, newShortcuts in
             for shortcut in newShortcuts {
                 enabledStates[shortcut.id] = shortcut.isEnabled
             }

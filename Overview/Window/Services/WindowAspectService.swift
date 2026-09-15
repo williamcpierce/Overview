@@ -2,56 +2,46 @@
  Window/Services/WindowAspectService.swift
  Overview
 
- Created by William Pierce on 1/13/25.
-
- Manages window aspect ratio calculations and adjustments.
+ Locks preview window resize to the source aspect while still allowing drag and scale.
 */
-
 import AppKit
 
+@MainActor
 final class WindowAspectService {
-    // Constants
-    private struct Constants {
-        static let minHeightDifference: CGFloat = 1.0
-    }
-
-    // Dependencies
     private let logger = AppLogger.interface
 
-    func synchronizeAspectRatio(
+    /// Apply or clear the window aspect lock. Snap size only when the ratio first appears or changes.
+    func applyAspectLock(
         for window: NSWindow,
-        aspectRatio: CGFloat,
-        isCapturing: Bool
+        aspectRatio: CGFloat?,
+        snapToRatio: Bool
     ) {
-        guard isCapturing,
-            aspectRatio != 0,
-            let adjustedSize: NSSize = calculateAdjustedSize(
-                for: window,
-                aspectRatio: aspectRatio
-            )
-        else {
+        guard let aspectRatio, aspectRatio > 0, aspectRatio.isFinite else {
+            if window.contentAspectRatio != .zero {
+                window.contentAspectRatio = .zero
+                logger.debug("Cleared preview aspect lock")
+            }
             return
         }
 
-        window.setContentSize(adjustedSize)
-        window.contentAspectRatio = NSSize(width: aspectRatio, height: 1)
+        let lock = NSSize(width: aspectRatio, height: 1)
+        if window.contentAspectRatio != lock {
+            window.contentAspectRatio = lock
+            logger.debug("Locked preview aspect ratio to \(String(format: "%.3f", aspectRatio))")
+        }
 
-        logger.info("Window resized: \\(Int(adjustedSize.width))x\\(Int(adjustedSize.height))")
+        // Never fight an in-progress user resize; contentAspectRatio already constrains the drag.
+        guard snapToRatio, !window.inLiveResize else { return }
+        guard let adjusted = adjustedContentSize(for: window, aspectRatio: aspectRatio) else { return }
+        window.setContentSize(adjusted)
+        logger.debug("Snapped preview size to \(Int(adjusted.width))x\(Int(adjusted.height))")
     }
 
-    // MARK: - Private Methods
-
-    private func calculateAdjustedSize(
-        for window: NSWindow,
-        aspectRatio: CGFloat
-    ) -> NSSize? {
-        let windowWidth: CGFloat = window.frame.width
-        let windowHeight: CGFloat = window.frame.height
-        let desiredHeight: CGFloat = windowWidth / aspectRatio
-
-        let heightDifference: CGFloat = abs(windowHeight - desiredHeight)
-        guard heightDifference > Constants.minHeightDifference else { return nil }
-
-        return NSSize(width: windowWidth, height: desiredHeight)
+    private func adjustedContentSize(for window: NSWindow, aspectRatio: CGFloat) -> NSSize? {
+        let width = window.frame.width
+        let height = window.frame.height
+        let desiredHeight = width / aspectRatio
+        guard abs(height - desiredHeight) > 1 else { return nil }
+        return NSSize(width: width, height: desiredHeight)
     }
 }

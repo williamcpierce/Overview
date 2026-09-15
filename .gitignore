@@ -21,3 +21,7 @@ xcuserdata/
 # End of https://www.toptal.com/developers/gitignore/api/xcode
 
 .vscode/tasks.json
+
+# Local SwiftPM and Xcode verification output
+.build/
+.derivedData/

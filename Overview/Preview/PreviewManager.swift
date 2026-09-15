@@ -26,26 +26,25 @@ final class PreviewManager: ObservableObject {
     private let logger = AppLogger.interface
 
     // Private State
-    @State private var captureSystemInitialized: Bool = false
+    private var subscriptions = Set<AnyCancellable>()
 
     init(sourceManager: SourceManager, permissionManager: PermissionManager) {
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
+        sourceManager.$sources.sink { [weak self] sources in
+            guard let self else { return }
+            self.availableSources = sourceManager.filtered(sources)
+        }.store(in: &subscriptions)
         logger.debug("Initializing preview manager")
     }
 
     func initializeCaptureSystem(_ captureCoordinator: CaptureCoordinator) async {
-        guard !captureSystemInitialized else {
-            logger.debug("Capture system already initialized")
-            return
-        }
-
         do {
             logger.debug("Starting capture system initialization")
             try await permissionManager.ensurePermission()
             await updateAvailableSources()
             logger.debug("Capture system initialization completed")
-            captureSystemInitialized = true
+
         } catch {
             logger.logError(error, context: "Capture system initialization failed")
         }
@@ -59,6 +58,10 @@ final class PreviewManager: ObservableObject {
 
         logger.debug("Starting preview for source window: '\(selectedSource.title ?? "Untitled")'")
         captureCoordinator.selectedSource = selectedSource
+        if let identity = selectedSource.identity {
+            // Source list selection seeds or replaces a one-member group.
+            captureCoordinator.setSources([identity])
+        }
 
         Task {
             do {

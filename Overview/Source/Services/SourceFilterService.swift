@@ -2,9 +2,8 @@
  Source/Services/SourceFilterService.swift
  Overview
 
- Created by William Pierce on 12/15/24.
-
- Handles source window filtering operations based on basic requirements and user preferences.
+ Filters shareable windows for preview pickers. This fork only lists
+ EVE Online clients (CCP bundle IDs / known EVE app names).
 */
 
 import ScreenCaptureKit
@@ -22,18 +21,13 @@ final class SourceFilterService {
 
     // MARK: - Public Methods
 
-    func filterSources(
-        _ sources: [SCWindow],
-        appFilterNames: [String],
-        isFilterBlocklist: Bool
-    ) -> [SCWindow] {
+    func filterSources(_ sources: [SCWindow]) -> [SCWindow] {
         logger.debug("Starting source filtering: total=\(sources.count)")
 
         let filtered: [SCWindow] = sources.filter { source in
             meetsBasicRequirements(source)
                 && isNotSystemComponent(source)
-                && passesFilter(
-                    source, appFilterNames: appFilterNames, isFilterBlocklist: isFilterBlocklist)
+                && isEveOnlineClient(source)
         }
 
         logger.debug(
@@ -43,6 +37,13 @@ final class SourceFilterService {
     }
 
     // MARK: - Private Methods
+
+    private func isEveOnlineClient(_ source: SCWindow) -> Bool {
+        EveSourceMatcher.isAllowed(
+            bundleID: source.owningApplication?.bundleIdentifier,
+            applicationName: source.owningApplication?.applicationName
+        )
+    }
 
     private func meetsBasicRequirements(_ source: SCWindow) -> Bool {
         let isValid: Bool =
@@ -69,18 +70,5 @@ final class SourceFilterService {
         let isNotSystem: Bool = isNotDesktopView && isNotSystemUI && isNotSystemApp
 
         return isNotSystem
-    }
-
-    private func passesFilter(
-        _ source: SCWindow,
-        appFilterNames: [String],
-        isFilterBlocklist: Bool
-    ) -> Bool {
-        let isMatchedByFilter: Bool = appFilterNames.contains(
-            source.owningApplication?.applicationName ?? "")
-
-        let passesFilter: Bool = isFilterBlocklist ? !isMatchedByFilter : isMatchedByFilter
-
-        return passesFilter
     }
 }

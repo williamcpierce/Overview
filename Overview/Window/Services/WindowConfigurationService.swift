@@ -8,8 +8,10 @@
  creation logic from management concerns.
 */
 
+import Defaults
 import SwiftUI
 
+@MainActor
 final class WindowConfigurationService {
     // Constants
     private struct Constants {
@@ -52,6 +54,9 @@ final class WindowConfigurationService {
         window.backgroundColor = Constants.Window.defaultBackgroundColor
         window.isMovableByWindowBackground = Constants.Window.defaultIsMovable
         window.level = level
+        // Apply early so the first drag onto a fullscreen-game display is allowed.
+        updateSpaceParticipation(window, joinsAllDesktops: Defaults[.assignPreviewsToAllDesktops])
+        updateMissionControl(window, isManaged: Defaults[.managedByMissionControl])
     }
 
     func updateResizability(_ window: NSWindow, isEditable: Bool) {
@@ -86,6 +91,23 @@ final class WindowConfigurationService {
         }
 
         logger.debug("Mission Control management updated: managed=\(isManaged)")
+    }
+
+    /// Lets previews sit on every Space, including a display running a fullscreen game.
+    func updateSpaceParticipation(_ window: NSWindow, joinsAllDesktops: Bool) {
+        var behavior = window.collectionBehavior
+        // Never become the fullscreen primary — these are always auxiliary overlays.
+        behavior.remove(.fullScreenPrimary)
+        if joinsAllDesktops {
+            behavior.insert(.canJoinAllSpaces)
+            behavior.insert(.fullScreenAuxiliary)
+        } else {
+            behavior.remove(.canJoinAllSpaces)
+            behavior.remove(.fullScreenAuxiliary)
+        }
+        guard window.collectionBehavior != behavior else { return }
+        window.collectionBehavior = behavior
+        logger.debug("Space participation updated: joinsAllDesktops=\(joinsAllDesktops)")
     }
 
     // MARK: - Private Methods

@@ -119,7 +119,7 @@ final class LayoutManager: ObservableObject {
 
     private func saveLayouts() {
         do {
-            let encodedLayouts = try JSONEncoder().encode(layouts)
+            let encodedLayouts = try JSONEncoder().encode(SavedCollection(layouts))
             Defaults[.storedLayouts] = encodedLayouts
             logger.debug("Saved \(layouts.count) layouts to user defaults")
         } catch {
@@ -128,11 +128,21 @@ final class LayoutManager: ObservableObject {
     }
 
     private static func loadLayouts() -> [Layout] {
-        guard let data = Defaults[.storedLayouts],
-            let layouts = try? JSONDecoder().decode([Layout].self, from: data)
-        else {
+        guard let data = Defaults[.storedLayouts] else { return [] }
+        do {
+            let decoded = try SavedCollection<Layout>.decode(data)
+            if decoded.legacy {
+                let encoded = try JSONEncoder().encode(SavedCollection(decoded.items))
+                if UserDefaults.standard.data(forKey: "storedLayouts.legacyBackup") == nil {
+                    UserDefaults.standard.set(data, forKey: "storedLayouts.legacyBackup")
+                }
+                Defaults[.storedLayouts] = encoded
+            }
+            return decoded.items
+        } catch {
+            UserDefaults.standard.set(data, forKey: "storedLayouts.unreadableBackup")
+            AppLogger.interface.logError(error, context: "Could not load layouts; original data preserved")
             return []
         }
-        return layouts
     }
 }

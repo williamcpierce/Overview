@@ -18,9 +18,6 @@ struct FocusBorderOverlay: View {
     // Public Properties
     let isWindowFocused: Bool
 
-    // Preview Settings
-    @Default(.hideActiveWindow) private var hideActiveWindow
-
     // Overlay Settings
     @Default(.focusBorderEnabled) private var focusBorderEnabled
     @Default(.focusBorderWidth) private var focusBorderWidth
@@ -44,9 +41,6 @@ struct FocusBorderOverlay: View {
     // MARK: - Private Properties
 
     private var shouldShowFocusBorder: Bool {
-        let shouldShow: Bool =
-            focusBorderEnabled && isWindowFocused && !hideActiveWindow
-
-        return shouldShow
+        focusBorderEnabled && isWindowFocused
     }
 }

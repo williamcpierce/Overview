@@ -1,106 +1,65 @@
-/*
- Window/Services/WindowStorageService.swift
- Overview
-
- Created by William Pierce on 1/5/25.
-
- Manages persistence and restoration of window information.
-*/
-
+/* Window/Services/WindowStorageService.swift — Registered previews and versioned persistence. */
 import Defaults
 import SwiftUI
 
+@MainActor
 final class WindowStorageService {
-    // Dependencies
+    private struct Registration {
+        weak var window: NSWindow?
+        weak var capture: CaptureCoordinator?
+    }
+    private var previews: [UUID: Registration] = [:]
     private let logger = AppLogger.interface
 
-    // MARK: - Public Methods
-
-    func storeWindows() {
-        do {
-            let windows = collectWindows()
-            try saveWindows(windows)
-            logger.info("Successfully saved \(windows.count) windows")
-        } catch {
-            logger.logError(error, context: "Failed to save windows")
-        }
+    func register(_ window: NSWindow, capture: CaptureCoordinator) {
+        previews[capture.id] = Registration(window: window, capture: capture)
     }
+    func unregister(_ id: UUID) { previews.removeValue(forKey: id) }
 
     func collectWindows() -> [Window] {
-        NSApplication.shared.windows.compactMap { window in
-            guard window.contentView?.ancestorOrSelf(ofType: NSHostingView<PreviewView>.self) != nil
-            else {
-                return nil
+        previews.compactMap { id, entry in
+            guard let window = entry.window, let capture = entry.capture else { return nil }
+            return Window(
+                frame: window.frame,
+                id: id,
+                sources: capture.sources,
+                hideWhenFocused: capture.hideWhenFocused,
+                displayIdentifier: window.screen?.persistentIdentifier
+            )
+        }.sorted { $0.id.uuidString < $1.id.uuidString }
+    }
+
+    func storeWindows() {
+        do { Defaults[.storedWindows] = try JSONEncoder().encode(SavedCollection(collectWindows())) }
+        catch { logger.logError(error, context: "Could not save previews") }
+    }
+
+    func restoreWindows(using createWindow: (Window) -> Void) {
+        guard let data = Defaults[.storedWindows] else { return }
+        do {
+            let decoded = try SavedCollection<Window>.decode(data)
+            if decoded.legacy {
+                let encoded = try JSONEncoder().encode(SavedCollection(decoded.items))
+                if UserDefaults.standard.data(forKey: "storedWindows.legacyBackup") == nil {
+                    UserDefaults.standard.set(data, forKey: "storedWindows.legacyBackup")
+                }
+                Defaults[.storedWindows] = encoded
             }
-            return Window(frame: window.frame)
-        }
-    }
-
-    func restoreWindows(using createWindow: (NSRect) -> Void) {
-        do {
-            let windows = try loadWindows()
-            windows.forEach { window in
-                createWindow(window.frame)
-            }
-            logger.info("Successfully restored \(windows.count) windows")
+            decoded.items.forEach(createWindow)
         } catch {
-            logger.logError(error, context: "Window restoration failed")
+            // Keep the original bytes for recovery rather than migrating an empty result.
+            UserDefaults.standard.set(data, forKey: "storedWindows.unreadableBackup")
+            logger.logError(error, context: "Could not restore saved previews; original data preserved")
         }
     }
 
-    func applyWindows(_ windows: [Window], using handler: (NSRect) -> Void) {
-        windows.forEach { window in
-            handler(window.frame)
-        }
-        logger.info("Successfully applied \(windows.count) windows")
-    }
-
-    // MARK: - Private Methods
-
-    private func saveWindows(_ windows: [Window]) throws {
-        do {
-            let encodedWindows = try JSONEncoder().encode(windows)
-            Defaults[.storedWindows] = encodedWindows
-            logger.debug("Saved \(windows.count) windows to user defaults")
-        } catch {
-            logger.error("Window encoding failed: \(error.localizedDescription)")
-            throw WindowStorageError.encodingFailed
-        }
-    }
-
-    private func loadWindows() throws -> [Window] {
-        guard let data = Defaults[.storedWindows] else {
-            logger.debug("No stored windows found")
-            throw WindowStorageError.noDataFound
-        }
-
-        do {
-            let windows = try JSONDecoder().decode([Window].self, from: data)
-            return windows
-        } catch let error as WindowStorageError {
-            throw error
-        } catch {
-            logger.error("Window decoding failed: \(error.localizedDescription)")
-            throw WindowStorageError.decodingFailed
-        }
-    }
+    func applyWindows(_ windows: [Window], using handler: (Window) -> Void) { windows.forEach(handler) }
 }
 
-// MARK: - Window Storage Error
-
-enum WindowStorageError: LocalizedError {
-    case encodingFailed
-    case decodingFailed
-    case noDataFound
-
-    var errorDescription: String? {
-        switch self {
-        case .encodingFailed:
-            return "Failed to encode windows"
-        case .decodingFailed:
-            return "Failed to decode stored windows"
-        case .noDataFound:
-            return "No stored window data found"
-        }
+extension NSScreen {
+    var persistentIdentifier: String? {
+        guard let number = deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String
     }
 }

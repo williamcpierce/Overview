@@ -2,26 +2,22 @@
  Source/Settings/SourceSettingsContent.swift
  Overview
 
- Created by William Pierce on 1/13/25.
+ Info copy for the Sources settings tab (EVE-only picker policy).
 */
 
 extension InfoPopoverContent {
     static let sourceFilter = InfoPopoverContent(
-        title: "Source App Filter",
+        title: "EVE Online Sources",
         sections: [
             Section(
                 title: "Summary",
-                text: "Filter which applications appear in the window picker."
+                text:
+                    "Overview Dev only lists EVE Online client windows. Matching uses CCP bundle identifiers (com.ccpgames.*) with EVE Online / EVE Launcher application names as a fallback."
             ),
             Section(
-                title: "Filter Mode",
+                title: "Why",
                 text:
-                    "• Blocklist: Hide specific applications\n• Allowlist: Show only specified applications"
-            ),
-            Section(
-                title: "Usage Tips",
-                text:
-                    "Enter application names exactly as they appear in the window picker. Blocklist mode is useful for hiding system utilities, while allowlist mode helps focus on specific applications you want to monitor."
+                    "This personal build is an EVE multi-client companion. Generic application filters are not used."
             ),
         ],
         isWarning: false

@@ -103,7 +103,7 @@ struct WindowSettingsTab: View {
                     Defaults.Toggle(
                         "Show windows in Mission Control", key: .managedByMissionControl)
                     Defaults.Toggle(
-                        "Show windows on all desktops", key: .assignPreviewsToAllDesktops)
+                        "Show on all Spaces / fullscreen", key: .assignPreviewsToAllDesktops)
                 }
             }
 

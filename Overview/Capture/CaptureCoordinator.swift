@@ -1,13 +1,4 @@
-/*
- Capture/CaptureCoordinator.swift
- Overview
-
- Created by William Pierce on 9/15/24.
-
- Manages the lifecycle of each screen capture operation, coordinating source
- window selection, frame processing, and state synchronization.
-*/
-
+/* Capture/CaptureCoordinator.swift — Source groups, optimistic focus, and lifecycle integration. */
 import Combine
 import Defaults
 import ScreenCaptureKit
@@ -15,234 +6,310 @@ import SwiftUI
 
 @MainActor
 final class CaptureCoordinator: ObservableObject {
-    // Published State
     @Published private(set) var capturedFrame: CapturedFrame?
-    @Published private(set) var isCapturing: Bool = false
-    @Published private(set) var isSourceAppFocused: Bool = false
-    @Published private(set) var isSourceWindowFocused: Bool = false
+    @Published private(set) var state: CaptureState = .idle
+    @Published private(set) var isSourceAppFocused = false
+    @Published private(set) var isSourceWindowFocused = false
     @Published private(set) var sourceWindowTitle: String?
     @Published private(set) var sourceApplicationTitle: String?
-    @Published var selectedSource: SCWindow? {
-        didSet {
-            sourceWindowTitle = selectedSource?.title
-            sourceApplicationTitle = selectedSource?.owningApplication?.applicationName
-            Task { await synchronizeFocusState() }
-        }
+    /// Currently displayed group member.
+    @Published private(set) var sourceIdentity: SourceIdentity?
+    @Published private(set) var sources: [SourceIdentity] = []
+    @Published var hideWhenFocused = false
+    /// True when hide-when-focused has no inactive member left to show.
+    @Published private(set) var shouldHideForFocus = false
+    @Published private(set) var resolutionMessage: String?
+    @Published var selectedSource: SCWindow?
+    /// Optimistic focus owned by Overview after a preview click; wins over ambiguous OS focus.
+    @Published private(set) var localFocusedIdentity: SourceIdentity?
+
+    /// Source groups with 2+ clients always swap; single-source windows use the explicit toggle.
+    var effectiveHideWhenFocused: Bool {
+        SourceGroupSelection.swapsWhenFocused(sourceCount: sources.count, hideWhenFocused: hideWhenFocused)
     }
 
-    // Dependencies
-    private var sourceManager: SourceManager
-    private var permissionManager: PermissionManager
-    private let captureEngine: CaptureEngine
-    private let captureServices: CaptureServices = CaptureServices.shared
-    private let logger = AppLogger.capture
-
-    // Private State
-    private var hasPermission: Bool = false
-    private var activeFrameProcessingTask: Task<Void, Never>?
+    var isCapturing: Bool { state == .running }
+    var hasAssignment: Bool { !sources.isEmpty || selectedSource != nil }
+    var statusLabel: String { resolutionMessage ?? state.label }
+    var applicationFocusOnly: Bool { isSourceAppFocused && !isSourceWindowFocused }
+    var focusMessage: String? { sourceManager.focusMessage }
+    let id: UUID
+    private let sourceManager: SourceManager
+    private let permissionManager: PermissionManager
+    private let lifecycle: CaptureLifecycle<CaptureEngine>
     private var subscriptions = Set<AnyCancellable>()
+    private var pixelSize: CGSize = .zero
+    private var resizeTask: Task<Void, Never>?
+    private var wantsCapture = false
+    private var hidden = false
+    private var tracked = false
+    private var selectionGeneration = 0
 
     init(
         sourceManager: SourceManager,
         permissionManager: PermissionManager,
-        captureEngine: CaptureEngine = CaptureEngine()
+        id: UUID = UUID(),
+        sources: [SourceIdentity] = [],
+        hideWhenFocused: Bool = false,
+        source: SourceIdentity? = nil
     ) {
+        self.id = id
         self.sourceManager = sourceManager
         self.permissionManager = permissionManager
-        self.captureEngine = captureEngine
-        setupSubscriptions()
+        self.hideWhenFocused = hideWhenFocused
+        let initialSources: [SourceIdentity]
+        if !sources.isEmpty {
+            initialSources = sources
+        } else if let source {
+            initialSources = [source]
+        } else {
+            initialSources = []
+        }
+        self.sources = initialSources
+        sourceIdentity = initialSources.first
+        sourceWindowTitle = initialSources.first?.windowTitle
+        wantsCapture = !initialSources.isEmpty
+        lifecycle = CaptureLifecycle(session: CaptureEngine(), classify: { error in
+            if error is PermissionError { return .permission }
+            if let streamError = error as? SCStreamError {
+                switch streamError.code {
+                case .userDeclined: return .permission
+                case .userStopped, .missingEntitlements: return .terminal
+                default: return .transient
+                }
+            }
+            return .transient
+        })
+        lifecycle.$state.sink { [weak self] state in
+            self?.state = state
+            if state == .permissionRequired { self?.permissionManager.updatePermissionStatus() }
+        }.store(in: &subscriptions)
+        lifecycle.$frame.assign(to: &$capturedFrame)
+        sourceManager.$sources.sink { [weak self] _ in
+            Task { @MainActor [weak self] in self?.reconcileSource() }
+        }.store(in: &subscriptions)
+        sourceManager.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in self?.reconcileSource() }
+        }.store(in: &subscriptions)
+        sourceManager.$isSleeping.sink { [weak self] _ in
+            self?.applySuspension()
+        }.store(in: &subscriptions)
+        permissionManager.$permissionStatus.sink { [weak self] status in
+            Task { @MainActor [weak self] in
+                guard let self, self.wantsCapture else { return }
+                if status == .denied {
+                    await self.lifecycle.stop()
+                    self.state = .permissionRequired
+                } else if status == .granted { self.reconcileSource(force: true) }
+            }
+        }.store(in: &subscriptions)
     }
 
-    // MARK: - Public Interface
+    func beginTracking() {
+        guard !tracked else { return }
+        tracked = true
+        sourceManager.beginTracking()
+        reconcileSource()
+    }
 
-    func requestPermission() async throws {
-        guard !hasPermission else { return }
-        logger.debug("Requesting screen recording permission")
-        try await permissionManager.ensurePermission()
-        hasPermission = true
-        logger.info("Screen recording permission granted")
+    func close() async {
+        selectionGeneration += 1
+        wantsCapture = false
+        resizeTask?.cancel()
+        if tracked { sourceManager.endTracking(); tracked = false }
+        await lifecycle.stop()
     }
 
     func startCapture() async throws {
-        guard !isCapturing else { return }
-
-        guard let source: SCWindow = selectedSource else {
-            logger.error("Capture failed: No source window selected")
-            throw CaptureError.noSourceSelected
+        guard let source = selectedSource, let identity = source.identity else { return }
+        selectionGeneration += 1
+        let token = selectionGeneration
+        if !sources.contains(where: { $0.matchesClient(identity) }) {
+            sources = [identity]
         }
-
-        logger.debug("Starting capture for source window: '\(source.title ?? "Untitled")'")
-
-        let stream = try await captureServices.startCapture(
-            source: source,
-            engine: captureEngine,
-            frameRate: Defaults[.captureFrameRate]
-        )
-
-        await processFrames(from: stream)
-
-        isCapturing = true
-        logger.info("Capture started: '\(source.title ?? "Untitled")'")
+        sourceIdentity = identity
+        sourceWindowTitle = source.title
+        sourceApplicationTitle = source.owningApplication?.applicationName
+        wantsCapture = true
+        shouldHideForFocus = false
+        resolutionMessage = nil
+        do { try await permissionManager.ensurePermission() }
+        catch { if token == selectionGeneration { state = .permissionRequired }; throw error }
+        guard token == selectionGeneration, wantsCapture else { return }
+        lifecycle.start(request(source))
     }
 
     func stopCapture() async {
-        guard isCapturing else { return }
+        selectionGeneration += 1
+        wantsCapture = false
+        selectedSource = nil
+        sources = []
+        sourceIdentity = nil
+        localFocusedIdentity = nil
+        shouldHideForFocus = false
+        resolutionMessage = nil
+        await lifecycle.stop()
+    }
 
-        activeFrameProcessingTask?.cancel()
-        activeFrameProcessingTask = nil
+    func retry() async {
+        do {
+            try await permissionManager.ensurePermission()
+            _ = try await sourceManager.refresh()
+            wantsCapture = !sources.isEmpty || selectedSource != nil
+            if !sources.isEmpty { reconcileSource(force: true) }
+            else if selectedSource != nil { try await startCapture() }
+        } catch { state = .permissionRequired }
+    }
 
-        await captureEngine.stopCapture()
+    func setHidden(_ hidden: Bool) {
+        self.hidden = hidden
+        applySuspension()
+    }
 
-        isCapturing = false
-        capturedFrame = nil
-        logger.debug("Capture stopped")
+    func setPixelSize(_ size: CGSize) {
+        guard abs(size.width - pixelSize.width) > 1 || abs(size.height - pixelSize.height) > 1 else { return }
+        pixelSize = size
+        resizeTask?.cancel()
+        resizeTask = Task { [weak self] in
+            do { try await Task.sleep(nanoseconds: 200_000_000) } catch { return }
+            await self?.updateStreamConfiguration()
+        }
     }
 
     func updateStreamConfiguration() async {
-        guard isCapturing, let source: SCWindow = selectedSource else { return }
-        logger.debug("Updating stream configuration: frameRate=\(Defaults[.captureFrameRate])")
-
-        do {
-            try await captureServices.updateStreamConfiguration(
-                source: source,
-                stream: captureEngine.stream,
-                frameRate: Defaults[.captureFrameRate]
-            )
-            logger.info("Stream configuration updated successfully")
-        } catch {
-            logger.logError(error, context: "Failed to update stream configuration")
-        }
+        guard let selectedSource else { return }
+        await lifecycle.update(request(selectedSource))
     }
 
+    /// Click-to-focus: mark the shown member active locally, then activate the OS window.
     func focusSource() {
-        guard let source: SCWindow = selectedSource else { return }
-        logger.debug("Focusing source window: '\(source.title ?? "Untitled")'")
-        sourceManager.focusSource(source)
-    }
-
-    // MARK: - Frame Processing
-
-    private func processFrames(from stream: AsyncThrowingStream<CapturedFrame, Error>) async {
-        activeFrameProcessingTask?.cancel()
-
-        activeFrameProcessingTask = Task { @MainActor in
-            do {
-                for try await frame in stream {
-                    if Task.isCancelled { break }
-
-                    self.capturedFrame = frame
-                }
-
-                if !Task.isCancelled {
-                    logger.debug("Stream ended normally")
-                    isCapturing = false
-                }
-
-            } catch let error as SCStreamError {
-                await handleStreamError(error)
-
-            } catch {
-                logger.warning("Capture ended with error: \(error.localizedDescription)")
-
-                if isCapturing {
-                    await recoverFromError()
-                }
-            }
+        guard let identity = sourceIdentity else { return }
+        localFocusedIdentity = identity
+        reconcileSource(force: true)
+        if let source = sourceManager.resolve(identity).1 {
+            sourceManager.focusSource(source)
         }
     }
 
-    private func handleStreamError(_ error: SCStreamError) async {
-        let errorDescription = error.localizedDescription
+    func setLabel(_ label: String) {
+        let trimmed = label.isEmpty ? nil : label
+        guard let current = sourceIdentity else { return }
+        if let index = sources.firstIndex(where: { $0.matchesClient(current) }) {
+            sources[index].label = trimmed
+            sourceIdentity = sources[index]
+        }
+    }
 
-        if error.code.isFatal {
-            logger.logError(error, context: "Fatal stream error: \(errorDescription)")
-            await stopCapture()
+    func setSources(_ newSources: [SourceIdentity]) {
+        // Preserve order and drop duplicates by client match.
+        var unique: [SourceIdentity] = []
+        for source in newSources where !unique.contains(where: { $0.matchesClient(source) }) {
+            unique.append(source)
+        }
+        sources = unique
+        // Two or more clients imply swap behavior — persist that so layouts restore correctly.
+        if unique.count > 1 { hideWhenFocused = true }
+        wantsCapture = !unique.isEmpty
+        if unique.isEmpty {
+            sourceIdentity = nil
+            selectedSource = nil
+            shouldHideForFocus = false
+            Task { await lifecycle.stop() }
         } else {
-            logger.warning("Recoverable stream error: \(errorDescription)")
-            await recoverFromError()
+            reconcileSource(force: true)
         }
     }
 
-    private func recoverFromError() async {
-        guard isCapturing else { return }
+    func setHideWhenFocused(_ value: Bool) {
+        hideWhenFocused = value
+        reconcileSource(force: true)
+    }
 
-        logger.debug("Attempting to recover from capture error")
+    private func request(_ source: SCWindow) -> CaptureRequest {
+        CaptureRequest(source: source, frameRate: Defaults[.captureFrameRate], pixelSize: pixelSize)
+    }
 
-        try? await Task.sleep(nanoseconds: 1_000_000_000)  // 1 second
+    private func effectiveFocusedIdentity() -> SourceIdentity? {
+        if let localFocusedIdentity { return localFocusedIdentity }
+        guard let windowID = sourceManager.focusedWindowID,
+              let match = sourceManager.sources.first(where: { $0.windowID == windowID }),
+              let identity = match.identity else { return nil }
+        return identity
+    }
 
-        do {
-            try await startCapture()
-            logger.info("Successfully recovered from capture error")
-        } catch {
-            logger.logError(error, context: "Failed to recover from capture error")
-            isCapturing = false
+    private func reconcileSource(force: Bool = false) {
+        guard wantsCapture, !sources.isEmpty else { return }
+        synchronizeFocus()
+
+        let focused = effectiveFocusedIdentity()
+        // Clear stale optimistic focus once OS focus has moved elsewhere in the group.
+        if let local = localFocusedIdentity, let focused, !local.matchesClient(focused),
+           sources.contains(where: { $0.matchesClient(focused) }) {
+            localFocusedIdentity = focused
         }
-    }
 
-    // MARK: - State Synchronization
+        let candidate = SourceGroupSelection.displayCandidate(
+            sources: sources,
+            focused: effectiveFocusedIdentity(),
+            hideWhenFocused: hideWhenFocused
+        )
 
-    private func setupSubscriptions() {
-        sourceManager.$focusedProcessId
-            .sink { [weak self] _ in Task { await self?.synchronizeFocusState() } }
-            .store(in: &subscriptions)
-
-        sourceManager.$sourceTitles
-            .sink { [weak self] titles in self?.synchronizeSourceTitle(from: titles) }
-            .store(in: &subscriptions)
-    }
-
-    private func synchronizeFocusState() async {
-        guard let selectedSource: SCWindow = selectedSource else {
-            isSourceWindowFocused = false
+        if effectiveHideWhenFocused, candidate == nil {
+            shouldHideForFocus = true
+            resolutionMessage = nil
+            selectedSource = nil
+            sourceIdentity = sources.first
+            applySuspension()
+            Task { await lifecycle.stop() }
             return
         }
 
-        let selectedProcessId: pid_t? = selectedSource.owningApplication?.processID
-        let selectedBundleId: String? = selectedSource.owningApplication?.bundleIdentifier
+        shouldHideForFocus = false
+        applySuspension()
 
-        isSourceWindowFocused = selectedProcessId == sourceManager.focusedProcessId
-        isSourceAppFocused = selectedBundleId == sourceManager.focusedBundleId
-    }
+        guard let candidate else { return }
+        guard permissionManager.permissionStatus == .granted else { return }
 
-    private func synchronizeSourceTitle(from titles: [SourceManager.SourceID: String]) {
-        guard let source: SCWindow = selectedSource,
-            let processID: pid_t = source.owningApplication?.processID
-        else { return }
-
-        let sourceID = SourceManager.SourceID(processID: processID, windowID: source.windowID)
-        sourceWindowTitle = titles[sourceID]
-        sourceApplicationTitle = source.owningApplication?.applicationName
-    }
-}
-
-// MARK - Support Types
-
-enum CaptureError: LocalizedError {
-    case noSourceSelected
-    case permissionDenied
-
-    var errorDescription: String? {
-        switch self {
-        case .noSourceSelected:
-            return "No source window is selected for capture"
-        case .permissionDenied:
-            return "Screen capture permission was denied"
+        let (resolution, source) = sourceManager.resolve(candidate)
+        if let source {
+            let changed =
+                selectedSource?.windowID != source.windowID
+                || selectedSource?.owningApplication?.processID != source.owningApplication?.processID
+                || !(sourceIdentity?.matchesClient(candidate) ?? false)
+            selectedSource = source
+            sourceIdentity = candidate
+            sourceWindowTitle = source.title
+            sourceApplicationTitle = source.owningApplication?.applicationName
+            resolutionMessage = nil
+            if changed || force || state == .idle || state == .paused {
+                lifecycle.start(request(source))
+            }
+        } else {
+            let message =
+                resolution == .ambiguous
+                ? "Multiple matching clients. Choose a source."
+                : "Waiting for \(candidate.label ?? candidate.windowTitle)"
+            guard resolutionMessage != message else { return }
+            resolutionMessage = message
+            selectedSource = nil
+            sourceIdentity = candidate
+            Task { await lifecycle.stop() }
         }
+        synchronizeFocus()
     }
-}
 
-extension SCStreamError.Code {
-    var isFatal: Bool {
-        switch self {
-        case .userDeclined, .missingEntitlements, .userStopped,
-            .noCaptureSource, .noWindowList,
-            .failedApplicationConnectionInvalid,
-            .failedApplicationConnectionInterrupted,
-            .failedNoMatchingApplicationContext,
-            .systemStoppedStream, .internalError:
-            return true
-        default:
-            return false
-        }
+    private func synchronizeFocus() {
+        let focusedIdentity = effectiveFocusedIdentity()
+        isSourceWindowFocused =
+            selectedSource != nil
+            && (selectedSource?.windowID == sourceManager.focusedWindowID
+                || (focusedIdentity != nil && sourceIdentity?.matchesClient(focusedIdentity!) == true))
+        isSourceAppFocused =
+            selectedSource?.owningApplication?.processID == sourceManager.focusedProcessId
+            && selectedSource != nil
+    }
+
+    private func applySuspension() {
+        lifecycle.setSuspended(hidden || shouldHideForFocus || sourceManager.isSleeping)
     }
 }
