@@ -35,8 +35,16 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
             sourceManager: sourceManager,
             permissionManager: permissionManager
         )
+        windowManager = WindowManager(
+            previewManager: previewManager,
+            sourceManager: sourceManager,
+            permissionManager: permissionManager,
+            layoutManager: layoutManager
+        )
+
         shortcutManager = ShortcutManager(
             sourceManager: sourceManager,
+            windowManager: windowManager,
             previewManager: previewManager
         )
         settingsManager = SettingsManager(
@@ -46,13 +54,6 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
         )
 
         super.init()
-
-        windowManager = WindowManager(
-            previewManager: previewManager,
-            sourceManager: sourceManager,
-            permissionManager: permissionManager,
-            layoutManager: layoutManager
-        )
 
         setupObservers()
     }

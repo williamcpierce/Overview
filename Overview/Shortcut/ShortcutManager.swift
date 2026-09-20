@@ -13,6 +13,7 @@ import SwiftUI
 final class ShortcutManager: ObservableObject {
     // Dependencies
     private var sourceManager: SourceManager
+    private var windowManager: WindowManager
     private var previewManager: PreviewManager
     private let logger = AppLogger.shortcuts
 
@@ -22,14 +23,31 @@ final class ShortcutManager: ObservableObject {
     // Private State
     private var cancellables = Set<AnyCancellable>()
 
-    init(sourceManager: SourceManager, previewManager: PreviewManager) {
+    init(
+        sourceManager: SourceManager,
+        windowManager: WindowManager,
+        previewManager: PreviewManager
+    ) {
         self.sourceManager = sourceManager
+        self.windowManager = windowManager
         self.previewManager = previewManager
         self.shortcutStorage = ShortcutStorage()
         setupShortcuts()
     }
 
     private func setupShortcuts() {
+        KeyboardShortcuts.onKeyDown(for: .focusSelectedWindow) { [weak self] in
+            Task { @MainActor in
+                self?.windowManager.cyclePreviewWindow(backward: false)
+            }
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .focusPreviousWindow) { [weak self] in
+            Task { @MainActor in
+                self?.windowManager.cyclePreviewWindow(backward: true)
+            }
+        }
+
         setupHideAllPreviewsShortcut()
 
         shortcutStorage.shortcuts.forEach { shortcut in

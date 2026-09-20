@@ -70,6 +70,30 @@ final class WindowManager: ObservableObject {
         }
     }
 
+    func cyclePreviewWindow(backward: Bool) {
+        let windows = activeWindows.sorted {
+            if $0.frame.origin.y == $1.frame.origin.y {
+                return $0.frame.origin.x < $1.frame.origin.x
+            }
+            return $0.frame.origin.y < $1.frame.origin.y
+        }
+
+        guard !windows.isEmpty else {
+            logger.debug("Cannot cycle preview windows: no active windows")
+            return
+        }
+
+        let currentWindow = NSApp.keyWindow ?? NSApp.mainWindow
+        let currentIndex = currentWindow.flatMap { windows.firstIndex(of: $0) }
+        let nextIndex = currentIndex.map { index in
+            backward ? (index - 1 + windows.count) % windows.count : (index + 1) % windows.count
+        } ?? 0
+        let nextWindow = windows[nextIndex]
+
+        nextWindow.makeKeyAndOrderFront(nil)
+        logger.debug("Selected preview window at index \(nextIndex)")
+    }
+
     func handleWindowsOnLaunch() {
         if layoutManager.shouldApplyLayoutOnLaunch(),
             let launchLayout = layoutManager.getLaunchLayout()

@@ -44,6 +44,23 @@ struct ShortcutSettingsTab: View {
         Form {
             Section {
                 HStack {
+                    Text("Overview Window Cycling")
+                        .font(.headline)
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 6) {
+                        KeyboardShortcuts.Recorder("Forward", name: .focusSelectedWindow)
+                            .frame(width: 120)
+                        KeyboardShortcuts.Recorder("Backward", name: .focusPreviousWindow)
+                            .frame(width: 120)
+                    }
+                }
+
+                Text("Selects the next or previous Overview preview window each time the shortcut is pressed.")
+                    .foregroundColor(.secondary)
+
+                Divider()
+
+                HStack {
                     Text("Window Activation")
                         .font(.headline)
                     Spacer()
