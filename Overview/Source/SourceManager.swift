@@ -102,11 +102,39 @@ final class SourceManager: ObservableObject {
             return
         }
 
-        focusedProcessId = activeApp.processIdentifier
+        focusedProcessId = resolveFocusedProcessId(for: activeApp)
         focusedBundleId = activeApp.bundleIdentifier
         isOverviewActive = activeApp.bundleIdentifier == Bundle.main.bundleIdentifier
 
         logger.debug("Focus state updated: bundleId=\(activeApp.bundleIdentifier ?? "unknown")")
+    }
+
+    /// Resolves the process identifier of the frontmost application.
+    ///
+    /// `NSWorkspace` reports a process identifier of -1 for some applications on
+    /// macOS 27, while still reporting their bundle identifier. Applications
+    /// launched from outside the standard locations, such as the EVE clients in
+    /// Application Support, are affected. For those, fall back to asking each
+    /// known source process whether it is active, which is still reported
+    /// correctly, and which distinguishes between multiple processes of the same
+    /// application where the bundle identifier cannot.
+    private func resolveFocusedProcessId(for activeApp: NSRunningApplication) -> pid_t? {
+        let reportedProcessId = activeApp.processIdentifier
+
+        guard reportedProcessId == -1 else { return reportedProcessId }
+
+        let candidates = Set(sourceTitles.keys.map(\.processID))
+        let activeProcessId = candidates.first { candidate in
+            NSRunningApplication(processIdentifier: candidate)?.isActive == true
+        }
+
+        if let activeProcessId {
+            logger.debug("Recovered focused process ID by activity: \(activeProcessId)")
+        } else {
+            logger.debug("No active source process found for \(activeApp.bundleIdentifier ?? "unknown")")
+        }
+
+        return activeProcessId
     }
 
     private func updateSourceTitles() async {

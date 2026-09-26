@@ -105,11 +105,22 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
     }
     
     override func mouseDown(with event: NSEvent) {
-        if !editModeEnabled && !isSelectionVisible {
-            onSourceWindowFocus?()
-        } else {
-            super.mouseDown(with: event)
+        if editModeEnabled {
+            // Start the drag explicitly rather than relying on
+            // `isMovableByWindowBackground`, which needs the click to travel up the
+            // responder chain to the window. This view overrides `mouseDown`, so that
+            // only happened while the capture overlay sat in front of it, leaving
+            // previews without an active capture impossible to move.
+            window?.performDrag(with: event)
+            return
         }
+
+        if !isSelectionVisible {
+            onSourceWindowFocus?()
+            return
+        }
+
+        super.mouseDown(with: event)
     }
 
     func menuWillOpen(_ menu: NSMenu) {

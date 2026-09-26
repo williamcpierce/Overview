@@ -39,8 +39,7 @@ final class SourceFocusService {
             return false
         }
 
-        NSApp.activate(ignoringOtherApps: true)
-        let success: Bool = runningApp.activate()
+        let success: Bool = activate(runningApp)
 
         if success {
             logger.info("Title-based focus successful: '\(title)'")
@@ -72,15 +71,15 @@ final class SourceFocusService {
             return nil
         }
 
-        let runningApp: NSRunningApplication? = NSWorkspace.shared.runningApplications.first {
-            app in
-            app.processIdentifier == sourcePID
+        // Resolve by PID directly: `NSWorkspace.runningApplications` can omit
+        // processes that the window server (and ScreenCaptureKit) still report.
+        guard let runningApp = NSRunningApplication(processIdentifier: sourcePID) else {
+            logger.warning("No running application for pid=\(sourcePID), title: '\(title)'")
+            return nil
         }
 
-        if let app: NSRunningApplication = runningApp {
-            logger.debug("Found application: '\(app.localizedName ?? "unknown")', pid=\(sourcePID)")
-        }
-
+        logger.debug(
+            "Found application: '\(runningApp.localizedName ?? "unknown")', pid=\(sourcePID)")
         return runningApp
     }
 
@@ -89,6 +88,29 @@ final class SourceFocusService {
             logger.error("Invalid process ID: \(processID)")
             return false
         }
+        return activate(app)
+    }
+
+    /// Brings another application to the front.
+    ///
+    /// Since macOS 14 activation is cooperative: the active app must hand
+    /// activation to the target via `activate(from:options:)`. The legacy
+    /// `activate()` still worked on macOS 26 but is refused on macOS 27.
+    private func activate(_ app: NSRunningApplication) -> Bool {
+        if #available(macOS 14.0, *) {
+            NSApp.activate()
+
+            if app.activate(from: .current, options: []) {
+                return true
+            }
+
+            logger.debug(
+                "Cooperative activation refused (overviewActive=\(NSApp.isActive)), yielding")
+            NSApp.yieldActivation(to: app)
+            return app.activate()
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
         return app.activate()
     }
 }
