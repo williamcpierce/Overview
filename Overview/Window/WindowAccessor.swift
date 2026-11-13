@@ -20,7 +20,6 @@ struct WindowAccessor: NSViewRepresentable {
     @Binding var aspectRatio: CGFloat
     @ObservedObject var captureCoordinator: CaptureCoordinator
     @ObservedObject var previewManager: PreviewManager
-    @ObservedObject var sourceManager: SourceManager
     private let configService = WindowServices.shared.windowConfiguration
     private let aspectService = WindowServices.shared.windowAspect
     private let logger = AppLogger.interface
@@ -65,10 +64,10 @@ struct WindowAccessor: NSViewRepresentable {
     }
 
     private func synchronizeLayoutAndBehavior(_ window: NSWindow) {
-        let shouldFloat = previewManager.editModeEnabled && sourceManager.isOverviewActive
-        let newLevel: NSWindow.Level = shouldFloat ? .floating : .statusBar + 1
-
-        window.level = newLevel
+        // Stay above the menu bar even while editing: previews are meant to
+        // be positionable in (and visible within) the menu bar strip, since
+        // it is hidden while the captured game runs.
+        window.level = .statusBar + 1
         window.hasShadow = Defaults[.windowShadowEnabled]
 
         if Defaults[.syncAspectRatio] {
