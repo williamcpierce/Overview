@@ -28,7 +28,7 @@ final class WindowConfigurationService {
     func createWindow(with frame: NSRect) throws -> NSWindow {
         let config = WindowConfiguration.default
 
-        let window = NSWindow(
+        let window = PreviewWindow(
             contentRect: frame,
             styleMask: config.styleMask,
             backing: config.backing,

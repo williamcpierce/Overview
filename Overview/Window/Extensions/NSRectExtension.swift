@@ -5,7 +5,8 @@
  Created by William Pierce on 1/7/25.
 
  Provides screen boundary management functionality for NSRect frames,
- ensuring windows remain visible within screen bounds.
+ ensuring windows remain visible within the physical screen bounds,
+ including the menu bar and Dock regions that previews may cover.
 */
 
 import AppKit
@@ -25,9 +26,9 @@ extension NSRect {
     // MARK: - Public Methods
 
     func ensureOnScreen() -> NSRect {
-        let visibleFrames: [NSRect] = NSScreen.screens.map { $0.visibleFrame }
+        let screenFrames: [NSRect] = NSScreen.screens.map { $0.frame }
 
-        guard !visibleFrames.isEmpty else {
+        guard !screenFrames.isEmpty else {
             return centerOnDefaultScreen()
         }
 
@@ -35,7 +36,7 @@ extension NSRect {
         let adjustedSize: NSSize = calculateAdjustedSize(for: targetScreen)
         let adjustedPosition: NSPoint = calculateAdjustedPosition(
             size: adjustedSize,
-            targetFrame: targetScreen.visibleFrame
+            targetFrame: targetScreen.frame
         )
 
         return NSRect(origin: adjustedPosition, size: adjustedSize)
@@ -63,13 +64,13 @@ extension NSRect {
 
     private func findTargetScreen() -> NSScreen {
         let containingScreen: NSScreen? = NSScreen.screens.first {
-            $0.visibleFrame.intersects(self)
+            $0.frame.intersects(self)
         }
         return containingScreen ?? NSScreen.main ?? NSScreen.screens[0]
     }
 
     private func calculateAdjustedSize(for screen: NSScreen) -> NSSize {
-        let targetFrame: NSRect = screen.visibleFrame
+        let targetFrame: NSRect = screen.frame
 
         let maxWidth: CGFloat = min(targetFrame.width, Constraints.maxWidth)
         let maxHeight: CGFloat = min(targetFrame.height, Constraints.maxHeight)
