@@ -250,7 +250,7 @@ final class DiagnosticService {
             previewWindows: PreviewWindowInfo(
                 activeCount: previewWindows.count,
                 windows: previewWindows.enumerated().map { index, window in
-                    PreviewWindow(
+                    PreviewWindowDiagnostic(
                         id: index + 1,
                         size: Resolution(
                             width: Int(window.frame.width),
@@ -560,10 +560,10 @@ struct WindowStatistics: Codable {
 
 struct PreviewWindowInfo: Codable {
     let activeCount: Int
-    let windows: [PreviewWindow]
+    let windows: [PreviewWindowDiagnostic]
 }
 
-struct PreviewWindow: Codable {
+struct PreviewWindowDiagnostic: Codable {
     let id: Int
     let size: Resolution
     let screen: String

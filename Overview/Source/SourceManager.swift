@@ -84,6 +84,57 @@ final class SourceManager: ObservableObject {
         return filteredSources
     }
 
+    // Reacquires a previously bound source window from the live window list.
+    // Matches the saved window ID first (exact window within the current
+    // session), then falls back to title, optionally constrained to the
+    // same owning application. Returns nil when no live window matches.
+    func findSource(matching saved: WindowSource) async -> SCWindow? {
+        guard let title: String = saved.title, !title.isEmpty else {
+            return nil
+        }
+
+        let candidates: [SCWindow]
+        do {
+            candidates = try await getFilteredSources()
+        } catch {
+            logger.logError(error, context: "Failed to retrieve sources for layout restore")
+            return nil
+        }
+
+        if let windowID: UInt32 = saved.windowID,
+            let exactMatch = candidates.first(where: {
+                $0.windowID == windowID && $0.title == title
+            })
+        {
+            return exactMatch
+        }
+
+        if let windowID: UInt32 = saved.windowID,
+            let sameAppMatch = candidates.first(where: {
+                $0.windowID == windowID && $0.owningApplication?.bundleIdentifier
+                    == saved.bundleID
+            })
+        {
+            return sameAppMatch
+        }
+
+        if let bundleID: String = saved.bundleID,
+            let titledAppMatch = candidates.first(where: {
+                $0.title == title && $0.owningApplication?.bundleIdentifier == bundleID
+            })
+        {
+            return titledAppMatch
+        }
+
+        let titleMatch = candidates.first(where: { $0.title == title })
+
+        if titleMatch == nil {
+            logger.debug("No live window found matching saved source title: '\(title)'")
+        }
+
+        return titleMatch
+    }
+
     // MARK: - Private Methods
 
     private func setupObservers() {

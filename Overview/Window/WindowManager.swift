@@ -8,6 +8,7 @@
 */
 
 import Defaults
+import ScreenCaptureKit
 import SwiftUI
 
 @MainActor
@@ -20,9 +21,14 @@ final class WindowManager: ObservableObject {
     private let windowServices: WindowServices = WindowServices.shared
     private let logger = AppLogger.interface
 
+    // Constants
+    private static let sourceRestoreAttempts: Int = 5
+    private static let sourceRestoreRetryInterval: UInt64 = 600_000_000
+
     // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var windowCoordinators: [NSWindow: CaptureCoordinator] = [:]
     private var sessionWindowCounter: Int
 
     init(
@@ -36,10 +42,18 @@ final class WindowManager: ObservableObject {
         self.permissionManager = permissionManager
         self.layoutManager = layoutManager
         self.sessionWindowCounter = 0
+        windowServices.windowStorage.sourceResolver = { [weak self] window in
+            guard let source: SCWindow = self?.windowCoordinators[window]?.selectedSource else {
+                return nil
+            }
+            return WindowSource(source: source)
+        }
         logger.debug("Window manager initialized")
     }
 
-    func createWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil, restoringSource source: WindowSource? = nil)
+        throws
+    {
         do {
             let defaultSize = CGSize(
                 width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
@@ -55,6 +69,10 @@ final class WindowManager: ObservableObject {
 
             window.orderFront(self)
             logger.info("Created new preview window: id=\(sessionWindowCounter)")
+
+            if let source: WindowSource = source {
+                restoreSource(source, into: window)
+            }
         } catch {
             logger.logError(error, context: "Failed to create preview window")
             throw WindowManagerError.windowCreationFailed
@@ -66,6 +84,7 @@ final class WindowManager: ObservableObject {
             window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
+            windowCoordinators.removeValue(forKey: window)
             logger.debug("Window closed successfully")
         }
     }
@@ -81,10 +100,11 @@ final class WindowManager: ObservableObject {
         var restoredCount: Int = 0
 
         if Defaults[.restoreWindowsOnLaunch] {
-            windowServices.windowStorage.restoreWindows { [weak self] frame in
+            windowServices.windowStorage.restoreWindows { [weak self] windowState in
                 guard let self = self else { return }
                 do {
-                    try createWindow(at: frame)
+                    try self.createWindow(
+                        at: windowState.frame, restoringSource: windowState.source)
                     restoredCount += 1
                     logger.debug("Restored window \(restoredCount)")
                 } catch {
@@ -112,10 +132,11 @@ final class WindowManager: ObservableObject {
             closeAllWindows()
         }
 
-        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
+        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] windowState in
             guard let self = self else { return }
             do {
-                try createWindow(at: frame)
+                try self.createWindow(
+                    at: windowState.frame, restoringSource: windowState.source)
             } catch {
                 logger.logError(
                     error, context: "Failed to create window from layout '\(layout.name)'")
@@ -153,6 +174,7 @@ final class WindowManager: ObservableObject {
             sourceManager: sourceManager,
             permissionManager: permissionManager
         )
+        windowCoordinators[window] = captureCoordinator
 
         let contentView = PreviewView(
             previewManager: previewManager,
@@ -180,6 +202,41 @@ final class WindowManager: ObservableObject {
             createDefaultWindow()
         } else {
             logger.info("Successfully restored \(restoredCount) windows")
+        }
+    }
+
+    // Rebinds a saved source window to a freshly created preview window.
+    // Retries briefly so windows belonging to applications that are still
+    // launching can be acquired; falls back to manual selection otherwise.
+    private func restoreSource(_ source: WindowSource, into window: NSWindow) {
+        guard let coordinator: CaptureCoordinator = windowCoordinators[window] else {
+            logger.warning("Cannot restore source: window has no capture coordinator")
+            return
+        }
+
+        Task { @MainActor in
+            for attempt in 1...Self.sourceRestoreAttempts {
+                guard windowCoordinators[window] != nil, coordinator.selectedSource == nil else {
+                    return
+                }
+
+                if let match: SCWindow = await sourceManager.findSource(matching: source) {
+                    logger.info(
+                        "Reacquired layout source '\(source.title ?? "untitled")' on attempt \(attempt)"
+                    )
+                    previewManager.startSourcePreview(
+                        captureCoordinator: coordinator, source: match)
+                    return
+                }
+
+                if attempt < Self.sourceRestoreAttempts {
+                    try? await Task.sleep(nanoseconds: Self.sourceRestoreRetryInterval)
+                }
+            }
+
+            logger.info(
+                "No live window matched saved source '\(source.title ?? "untitled")'; manual selection required"
+            )
         }
     }
 }
