@@ -14,6 +14,10 @@ final class WindowStorageService {
     // Dependencies
     private let logger = AppLogger.interface
 
+    // Installed by WindowManager: resolves the bound source window
+    // for a given preview window when layouts or sessions are stored.
+    var sourceResolver: ((NSWindow) -> WindowSource?)?
+
     // MARK: - Public Methods
 
     func storeWindows() {
@@ -32,15 +36,15 @@ final class WindowStorageService {
             else {
                 return nil
             }
-            return Window(frame: window.frame)
+            return Window(frame: window.frame, source: self.sourceResolver?(window))
         }
     }
 
-    func restoreWindows(using createWindow: (NSRect) -> Void) {
+    func restoreWindows(using createWindow: (Window) -> Void) {
         do {
             let windows = try loadWindows()
             windows.forEach { window in
-                createWindow(window.frame)
+                createWindow(window)
             }
             logger.info("Successfully restored \(windows.count) windows")
         } catch {
@@ -48,9 +52,9 @@ final class WindowStorageService {
         }
     }
 
-    func applyWindows(_ windows: [Window], using handler: (NSRect) -> Void) {
+    func applyWindows(_ windows: [Window], using handler: (Window) -> Void) {
         windows.forEach { window in
-            handler(window.frame)
+            handler(window)
         }
         logger.info("Successfully applied \(windows.count) windows")
     }
